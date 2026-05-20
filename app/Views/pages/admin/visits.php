@@ -1,7 +1,14 @@
 <?php use App\Support\UiIconHelper; ?>
 <section class="container py-4">
   <div class="bg-white border rounded-3 p-4 shadow-sm">
-    <h4 class="mb-3">Visitas de Páginas</h4>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+      <h4 class="mb-0">Visitas de Páginas</h4>
+      <div class="btn-group" role="group" aria-label="Relatorios de visitas">
+        <a class="btn btn-outline-secondary btn-sm" href="/admin/visitas/mensal">Por mes</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/admin/visitas/analytics">Analytics</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/admin/visitas/paginas">Por pagina</a>
+      </div>
+    </div>
     <div class="table-responsive">
       <table class="table table-striped table-sm align-middle">
         <thead>

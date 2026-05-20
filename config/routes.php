@@ -24,6 +24,9 @@ return static function (Router $router): void {
     $router->get('/admin/logs/', [AdminController::class, 'logs']);
     $router->get('/admin/visitas', [AdminController::class, 'visits']);
     $router->get('/admin/visitas/', [AdminController::class, 'visits']);
+    $router->get('/admin/visitas/mensal', [AdminController::class, 'visitsMonthly']);
+    $router->get('/admin/visitas/analytics', [AdminController::class, 'visitsAnalytics']);
+    $router->get('/admin/visitas/paginas', [AdminController::class, 'visitsPages']);
     $router->post('/admin/cursos', [AdminController::class, 'createCourse']);
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);

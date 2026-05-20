@@ -40,6 +40,170 @@ final class AdminService
         return $visits;
     }
 
+    public function visitsByMonthDaily(?int $month = null, ?int $year = null): array
+    {
+        $month = $this->sanitizeMonth($month);
+        $year = $this->sanitizeYear($year);
+
+        $rows = $this->repository->visitsByDayInMonth($month, $year);
+        $totalMonth = 0;
+        $days = [];
+        foreach ($rows as $row) {
+            $total = (int) ($row['total'] ?? 0);
+            $day = substr((string) ($row['data_visita'] ?? ''), -2);
+            $dayInt = (int) $day;
+            $totalMonth += $total;
+            $days[] = [
+                'day' => $dayInt,
+                'total' => $total,
+            ];
+        }
+
+        return [
+            'month' => $month,
+            'year' => $year,
+            'month_label' => $this->monthNamePtBr($month),
+            'total_month' => $totalMonth,
+            'days' => $days,
+        ];
+    }
+
+    public function visitsAnalytics(?int $month = null, ?int $year = null): array
+    {
+        $month = $this->sanitizeMonth($month);
+        $year = $this->sanitizeYear($year);
+        $visits = $this->repository->visitsInMonthWithPage($month, $year);
+
+        $countries = [];
+        $cities = [];
+        $devices = [];
+        $systems = [];
+        $browsers = [];
+
+        foreach ($visits as $visit) {
+            $location = $this->ipLocation->resolve((string) ($visit['ip'] ?? ''));
+            $ua = $this->uaParser->parse((string) ($visit['user_agent'] ?? ''));
+
+            $country = trim((string) ($location['country'] ?? '-'));
+            $city = trim((string) ($location['city'] ?? '-'));
+            $device = trim((string) ($ua['device'] ?? '-'));
+            $os = trim((string) ($ua['os'] ?? '-'));
+            $browser = trim((string) ($ua['browser'] ?? '-'));
+
+            $this->incrementBucket($countries, $country !== '' ? $country : '-');
+            $this->incrementBucket($cities, $city !== '' ? $city : '-');
+            $this->incrementBucket($devices, $device !== '' ? $device : '-');
+            $this->incrementBucket($systems, $os !== '' ? $os : '-');
+            $this->incrementBucket($browsers, $browser !== '' ? $browser : '-');
+        }
+
+        return [
+            'month' => $month,
+            'year' => $year,
+            'month_label' => $this->monthNamePtBr($month),
+            'total' => count($visits),
+            'countries' => $this->toDistribution($countries),
+            'cities' => $this->toDistribution($cities),
+            'devices' => $this->toDistribution($devices),
+            'systems' => $this->toDistribution($systems),
+            'browsers' => $this->toDistribution($browsers),
+        ];
+    }
+
+    public function visitsByPage(?int $month = null, ?int $year = null): array
+    {
+        $month = $this->sanitizeMonth($month);
+        $year = $this->sanitizeYear($year);
+        $rows = $this->repository->pageVisitTotalsInMonth($month, $year);
+        $total = 0;
+        foreach ($rows as $row) {
+            $total += (int) ($row['total'] ?? 0);
+        }
+
+        $pages = [];
+        foreach ($rows as $row) {
+            $count = (int) ($row['total'] ?? 0);
+            $pages[] = [
+                'name' => (string) ($row['pagina_nome'] ?? '-'),
+                'slug' => (string) ($row['pagina_slug'] ?? '-'),
+                'total' => $count,
+                'percent' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
+            ];
+        }
+
+        return [
+            'month' => $month,
+            'year' => $year,
+            'month_label' => $this->monthNamePtBr($month),
+            'total' => $total,
+            'pages' => $pages,
+        ];
+    }
+
+    private function incrementBucket(array &$bucket, string $key): void
+    {
+        if (!isset($bucket[$key])) {
+            $bucket[$key] = 0;
+        }
+        $bucket[$key]++;
+    }
+
+    private function toDistribution(array $bucket): array
+    {
+        arsort($bucket);
+        $total = array_sum($bucket);
+        $result = [];
+        foreach ($bucket as $label => $count) {
+            $result[] = [
+                'label' => $label,
+                'count' => (int) $count,
+                'percent' => $total > 0 ? round(((int) $count / $total) * 100, 1) : 0.0,
+            ];
+        }
+
+        return $result;
+    }
+
+    private function sanitizeMonth(?int $month): int
+    {
+        $month = $month ?? (int) date('m');
+        if ($month < 1 || $month > 12) {
+            return (int) date('m');
+        }
+
+        return $month;
+    }
+
+    private function sanitizeYear(?int $year): int
+    {
+        $year = $year ?? (int) date('Y');
+        if ($year < 2000 || $year > 2100) {
+            return (int) date('Y');
+        }
+
+        return $year;
+    }
+
+    private function monthNamePtBr(int $month): string
+    {
+        $months = [
+            1 => 'Janeiro',
+            2 => 'Fevereiro',
+            3 => 'Marco',
+            4 => 'Abril',
+            5 => 'Maio',
+            6 => 'Junho',
+            7 => 'Julho',
+            8 => 'Agosto',
+            9 => 'Setembro',
+            10 => 'Outubro',
+            11 => 'Novembro',
+            12 => 'Dezembro',
+        ];
+
+        return $months[$month] ?? 'Mes';
+    }
+
     private function formatDate(string $date): string
     {
         if ($date === '') {

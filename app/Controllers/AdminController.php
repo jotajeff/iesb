@@ -66,6 +66,57 @@ final class AdminController extends Controller
         ], 'admin');
     }
 
+    public function visitsMonthly(): void
+    {
+        if (!$this->auth->checkRole('admin')) {
+            Session::setFlash('flash', 'Faça login como admin para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+
+        $this->render('pages/admin/visits_monthly', [
+            'title' => 'Visitas por Mês',
+            'currentRoute' => '/admin/visitas',
+            'monthly' => $this->admin->visitsByMonthDaily($month, $year),
+        ], 'admin');
+    }
+
+    public function visitsAnalytics(): void
+    {
+        if (!$this->auth->checkRole('admin')) {
+            Session::setFlash('flash', 'Faça login como admin para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+
+        $this->render('pages/admin/visits_analytics', [
+            'title' => 'Analytics de Visitas',
+            'currentRoute' => '/admin/visitas',
+            'analytics' => $this->admin->visitsAnalytics($month, $year),
+        ], 'admin');
+    }
+
+    public function visitsPages(): void
+    {
+        if (!$this->auth->checkRole('admin')) {
+            Session::setFlash('flash', 'Faça login como admin para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+
+        $this->render('pages/admin/visits_pages', [
+            'title' => 'Visitas por Página',
+            'currentRoute' => '/admin/visitas',
+            'pagesStats' => $this->admin->visitsByPage($month, $year),
+        ], 'admin');
+    }
+
     public function createCourse(): void
     {
         if (!$this->auth->checkRole('admin')) {

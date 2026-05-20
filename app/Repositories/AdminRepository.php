@@ -67,6 +67,77 @@ final class AdminRepository
         return is_array($rows) ? $rows : [];
     }
 
+    public function visitsByDayInMonth(int $month, int $year): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $monthStr = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+        $period = sprintf('%04d-%s', $year, $monthStr);
+
+        $sql = 'SELECT data_visita, COUNT(*) AS total
+                FROM visitas_paginas
+                WHERE data_visita LIKE :period
+                GROUP BY data_visita
+                ORDER BY data_visita ASC';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':period', $period . '%');
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function visitsInMonthWithPage(int $month, int $year): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $monthStr = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+        $period = sprintf('%04d-%s', $year, $monthStr);
+
+        $sql = 'SELECT v.id, v.ip, v.user_agent, v.data_visita,
+                       p.nome AS pagina_nome, p.slug AS pagina_slug
+                FROM visitas_paginas v
+                INNER JOIN paginas p ON p.id = v.pagina_id
+                WHERE v.data_visita LIKE :period
+                ORDER BY v.id DESC';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':period', $period . '%');
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function pageVisitTotalsInMonth(int $month, int $year): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $monthStr = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+        $period = sprintf('%04d-%s', $year, $monthStr);
+
+        $sql = 'SELECT p.nome AS pagina_nome, p.slug AS pagina_slug, COUNT(*) AS total
+                FROM visitas_paginas v
+                INNER JOIN paginas p ON p.id = v.pagina_id
+                WHERE v.data_visita LIKE :period
+                GROUP BY p.id, p.nome, p.slug
+                ORDER BY total DESC';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':period', $period . '%');
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
     private function count(PDO $pdo, string $sql): int
     {
         try {

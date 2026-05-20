@@ -1108,3 +1108,10 @@ footer .footer-links a:hover {
 [data-aos] {
   transition-timing-function: cubic-bezier(0.25, 0.46, 0.45, 0.94) !important;
 }
+
+[data-bs-theme="dark"] .about-equipe-estrutura p,
+[data-bs-theme="dark"] .about-equipe-estrutura figcaption,
+[data-bs-theme="dark"] .about-equipe-estrutura .small,
+[data-bs-theme="dark"] .about-equipe-estrutura .section-title {
+  color: #8d8d8b !important;
+}

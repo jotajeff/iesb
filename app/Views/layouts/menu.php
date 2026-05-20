@@ -9,15 +9,17 @@
     <div class="collapse navbar-collapse" id="navbarContent">
       <ul class="navbar-nav mx-auto">
         <?php
-        $menuItems = [
+        $menuItemsBeforeCursos = [
           '/home' => 'Início',
           '/sobre' => 'Sobre',
+        ];
+
+        $menuItemsAfterCursos = [
           '/eventos' => 'Eventos',
           '/parcerias' => 'Parcerias',
-
         ];
         ?>
-        <?php foreach ($menuItems as $path => $label): ?>
+        <?php foreach ($menuItemsBeforeCursos as $path => $label): ?>
           <li class="nav-item">
             <a class="nav-link <?= ($currentRoute ?? '') === $path ? 'active' : '' ?>" href="<?= $path ?>"><?= $label ?></a>
           </li>
@@ -32,6 +34,11 @@
             <li><a class="dropdown-item" href="/cursos?tipo=cursos-livres">Cursos Livres</a></li>
           </ul>
         </li>
+        <?php foreach ($menuItemsAfterCursos as $path => $label): ?>
+          <li class="nav-item">
+            <a class="nav-link <?= ($currentRoute ?? '') === $path ? 'active' : '' ?>" href="<?= $path ?>"><?= $label ?></a>
+          </li>
+        <?php endforeach; ?>
       </ul>
       <div class="d-flex align-items-center gap-2">
         <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
