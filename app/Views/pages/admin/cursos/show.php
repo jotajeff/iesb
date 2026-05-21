@@ -56,6 +56,10 @@
           <td><?= htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
         </tr>
         <tr>
+          <th class="bg-light">Slug</th>
+          <td><code><?= htmlspecialchars((string) ($course['slug'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></code></td>
+        </tr>
+        <tr>
           <th class="bg-light">Data do curso</th>
           <td><?= htmlspecialchars((string) ($course['data_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
         </tr>

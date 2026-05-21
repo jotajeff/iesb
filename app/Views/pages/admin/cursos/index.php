@@ -10,7 +10,7 @@
                type="button"
                class="btn btn-outline-secondary btn-sm<?= $currentOrder === 'desc' ? ' active' : '' ?>"
                title="Mais novos primeiro (clique para ordenar decrescente)"
-                onclick="console.log('=== ARROW CLICK desc ==='); var url=window.location.href; if(url.indexOf('order=')>-1){url=url.replace(/order=[^&]*/,'order=desc');}else if(url.indexOf('?')>-1){url+='&order=desc';}else{url+='?order=desc';} window.location.href=url;"
+                onclick="var url=window.location.href; if(url.indexOf('order=')>-1){url=url.replace(/order=[^&]*/,'order=desc');}else if(url.indexOf('?')>-1){url+='&order=desc';}else{url+='?order=desc';} window.location.href=url;"
              >
                <i class="bi bi-arrow-down"></i>
              </button>
@@ -18,7 +18,7 @@
                type="button"
                class="btn btn-outline-secondary btn-sm<?= $currentOrder === 'asc' ? ' active' : '' ?>"
                title="Mais antigos primeiro (clique para ordenar crescente)"
-                onclick="console.log('=== ARROW CLICK asc ==='); var url=window.location.href; if(url.indexOf('order=')>-1){url=url.replace(/order=[^&]*/,'order=asc');}else if(url.indexOf('?')>-1){url+='&order=asc';}else{url+='?order=asc';} window.location.href=url;"
+                onclick="var url=window.location.href; if(url.indexOf('order=')>-1){url=url.replace(/order=[^&]*/,'order=asc');}else if(url.indexOf('?')>-1){url+='&order=asc';}else{url+='?order=asc';} window.location.href=url;"
              >
                <i class="bi bi-arrow-up"></i>
              </button>
@@ -34,6 +34,7 @@
             <th><i class="bi bi-hash"></i></th>
             <th><i class="bi bi-card-image me-1"></i>Card</th>
             <th><i class="bi bi-journal-text me-1"></i>Nome</th>
+            <th><i class="bi bi-link-45deg me-1"></i>Slug</th>
             <th><i class="bi bi-calendar-event me-1"></i>Data</th>
             <th><i class="bi bi-geo-alt me-1"></i>Local</th>
             <th><i class="bi bi-tag me-1"></i>Tipo</th>
@@ -42,7 +43,7 @@
         </thead>
         <tbody>
           <?php if (empty($courses)): ?>
-            <tr><td colspan="7" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
+            <tr><td colspan="8" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
           <?php endif; ?>
 
           <?php foreach (($courses ?? []) as $course): ?>
@@ -59,6 +60,7 @@
                 </a>
               </td>
               <td><?= htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td><code><?= htmlspecialchars((string) ($course['slug'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></code></td>
               <?php $cursoCalendarioRaw = (string) ($course['curso_calendario'] ?? ''); ?>
               <?php $needsAlert = $cursoCalendarioRaw === '0000-00-00'; ?>
               <td<?= $needsAlert ? ' class="text-danger fw-semibold"' : '' ?>>

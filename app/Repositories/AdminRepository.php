@@ -35,13 +35,37 @@ final class AdminRepository
         }
 
         $direction = strtoupper($order) === 'asc' ? 'ASC' : 'DESC';
-        $sql = 'SELECT c.id, c.nome, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.tipo_curso,
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.tipo_curso,
                        c.ativo, c.imagem_card, c.created_at, t.tipo AS tipo_nome
                 FROM cursos_iesb c
                 LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
                 ORDER BY c.id ' . $direction . '
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function listCursosDisponiveisHome(int $limit = 6, string $referenceDate = ''): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
+
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.tipo_curso, t.tipo AS tipo_nome
+                FROM cursos_iesb c
+                LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
+                WHERE c.ativo = "S" AND c.curso_calendario > "0000-00-00" AND c.curso_calendario >= :maxDate
+                ORDER BY c.curso_calendario ASC, c.id DESC
+                LIMIT :limit';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':maxDate', $referenceDate);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -56,7 +80,7 @@ final class AdminRepository
             return null;
         }
 
-        $sql = 'SELECT c.id, c.nome, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.tipo_curso, c.ativo, c.created_at,
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.tipo_curso, c.ativo, c.created_at,
                        t.tipo AS tipo_nome
                 FROM cursos_iesb c
                 LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
@@ -77,12 +101,13 @@ final class AdminRepository
         }
 
         $sql = 'UPDATE cursos_iesb
-                SET nome = :nome, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
+                SET nome = :nome, slug = :slug, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
                     imagem_card = :imagem_card, link_ingresso = :link_ingresso, tipo_curso = :tipo_curso, ativo = :ativo
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->bindValue(':nome', $payload['nome']);
+        $stmt->bindValue(':slug', $payload['slug']);
         $stmt->bindValue(':data_curso', $payload['data_curso']);
         $stmt->bindValue(':curso_calendario', $payload['curso_calendario']);
         $stmt->bindValue(':horario', $payload['horario']);
@@ -128,10 +153,11 @@ final class AdminRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO cursos_iesb (nome, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, tipo_curso, ativo)
-                VALUES (:nome, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :tipo_curso, :ativo)';
+        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, tipo_curso, ativo)
+                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :tipo_curso, :ativo)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
+        $stmt->bindValue(':slug', $payload['slug']);
         $stmt->bindValue(':data_curso', $payload['data_curso']);
         $stmt->bindValue(':curso_calendario', $payload['curso_calendario']);
         $stmt->bindValue(':horario', $payload['horario']);
@@ -143,6 +169,59 @@ final class AdminRepository
         $stmt->execute();
 
         return (int) $pdo->lastInsertId();
+    }
+
+    public function listCursosSemSlug(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $sql = 'SELECT id, nome, slug
+                FROM cursos_iesb
+                WHERE slug IS NULL OR slug = ""
+                ORDER BY id ASC';
+        $stmt = $pdo->query($sql);
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function updateCursoSlug(int $id, string $slug): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE cursos_iesb SET slug = :slug WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':slug', $slug);
+        $stmt->execute();
+    }
+
+    public function cursoSlugExists(string $slug, ?int $ignoreId = null): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return false;
+        }
+
+        $sql = 'SELECT id FROM cursos_iesb WHERE slug = :slug';
+        if ($ignoreId !== null && $ignoreId > 0) {
+            $sql .= ' AND id <> :ignore_id';
+        }
+        $sql .= ' LIMIT 1';
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug);
+        if ($ignoreId !== null && $ignoreId > 0) {
+            $stmt->bindValue(':ignore_id', $ignoreId, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchColumn() !== false;
     }
 
     public function recentLogs(int $limit = 50): array

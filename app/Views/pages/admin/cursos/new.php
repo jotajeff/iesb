@@ -9,6 +9,7 @@
       <div class="col-md-8">
         <label class="form-label">Nome</label>
         <input class="form-control" type="text" name="nome" required>
+        <small class="text-muted">O slug será gerado automaticamente a partir deste nome.</small>
       </div>
       <div class="col-md-4">
         <label class="form-label">Tipo</label>

@@ -27,12 +27,16 @@ final class AdminService
 
     public function cursos(string $order = 'desc', int $limit = 200): array
     {
-        return $this->repository->listCursos($limit, $order);
+        return array_map(
+            fn (array $course): array => $this->normalizeCursoSlug($course),
+            $this->repository->listCursos($limit, $order)
+        );
     }
 
     public function findCurso(int $id): ?array
     {
-        return $this->repository->findCursoById($id);
+        $course = $this->repository->findCursoById($id);
+        return $course ? $this->normalizeCursoSlug($course) : null;
     }
 
     public function atualizarCurso(
@@ -47,8 +51,11 @@ final class AdminService
         string $ativo = 'S',
         string $imagemCard = ''
     ): void {
+        $slug = $this->generateUniqueCursoSlug($nome, $id);
+
         $this->repository->updateCurso($id, [
             'nome' => trim($nome),
+            'slug' => $slug,
             'data_curso' => trim($dataCurso),
             'horario' => trim($horario),
             'local_curso' => trim($localCurso),
@@ -65,6 +72,15 @@ final class AdminService
         return $this->repository->listCursosTipos();
     }
 
+    public function cursosDisponiveisParaHome(int $limit = 6): array
+    {
+        $today = (new \DateTime())->format('Y-m-d');
+        return array_map(
+            fn (array $course): array => $this->normalizeCursoSlug($course),
+            $this->repository->listCursosDisponiveisHome($limit, $today)
+        );
+    }
+
     public function atualizarCursoImagem(int $id, string $imagemPath): void
     {
         $this->repository->updateCursoImagem($id, $imagemPath);
@@ -72,19 +88,45 @@ final class AdminService
 
     public static function slugify(string $text): string
     {
-        $text = preg_replace('/[^a-zA-Z0-9\p{L}\s-]/u', '', $text);
+        $text = trim($text);
         $text = mb_strtolower($text, 'UTF-8');
-        $map = [
-            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a',
-            'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
-            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
-            'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
-            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
-        ];
-        $text = strtr($text, $map);
-        $text = preg_replace('/[^a-z0-9-]+/', '-', $text);
+
+        $ascii = @iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+        if ($ascii !== false) {
+            $text = $ascii;
+        } else {
+            $map = [
+                'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a',
+                'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+                'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
+                'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
+                'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
+            ];
+            $text = strtr($text, $map);
+        }
+
+        $text = preg_replace('/[^a-z0-9]+/', '-', $text);
         $text = trim($text, '-');
         return $text === '' ? 'sem-nome' : $text;
+    }
+
+    public function sincronizarSlugsCursos(): int
+    {
+        $updated = 0;
+        foreach ($this->repository->listCursosSemSlug() as $course) {
+            $id = (int) ($course['id'] ?? 0);
+            $nome = (string) ($course['nome'] ?? 'curso');
+
+            if ($id <= 0) {
+                continue;
+            }
+
+            $slug = $this->generateUniqueCursoSlug($nome, $id);
+            $this->repository->updateCursoSlug($id, $slug);
+            $updated++;
+        }
+
+        return $updated;
     }
 
     public function log(
@@ -112,8 +154,11 @@ final class AdminService
         string $ativo = 'S',
         string $imagemCard = ''
     ): int {
+        $slug = $this->generateUniqueCursoSlug($nome);
+
         return $this->repository->createCurso([
             'nome' => trim($nome),
+            'slug' => $slug,
             'data_curso' => trim($dataCurso),
             'horario' => trim($horario),
             'local_curso' => trim($localCurso),
@@ -123,6 +168,31 @@ final class AdminService
             'tipo_curso' => $tipoCurso,
             'ativo' => trim($ativo),
         ]);
+    }
+
+    private function generateUniqueCursoSlug(string $nome, ?int $ignoreId = null): string
+    {
+        $baseSlug = self::slugify($nome);
+        $slug = $baseSlug;
+        $suffix = 2;
+
+        while ($this->repository->cursoSlugExists($slug, $ignoreId)) {
+            $slug = $baseSlug . '-' . $suffix;
+            $suffix++;
+        }
+
+        return $slug;
+    }
+
+    private function normalizeCursoSlug(array $course): array
+    {
+        $slug = trim((string) ($course['slug'] ?? ''));
+        if ($slug === '') {
+            $slug = self::slugify((string) ($course['nome'] ?? 'curso'));
+            $course['slug'] = $slug;
+        }
+
+        return $course;
     }
 
     public function visits(int $limit = 100): array

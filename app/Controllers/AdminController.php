@@ -60,6 +60,8 @@ final class AdminController extends Controller
             $order = 'desc';
         }
 
+        $this->admin->sincronizarSlugsCursos();
+
         $this->render('pages/admin/cursos/index', [
             'title' => 'Cursos IESB',
             'currentRoute' => '/admin/cursos',
@@ -314,7 +316,10 @@ final class AdminController extends Controller
             $this->redirect('/admin/cursos/upload?id=' . $id);
         }
 
-        $slug = AdminService::slugify((string) ($curso['nome'] ?? 'curso'));
+        $slug = trim((string) ($curso['slug'] ?? ''));
+        if ($slug === '') {
+            $slug = AdminService::slugify((string) ($curso['nome'] ?? 'curso'));
+        }
         $filename = $slug . '-' . $id . '.' . $ext;
 
         $destDir = dirname(__DIR__, 2) . '/public/assets/img/cursos';

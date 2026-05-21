@@ -12,6 +12,7 @@
       <div class="col-md-8">
         <label class="form-label">Nome</label>
         <input class="form-control" type="text" name="nome" value="<?= htmlspecialchars((string) ($course['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
+        <small class="text-muted">Ao salvar, o slug será recalculado com base no nome.</small>
       </div>
       <div class="col-md-4">
         <label class="form-label">Tipo</label>

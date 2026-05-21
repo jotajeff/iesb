@@ -152,304 +152,80 @@
                     </p>
                   </div>
                   <div class="row g-4">
-                    <!-- Curso 1 -->
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="100">
-                      <div class="course-card">
-                        <div class="course-card-image">
-                          <div
-                            class="course-img-placeholder"
-                            style="
-                              background: linear-gradient(
-                                135deg,
-                                #2c3e50,
-                                #3498db
-                              );
-                            ">
-                            <i class="bi bi-laptop"></i>
-                          </div>
-                          <span class="course-badge">Mais Popular</span>
-                        </div>
-                        <div class="course-card-body">
-                          <h3 class="course-card-title">
-                            Técnico em Informática
-                          </h3>
-                          <p class="course-card-desc">
-                            Desenvolvimento web, redes, banco de dados e
-                            manutenção de computadores.
-                          </p>
-                          <div class="course-meta">
-                            <div class="course-meta-item">
-                              <i class="bi bi-clock"></i> 800 horas
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-calendar3"></i> 18 meses
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-moon-stars"></i> Noturno
-                            </div>
-                          </div>
-                          <div class="course-card-footer">
-                            <div class="course-price">
-                              R$ 189 <small>/mês</small>
-                            </div>
-                            <button class="course-btn">Inscreva-se</button>
-                          </div>
-                        </div>
+                    <?php $cursosDisponiveis = $cursosDestaque ?? []; ?>
+                    <?php if (empty($cursosDisponiveis)): ?>
+                      <div class="col-12 text-center text-muted" data-aos="fade-up" data-aos-delay="100">
+                        Nenhum curso disponível no momento.
                       </div>
-                    </div>
-
-                    <!-- Curso 2 -->
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="200">
-                      <div class="course-card">
-                        <div class="course-card-image">
-                          <div
-                            class="course-img-placeholder"
-                            style="
-                              background: linear-gradient(
-                                135deg,
-                                #27ae60,
-                                #2ecc71
-                              );
-                            ">
-                            <i class="bi bi-heart-pulse"></i>
+                    <?php else: ?>
+                      <?php foreach ($cursosDisponiveis as $index => $course): ?>
+                        <?php
+                          $courseImage = trim((string) ($course['imagem_card'] ?? ''));
+                          $courseName = htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                          $courseLocation = htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                          $courseHorario = htmlspecialchars((string) ($course['horario'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                          $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
+                          $badgeLabel = htmlspecialchars((string) ($course['tipo_nome'] ?? 'Curso'), ENT_QUOTES, 'UTF-8');
+                          $dateText = '-';
+                          $rawDate = (string) ($course['data_curso'] ?? '');
+                          $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
+                          if ($dtDate instanceof \DateTime) {
+                            $dateText = $dtDate->format('d/m/Y');
+                          } elseif ($rawDate !== '') {
+                            $dateText = $rawDate;
+                          }
+                          $delay = 100 + ($index % 3) * 100;
+                        ?>
+                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
+                          <div class="course-card">
+                            <div class="course-card-image">
+                              <?php if ($courseImage !== ''): ?>
+                                <img
+                                  src="/<?= htmlspecialchars($courseImage, ENT_QUOTES, 'UTF-8') ?>"
+                                  alt="Imagem do curso <?= $courseName ?>"
+                                  style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                                />
+                              <?php else: ?>
+                                <div class="course-img-placeholder" style="background: linear-gradient(135deg, #2c3e50, #0f172a);">
+                                  <i class="bi bi-journal-bookmark"></i>
+                                </div>
+                              <?php endif; ?>
+                              <span class="course-badge"><?= $badgeLabel ?></span>
+                            </div>
+                            <div class="course-card-body">
+                              <h3 class="course-card-title"><?= $courseName ?></h3>
+                              <p class="course-card-desc"><?= $courseLocation ?></p>
+                              <div class="course-meta">
+                                <div class="course-meta-item">
+                                  <i class="bi bi-calendar-event"></i> <?= htmlspecialchars($dateText, ENT_QUOTES, 'UTF-8') ?>
+                                </div>
+                                <div class="course-meta-item">
+                                  <i class="bi bi-clock"></i> <?= $courseHorario ?>
+                                </div>
+                              </div>
+                              <div class="course-card-footer">
+                                <?php if ($linkIngresso !== ''): ?>
+                                  <a
+                                    class="course-btn"
+                                    href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                  >
+                                    Inscreva-se
+                                  </a>
+                                <?php else: ?>
+                                  <span class="course-btn" style="pointer-events: none; opacity: 0.5;">Inscrições em breve</span>
+                                <?php endif; ?>
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        <div class="course-card-body">
-                          <h3 class="course-card-title">
-                            Técnico em Enfermagem
-                          </h3>
-                          <p class="course-card-desc">
-                            Cuidados clínicos, farmacologia, anatomia e prática
-                            hospitalar supervisionada.
-                          </p>
-                          <div class="course-meta">
-                            <div class="course-meta-item">
-                              <i class="bi bi-clock"></i> 1.200 horas
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-calendar3"></i> 24 meses
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-sun"></i> Integral
-                            </div>
-                          </div>
-                          <div class="course-card-footer">
-                            <div class="course-price">
-                              R$ 249 <small>/mês</small>
-                            </div>
-                            <button class="course-btn">Inscreva-se</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Curso 3 -->
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="300">
-                      <div class="course-card">
-                        <div class="course-card-image">
-                          <div
-                            class="course-img-placeholder"
-                            style="
-                              background: linear-gradient(
-                                135deg,
-                                #e74c3c,
-                                #c0392b
-                              );
-                            ">
-                            <i class="bi bi-cash-stack"></i>
-                          </div>
-                          <span class="course-badge">Novo</span>
-                        </div>
-                        <div class="course-card-body">
-                          <h3 class="course-card-title">
-                            Técnico em Administração
-                          </h3>
-                          <p class="course-card-desc">
-                            Gestão empresarial, finanças, marketing e recursos
-                            humanos aplicados.
-                          </p>
-                          <div class="course-meta">
-                            <div class="course-meta-item">
-                              <i class="bi bi-clock"></i> 600 horas
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-calendar3"></i> 14 meses
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-cloud-sun"></i> Manhã / Noite
-                            </div>
-                          </div>
-                          <div class="course-card-footer">
-                            <div class="course-price">
-                              R$ 169 <small>/mês</small>
-                            </div>
-                            <button class="course-btn">Inscreva-se</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Curso 4 -->
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="100">
-                      <div class="course-card">
-                        <div class="course-card-image">
-                          <div
-                            class="course-img-placeholder"
-                            style="
-                              background: linear-gradient(
-                                135deg,
-                                #8e44ad,
-                                #9b59b6
-                              );
-                            ">
-                            <i class="bi bi-graph-up-arrow"></i>
-                          </div>
-                        </div>
-                        <div class="course-card-body">
-                          <h3 class="course-card-title">
-                            Técnico em Contabilidade
-                          </h3>
-                          <p class="course-card-desc">
-                            Contabilidade geral, fiscal, trabalhista e análise
-                            de demonstrações financeiras.
-                          </p>
-                          <div class="course-meta">
-                            <div class="course-meta-item">
-                              <i class="bi bi-clock"></i> 700 horas
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-calendar3"></i> 16 meses
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-moon-stars"></i> Noturno
-                            </div>
-                          </div>
-                          <div class="course-card-footer">
-                            <div class="course-price">
-                              R$ 179 <small>/mês</small>
-                            </div>
-                            <button class="course-btn">Inscreva-se</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Curso 5 -->
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="200">
-                      <div class="course-card">
-                        <div class="course-card-image">
-                          <div
-                            class="course-img-placeholder"
-                            style="
-                              background: linear-gradient(
-                                135deg,
-                                #f39c12,
-                                #e67e22
-                              );
-                            ">
-                            <i class="bi bi-gear-wide-connected"></i>
-                          </div>
-                        </div>
-                        <div class="course-card-body">
-                          <h3 class="course-card-title">Técnico em Mecânica</h3>
-                          <p class="course-card-desc">
-                            Processos de fabricação, manutenção industrial,
-                            soldagem e CNC.
-                          </p>
-                          <div class="course-meta">
-                            <div class="course-meta-item">
-                              <i class="bi bi-clock"></i> 900 horas
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-calendar3"></i> 20 meses
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-cloud-sun"></i> Manhã / Tarde
-                            </div>
-                          </div>
-                          <div class="course-card-footer">
-                            <div class="course-price">
-                              R$ 199 <small>/mês</small>
-                            </div>
-                            <button class="course-btn">Inscreva-se</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <!-- Curso 6 -->
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="300">
-                      <div class="course-card">
-                        <div class="course-card-image">
-                          <div
-                            class="course-img-placeholder"
-                            style="
-                              background: linear-gradient(
-                                135deg,
-                                #1abc9c,
-                                #16a085
-                              );
-                            ">
-                            <i class="bi bi-shield-lock"></i>
-                          </div>
-                          <span class="course-badge">Em Alta</span>
-                        </div>
-                        <div class="course-card-body">
-                          <h3 class="course-card-title">
-                            Técnico em Segurança do Trabalho
-                          </h3>
-                          <p class="course-card-desc">
-                            Normas regulamentadoras, prevenção de riscos,
-                            ergonomia e meio ambiente.
-                          </p>
-                          <div class="course-meta">
-                            <div class="course-meta-item">
-                              <i class="bi bi-clock"></i> 400 horas
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-calendar3"></i> 12 meses
-                            </div>
-                            <div class="course-meta-item">
-                              <i class="bi bi-moon-stars"></i> Noturno
-                            </div>
-                          </div>
-                          <div class="course-card-footer">
-                            <div class="course-price">
-                              R$ 159 <small>/mês</small>
-                            </div>
-                            <button class="course-btn">Inscreva-se</button>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div
-                    class="text-center mt-5"
-                    data-aos="fade-up"
-                    data-aos-delay="200">
-                    <a href="#" class="btn-outline-custom">Ver Todos os Cursos <i class="bi bi-arrow-right"></i></a>
+                      <?php endforeach; ?>
+                    <?php endif; ?>
                   </div>
                 </div>
               </section>
-
+              
               <!-- ==================== FEATURES ==================== -->
               <section class="section-dark" id="diferenciais">
                 <div class="container">
