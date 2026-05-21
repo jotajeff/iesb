@@ -18,6 +18,10 @@
     ];
     $currentYear = (int) date('Y');
     $yearOptions = [$currentYear - 2, $currentYear - 1, $currentYear, $currentYear + 1];
+    $days = $m['days'] ?? [];
+    usort($days, static function (array $a, array $b): int {
+      return ((int) ($b['day'] ?? 0)) <=> ((int) ($a['day'] ?? 0));
+    });
     ?>
     <form class="row g-2 align-items-end mb-4" method="get" action="/admin/visitas/mensal">
       <div class="col-sm-4 col-md-3">
@@ -55,10 +59,10 @@
           </tr>
         </thead>
         <tbody>
-          <?php if (empty($m['days'])): ?>
+          <?php if (empty($days)): ?>
             <tr><td colspan="2" class="text-muted">Sem visitas para o periodo selecionado.</td></tr>
           <?php endif; ?>
-          <?php foreach (($m['days'] ?? []) as $day): ?>
+          <?php foreach ($days as $day): ?>
             <tr>
               <td><?= htmlspecialchars((string) $m['month_label'], ENT_QUOTES, 'UTF-8') ?> dia <?= (int) ($day['day'] ?? 0) ?></td>
               <td><span class="badge text-bg-primary"><?= (int) ($day['total'] ?? 0) ?></span></td>
