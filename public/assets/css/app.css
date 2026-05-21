@@ -1115,3 +1115,11 @@ footer .footer-links a:hover {
 [data-bs-theme="dark"] .about-equipe-estrutura .section-title {
   color: #8d8d8b !important;
 }
+
+.shadow-soft {
+  box-shadow: 0 2px 12px rgba(77, 79, 78, 0.1) !important;
+}
+
+[data-bs-theme="dark"] .shadow-soft {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
+}

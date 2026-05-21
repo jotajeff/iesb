@@ -49,6 +49,30 @@ final class AdminRepository
         return is_array($rows) ? $rows : [];
     }
 
+    public function listCursosDisponiveis(int $limit = 200, string $referenceDate = ''): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
+
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.tipo_curso, t.tipo AS tipo_nome
+                FROM cursos_iesb c
+                LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
+                WHERE c.ativo = "S" AND c.curso_calendario > "0000-00-00" AND c.curso_calendario >= :maxDate
+                ORDER BY c.curso_calendario ASC, c.id DESC
+                LIMIT :limit';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':maxDate', $referenceDate);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
     public function listCursosDisponiveisHome(int $limit = 6, string $referenceDate = ''): array
     {
         $pdo = Database::connection();

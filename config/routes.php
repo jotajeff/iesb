@@ -34,6 +34,7 @@ return static function (Router $router): void {
     $router->get('/admin/visitas/paginas', [AdminController::class, 'visitasPaginas']);
     $router->get('/admin/cursos/upload', [AdminController::class, 'uploadCursoForm']);
     $router->post('/admin/cursos/upload', [AdminController::class, 'uploadCursoImage']);
+    $router->get('/admin/dbase', [AdminController::class, 'dbase']);
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);

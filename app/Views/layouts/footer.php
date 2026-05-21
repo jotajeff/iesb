@@ -138,16 +138,23 @@
                                   font-weight: 600;
                                   color: var(--text-primary);
                                 ">Curso de Interesse</label>
+                  <?php
+                    $coursesForSelect = (new \App\Services\CourseService())->list();
+                    usort(
+                      $coursesForSelect,
+                      static fn (array $a, array $b): int => strcmp(
+                        (string) ($a['curso_calendario'] ?? ''),
+                        (string) ($b['curso_calendario'] ?? '')
+                      )
+                    );
+                  ?>
                   <select class="form-select-custom">
                     <option value="">Selecione um curso</option>
-                    <option>Técnico em Informática</option>
-                    <option>Técnico em Enfermagem</option>
-                    <option>Técnico em Administração</option>
-                    <option>Técnico em Contabilidade</option>
-                    <option>Técnico em Mecânica</option>
-                    <option>
-                      Técnico em Segurança do Trabalho
-                    </option>
+                    <?php foreach ($coursesForSelect as $course): ?>
+                      <option value="<?= htmlspecialchars($course['nome'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <?= htmlspecialchars($course['nome'], ENT_QUOTES, 'UTF-8'); ?>
+                      </option>
+                    <?php endforeach; ?>
                   </select>
                 </div>
                 <div class="col-12">

@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Services\AdminService;
 use App\Services\AuthService;
 use App\Support\Session;
+use PDO;
 
 final class AdminController extends Controller
 {
@@ -338,5 +340,69 @@ final class AdminController extends Controller
         $this->admin->log('upload_imagem', 'curso', $id, "Imagem do card enviada: $filename");
         Session::setFlash('flash', 'Imagem do card atualizada com sucesso.');
         $this->redirect('/admin/cursos');
+    }
+
+    public function dbase(): void
+    {
+        if (!$this->auth->checkRole('admin')) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $pdo = Database::connection();
+        $dbName = getenv('DB_NAME') ?: '';
+        $tables = [];
+        $rows = [];
+        $columns = [];
+        $currentTable = '';
+        $totalRows = 0;
+        $error = '';
+
+        if (!$pdo instanceof PDO) {
+            $error = 'Nao foi possivel conectar ao banco de dados.';
+        } else {
+            $table = trim((string) ($_GET['table'] ?? ''));
+
+            if ($table !== '') {
+                $currentTable = $table;
+                $stmt = $pdo->prepare('SELECT COUNT(*) FROM `' . $table . '`');
+                $stmt->execute();
+                $totalRows = (int) $stmt->fetchColumn();
+
+                $stmt = $pdo->prepare('SHOW COLUMNS FROM `' . $table . '`');
+                $stmt->execute();
+                $cols = $stmt->fetchAll();
+                $columns = array_map(fn($c) => $c['Field'], $cols);
+
+                $limit = 200;
+                $stmt = $pdo->prepare('SELECT * FROM `' . $table . '` LIMIT :limit');
+                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+            } else {
+                $stmt = $pdo->prepare(
+                    "SELECT t.table_name AS name,
+                            t.table_rows AS row_count
+                     FROM information_schema.tables t
+                     WHERE t.table_schema = :schema
+                     ORDER BY t.table_name ASC"
+                );
+                $stmt->bindValue(':schema', $dbName);
+                $stmt->execute();
+                $tables = $stmt->fetchAll();
+            }
+        }
+
+        $this->render('pages/admin/dbase/index', [
+            'title' => 'Explorador de Banco de Dados',
+            'currentRoute' => '/admin/dbase',
+            'dbName' => $dbName,
+            'tables' => $tables,
+            'rows' => $rows,
+            'columns' => $columns,
+            'currentTable' => $currentTable,
+            'totalRows' => $totalRows,
+            'error' => $error,
+        ], 'admin');
     }
 }
