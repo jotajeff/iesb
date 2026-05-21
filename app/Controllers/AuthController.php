@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Services\AdminService;
 use App\Services\AuthService;
 use App\Support\Session;
 
 final class AuthController extends Controller
 {
     private AuthService $auth;
+    private AdminService $admin;
 
     public function __construct()
     {
         $this->auth = new AuthService();
+        $this->admin = new AdminService();
     }
 
     public function adminLoginForm(): void
@@ -32,6 +35,7 @@ final class AuthController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $this->admin->log('login', 'admin', 0, "Login realizado: $email");
         $this->redirect('/admin');
     }
 

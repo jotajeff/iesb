@@ -19,5 +19,9 @@
       </div>
     </div>
   </div>
+  <div class="bg-white border rounded-3 p-4 shadow-sm">
+    <h5 class="mb-2">Gestao de cursos</h5>
+    <p class="text-muted mb-3">Use o modulo de cursos para listar, criar e editar registros da tabela <code>cursos_iesb</code>.</p>
+    <a class="btn btn-primary btn-sm" href="/admin/cursos">Abrir cursos</a>
   </div>
 </section>

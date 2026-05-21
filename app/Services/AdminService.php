@@ -25,6 +25,106 @@ final class AdminService
         return $this->repository->recentLogs($limit);
     }
 
+    public function cursos(string $order = 'desc', int $limit = 200): array
+    {
+        return $this->repository->listCursos($limit, $order);
+    }
+
+    public function findCurso(int $id): ?array
+    {
+        return $this->repository->findCursoById($id);
+    }
+
+    public function atualizarCurso(
+        int $id,
+        string $nome,
+        string $dataCurso,
+        string $horario,
+        string $localCurso,
+        string $linkIngresso,
+        int $tipoCurso = 3,
+        string $cursoCalendario = '',
+        string $ativo = 'S',
+        string $imagemCard = ''
+    ): void {
+        $this->repository->updateCurso($id, [
+            'nome' => trim($nome),
+            'data_curso' => trim($dataCurso),
+            'horario' => trim($horario),
+            'local_curso' => trim($localCurso),
+            'imagem_card' => trim($imagemCard),
+            'curso_calendario' => trim($cursoCalendario),
+            'link_ingresso' => trim($linkIngresso),
+            'tipo_curso' => $tipoCurso,
+            'ativo' => trim($ativo),
+        ]);
+    }
+
+    public function cursosTipos(): array
+    {
+        return $this->repository->listCursosTipos();
+    }
+
+    public function atualizarCursoImagem(int $id, string $imagemPath): void
+    {
+        $this->repository->updateCursoImagem($id, $imagemPath);
+    }
+
+    public static function slugify(string $text): string
+    {
+        $text = preg_replace('/[^a-zA-Z0-9\p{L}\s-]/u', '', $text);
+        $text = mb_strtolower($text, 'UTF-8');
+        $map = [
+            'à' => 'a', 'á' => 'a', 'â' => 'a', 'ã' => 'a', 'ä' => 'a',
+            'ç' => 'c', 'è' => 'e', 'é' => 'e', 'ê' => 'e', 'ë' => 'e',
+            'ì' => 'i', 'í' => 'i', 'î' => 'i', 'ï' => 'i',
+            'ñ' => 'n', 'ò' => 'o', 'ó' => 'o', 'ô' => 'o', 'õ' => 'o', 'ö' => 'o',
+            'ù' => 'u', 'ú' => 'u', 'û' => 'u', 'ü' => 'u',
+        ];
+        $text = strtr($text, $map);
+        $text = preg_replace('/[^a-z0-9-]+/', '-', $text);
+        $text = trim($text, '-');
+        return $text === '' ? 'sem-nome' : $text;
+    }
+
+    public function log(
+        string $acao,
+        string $entidade,
+        int $entidadeId,
+        string $descricao,
+        bool $sucesso = true
+    ): void {
+        $user = \App\Support\Session::get('user');
+        $usuarioId = (int) ($user['id'] ?? 0);
+        $perfil = (string) ($user['role'] ?? 'admin');
+
+        $this->repository->registrarLog($usuarioId, $perfil, $acao, $entidade, $entidadeId, $descricao, $sucesso);
+    }
+
+    public function criarCurso(
+        string $nome,
+        string $dataCurso,
+        string $horario,
+        string $localCurso,
+        string $linkIngresso,
+        int $tipoCurso = 3,
+        string $cursoCalendario = '',
+        string $ativo = 'S',
+        string $imagemCard = ''
+    ): int {
+        return $this->repository->createCurso([
+            'nome' => trim($nome),
+            'data_curso' => trim($dataCurso),
+            'horario' => trim($horario),
+            'local_curso' => trim($localCurso),
+            'imagem_card' => trim($imagemCard),
+            'curso_calendario' => trim($cursoCalendario),
+            'link_ingresso' => trim($linkIngresso),
+            'tipo_curso' => $tipoCurso,
+            'ativo' => trim($ativo),
+        ]);
+    }
+
     public function visits(int $limit = 100): array
     {
         $visits = $this->repository->recentVisits($limit);

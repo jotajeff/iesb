@@ -22,9 +22,127 @@ final class AdminRepository
 
         return [
             'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos'),
-            'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos'),
+            'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos_iesb'),
             'total_matriculas' => $this->count($pdo, 'SELECT COUNT(*) FROM matriculas'),
         ];
+    }
+
+    public function listCursos(int $limit = 200, string $order = 'desc'): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $direction = strtoupper($order) === 'asc' ? 'ASC' : 'DESC';
+        $sql = 'SELECT c.id, c.nome, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.tipo_curso,
+                       c.ativo, c.imagem_card, c.created_at, t.tipo AS tipo_nome
+                FROM cursos_iesb c
+                LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
+                ORDER BY c.id ' . $direction . '
+                LIMIT :limit';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function findCursoById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT c.id, c.nome, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.tipo_curso, c.ativo, c.created_at,
+                       t.tipo AS tipo_nome
+                FROM cursos_iesb c
+                LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
+                WHERE c.id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function updateCurso(int $id, array $payload): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE cursos_iesb
+                SET nome = :nome, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
+                    imagem_card = :imagem_card, link_ingresso = :link_ingresso, tipo_curso = :tipo_curso, ativo = :ativo
+                WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->bindValue(':nome', $payload['nome']);
+        $stmt->bindValue(':data_curso', $payload['data_curso']);
+        $stmt->bindValue(':curso_calendario', $payload['curso_calendario']);
+        $stmt->bindValue(':horario', $payload['horario']);
+        $stmt->bindValue(':local_curso', $payload['local_curso']);
+        $stmt->bindValue(':imagem_card', $payload['imagem_card']);
+        $stmt->bindValue(':link_ingresso', $payload['link_ingresso']);
+        $stmt->bindValue(':tipo_curso', (int) $payload['tipo_curso'], PDO::PARAM_INT);
+        $stmt->bindValue(':ativo', (string) $payload['ativo']);
+        $stmt->execute();
+    }
+
+    public function updateCursoImagem(int $id, string $imagemPath): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE cursos_iesb SET imagem_card = :imagem_card WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':imagem_card', $imagemPath);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function listCursosTipos(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $sql = 'SELECT id, tipo FROM cursos_tipo ORDER BY id ASC';
+        $stmt = $pdo->query($sql);
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function createCurso(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        $sql = 'INSERT INTO cursos_iesb (nome, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, tipo_curso, ativo)
+                VALUES (:nome, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :tipo_curso, :ativo)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nome', $payload['nome']);
+        $stmt->bindValue(':data_curso', $payload['data_curso']);
+        $stmt->bindValue(':curso_calendario', $payload['curso_calendario']);
+        $stmt->bindValue(':horario', $payload['horario']);
+        $stmt->bindValue(':local_curso', $payload['local_curso']);
+        $stmt->bindValue(':imagem_card', $payload['imagem_card']);
+        $stmt->bindValue(':link_ingresso', $payload['link_ingresso']);
+        $stmt->bindValue(':tipo_curso', (int) $payload['tipo_curso'], PDO::PARAM_INT);
+        $stmt->bindValue(':ativo', (string) $payload['ativo']);
+        $stmt->execute();
+
+        return (int) $pdo->lastInsertId();
     }
 
     public function recentLogs(int $limit = 50): array
@@ -136,6 +254,29 @@ final class AdminRepository
 
         $rows = $stmt->fetchAll();
         return is_array($rows) ? $rows : [];
+    }
+
+    public function registrarLog(int $usuarioId, string $perfil, string $acao, string $entidade, int $entidadeId, string $descricao, bool $sucesso = true): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $ip = $_SERVER['REMOTE_ADDR'] ?? '127.0.0.1';
+
+        $sql = 'INSERT INTO logs_auditoria (usuario_id, perfil, acao, entidade, entidade_id, descricao, ip, sucesso)
+                VALUES (:usuario_id, :perfil, :acao, :entidade, :entidade_id, :descricao, :ip, :sucesso)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':usuario_id', $usuarioId, PDO::PARAM_INT);
+        $stmt->bindValue(':perfil', $perfil);
+        $stmt->bindValue(':acao', $acao);
+        $stmt->bindValue(':entidade', $entidade);
+        $stmt->bindValue(':entidade_id', $entidadeId, PDO::PARAM_INT);
+        $stmt->bindValue(':descricao', $descricao);
+        $stmt->bindValue(':ip', $ip);
+        $stmt->bindValue(':sucesso', $sucesso ? 1 : 0, PDO::PARAM_INT);
+        $stmt->execute();
     }
 
     private function count(PDO $pdo, string $sql): int

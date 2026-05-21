@@ -20,14 +20,20 @@ return static function (Router $router): void {
     $router->get('/admin/login', [AuthController::class, 'adminLoginForm']);
     $router->post('/admin/login', [AuthController::class, 'adminLogin']);
     $router->get('/admin', [AdminController::class, 'dashboard']);
+    $router->get('/admin/dashboard', [AdminController::class, 'dashboard']);
+    $router->get('/admin/cursos', [AdminController::class, 'cursos']);
+    $router->get('/admin/cursos/novo', [AdminController::class, 'novoCursoForm']);
+    $router->get('/admin/cursos/show', [AdminController::class, 'showCurso']);
+    $router->post('/admin/cursos/salvar', [AdminController::class, 'createCourse']);
+    $router->get('/admin/cursos/editar', [AdminController::class, 'editarCursoForm']);
+    $router->post('/admin/cursos/atualizar', [AdminController::class, 'updateCourse']);
     $router->get('/admin/logs', [AdminController::class, 'logs']);
-    $router->get('/admin/logs/', [AdminController::class, 'logs']);
-    $router->get('/admin/visitas', [AdminController::class, 'visits']);
-    $router->get('/admin/visitas/', [AdminController::class, 'visits']);
-    $router->get('/admin/visitas/mensal', [AdminController::class, 'visitsMonthly']);
-    $router->get('/admin/visitas/analytics', [AdminController::class, 'visitsAnalytics']);
-    $router->get('/admin/visitas/paginas', [AdminController::class, 'visitsPages']);
-    $router->post('/admin/cursos', [AdminController::class, 'createCourse']);
+    $router->get('/admin/visitas', [AdminController::class, 'visitas']);
+    $router->get('/admin/visitas/mensal', [AdminController::class, 'visitasMensal']);
+    $router->get('/admin/visitas/analytics', [AdminController::class, 'visitasAnalytics']);
+    $router->get('/admin/visitas/paginas', [AdminController::class, 'visitasPaginas']);
+    $router->get('/admin/cursos/upload', [AdminController::class, 'uploadCursoForm']);
+    $router->post('/admin/cursos/upload', [AdminController::class, 'uploadCursoImage']);
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);

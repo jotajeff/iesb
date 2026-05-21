@@ -24,7 +24,7 @@
                       <div class="d-flex flex-wrap gap-3">
                         <a href="#cursos" class="btn-primary-custom"><i class="bi bi-book"></i> Ver Cursos</a>
                         <a
-                          href="#sobre"
+                          href="/sobre"
                           class="btn-outline-custom"
                           style="
                             border-color: rgba(229, 229, 217, 0.3);

@@ -1,4 +1,4 @@
-<footer class="mt-5 fixed-bottom" style="background:#111827; color:#cbd5e1;">
+<footer class="mt-auto" style="background:#111827; color:#cbd5e1;">
   <div class="container py-3 d-flex justify-content-between align-items-center">
     <small>Painel Administrativo IESB</small>
     <small>&copy; 2026</small>

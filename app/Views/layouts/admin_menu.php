@@ -7,6 +7,7 @@
     <div class="collapse navbar-collapse" id="adminNavbar">
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin' ? 'active' : '' ?>" href="/admin">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin/cursos' ? 'active' : '' ?>" href="/admin/cursos">Cursos</a></li>
         <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin/logs' ? 'active' : '' ?>" href="/admin/logs">Logs</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle <?= ($currentRoute ?? '') === '/admin/visitas' ? 'active' : '' ?>" href="/admin/visitas" role="button" data-bs-toggle="dropdown" aria-expanded="false">Visitas</a>
