@@ -12,6 +12,8 @@
   --light-rgb: 229, 229, 217;
   --gray: #a5aaaa;
   --gray-rgb: 165, 170, 170;
+  --success: #0f9d58;
+  --success-rgb: 15, 157, 88;
 }
 
 [data-bs-theme="light"] {
@@ -479,6 +481,7 @@ section {
            COURSES SECTION
            ============================================ */
 .course-card {
+  position: relative;
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: 16px;
@@ -491,6 +494,25 @@ section {
   transform: translateY(-8px);
   box-shadow: var(--card-hover-shadow);
   border-color: rgba(var(--primary-rgb), 0.3);
+}
+.course-card.course-card-confirmed {
+  border-color: var(--success);
+  box-shadow: 0 12px 28px rgba(var(--success-rgb), 0.25);
+}
+.course-card.course-card-confirmed:hover {
+  border-color: var(--success);
+  box-shadow: 0 20px 45px rgba(var(--success-rgb), 0.35);
+}
+.course-card.course-card-confirmed::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  border: 2px solid rgba(var(--success-rgb), 0.6);
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.98);
+  animation: confirmedPulse 3.2s ease-out infinite;
 }
 .course-card-image {
   height: 200px;
@@ -522,6 +544,19 @@ section {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.5px;
+}
+.course-badge.course-badge-confirmed {
+  background: var(--success);
+  color: #ffffff;
+  border: 1px solid rgba(var(--success-rgb), 0.6);
+  box-shadow: 0 10px 20px rgba(var(--success-rgb), 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+.course-badge.course-badge-confirmed i {
+  font-size: 0.9rem;
 }
 .course-card-body {
   padding: 1.5rem;
@@ -573,19 +608,34 @@ section {
   color: var(--text-secondary);
 }
 .course-btn {
-  background: rgba(var(--primary-rgb), 0.12);
-  color: var(--primary);
+  background: rgb(29 28 27 / 83%);
+  color: var(--light);
   border: none;
   padding: 8px 18px;
   border-radius: 8px;
   font-size: 0.85rem;
   font-weight: 600;
-  transition: all 0.3s ease;
+  transition: background 0.3s ease, transform 0.3s ease;
   cursor: pointer;
 }
 .course-btn:hover {
-  background: var(--primary);
-  color: var(--dark);
+  background: rgb(29 28 27 / 95%);
+  transform: translateY(-1px);
+}
+
+@keyframes confirmedPulse {
+  0% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  60% {
+    opacity: 0.15;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
 }
 
 /* ============================================

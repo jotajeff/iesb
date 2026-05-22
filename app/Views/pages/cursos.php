@@ -48,9 +48,10 @@
               $dateText = $rawDate;
             }
             $delay = 100 + ($index % 3) * 100;
+            $isConfirmed = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S';
           ?>
           <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
-            <div class="course-card">
+            <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">
               <div class="course-card-image">
                 <?php if ($courseImage !== ''): ?>
                   <img
@@ -63,7 +64,11 @@
                     <i class="bi bi-journal-bookmark"></i>
                   </div>
                 <?php endif; ?>
-                <span class="course-badge">IESB Agenda de Cursos</span>
+                <?php if ($isConfirmed): ?>
+                  <span class="course-badge course-badge-confirmed">
+                    <i class="bi bi-award-fill"></i> Confirmado
+                  </span>
+                <?php endif; ?>
               </div>
               <div class="course-card-body">
                 <h3 class="course-card-title"><?= $courseName ?></h3>

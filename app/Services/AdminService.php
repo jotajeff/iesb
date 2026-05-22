@@ -49,6 +49,7 @@ final class AdminService
         int $tipoCurso = 3,
         string $cursoCalendario = '',
         string $ativo = 'S',
+        string $confirmado = 'N',
         string $imagemCard = ''
     ): void {
         $slug = $this->generateUniqueCursoSlug($nome, $id);
@@ -64,6 +65,7 @@ final class AdminService
             'link_ingresso' => trim($linkIngresso),
             'tipo_curso' => $tipoCurso,
             'ativo' => trim($ativo),
+            'confirmado' => trim($confirmado),
         ]);
     }
 
@@ -152,6 +154,7 @@ final class AdminService
         int $tipoCurso = 3,
         string $cursoCalendario = '',
         string $ativo = 'S',
+        string $confirmado = 'N',
         string $imagemCard = ''
     ): int {
         $slug = $this->generateUniqueCursoSlug($nome);
@@ -167,6 +170,7 @@ final class AdminService
             'link_ingresso' => trim($linkIngresso),
             'tipo_curso' => $tipoCurso,
             'ativo' => trim($ativo),
+            'confirmado' => trim($confirmado),
         ]);
     }
 

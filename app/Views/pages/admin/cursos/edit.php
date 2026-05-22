@@ -9,6 +9,7 @@
       <input type="hidden" name="id" value="<?= (int) ($course['id'] ?? 0) ?>">
       <?php $cursoCalendarioValue = (string) ($course['curso_calendario'] ?? ''); ?>
       <?php $ativoAtual = strtoupper((string) ($course['ativo'] ?? 'S')); ?>
+      <?php $confirmadoAtual = strtoupper((string) ($course['confirmado'] ?? 'N')); ?>
       <div class="col-md-8">
         <label class="form-label">Nome</label>
         <input class="form-control" type="text" name="nome" value="<?= htmlspecialchars((string) ($course['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
@@ -32,6 +33,13 @@
         <select class="form-select" name="ativo">
           <option value="S" <?= $ativoAtual === 'S' ? 'selected' : '' ?>>Sim</option>
           <option value="N" <?= $ativoAtual === 'N' ? 'selected' : '' ?>>Não</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Confirmado</label>
+        <select class="form-select" name="confirmado">
+          <option value="S" <?= $confirmadoAtual === 'S' ? 'selected' : '' ?>>Sim</option>
+          <option value="N" <?= $confirmadoAtual === 'N' ? 'selected' : '' ?>>Não</option>
         </select>
       </div>
       <div class="col-md-4">

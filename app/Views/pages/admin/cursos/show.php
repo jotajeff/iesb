@@ -32,6 +32,8 @@
       }
       $ativoLabel = strtoupper(trim((string) ($course['ativo'] ?? 'S')));
       $ativoTexto = $ativoLabel === 'N' ? 'Não' : 'Sim';
+      $confirmadoLabel = strtoupper(trim((string) ($course['confirmado'] ?? 'N')));
+      $confirmadoTexto = $confirmadoLabel === 'S' ? 'Sim' : 'Não';
     ?>
     <?php if ($img !== ''): ?>
       <div class="text-center mb-4">
@@ -95,6 +97,16 @@
         <tr>
           <th class="bg-light">Ativo</th>
           <td><?= htmlspecialchars($ativoTexto, ENT_QUOTES, 'UTF-8') ?></td>
+        </tr>
+        <tr>
+          <th class="bg-light">Confirmado</th>
+          <td>
+            <?php if ($confirmadoLabel === 'S'): ?>
+              <span class="badge bg-success">Confirmado</span>
+            <?php else: ?>
+              <span class="badge bg-secondary">Não confirmado</span>
+            <?php endif; ?>
+          </td>
         </tr>
         <tr>
           <th class="bg-light">Imagem do card</th>

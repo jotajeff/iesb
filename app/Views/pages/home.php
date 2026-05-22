@@ -158,16 +158,15 @@
                         Nenhum curso disponível no momento.
                       </div>
                     <?php else: ?>
-                      <?php foreach ($cursosDisponiveis as $index => $course): ?>
+                    <?php foreach ($cursosDisponiveis as $index => $course): ?>
                         <?php
                           $courseImage = trim((string) ($course['imagem_card'] ?? ''));
                           $courseName = htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8');
                           $courseLocation = htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8');
                           $courseHorario = htmlspecialchars((string) ($course['horario'] ?? '-'), ENT_QUOTES, 'UTF-8');
                           $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
-                          $badgeLabel = htmlspecialchars((string) ($course['tipo_nome'] ?? 'Curso'), ENT_QUOTES, 'UTF-8');
-                          $dateText = '-';
                           $rawDate = (string) ($course['data_curso'] ?? '');
+                          $dateText = '-';
                           $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
                           if ($dtDate instanceof \DateTime) {
                             $dateText = $dtDate->format('d/m/Y');
@@ -175,9 +174,10 @@
                             $dateText = $rawDate;
                           }
                           $delay = 100 + ($index % 3) * 100;
+                          $isConfirmed = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S';
                         ?>
                         <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
-                          <div class="course-card">
+                          <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">
                             <div class="course-card-image">
                               <?php if ($courseImage !== ''): ?>
                                 <img
@@ -190,7 +190,11 @@
                                   <i class="bi bi-journal-bookmark"></i>
                                 </div>
                               <?php endif; ?>
-                              <span class="course-badge"><?= $badgeLabel ?></span>
+                              <?php if ($isConfirmed): ?>
+                                <span class="course-badge course-badge-confirmed">
+                                  <i class="bi bi-award-fill"></i> Confirmado
+                                </span>
+                              <?php endif; ?>
                             </div>
                             <div class="course-card-body">
                               <h3 class="course-card-title"><?= $courseName ?></h3>

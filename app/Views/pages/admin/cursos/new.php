@@ -32,6 +32,13 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Confirmado</label>
+        <select class="form-select" name="confirmado">
+          <option value="N" selected>Não</option>
+          <option value="S">Sim</option>
+        </select>
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Data do curso</label>
         <input class="form-control" type="text" name="data_curso" placeholder="ex: 10/06/2026">
       </div>

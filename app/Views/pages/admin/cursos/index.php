@@ -38,12 +38,13 @@
             <th><i class="bi bi-calendar-event me-1"></i>Data</th>
             <th><i class="bi bi-geo-alt me-1"></i>Local</th>
             <th><i class="bi bi-tag me-1"></i>Tipo</th>
+            <th><i class="bi bi-award-fill me-1"></i>Confirmado</th>
             <th><i class="bi bi-gear me-1"></i>Acoes</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($courses)): ?>
-            <tr><td colspan="8" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
+            <tr><td colspan="9" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
           <?php endif; ?>
 
           <?php foreach (($courses ?? []) as $course): ?>
@@ -68,6 +69,14 @@
               </td>
               <td><?= htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td><?= htmlspecialchars((string) ($course['tipo_nome'] ?? (($course['tipo_curso'] ?? 0) ? 'Tipo ' . $course['tipo_curso'] : '-')), ENT_QUOTES, 'UTF-8') ?></td>
+              <?php $confirmadoStatus = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))); ?>
+              <td>
+                <?php if ($confirmadoStatus === 'S'): ?>
+                  <span class="badge bg-success">Sim</span>
+                <?php else: ?>
+                  <span class="badge bg-secondary">Não</span>
+                <?php endif; ?>
+              </td>
               <td>
                 <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/editar?id=<?= (int) ($course['id'] ?? 0) ?>">
                   <i class="bi bi-pencil-square me-1"></i>Editar
