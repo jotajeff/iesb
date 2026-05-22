@@ -15,37 +15,85 @@
       <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
         <a class="btn btn-outline-secondary btn-sm" href="/admin/dbase"><i class="bi bi-arrow-left me-1"></i>Voltar para tabelas</a>
         <span class="text-muted small">Tabela: <code><?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?></code></span>
-        <span class="badge bg-primary"><?= $totalRows ?? 0 ?> registros</span>
+        <?php if ($viewMode === 'structure'): ?>
+          <a class="btn btn-outline-primary btn-sm ms-auto" href="/admin/dbase?table=<?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?>&view=records">
+            <i class="bi bi-list-ul me-1"></i>Ver registros
+          </a>
+          <?php if ($totalRows > 0): ?>
+            <span class="badge bg-info"><?= $totalRows ?> registros</span>
+          <?php endif; ?>
+        <?php else: ?>
+          <a class="btn btn-outline-info btn-sm ms-auto" href="/admin/dbase?table=<?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?>">
+            <i class="bi bi-diagram-3 me-1"></i>Ver estrutura
+          </a>
+          <span class="badge bg-primary"><?= $totalRows ?? 0 ?> registros</span>
+        <?php endif; ?>
       </div>
 
-      <div class="table-responsive">
-        <table class="table table-striped table-hover table-sm table-bordered align-middle">
-          <thead class="table-light">
-            <tr>
-              <?php foreach ($columns ?? [] as $col): ?>
-                <th class="text-nowrap small"><?= htmlspecialchars($col, ENT_QUOTES, 'UTF-8') ?></th>
-              <?php endforeach; ?>
-            </tr>
-          </thead>
-          <tbody>
-            <?php if (empty($rows)): ?>
-              <tr><td colspan="<?= count($columns ?? []) ?>" class="text-muted text-center"><i class="bi bi-inbox me-1"></i>Nenhum registro encontrado.</td></tr>
-            <?php else: ?>
-              <?php foreach ($rows as $row): ?>
-                <tr>
-                  <?php foreach ($columns ?? [] as $col): ?>
-                    <td class="small" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars((string) ($row[$col] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                      <?= htmlspecialchars((string) ($row[$col] ?? ''), ENT_QUOTES, 'UTF-8') ?>
-                    </td>
-                  <?php endforeach; ?>
-                </tr>
-              <?php endforeach; ?>
-            <?php endif; ?>
-          </tbody>
-        </table>
-      </div>
+      <?php if ($viewMode === 'structure'): ?>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover table-sm table-bordered align-middle">
+            <thead class="table-dark">
+              <tr>
+                <th class="text-nowrap small">#</th>
+                <th class="text-nowrap small">Campo</th>
+                <th class="text-nowrap small">Tipo</th>
+                <th class="text-nowrap small">Nulo</th>
+                <th class="text-nowrap small">Chave</th>
+                <th class="text-nowrap small">Padrão</th>
+                <th class="text-nowrap small">Extra</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($columns)): ?>
+                <tr><td colspan="7" class="text-muted text-center"><i class="bi bi-inbox me-1"></i>Nenhuma coluna encontrada.</td></tr>
+              <?php else: ?>
+                <?php $idx = 1; ?>
+                <?php foreach ($columns as $col): ?>
+                  <tr>
+                    <td class="small text-muted"><?= $idx++ ?></td>
+                    <td class="small fw-semibold"><?= htmlspecialchars($col['Field'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                    <td class="small"><code><?= htmlspecialchars($col['Type'] ?? '', ENT_QUOTES, 'UTF-8') ?></code></td>
+                    <td class="small"><?= htmlspecialchars($col['Null'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                    <td class="small"><?= htmlspecialchars($col['Key'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                    <td class="small"><?= htmlspecialchars($col['Default'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                    <td class="small"><?= htmlspecialchars($col['Extra'] ?? '', ENT_QUOTES, 'UTF-8') ?></td>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php else: ?>
+        <div class="table-responsive">
+          <table class="table table-striped table-hover table-sm table-bordered align-middle">
+            <thead class="table-light">
+              <tr>
+                <?php foreach ($columns ?? [] as $col): ?>
+                  <th class="text-nowrap small"><?= htmlspecialchars($col['Field'] ?? '', ENT_QUOTES, 'UTF-8') ?></th>
+                <?php endforeach; ?>
+              </tr>
+            </thead>
+            <tbody>
+              <?php if (empty($rows)): ?>
+                <tr><td colspan="<?= count($columns ?? []) ?>" class="text-muted text-center"><i class="bi bi-inbox me-1"></i>Nenhum registro encontrado.</td></tr>
+              <?php else: ?>
+                <?php foreach ($rows as $row): ?>
+                  <tr>
+                    <?php foreach ($columns ?? [] as $col): ?>
+                      <td class="small" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars((string) ($row[$col['Field']] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                        <?= htmlspecialchars((string) ($row[$col['Field']] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+                      </td>
+                    <?php endforeach; ?>
+                  </tr>
+                <?php endforeach; ?>
+              <?php endif; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
     <?php else: ?>
-      <p class="text-muted mb-3">Selecione uma tabela para visualizar os registros.</p>
+      <p class="text-muted mb-3">Selecione uma tabela para visualizar a estrutura.</p>
 
       <div class="row g-3">
         <?php foreach ($tables ?? [] as $table): ?>

@@ -357,6 +357,7 @@ final class AdminController extends Controller
         $currentTable = '';
         $totalRows = 0;
         $error = '';
+        $viewMode = 'structure';
 
         if (!$pdo instanceof PDO) {
             $error = 'Nao foi possivel conectar ao banco de dados.';
@@ -365,20 +366,24 @@ final class AdminController extends Controller
 
             if ($table !== '') {
                 $currentTable = $table;
+
+                $stmt = $pdo->prepare('SHOW COLUMNS FROM `' . $table . '`');
+                $stmt->execute();
+                $columns = $stmt->fetchAll();
+
                 $stmt = $pdo->prepare('SELECT COUNT(*) FROM `' . $table . '`');
                 $stmt->execute();
                 $totalRows = (int) $stmt->fetchColumn();
 
-                $stmt = $pdo->prepare('SHOW COLUMNS FROM `' . $table . '`');
-                $stmt->execute();
-                $cols = $stmt->fetchAll();
-                $columns = array_map(fn($c) => $c['Field'], $cols);
+                $viewMode = ($_GET['view'] ?? '') === 'records' ? 'records' : 'structure';
 
-                $limit = 200;
-                $stmt = $pdo->prepare('SELECT * FROM `' . $table . '` LIMIT :limit');
-                $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-                $stmt->execute();
-                $rows = $stmt->fetchAll();
+                if ($viewMode === 'records') {
+                    $limit = 200;
+                    $stmt = $pdo->prepare('SELECT * FROM `' . $table . '` LIMIT :limit');
+                    $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+                    $stmt->execute();
+                    $rows = $stmt->fetchAll();
+                }
             } else {
                 $stmt = $pdo->prepare(
                     "SELECT t.table_name AS name,
@@ -402,6 +407,7 @@ final class AdminController extends Controller
             'columns' => $columns,
             'currentTable' => $currentTable,
             'totalRows' => $totalRows,
+            'viewMode' => $viewMode,
             'error' => $error,
         ], 'admin');
     }
