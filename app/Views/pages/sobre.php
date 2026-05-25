@@ -20,9 +20,9 @@
       <div class="section-label justify-content-center">
         IESB
       </div>
-      <h2 class="section-title">Missao, Visao e Valores</h2>
+      <h2 class="section-title">Missão, Visão e Valores</h2>
       <p class="section-desc centered">
-        Nossa base institucional e o compromisso com uma educacao conectada ao mercado.
+        Nossa base institucional e o compromisso com uma educação conectada ao mercado.
       </p>
     </div>
 
@@ -83,9 +83,9 @@
       <div class="section-label justify-content-center">
         Direcao da Escola
       </div>
-      <h2 class="section-title">Lideranca IESB</h2>
+      <h2 class="section-title">Liderança IESB</h2>
       <p class="section-desc centered">
-        Conheca as profissionais que conduzem o desenvolvimento academico e institucional da IESB.
+        Conheça as profissionais que conduzem o desenvolvimento acadêmico e institucional da IESB.
       </p>
     </div>
 
@@ -141,7 +141,7 @@
       </div>
       <h2 class="section-title">Fotos da Escola e Equipe</h2>
       <p class="section-desc centered" style="color: var(--bs-secondary-color);">
-        Conheca os ambientes e as pessoas que fazem parte da experiencia IESB.
+        Conheça os ambientes e as pessoas que fazem parte da experiência IESB.
       </p>
     </div>
 
