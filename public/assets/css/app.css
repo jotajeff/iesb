@@ -1145,6 +1145,18 @@ footer .footer-links a:hover {
     min-height: auto;
     padding: 140px 0 80px;
   }
+  .hero-image {
+    display: none !important;
+  }
+  .hero-layout {
+    flex-direction: column;
+    min-height: auto;
+  }
+  .hero-text-wrapper {
+    flex: 0 0 100%;
+    max-width: 100%;
+    padding: 2rem 1.5rem;
+  }
 }
 
 @media (max-width: 991.98px) {
