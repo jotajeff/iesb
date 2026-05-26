@@ -35,6 +35,11 @@
           <table class="table table-striped table-hover table-sm table-bordered align-middle">
             <thead class="table-dark">
               <tr>
+                <th colspan="7" class="small">DEBUG: columns = <?= htmlspecialchars(print_r($columns ?? [], true), ENT_QUOTES, 'UTF-8') ?></th>
+              </tr>
+            </thead>
+            <thead class="table-dark">
+              <tr>
                 <th class="text-nowrap small">#</th>
                 <th class="text-nowrap small">Campo</th>
                 <th class="text-nowrap small">Tipo</th>
@@ -65,6 +70,13 @@
           </table>
         </div>
       <?php else: ?>
+        <div class="alert alert-info small mb-2">
+          <strong>DEBUG</strong> — viewMode=records |
+          columns (<?= is_countable($columns ?? []) ? count($columns) : 0 ?>):
+          <pre style="margin:4px 0 0;font-size:11px;"><?= htmlspecialchars(print_r($columns ?? [], true), ENT_QUOTES, 'UTF-8') ?></pre>
+          rows (<?= is_countable($rows ?? []) ? count($rows) : 0 ?>):
+          <pre style="margin:4px 0 0;font-size:11px;"><?= htmlspecialchars(print_r($rows ?? [], true), ENT_QUOTES, 'UTF-8') ?></pre>
+        </div>
         <div class="table-responsive">
           <table class="table table-striped table-hover table-sm table-bordered align-middle">
             <thead class="table-light">

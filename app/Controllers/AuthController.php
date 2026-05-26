@@ -30,13 +30,22 @@ final class AuthController extends Controller
         $email = (string) $this->input('email', '');
         $password = (string) $this->input('password', '');
 
-        if (!$this->auth->login($email, $password, 'admin')) {
-            Session::setFlash('flash', 'Credenciais de administrador inválidas.');
-            $this->redirect('/admin/login');
+        $user = $this->auth->authenticate($email, $password);
+
+        if ($user !== null) {
+            Session::set('user', [
+                'id'   => (int) $user['id'],
+                'name' => $user['name'],
+                'email'=> $user['email'],
+                'role' => $user['role'],
+            ]);
+
+            $this->admin->log('login', 'admin', 0, "Login realizado: $email");
+            $this->redirect('/admin');
         }
 
-        $this->admin->log('login', 'admin', 0, "Login realizado: $email");
-        $this->redirect('/admin');
+        Session::setFlash('flash', 'Credenciais inválidas.');
+        $this->redirect('/admin/login');
     }
 
     public function alunoLoginForm(): void

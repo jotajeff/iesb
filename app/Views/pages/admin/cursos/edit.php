@@ -25,6 +25,30 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Modalidade</label>
+        <select class="form-select" name="modalidade_id">
+          <option value="">Selecione...</option>
+          <?php $selMod = (int) ($course['modalidade_id'] ?? 0); ?>
+          <?php foreach (($modalidades ?? []) as $m): ?>
+            <option value="<?= (int) $m['id'] ?>" <?= (int)$m['id'] === $selMod ? 'selected' : '' ?>>
+              <?= htmlspecialchars($m['nome']) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nível</label>
+        <select class="form-select" name="nivel_id">
+          <option value="">Selecione...</option>
+          <?php $selNiv = (int) ($course['nivel_id'] ?? 0); ?>
+          <?php foreach (($niveis ?? []) as $n): ?>
+            <option value="<?= (int) $n['id'] ?>" <?= (int)$n['id'] === $selNiv ? 'selected' : '' ?>>
+              <?= htmlspecialchars($n['nome']) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Calendário</label>
         <input class="form-control" type="date" name="curso_calendario" value="<?= htmlspecialchars($cursoCalendarioValue, ENT_QUOTES, 'UTF-8') ?>">
       </div>

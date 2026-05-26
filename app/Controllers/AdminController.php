@@ -24,8 +24,8 @@ final class AdminController extends Controller
 
     public function dashboard(): void
     {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Faça login como admin para acessar o painel.');
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar o painel.');
             $this->redirect('/admin/login');
         }
 
@@ -38,8 +38,8 @@ final class AdminController extends Controller
 
     public function logs(): void
     {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Faça login como admin para acessar os logs.');
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar os logs.');
             $this->redirect('/admin/login');
         }
 
@@ -52,8 +52,8 @@ final class AdminController extends Controller
 
     public function cursos(): void
     {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Faça login como admin para acessar os cursos.');
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar os cursos.');
             $this->redirect('/admin/login');
         }
 
@@ -62,7 +62,11 @@ final class AdminController extends Controller
             $order = 'desc';
         }
 
-        $this->admin->sincronizarSlugsCursos();
+        try {
+            $this->admin->sincronizarSlugsCursos();
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro em sincronizarSlugsCursos: ' . $e->getMessage());
+        }
 
         $this->render('pages/admin/cursos/index', [
             'title' => 'Cursos IESB',
@@ -72,74 +76,25 @@ final class AdminController extends Controller
         ], 'admin');
     }
 
-    public function visitas(): void
+    public function novoCursoForm(): void
     {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Faça login como admin para acessar as visitas.');
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
 
-        $this->render('pages/admin/visitas/index', [
-            'title' => 'Visitas de Páginas',
-            'currentRoute' => '/admin/visitas',
-            'visits' => $this->admin->visits(),
-        ], 'admin');
-    }
-
-    public function visitasMensal(): void
-    {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Faça login como admin para acessar as visitas.');
-            $this->redirect('/admin/login');
-        }
-
-        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
-        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
-
-        $this->render('pages/admin/visitas/monthly', [
-            'title' => 'Visitas por Mês',
-            'currentRoute' => '/admin/visitas',
-            'monthly' => $this->admin->visitsByMonthDaily($month, $year),
-        ], 'admin');
-    }
-
-    public function visitasAnalytics(): void
-    {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Faça login como admin para acessar as visitas.');
-            $this->redirect('/admin/login');
-        }
-
-        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
-        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
-
-        $this->render('pages/admin/visitas/analytics', [
-            'title' => 'Analytics de Visitas',
-            'currentRoute' => '/admin/visitas',
-            'analytics' => $this->admin->visitsAnalytics($month, $year),
-        ], 'admin');
-    }
-
-    public function visitasPaginas(): void
-    {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Faça login como admin para acessar as visitas.');
-            $this->redirect('/admin/login');
-        }
-
-        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
-        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
-
-        $this->render('pages/admin/visitas/pages', [
-            'title' => 'Visitas por Página',
-            'currentRoute' => '/admin/visitas',
-            'pagesStats' => $this->admin->visitsByPage($month, $year),
+        $this->render('pages/admin/cursos/new', [
+            'title' => 'Novo Curso',
+            'currentRoute' => '/admin/cursos/novo',
+            'cursosTipos' => $this->admin->cursosTipos(),
+            'modalidades' => $this->admin->modalidades(),
+            'niveis' => $this->admin->niveis(),
         ], 'admin');
     }
 
     public function createCourse(): void
     {
-        if (!$this->auth->checkRole('admin')) {
+        if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -153,35 +108,24 @@ final class AdminController extends Controller
         $cursoCalendario = (string) $this->input('curso_calendario', '');
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
+        $modalidadeId = (int) $this->input('modalidade_id', 0);
+        $nivelId = (int) $this->input('nivel_id', 0);
 
         if ($nome === '' || $localCurso === '') {
             Session::setFlash('flash', 'Preencha ao menos nome e local do curso.');
-            $this->redirect('/admin/cursos');
+            $this->redirect('/admin/cursos/novo');
+            return;
         }
 
-        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $tipoCurso, $cursoCalendario, $ativo, $confirmado);
+        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $tipoCurso, $cursoCalendario, $ativo, $confirmado, '', $modalidadeId, $nivelId);
         $this->admin->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
     }
 
-    public function novoCursoForm(): void
-    {
-        if (!$this->auth->checkRole('admin')) {
-            Session::setFlash('flash', 'Acesso negado.');
-            $this->redirect('/admin/login');
-        }
-
-        $this->render('pages/admin/cursos/new', [
-            'title' => 'Novo Curso',
-            'currentRoute' => '/admin/cursos/novo',
-            'cursosTipos' => $this->admin->cursosTipos(),
-        ], 'admin');
-    }
-
     public function editarCursoForm(): void
     {
-        if (!$this->auth->checkRole('admin')) {
+        if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -192,6 +136,7 @@ final class AdminController extends Controller
         if (!$course) {
             Session::setFlash('flash', 'Curso nao encontrado.');
             $this->redirect('/admin/cursos');
+            return;
         }
 
         $this->render('pages/admin/cursos/edit', [
@@ -199,12 +144,14 @@ final class AdminController extends Controller
             'currentRoute' => '/admin/cursos/editar',
             'course' => $course,
             'cursosTipos' => $this->admin->cursosTipos(),
+            'modalidades' => $this->admin->modalidades(),
+            'niveis' => $this->admin->niveis(),
         ], 'admin');
     }
 
     public function updateCourse(): void
     {
-        if (!$this->auth->checkRole('admin')) {
+        if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -219,6 +166,8 @@ final class AdminController extends Controller
         $cursoCalendario = (string) $this->input('curso_calendario', '');
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
+        $modalidadeId = (int) $this->input('modalidade_id', 0);
+        $nivelId = (int) $this->input('nivel_id', 0);
 
         if ($nome === '' || $localCurso === '') {
             Session::setFlash('flash', 'Preencha ao menos nome e local do curso.');
@@ -234,27 +183,15 @@ final class AdminController extends Controller
         }
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
-        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $tipoCurso, $cursoCalendario, $ativo, $confirmado, $imagemCard);
+        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $tipoCurso, $cursoCalendario, $ativo, $confirmado, $imagemCard, $modalidadeId, $nivelId);
         $this->admin->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');
     }
 
-    private function normalizeAtivo(string $value): string
-    {
-        $normalized = strtoupper(trim($value));
-        return $normalized === 'N' ? 'N' : 'S';
-    }
-
-    private function normalizeConfirmado(string $value): string
-    {
-        $normalized = strtoupper(trim($value));
-        return $normalized === 'S' ? 'S' : 'N';
-    }
-
     public function showCurso(): void
     {
-        if (!$this->auth->checkRole('admin')) {
+        if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -265,6 +202,7 @@ final class AdminController extends Controller
         if (!$course) {
             Session::setFlash('flash', 'Curso nao encontrado.');
             $this->redirect('/admin/cursos');
+            return;
         }
 
         $this->render('pages/admin/cursos/show', [
@@ -276,7 +214,7 @@ final class AdminController extends Controller
 
     public function uploadCursoForm(): void
     {
-        if (!$this->auth->checkRole('admin')) {
+        if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -287,6 +225,7 @@ final class AdminController extends Controller
         if (!$course) {
             Session::setFlash('flash', 'Curso nao encontrado.');
             $this->redirect('/admin/cursos');
+            return;
         }
 
         $this->render('pages/admin/cursos/upload', [
@@ -298,7 +237,7 @@ final class AdminController extends Controller
 
     public function uploadCursoImage(): void
     {
-        if (!$this->auth->checkRole('admin')) {
+        if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -309,6 +248,7 @@ final class AdminController extends Controller
         if (!$curso) {
             Session::setFlash('flash', 'Curso nao encontrado.');
             $this->redirect('/admin/cursos');
+            return;
         }
 
         $file = $_FILES['imagem_card'] ?? null;
@@ -316,6 +256,7 @@ final class AdminController extends Controller
         if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
             Session::setFlash('flash', 'Erro ao enviar o arquivo.');
             $this->redirect('/admin/cursos/upload?id=' . $id);
+            return;
         }
 
         $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -324,6 +265,7 @@ final class AdminController extends Controller
         if (!in_array($ext, $allowed, true)) {
             Session::setFlash('flash', 'Formato nao permitido. Use jpg, png, gif ou webp.');
             $this->redirect('/admin/cursos/upload?id=' . $id);
+            return;
         }
 
         $slug = trim((string) ($curso['slug'] ?? ''));
@@ -342,6 +284,7 @@ final class AdminController extends Controller
         if (!move_uploaded_file($file['tmp_name'], $destPath)) {
             Session::setFlash('flash', 'Falha ao salvar a imagem.');
             $this->redirect('/admin/cursos/upload?id=' . $id);
+            return;
         }
 
         $this->admin->atualizarCursoImagem($id, 'assets/img/cursos/' . $filename);
@@ -350,9 +293,225 @@ final class AdminController extends Controller
         $this->redirect('/admin/cursos');
     }
 
+    // ==================== USUÁRIOS (APENAS ADMIN) ====================
+
+    public function usuarios(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar os usuários.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/usuarios/index', [
+            'title' => 'Usuários',
+            'currentRoute' => '/admin/usuarios',
+            'usuarios' => $this->admin->usuarios(),
+        ], 'admin');
+    }
+
+    public function novoUsuarioForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/usuarios/novo', [
+            'title' => 'Novo Usuário',
+            'currentRoute' => '/admin/usuarios/novo',
+        ], 'admin');
+    }
+
+    public function createUsuario(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $nome = (string) $this->input('nome', '');
+        $email = (string) $this->input('email', '');
+        $senha = (string) $this->input('senha', '');
+        $tipo = (string) $this->input('tipo', 'aluno');
+        $ativo = (string) $this->input('ativo', '1');
+
+        if ($nome === '' || $email === '' || $senha === '') {
+            Session::setFlash('flash', 'Preencha nome, email e senha.');
+            $this->redirect('/admin/usuarios/novo');
+            return;
+        }
+
+        $tiposValidos = ['admin', 'operador'];
+        if (!in_array($tipo, $tiposValidos, true)) {
+            $tipo = 'aluno';
+        }
+
+        $usuarioId = $this->admin->criarUsuario($nome, $email, $senha, $tipo, $ativo);
+        $this->admin->log('criar', 'usuario', $usuarioId, "Usuário criado: $nome");
+        Session::setFlash('flash', 'Usuário criado com sucesso.');
+        $this->redirect('/admin/usuarios');
+    }
+
+    public function editarUsuarioForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $loggedUser = Session::get('user') ?? [];
+        $loggedRole = (string) ($loggedUser['role'] ?? '');
+        $loggedId = (int) ($loggedUser['id'] ?? 0);
+        $isAdmin = $loggedRole === 'admin';
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $usuario = $this->admin->findUsuario($id);
+
+        if (!$usuario) {
+            Session::setFlash('flash', 'Usuário não encontrado.');
+            $this->redirect('/admin/usuarios');
+            return;
+        }
+
+        // Operador só pode editar a si mesmo
+        if (!$isAdmin && $id !== $loggedId) {
+            Session::setFlash('flash', 'Você só pode editar seu próprio usuário.');
+            $this->redirect('/admin/usuarios');
+            return;
+        }
+
+        $this->render('pages/admin/usuarios/edit', [
+            'title' => 'Editar Usuário',
+            'currentRoute' => '/admin/usuarios/editar',
+            'usuario' => $usuario,
+            'isAdmin' => $isAdmin,
+        ], 'admin');
+    }
+
+    public function updateUsuario(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $loggedUser = Session::get('user') ?? [];
+        $loggedRole = (string) ($loggedUser['role'] ?? '');
+        $loggedId = (int) ($loggedUser['id'] ?? 0);
+        $isAdmin = $loggedRole === 'admin';
+
+        $id = (int) $this->input('id', 0);
+        $senha = (string) $this->input('senha', '');
+
+        $usuario = $this->admin->findUsuario($id);
+        if (!$usuario) {
+            Session::setFlash('flash', 'Usuário não encontrado.');
+            $this->redirect('/admin/usuarios');
+            return;
+        }
+
+        // Operador só pode editar a si mesmo
+        if (!$isAdmin && $id !== $loggedId) {
+            Session::setFlash('flash', 'Você só pode editar seu próprio usuário.');
+            $this->redirect('/admin/usuarios');
+            return;
+        }
+
+        // Se for operador, ignora alterações de tipo e ativo (só permite senha)
+        if ($isAdmin) {
+            $ativo = (string) $this->input('ativo', '1');
+            $tipo = (string) $this->input('tipo', '');
+
+            if ($tipo === '') {
+                $tipo = (string) ($usuario['tipo'] ?? '');
+            }
+
+            $tiposValidos = ['admin', 'operador'];
+            if (!in_array($tipo, $tiposValidos, true)) {
+                $tipo = (string) ($usuario['tipo'] ?? 'operador');
+            }
+        } else {
+            // Operador: mantém os valores originais
+            $ativo = (string) ($usuario['ativo'] ?? '1');
+            $tipo = (string) ($usuario['tipo'] ?? 'operador');
+        }
+
+        $this->admin->atualizarUsuario($id, $senha, $ativo, '', '', $tipo);
+        $this->admin->log('atualizar', 'usuario', $id, 'Usuário atualizado: ' . ($usuario['nome'] ?? ''));
+        Session::setFlash('flash', 'Usuário atualizado com sucesso.');
+        $this->redirect('/admin/usuarios');
+    }
+
+    // ==================== VISITAS (STAFF) ====================
+
+    public function visitas(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/visitas/index', [
+            'title' => 'Visitas de Páginas',
+            'currentRoute' => '/admin/visitas',
+            'visits' => $this->admin->visits(),
+        ], 'admin');
+    }
+
+    public function visitasMensal(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+
+        $this->render('pages/admin/visitas/monthly', [
+            'title' => 'Visitas por Mês',
+            'currentRoute' => '/admin/visitas',
+            'monthly' => $this->admin->visitsByMonthDaily($month, $year),
+        ], 'admin');
+    }
+
+    public function visitasAnalytics(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+
+        $this->render('pages/admin/visitas/analytics', [
+            'title' => 'Analytics de Visitas',
+            'currentRoute' => '/admin/visitas',
+            'analytics' => $this->admin->visitsAnalytics($month, $year),
+        ], 'admin');
+    }
+
+    public function visitasPaginas(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+
+        $this->render('pages/admin/visitas/pages', [
+            'title' => 'Visitas por Página',
+            'currentRoute' => '/admin/visitas',
+            'pagesStats' => $this->admin->visitsByPage($month, $year),
+        ], 'admin');
+    }
+
     public function dbase(): void
     {
-        if (!$this->auth->checkRole('admin')) {
+        if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -418,5 +577,17 @@ final class AdminController extends Controller
             'viewMode' => $viewMode,
             'error' => $error,
         ], 'admin');
+    }
+
+    private function normalizeAtivo(string $value): string
+    {
+        $normalized = strtoupper(trim($value));
+        return $normalized === 'N' ? 'N' : 'S';
+    }
+
+    private function normalizeConfirmado(string $value): string
+    {
+        $normalized = strtoupper(trim($value));
+        return $normalized === 'S' ? 'S' : 'N';
     }
 }

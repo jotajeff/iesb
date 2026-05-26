@@ -34,17 +34,18 @@
             <th><i class="bi bi-hash"></i></th>
             <th><i class="bi bi-card-image me-1"></i>Card</th>
             <th><i class="bi bi-journal-text me-1"></i>Nome</th>
-            <th><i class="bi bi-link-45deg me-1"></i>Slug</th>
+            <th><i class="bi bi-toggle-on me-1"></i>Ativo</th>
             <th><i class="bi bi-calendar-event me-1"></i>Data</th>
             <th><i class="bi bi-geo-alt me-1"></i>Local</th>
-            <th><i class="bi bi-tag me-1"></i>Tipo</th>
-            <th><i class="bi bi-award-fill me-1"></i>Confirmado</th>
-            <th><i class="bi bi-gear me-1"></i>Acoes</th>
+              <th>Modalidade</th>
+             <th>Nível</th>
+             <th><i class="bi bi-award-fill me-1"></i>Confirmado</th>
+             <th><i class="bi bi-gear me-1"></i>Acoes</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($courses)): ?>
-            <tr><td colspan="9" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
+            <tr><td colspan="10" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
           <?php endif; ?>
 
           <?php foreach (($courses ?? []) as $course): ?>
@@ -61,22 +62,29 @@
                 </a>
               </td>
               <td><?= htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td><code><?= htmlspecialchars((string) ($course['slug'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></code></td>
+              <?php $ativoStatus = strtoupper(trim((string) ($course['ativo'] ?? 'N'))); ?>
+              <td>
+                <?php if ($ativoStatus === 'S' || $ativoStatus === '1' || $ativoStatus === 'Y'): ?>
+                  <span class="badge bg-primary">Sim</span>
+                <?php else: ?>
+                  <span class="badge bg-secondary">Não</span>
+                <?php endif; ?>
+              </td>
               <?php $cursoCalendarioRaw = (string) ($course['curso_calendario'] ?? ''); ?>
               <?php $needsAlert = $cursoCalendarioRaw === '0000-00-00'; ?>
               <td<?= $needsAlert ? ' class="text-danger fw-semibold"' : '' ?>>
                 <?= htmlspecialchars((string) ($course['data_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
               </td>
               <td><?= htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td><?= htmlspecialchars((string) ($course['tipo_nome'] ?? (($course['tipo_curso'] ?? 0) ? 'Tipo ' . $course['tipo_curso'] : '-')), ENT_QUOTES, 'UTF-8') ?></td>
-              <?php $confirmadoStatus = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))); ?>
-              <td>
-                <?php if ($confirmadoStatus === 'S'): ?>
-                  <span class="badge bg-success">Sim</span>
-                <?php else: ?>
-                  <span class="badge bg-secondary">Não</span>
-                <?php endif; ?>
-              </td>
+                <td><?= htmlspecialchars((string) ($course['modalidade_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($course['nivel_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td>
+                  <?php if (strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S'): ?>
+                    <span class="badge bg-success">Sim</span>
+                  <?php else: ?>
+                    <span class="badge bg-secondary">Não</span>
+                  <?php endif; ?>
+                </td>
               <td>
                 <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/editar?id=<?= (int) ($course['id'] ?? 0) ?>">
                   <i class="bi bi-pencil-square me-1"></i>Editar

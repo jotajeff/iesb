@@ -35,18 +35,27 @@ final class AdminRepository
         }
 
         $direction = strtoupper($order) === 'asc' ? 'ASC' : 'DESC';
-        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.tipo_curso,
-                       c.ativo, c.imagem_card, c.confirmado, c.created_at, t.tipo AS tipo_nome
-                FROM cursos_iesb c
-                LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
-                ORDER BY c.id ' . $direction . '
-                LIMIT :limit';
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
-        $stmt->execute();
 
-        $rows = $stmt->fetchAll();
-        return is_array($rows) ? $rows : [];
+        try {
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso,
+                        c.ativo, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.nivel AS nivel_id, c.created_at,
+                        m.nome AS modalidade_nome, n.nome AS nivel_nome
+                 FROM cursos_iesb c
+                 LEFT JOIN modalidade m ON m.id = c.modalidade
+                 LEFT JOIN nivel n ON n.id = c.nivel
+                 ORDER BY c.id ' . $direction . '
+                 LIMIT :limit';
+        
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro em listCursos: ' . $e->getMessage());
+            return [];
+        }
     }
 
     public function listCursosDisponiveis(int $limit = 200, string $referenceDate = ''): array
@@ -104,17 +113,22 @@ final class AdminRepository
             return null;
         }
 
-        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.tipo_curso, c.ativo, c.confirmado, c.created_at,
-                       t.tipo AS tipo_nome
-                FROM cursos_iesb c
-                LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
-                WHERE c.id = :id';
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
-        $stmt->execute();
+        try {
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.tipo_curso, c.ativo, c.confirmado, c.modalidade AS modalidade_id, c.nivel AS nivel_id, c.created_at,
+                            t.tipo AS tipo_nome
+                     FROM cursos_iesb c
+                     LEFT JOIN cursos_tipo t ON t.id = c.tipo_curso
+                     WHERE c.id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
 
-        $row = $stmt->fetch();
-        return $row ?: null;
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro em findCursoById: ' . $e->getMessage());
+            return null;
+        }
     }
 
     public function updateCurso(int $id, array $payload): void
@@ -126,7 +140,8 @@ final class AdminRepository
 
         $sql = 'UPDATE cursos_iesb
                 SET nome = :nome, slug = :slug, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
-                    imagem_card = :imagem_card, link_ingresso = :link_ingresso, tipo_curso = :tipo_curso, ativo = :ativo, confirmado = :confirmado
+                    imagem_card = :imagem_card, link_ingresso = :link_ingresso, tipo_curso = :tipo_curso, ativo = :ativo, confirmado = :confirmado,
+                    modalidade = :modalidade_id, nivel = :nivel_id
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -141,6 +156,8 @@ final class AdminRepository
         $stmt->bindValue(':tipo_curso', (int) $payload['tipo_curso'], PDO::PARAM_INT);
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
+        $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $stmt->bindValue(':nivel_id', $payload['nivel_id'] ?? null, $payload['nivel_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->execute();
     }
 
@@ -171,6 +188,42 @@ final class AdminRepository
         return is_array($rows) ? $rows : [];
     }
 
+    public function listModalidades(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT id, nome FROM modalidade ORDER BY nome ASC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro ao carregar modalidades: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listNiveis(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT id, nome FROM nivel ORDER BY nome ASC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro ao carregar niveis: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function createCurso(array $payload): int
     {
         $pdo = Database::connection();
@@ -178,8 +231,8 @@ final class AdminRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, tipo_curso, ativo, confirmado)
-                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :tipo_curso, :ativo, :confirmado)';
+        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, tipo_curso, ativo, confirmado, modalidade, nivel)
+                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :tipo_curso, :ativo, :confirmado, :modalidade_id, :nivel_id)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
         $stmt->bindValue(':slug', $payload['slug']);
@@ -192,6 +245,8 @@ final class AdminRepository
         $stmt->bindValue(':tipo_curso', (int) $payload['tipo_curso'], PDO::PARAM_INT);
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
+        $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $stmt->bindValue(':nivel_id', $payload['nivel_id'] ?? null, $payload['nivel_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->execute();
 
         return (int) $pdo->lastInsertId();
@@ -257,9 +312,11 @@ final class AdminRepository
             return [];
         }
 
-        $sql = 'SELECT id, usuario_id, perfil, acao, entidade, entidade_id, descricao, ip, sucesso, created_at
-                FROM logs_auditoria
-                ORDER BY id DESC
+        $sql = 'SELECT l.id, l.usuario_id, l.acao, l.entidade, l.entidade_id, l.descricao, l.ip, l.sucesso, l.created_at,
+                       u.nome AS usuario_nome
+                FROM logs_auditoria l
+                LEFT JOIN usuarios u ON u.id = l.usuario_id
+                ORDER BY l.id DESC
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -359,6 +416,106 @@ final class AdminRepository
 
         $rows = $stmt->fetchAll();
         return is_array($rows) ? $rows : [];
+    }
+
+    public function listUsuarios(int $limit = 200): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $sql = 'SELECT id, nome, email, tipo, ativo, created_at, updated_at
+                FROM usuarios
+                ORDER BY id DESC
+                LIMIT :limit';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function findUsuarioById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, email, tipo, ativo, created_at, updated_at
+                FROM usuarios
+                WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function updateUsuario(int $id, array $payload): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sets = [];
+        $params = [':id' => $id];
+
+        if (isset($payload['nome'])) {
+            $sets[] = 'nome = :nome';
+            $params[':nome'] = $payload['nome'];
+        }
+        if (isset($payload['email'])) {
+            $sets[] = 'email = :email';
+            $params[':email'] = $payload['email'];
+        }
+        if (isset($payload['senha'])) {
+            $sets[] = 'senha = :senha';
+            $params[':senha'] = $payload['senha'];
+        }
+        if (isset($payload['tipo'])) {
+            $sets[] = 'tipo = :tipo';
+            $params[':tipo'] = $payload['tipo'];
+        }
+        if (isset($payload['ativo'])) {
+            $sets[] = 'ativo = :ativo';
+            $params[':ativo'] = (int) $payload['ativo'];
+        }
+
+        if (empty($sets)) {
+            return;
+        }
+
+        $sql = 'UPDATE usuarios SET ' . implode(', ', $sets) . ' WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+    }
+
+    public function createUsuario(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        $sql = 'INSERT INTO usuarios (nome, email, senha, tipo, ativo)
+                VALUES (:nome, :email, :senha, :tipo, :ativo)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nome', $payload['nome']);
+        $stmt->bindValue(':email', $payload['email']);
+        $stmt->bindValue(':senha', $payload['senha']);
+        $stmt->bindValue(':tipo', $payload['tipo']);
+        $stmt->bindValue(':ativo', (int) $payload['ativo'], PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int) $pdo->lastInsertId();
     }
 
     public function registrarLog(int $usuarioId, string $perfil, string $acao, string $entidade, int $entidadeId, string $descricao, bool $sucesso = true): void

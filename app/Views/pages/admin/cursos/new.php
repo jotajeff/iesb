@@ -21,6 +21,24 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Modalidade</label>
+        <select class="form-select" name="modalidade_id">
+          <option value="">Selecione...</option>
+          <?php foreach (($modalidades ?? []) as $m): ?>
+            <option value="<?= (int) $m['id'] ?>"><?= htmlspecialchars($m['nome']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Nível</label>
+        <select class="form-select" name="nivel_id">
+          <option value="">Selecione...</option>
+          <?php foreach (($niveis ?? []) as $n): ?>
+            <option value="<?= (int) $n['id'] ?>"><?= htmlspecialchars($n['nome']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Calendário</label>
         <input class="form-control" type="date" name="curso_calendario">
       </div>

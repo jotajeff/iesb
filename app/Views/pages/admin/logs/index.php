@@ -6,7 +6,6 @@
         <thead>
           <tr>
             <th>#</th>
-            <th>Perfil</th>
             <th>Ação</th>
             <th>Entidade</th>
             <th>Usuário</th>
@@ -17,25 +16,27 @@
         </thead>
         <tbody>
           <?php if (empty($logs)): ?>
-            <tr><td colspan="8" class="text-muted">Sem registros de log.</td></tr>
+            <tr><td colspan="7" class="text-muted">Sem registros de log.</td></tr>
           <?php endif; ?>
           <?php foreach (($logs ?? []) as $log): ?>
-            <tr>
-              <td><?= (int) $log['id'] ?></td>
-              <td><?= htmlspecialchars((string) $log['perfil'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td><?= htmlspecialchars((string) $log['acao'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td><?= (int) ($log['usuario_id'] ?? 0) ?></td>
-              <td><?= htmlspecialchars((string) ($log['ip'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td><?= htmlspecialchars((string) $log['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
-              <td>
-                <?php if ((int) ($log['sucesso'] ?? 0) === 1): ?>
-                  <span class="badge text-bg-success">Sucesso</span>
-                <?php else: ?>
-                  <span class="badge text-bg-danger">Falha</span>
-                <?php endif; ?>
-              </td>
-            </tr>
+             <tr>
+               <td><?= (int) $log['id'] ?></td>
+               <td><?= htmlspecialchars((string) $log['acao'], ENT_QUOTES, 'UTF-8') ?></td>
+               <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+               <td>
+                 <?php $nome = trim((string) ($log['usuario_nome'] ?? '')); ?>
+                 <?= $nome !== '' ? htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') : ('#' . (int) ($log['usuario_id'] ?? 0)) ?>
+               </td>
+               <td><?= htmlspecialchars((string) ($log['ip'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+               <td><?= htmlspecialchars((string) $log['created_at'], ENT_QUOTES, 'UTF-8') ?></td>
+               <td>
+                 <?php if ((int) ($log['sucesso'] ?? 0) === 1): ?>
+                   <span class="badge text-bg-success">Sucesso</span>
+                 <?php else: ?>
+                   <span class="badge text-bg-danger">Falha</span>
+                 <?php endif; ?>
+               </td>
+             </tr>
           <?php endforeach; ?>
         </tbody>
       </table>

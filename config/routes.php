@@ -34,6 +34,11 @@ return static function (Router $router): void {
     $router->get('/admin/visitas/paginas', [AdminController::class, 'visitasPaginas']);
     $router->get('/admin/cursos/upload', [AdminController::class, 'uploadCursoForm']);
     $router->post('/admin/cursos/upload', [AdminController::class, 'uploadCursoImage']);
+    $router->get('/admin/usuarios', [AdminController::class, 'usuarios']);
+    $router->get('/admin/usuarios/novo', [AdminController::class, 'novoUsuarioForm']);
+    $router->post('/admin/usuarios/salvar', [AdminController::class, 'createUsuario']);
+    $router->get('/admin/usuarios/editar', [AdminController::class, 'editarUsuarioForm']);
+    $router->post('/admin/usuarios/atualizar', [AdminController::class, 'updateUsuario']);
     $router->get('/admin/dbase', [AdminController::class, 'dbase']);
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);

@@ -25,6 +25,47 @@ final class AdminService
         return $this->repository->recentLogs($limit);
     }
 
+    public function usuarios(int $limit = 200): array
+    {
+        return $this->repository->listUsuarios($limit);
+    }
+
+    public function findUsuario(int $id): ?array
+    {
+        return $this->repository->findUsuarioById($id);
+    }
+
+    public function criarUsuario(string $nome, string $email, string $senha, string $tipo = 'aluno', string $ativo = '1'): int
+    {
+        return $this->repository->createUsuario([
+            'nome' => trim($nome),
+            'email' => trim($email),
+            'senha' => password_hash($senha, PASSWORD_DEFAULT),
+            'tipo' => $tipo,
+            'ativo' => $ativo,
+        ]);
+    }
+
+    public function atualizarUsuario(int $id, string $senha = '', string $ativo = '1', string $nome = '', string $email = '', string $tipo = ''): void
+    {
+        $payload = [];
+        if ($nome !== '') {
+            $payload['nome'] = $nome;
+        }
+        if ($email !== '') {
+            $payload['email'] = $email;
+        }
+        if ($senha !== '') {
+            $payload['senha'] = password_hash($senha, PASSWORD_DEFAULT);
+        }
+        if ($tipo !== '') {
+            $payload['tipo'] = $tipo;
+        }
+        $payload['ativo'] = $ativo;
+
+        $this->repository->updateUsuario($id, $payload);
+    }
+
     public function cursos(string $order = 'desc', int $limit = 200): array
     {
         return array_map(
@@ -50,7 +91,9 @@ final class AdminService
         string $cursoCalendario = '',
         string $ativo = 'S',
         string $confirmado = 'N',
-        string $imagemCard = ''
+        string $imagemCard = '',
+        int $modalidadeId = 0,
+        int $nivelId = 0
     ): void {
         $slug = $this->generateUniqueCursoSlug($nome, $id);
 
@@ -66,12 +109,24 @@ final class AdminService
             'tipo_curso' => $tipoCurso,
             'ativo' => trim($ativo),
             'confirmado' => trim($confirmado),
+            'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
+            'nivel_id' => $nivelId > 0 ? $nivelId : null,
         ]);
     }
 
     public function cursosTipos(): array
     {
         return $this->repository->listCursosTipos();
+    }
+
+    public function modalidades(): array
+    {
+        return $this->repository->listModalidades();
+    }
+
+    public function niveis(): array
+    {
+        return $this->repository->listNiveis();
     }
 
     public function cursosDisponiveisParaHome(int $limit = 6): array
@@ -155,7 +210,9 @@ final class AdminService
         string $cursoCalendario = '',
         string $ativo = 'S',
         string $confirmado = 'N',
-        string $imagemCard = ''
+        string $imagemCard = '',
+        int $modalidadeId = 0,
+        int $nivelId = 0
     ): int {
         $slug = $this->generateUniqueCursoSlug($nome);
 
@@ -171,6 +228,8 @@ final class AdminService
             'tipo_curso' => $tipoCurso,
             'ativo' => trim($ativo),
             'confirmado' => trim($confirmado),
+            'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
+            'nivel_id' => $nivelId > 0 ? $nivelId : null,
         ]);
     }
 

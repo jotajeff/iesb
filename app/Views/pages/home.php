@@ -7,9 +7,9 @@
                   <div class="shape shape-3"></div>
                 </div>
                 <div class="container hero-content">
-                  <div class="row align-items-center">
+                  <div class="hero-layout">
                     <div
-                      class="col-lg-8"
+                      class="hero-text-wrapper"
                       data-aos="fade-up"
                       data-aos-duration="800">
                       <a href="#emec" class="hero-badge">
@@ -62,6 +62,11 @@
                         </div>
                       </div>
                     </div>
+                  </div>
+                </div>
+                <div class="hero-image-col" data-aos="fade-left" data-aos-duration="800">
+                  <div class="hero-image-wrapper">
+                    <img src="/assets/img/hero.jpg" alt="Hero" class="hero-image" />
                   </div>
                 </div>
               </section>
@@ -220,10 +225,10 @@
                                 <?php else: ?>
                                   <span class="course-btn" style="pointer-events: none; opacity: 0.5;">Inscrições em breve</span>
                                 <?php endif; ?>
-                              </div>
-                            </div>
-                          </div>
                         </div>
+                      </div>
+                    </div>
+                  </div>
                       <?php endforeach; ?>
                     <?php endif; ?>
                   </div>

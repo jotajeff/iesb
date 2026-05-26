@@ -8,7 +8,8 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin' ? 'active' : '' ?>" href="/admin"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
         <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin/cursos' ? 'active' : '' ?>" href="/admin/cursos"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
-        <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin/dbase' ? 'active' : '' ?>" href="/admin/dbase"><i class="bi bi-database me-1"></i>Banco de Dados</a></li>
+        <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin/usuarios' ? 'active' : '' ?>" href="/admin/usuarios"><i class="bi bi-people me-1"></i>Usuários</a></li>
+
         <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin/logs' ? 'active' : '' ?>" href="/admin/logs"><i class="bi bi-clipboard-data me-1"></i>Logs</a></li>
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle <?= ($currentRoute ?? '') === '/admin/visitas' ? 'active' : '' ?>" href="/admin/visitas" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-eye me-1"></i>Visitas</a>
@@ -19,6 +20,9 @@
             <li><a class="dropdown-item" href="/admin/visitas/paginas"><i class="bi bi-file-earmark-text me-1"></i>Por pagina</a></li>
           </ul>
         </li>
+
+        <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin/dbase' ? 'active' : '' ?>" href="/admin/dbase"><i class="bi bi-database me-1"></i>DB</a></li>
+
       </ul>
       <div class="d-flex align-items-center gap-2">
         <span class="text-white-50 small"><?= htmlspecialchars($authUser['name'] ?? 'Administrador', ENT_QUOTES, 'UTF-8') ?></span>
@@ -40,10 +44,12 @@
     </div>
   </div>
   <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
       const toastEl = document.getElementById('flashToastAdmin');
       if (!toastEl || typeof bootstrap === 'undefined') return;
-      const toast = new bootstrap.Toast(toastEl, { delay: 3500 });
+      const toast = new bootstrap.Toast(toastEl, {
+        delay: 3500
+      });
       toast.show();
     });
   </script>
