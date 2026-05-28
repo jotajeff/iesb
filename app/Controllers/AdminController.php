@@ -438,6 +438,134 @@ final class AdminController extends Controller
         $this->redirect('/admin/usuarios');
     }
 
+    public function modalidade(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/modalidade/index', [
+            'title' => 'Modalidades',
+            'currentRoute' => '/admin/modalidade',
+            'modalidades' => $this->admin->modalidades(),
+        ], 'admin');
+    }
+
+    public function editModalidadeForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $modalidade = $id > 0 ? $this->admin->findModalidade($id) : null;
+
+        if ($id > 0 && !$modalidade) {
+            Session::setFlash('flash', 'Modalidade não encontrada.');
+            $this->redirect('/admin/modalidade');
+            return;
+        }
+
+        $this->render('pages/admin/modalidade/edit', [
+            'title' => $id > 0 ? 'Editar Modalidade' : 'Nova Modalidade',
+            'currentRoute' => '/admin/modalidade',
+            'modalidade' => $modalidade,
+        ], 'admin');
+    }
+
+    public function updateModalidade(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $ativo = (int) $this->input('ativo', 1);
+
+        if ($nome === '') {
+            Session::setFlash('flash', 'Informe o nome da modalidade.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/modalidade/edit' . $suffix);
+            return;
+        }
+
+        $modalidadeId = $this->admin->saveModalidade($id, $nome, $ativo);
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricao = ($id > 0 ? 'Modalidade atualizada: ' : 'Modalidade criada: ') . $nome;
+        $this->admin->log($acao, 'modalidade', $modalidadeId, $descricao);
+
+        Session::setFlash('flash', $id > 0 ? 'Modalidade atualizada com sucesso.' : 'Modalidade criada com sucesso.');
+        $this->redirect('/admin/modalidade');
+    }
+
+    public function nivel(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/nivel/index', [
+            'title' => 'Níveis',
+            'currentRoute' => '/admin/nivel',
+            'niveis' => $this->admin->niveis(),
+        ], 'admin');
+    }
+
+    public function editNivelForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $nivel = $id > 0 ? $this->admin->findNivel($id) : null;
+
+        if ($id > 0 && !$nivel) {
+            Session::setFlash('flash', 'Nível não encontrado.');
+            $this->redirect('/admin/nivel');
+            return;
+        }
+
+        $this->render('pages/admin/nivel/edit', [
+            'title' => $id > 0 ? 'Editar Nível' : 'Novo Nível',
+            'currentRoute' => '/admin/nivel',
+            'nivel' => $nivel,
+        ], 'admin');
+    }
+
+    public function updateNivel(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $ativo = (int) $this->input('ativo', 1);
+
+        if ($nome === '') {
+            Session::setFlash('flash', 'Informe o nome do nível.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/nivel/edit' . $suffix);
+            return;
+        }
+
+        $nivelId = $this->admin->saveNivel($id, $nome, $ativo);
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricao = ($id > 0 ? 'Nível atualizado: ' : 'Nível criado: ') . $nome;
+        $this->admin->log($acao, 'nivel', $nivelId, $descricao);
+
+        Session::setFlash('flash', $id > 0 ? 'Nível atualizado com sucesso.' : 'Nível criado com sucesso.');
+        $this->redirect('/admin/nivel');
+    }
+
     // ==================== VISITAS (STAFF) ====================
 
     public function visitas(): void

@@ -117,9 +117,37 @@ final class AdminService
         return $this->repository->listModalidades();
     }
 
+    public function findModalidade(int $id): ?array
+    {
+        return $this->repository->findModalidadeById($id);
+    }
+
+    public function saveModalidade(int $id, string $nome, int $ativo): int
+    {
+        return $this->repository->saveModalidade([
+            'id' => $id,
+            'nome' => trim($nome),
+            'ativo' => $ativo === 1 ? 1 : 0,
+        ]);
+    }
+
     public function niveis(): array
     {
         return $this->repository->listNiveis();
+    }
+
+    public function findNivel(int $id): ?array
+    {
+        return $this->repository->findNivelById($id);
+    }
+
+    public function saveNivel(int $id, string $nome, int $ativo): int
+    {
+        return $this->repository->saveNivel([
+            'id' => $id,
+            'nome' => trim($nome),
+            'ativo' => $ativo === 1 ? 1 : 0,
+        ]);
     }
 
     public function cursosDisponiveisParaHome(int $limit = 6): array

@@ -188,6 +188,52 @@ final class AdminRepository
         }
     }
 
+    public function findModalidadeById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, ativo FROM modalidade WHERE id = :id LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function saveModalidade(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        $id = (int) ($payload['id'] ?? 0);
+        $nome = trim((string) ($payload['nome'] ?? ''));
+        $ativo = (int) ($payload['ativo'] ?? 1);
+
+        if ($id > 0) {
+            $sql = 'UPDATE modalidade SET nome = :nome, ativo = :ativo WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':nome', $nome);
+            $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+            $stmt->execute();
+            return $id;
+        }
+
+        $sql = 'INSERT INTO modalidade (nome, ativo) VALUES (:nome, :ativo)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nome', $nome);
+        $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int) $pdo->lastInsertId();
+    }
+
     public function listNiveis(): array
     {
         try {
@@ -204,6 +250,52 @@ final class AdminRepository
             error_log('[CURSOS] Erro ao carregar niveis: ' . $e->getMessage());
             return [];
         }
+    }
+
+    public function findNivelById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, ativo FROM nivel WHERE id = :id LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function saveNivel(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        $id = (int) ($payload['id'] ?? 0);
+        $nome = trim((string) ($payload['nome'] ?? ''));
+        $ativo = (int) ($payload['ativo'] ?? 1);
+
+        if ($id > 0) {
+            $sql = 'UPDATE nivel SET nome = :nome, ativo = :ativo WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':nome', $nome);
+            $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+            $stmt->execute();
+            return $id;
+        }
+
+        $sql = 'INSERT INTO nivel (nome, ativo) VALUES (:nome, :ativo)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nome', $nome);
+        $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int) $pdo->lastInsertId();
     }
 
     public function createCurso(array $payload): int
