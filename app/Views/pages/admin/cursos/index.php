@@ -1,28 +1,95 @@
+<?php
+  $currentOrder = strtolower((string) ($order ?? ($_GET['order'] ?? 'desc')));
+  $currentOrder = $currentOrder === 'asc' ? 'asc' : 'desc';
+
+  $currentAtivo = strtoupper(trim((string) ($_GET['ativo'] ?? '')));
+  if ($currentAtivo !== 'S' && $currentAtivo !== 'N') {
+      $currentAtivo = '';
+  }
+
+  $coursesView = is_array($courses ?? null) ? $courses : [];
+
+  if ($currentAtivo !== '') {
+      $coursesView = array_values(array_filter($coursesView, static function ($course) use ($currentAtivo): bool {
+          $ativoStatus = strtoupper(trim((string) ($course['ativo'] ?? 'N')));
+          $isAtivo = ($ativoStatus === 'S' || $ativoStatus === '1' || $ativoStatus === 'Y');
+          return $currentAtivo === 'S' ? $isAtivo : !$isAtivo;
+      }));
+  }
+
+  usort($coursesView, static function ($a, $b) use ($currentOrder): int {
+      $idA = (int) ($a['id'] ?? 0);
+      $idB = (int) ($b['id'] ?? 0);
+
+      if ($idA === $idB) {
+          return 0;
+      }
+
+      if ($currentOrder === 'asc') {
+          return $idA <=> $idB;
+      }
+
+      return $idB <=> $idA;
+  });
+
+  $buildUrl = static function (array $changes = []): string {
+      $params = $_GET ?? [];
+
+      foreach ($changes as $key => $value) {
+          if ($value === null || $value === '') {
+              unset($params[$key]);
+              continue;
+          }
+
+          $params[$key] = $value;
+      }
+
+      $query = http_build_query($params);
+      return '/admin/cursos' . ($query !== '' ? '?' . $query : '');
+  };
+?>
+
 <section class="container py-4">
     <div class="bg-white border rounded-3 p-4 shadow-sm">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-journal-bookmark-fill me-2"></i>Cursos IESB</h4>
         <div class="d-flex flex-wrap align-items-center gap-2">
-          <?php $currentOrder = ($order ?? 'desc'); ?>
           <span class="text-muted small">Ordenar por ID</span>
            <div class="btn-group" role="group" aria-label="Ordenar cursos por ID">
-             <button
-               type="button"
+             <a
                class="btn btn-outline-secondary btn-sm<?= $currentOrder === 'desc' ? ' active' : '' ?>"
                title="Mais novos primeiro (clique para ordenar decrescente)"
-                onclick="var url=window.location.href; if(url.indexOf('order=')>-1){url=url.replace(/order=[^&]*/,'order=desc');}else if(url.indexOf('?')>-1){url+='&order=desc';}else{url+='?order=desc';} window.location.href=url;"
+               href="<?= htmlspecialchars($buildUrl(['order' => 'desc']), ENT_QUOTES, 'UTF-8') ?>"
              >
                <i class="bi bi-arrow-down"></i>
-             </button>
-             <button
-               type="button"
+             </a>
+             <a
                class="btn btn-outline-secondary btn-sm<?= $currentOrder === 'asc' ? ' active' : '' ?>"
                title="Mais antigos primeiro (clique para ordenar crescente)"
-                onclick="var url=window.location.href; if(url.indexOf('order=')>-1){url=url.replace(/order=[^&]*/,'order=asc');}else if(url.indexOf('?')>-1){url+='&order=asc';}else{url+='?order=asc';} window.location.href=url;"
+               href="<?= htmlspecialchars($buildUrl(['order' => 'asc']), ENT_QUOTES, 'UTF-8') ?>"
              >
                <i class="bi bi-arrow-up"></i>
-             </button>
+             </a>
            </div>
+
+          <span class="text-muted small ms-2">Ativo</span>
+          <div class="btn-group" role="group" aria-label="Filtrar cursos ativos">
+            <a
+              class="btn btn-outline-secondary btn-sm<?= $currentAtivo === 'S' ? ' active' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['ativo' => 'S']), ENT_QUOTES, 'UTF-8') ?>"
+              title="Exibir somente cursos ativos"
+            >
+              Ativo S
+            </a>
+            <a
+              class="btn btn-outline-secondary btn-sm<?= $currentAtivo === 'N' ? ' active' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['ativo' => 'N']), ENT_QUOTES, 'UTF-8') ?>"
+              title="Exibir somente cursos inativos"
+            >
+              Ativo N
+            </a>
+          </div>
+
           <a class="btn btn-primary btn-sm" href="/admin/cursos/novo"><i class="bi bi-plus-circle me-1"></i>Novo curso</a>
         </div>
       </div>
@@ -44,11 +111,11 @@
           </tr>
         </thead>
         <tbody>
-          <?php if (empty($courses)): ?>
+          <?php if (empty($coursesView)): ?>
             <tr><td colspan="10" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
           <?php endif; ?>
 
-          <?php foreach (($courses ?? []) as $course): ?>
+          <?php foreach ($coursesView as $course): ?>
             <tr>
               <td><a class="text-decoration-none fw-medium" href="/admin/cursos/show?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-box-arrow-up-right me-1"></i><?= (int) ($course['id'] ?? 0) ?></a></td>
               <td class="text-center">

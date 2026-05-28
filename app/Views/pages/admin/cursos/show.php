@@ -78,10 +78,6 @@
           <td><?= htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
         </tr>
         <tr>
-          <th class="bg-light">Tipo</th>
-          <td><?= htmlspecialchars((string) ($course['tipo_nome'] ?? (($course['tipo_curso'] ?? 0) ? 'Tipo ' . $course['tipo_curso'] : '-')), ENT_QUOTES, 'UTF-8') ?></td>
-        </tr>
-        <tr>
           <th class="bg-light">Link de ingresso</th>
           <td>
             <?php $link = (string) ($course['link_ingresso'] ?? ''); ?>

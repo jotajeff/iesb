@@ -86,7 +86,6 @@ final class AdminController extends Controller
         $this->render('pages/admin/cursos/new', [
             'title' => 'Novo Curso',
             'currentRoute' => '/admin/cursos/novo',
-            'cursosTipos' => $this->admin->cursosTipos(),
             'modalidades' => $this->admin->modalidades(),
             'niveis' => $this->admin->niveis(),
         ], 'admin');
@@ -104,7 +103,6 @@ final class AdminController extends Controller
         $horario = (string) $this->input('horario', '');
         $localCurso = (string) $this->input('local_curso', '');
         $linkIngresso = (string) $this->input('link_ingresso', '');
-        $tipoCurso = (int) $this->input('tipo_curso', 3);
         $cursoCalendario = (string) $this->input('curso_calendario', '');
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
@@ -117,7 +115,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $tipoCurso, $cursoCalendario, $ativo, $confirmado, '', $modalidadeId, $nivelId);
+        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, '', $modalidadeId, $nivelId);
         $this->admin->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -143,7 +141,6 @@ final class AdminController extends Controller
             'title' => 'Editar Curso',
             'currentRoute' => '/admin/cursos/editar',
             'course' => $course,
-            'cursosTipos' => $this->admin->cursosTipos(),
             'modalidades' => $this->admin->modalidades(),
             'niveis' => $this->admin->niveis(),
         ], 'admin');
@@ -162,7 +159,6 @@ final class AdminController extends Controller
         $horario = (string) $this->input('horario', '');
         $localCurso = (string) $this->input('local_curso', '');
         $linkIngresso = (string) $this->input('link_ingresso', '');
-        $tipoCurso = (int) $this->input('tipo_curso', 3);
         $cursoCalendario = (string) $this->input('curso_calendario', '');
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
@@ -183,7 +179,7 @@ final class AdminController extends Controller
         }
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
-        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $tipoCurso, $cursoCalendario, $ativo, $confirmado, $imagemCard, $modalidadeId, $nivelId);
+        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, $imagemCard, $modalidadeId, $nivelId);
         $this->admin->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');

@@ -12,15 +12,6 @@
         <small class="text-muted">O slug será gerado automaticamente a partir deste nome.</small>
       </div>
       <div class="col-md-4">
-        <label class="form-label">Tipo</label>
-        <select class="form-select" name="tipo_curso" required>
-          <option value="">Selecione...</option>
-          <?php foreach (($cursosTipos ?? []) as $t): ?>
-            <option value="<?= (int) ($t['id'] ?? 0) ?>"><?= (int) ($t['id'] ?? 0) ?> - <?= htmlspecialchars((string) ($t['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></option>
-          <?php endforeach; ?>
-        </select>
-      </div>
-      <div class="col-md-4">
         <label class="form-label">Modalidade</label>
         <select class="form-select" name="modalidade_id">
           <option value="">Selecione...</option>

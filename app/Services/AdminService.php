@@ -87,7 +87,6 @@ final class AdminService
         string $horario,
         string $localCurso,
         string $linkIngresso,
-        int $tipoCurso = 3,
         string $cursoCalendario = '',
         string $ativo = 'S',
         string $confirmado = 'N',
@@ -106,17 +105,11 @@ final class AdminService
             'imagem_card' => trim($imagemCard),
             'curso_calendario' => trim($cursoCalendario),
             'link_ingresso' => trim($linkIngresso),
-            'tipo_curso' => $tipoCurso,
             'ativo' => trim($ativo),
             'confirmado' => trim($confirmado),
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
             'nivel_id' => $nivelId > 0 ? $nivelId : null,
         ]);
-    }
-
-    public function cursosTipos(): array
-    {
-        return $this->repository->listCursosTipos();
     }
 
     public function modalidades(): array
@@ -206,7 +199,6 @@ final class AdminService
         string $horario,
         string $localCurso,
         string $linkIngresso,
-        int $tipoCurso = 3,
         string $cursoCalendario = '',
         string $ativo = 'S',
         string $confirmado = 'N',
@@ -225,7 +217,6 @@ final class AdminService
             'imagem_card' => trim($imagemCard),
             'curso_calendario' => trim($cursoCalendario),
             'link_ingresso' => trim($linkIngresso),
-            'tipo_curso' => $tipoCurso,
             'ativo' => trim($ativo),
             'confirmado' => trim($confirmado),
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,

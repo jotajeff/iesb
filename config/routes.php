@@ -26,6 +26,8 @@ return static function (Router $router): void {
     $router->get('/admin/cursos/show', [AdminController::class, 'showCurso']);
     $router->post('/admin/cursos/salvar', [AdminController::class, 'createCourse']);
     $router->get('/admin/cursos/editar', [AdminController::class, 'editarCursoForm']);
+    $router->get('/admin/cursos/edit', [AdminController::class, 'editarCursoForm']);
+    $router->get('/admin/cursos/edit.php', [AdminController::class, 'editarCursoForm']);
     $router->post('/admin/cursos/atualizar', [AdminController::class, 'updateCourse']);
     $router->get('/admin/logs', [AdminController::class, 'logs']);
     $router->get('/admin/visitas', [AdminController::class, 'visitas']);
