@@ -178,7 +178,7 @@ final class AdminRepository
                 return [];
             }
 
-            $sql = 'SELECT id, nome, ativo FROM modalidade ORDER BY nome ASC';
+            $sql = 'SELECT id, nome FROM modalidade ORDER BY nome ASC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -196,7 +196,7 @@ final class AdminRepository
                 return [];
             }
 
-            $sql = 'SELECT id, nome, ativo FROM nivel ORDER BY nome ASC';
+            $sql = 'SELECT id, nome FROM nivel ORDER BY nome ASC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
