@@ -87,6 +87,7 @@ final class AdminController extends Controller
             'title' => 'Novo Curso',
             'currentRoute' => '/admin/cursos/novo',
             'modalidades' => $this->admin->modalidades(),
+            'segmentos' => $this->admin->segmentos(),
             'niveis' => $this->admin->niveis(),
         ], 'admin');
     }
@@ -107,6 +108,7 @@ final class AdminController extends Controller
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
         $modalidadeId = (int) $this->input('modalidade_id', 0);
+        $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
 
         if ($nome === '' || $localCurso === '') {
@@ -115,7 +117,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, '', $modalidadeId, $nivelId);
+        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, '', $modalidadeId, $segmentoId, $nivelId);
         $this->admin->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -142,6 +144,7 @@ final class AdminController extends Controller
             'currentRoute' => '/admin/cursos/editar',
             'course' => $course,
             'modalidades' => $this->admin->modalidades(),
+            'segmentos' => $this->admin->segmentos(),
             'niveis' => $this->admin->niveis(),
         ], 'admin');
     }
@@ -163,6 +166,7 @@ final class AdminController extends Controller
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
         $modalidadeId = (int) $this->input('modalidade_id', 0);
+        $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
 
         if ($nome === '' || $localCurso === '') {
@@ -179,7 +183,7 @@ final class AdminController extends Controller
         }
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
-        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, $imagemCard, $modalidadeId, $nivelId);
+        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId);
         $this->admin->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -502,6 +506,70 @@ final class AdminController extends Controller
         $this->redirect('/admin/modalidade');
     }
 
+    public function segmento(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/segmento/index', [
+            'title' => 'Segmentos',
+            'currentRoute' => '/admin/segmento',
+            'segmentos' => $this->admin->segmentos(),
+        ], 'admin');
+    }
+
+    public function editSegmentoForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $segmento = $id > 0 ? $this->admin->findSegmento($id) : null;
+
+        if ($id > 0 && !$segmento) {
+            Session::setFlash('flash', 'Segmento não encontrado.');
+            $this->redirect('/admin/segmento');
+            return;
+        }
+
+        $this->render('pages/admin/segmento/edit', [
+            'title' => $id > 0 ? 'Editar Segmento' : 'Novo Segmento',
+            'currentRoute' => '/admin/segmento',
+            'segmento' => $segmento,
+        ], 'admin');
+    }
+
+    public function updateSegmento(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $ativo = strtoupper(trim((string) $this->input('ativo', 'S')));
+
+        if ($nome === '') {
+            Session::setFlash('flash', 'Informe o nome do segmento.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/segmento/edit' . $suffix);
+            return;
+        }
+
+        $segmentoId = $this->admin->saveSegmento($id, $nome, $ativo);
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricao = ($id > 0 ? 'Segmento atualizado: ' : 'Segmento criado: ') . $nome;
+        $this->admin->log($acao, 'segmento', $segmentoId, $descricao);
+
+        Session::setFlash('flash', $id > 0 ? 'Segmento atualizado com sucesso.' : 'Segmento criado com sucesso.');
+        $this->redirect('/admin/segmento');
+    }
+
     public function nivel(): void
     {
         if (!$this->auth->isStaff()) {
@@ -549,6 +617,7 @@ final class AdminController extends Controller
         $id = (int) $this->input('id', 0);
         $nome = trim((string) $this->input('nome', ''));
         $ativo = (int) $this->input('ativo', 1);
+        $apresentacao = (string) $this->input('apresentacao', '');
 
         if ($nome === '') {
             Session::setFlash('flash', 'Informe o nome do nível.');
@@ -557,7 +626,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $nivelId = $this->admin->saveNivel($id, $nome, $ativo);
+        $nivelId = $this->admin->saveNivel($id, $nome, $ativo, $apresentacao);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Nível atualizado: ' : 'Nível criado: ') . $nome;
         $this->admin->log($acao, 'nivel', $nivelId, $descricao);

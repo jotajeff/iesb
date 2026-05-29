@@ -44,6 +44,9 @@ return static function (Router $router): void {
     $router->get('/admin/modalidade', [AdminController::class, 'modalidade']);
     $router->get('/admin/modalidade/edit', [AdminController::class, 'editModalidadeForm']);
     $router->post('/admin/modalidade/update', [AdminController::class, 'updateModalidade']);
+    $router->get('/admin/segmento', [AdminController::class, 'segmento']);
+    $router->get('/admin/segmento/edit', [AdminController::class, 'editSegmentoForm']);
+    $router->post('/admin/segmento/update', [AdminController::class, 'updateSegmento']);
     $router->get('/admin/nivel', [AdminController::class, 'nivel']);
     $router->get('/admin/nivel/edit', [AdminController::class, 'editNivelForm']);
     $router->post('/admin/nivel/update', [AdminController::class, 'updateNivel']);

@@ -26,6 +26,15 @@
       </div>
 
       <div class="col-12">
+        <label class="form-label">Apresentação</label>
+        <textarea
+          id="apresentacao"
+          class="form-control"
+          name="apresentacao"
+          rows="10"><?= htmlspecialchars((string) ($nivel['apresentacao'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+      </div>
+
+      <div class="col-12">
         <button class="btn btn-success" type="submit">
           <i class="bi bi-check-lg me-1"></i><?= $id > 0 ? 'Atualizar Nível' : 'Criar Nível' ?>
         </button>
@@ -33,3 +42,17 @@
     </form>
   </div>
 </section>
+
+<script src="https://cdn.ckeditor.com/ckeditor5/41.4.2/classic/ckeditor.js"></script>
+<style>
+  .ck-editor__editable_inline {
+    min-height: 420px;
+  }
+</style>
+<script>
+  ClassicEditor
+    .create(document.querySelector('#apresentacao'))
+    .catch(function (error) {
+      console.error(error);
+    });
+</script>

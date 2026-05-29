@@ -387,12 +387,33 @@ a {
   color: var(--primary);
   line-height: 1;
 }
+.hero-stat-plus {
+  color: var(--primary);
+  margin-right: 0.1em;
+}
 .hero-stat-label {
   font-size: 0.8rem;
   color: #ecf7f7;
   text-transform: uppercase;
   letter-spacing: 1px;
   margin-top: 4px;
+}
+.hero-highlight-note {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding: 0.55rem 0.9rem;
+  border-radius: 999px;
+  background: rgba(var(--light-rgb), 0.14);
+  border: 1px solid rgba(var(--primary-rgb), 0.5);
+  color: var(--primary);
+  font-weight: 700;
+  font-size: 0.95rem;
+  box-shadow: 0 8px 20px rgba(var(--dark-rgb), 0.2);
+}
+.hero-highlight-note i {
+  color: var(--primary);
 }
 
 .hero-shapes {

@@ -38,10 +38,11 @@ final class AdminRepository
 
         try {
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso,
-                        c.ativo, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.nivel AS nivel_id, c.created_at,
-                        m.nome AS modalidade_nome, n.nome AS nivel_nome
+                        c.ativo, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at,
+                        m.nome AS modalidade_nome, s.nome AS segmento_nome, n.nome AS nivel_nome
                  FROM cursos_iesb c
                  LEFT JOIN modalidade m ON m.id = c.modalidade
+                 LEFT JOIN segmento s ON s.id = c.segmento
                  LEFT JOIN nivel n ON n.id = c.nivel
                  ORDER BY c.id ' . $direction . '
                  LIMIT :limit';
@@ -112,8 +113,9 @@ final class AdminRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.confirmado, c.modalidade AS modalidade_id, c.nivel AS nivel_id, c.created_at
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome
                      FROM cursos_iesb c
+                     LEFT JOIN segmento s ON s.id = c.segmento
                      WHERE c.id = :id';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -137,7 +139,7 @@ final class AdminRepository
         $sql = 'UPDATE cursos_iesb
                 SET nome = :nome, slug = :slug, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
                     imagem_card = :imagem_card, link_ingresso = :link_ingresso, ativo = :ativo, confirmado = :confirmado,
-                    modalidade = :modalidade_id, nivel = :nivel_id
+                    modalidade = :modalidade_id, segmento = :segmento_id, nivel = :nivel_id
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -152,6 +154,7 @@ final class AdminRepository
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
         $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $stmt->bindValue(':segmento_id', $payload['segmento_id'] ?? null, $payload['segmento_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':nivel_id', $payload['nivel_id'] ?? null, $payload['nivel_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->execute();
     }
@@ -234,6 +237,70 @@ final class AdminRepository
         return (int) $pdo->lastInsertId();
     }
 
+    public function listSegmentos(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT id, nome, ativo FROM segmento ORDER BY nome ASC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro ao carregar segmentos: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function findSegmentoById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, ativo FROM segmento WHERE id = :id LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function saveSegmento(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        $id = (int) ($payload['id'] ?? 0);
+        $nome = trim((string) ($payload['nome'] ?? ''));
+        $ativo = strtoupper(trim((string) ($payload['ativo'] ?? 'S'))) === 'N' ? 'N' : 'S';
+
+        if ($id > 0) {
+            $sql = 'UPDATE segmento SET nome = :nome, ativo = :ativo WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':nome', $nome);
+            $stmt->bindValue(':ativo', $ativo);
+            $stmt->execute();
+            return $id;
+        }
+
+        $sql = 'INSERT INTO segmento (nome, ativo) VALUES (:nome, :ativo)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nome', $nome);
+        $stmt->bindValue(':ativo', $ativo);
+        $stmt->execute();
+
+        return (int) $pdo->lastInsertId();
+    }
+
     public function listNiveis(): array
     {
         try {
@@ -242,7 +309,7 @@ final class AdminRepository
                 return [];
             }
 
-            $sql = 'SELECT id, nome, ativo FROM nivel ORDER BY nome ASC';
+            $sql = 'SELECT id, nome, ativo, apresentacao FROM nivel ORDER BY nome ASC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -259,7 +326,7 @@ final class AdminRepository
             return null;
         }
 
-        $sql = 'SELECT id, nome, ativo FROM nivel WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, nome, ativo, apresentacao FROM nivel WHERE id = :id LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -278,21 +345,24 @@ final class AdminRepository
         $id = (int) ($payload['id'] ?? 0);
         $nome = trim((string) ($payload['nome'] ?? ''));
         $ativo = (int) ($payload['ativo'] ?? 1);
+        $apresentacao = (string) ($payload['apresentacao'] ?? '');
 
         if ($id > 0) {
-            $sql = 'UPDATE nivel SET nome = :nome, ativo = :ativo WHERE id = :id';
+            $sql = 'UPDATE nivel SET nome = :nome, ativo = :ativo, apresentacao = :apresentacao WHERE id = :id';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->bindValue(':nome', $nome);
             $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+            $stmt->bindValue(':apresentacao', $apresentacao);
             $stmt->execute();
             return $id;
         }
 
-        $sql = 'INSERT INTO nivel (nome, ativo) VALUES (:nome, :ativo)';
+        $sql = 'INSERT INTO nivel (nome, ativo, apresentacao) VALUES (:nome, :ativo, :apresentacao)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $nome);
         $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+        $stmt->bindValue(':apresentacao', $apresentacao);
         $stmt->execute();
 
         return (int) $pdo->lastInsertId();
@@ -305,8 +375,8 @@ final class AdminRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, confirmado, modalidade, nivel)
-                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :ativo, :confirmado, :modalidade_id, :nivel_id)';
+        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, confirmado, modalidade, segmento, nivel)
+                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :ativo, :confirmado, :modalidade_id, :segmento_id, :nivel_id)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
         $stmt->bindValue(':slug', $payload['slug']);
@@ -319,6 +389,7 @@ final class AdminRepository
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
         $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
+        $stmt->bindValue(':segmento_id', $payload['segmento_id'] ?? null, $payload['segmento_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':nivel_id', $payload['nivel_id'] ?? null, $payload['nivel_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->execute();
 

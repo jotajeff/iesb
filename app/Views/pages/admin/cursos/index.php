@@ -103,7 +103,7 @@
             <th><i class="bi bi-journal-text me-1"></i>Nome</th>
             <th><i class="bi bi-toggle-on me-1"></i>Ativo</th>
             <th><i class="bi bi-calendar-event me-1"></i>Data</th>
-            <th><i class="bi bi-geo-alt me-1"></i>Local</th>
+            <th><i class="bi bi-diagram-3 me-1"></i>Segmento</th>
               <th>Modalidade</th>
              <th>Nível</th>
              <th><i class="bi bi-award-fill me-1"></i>Confirmado</th>
@@ -142,7 +142,7 @@
               <td<?= $needsAlert ? ' class="text-danger fw-semibold"' : '' ?>>
                 <?= htmlspecialchars((string) ($course['data_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
               </td>
-              <td><?= htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td><?= htmlspecialchars((string) ($course['segmento_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($course['modalidade_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($course['nivel_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td>

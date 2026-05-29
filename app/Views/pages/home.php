@@ -34,32 +34,32 @@
                       <div class="hero-stats">
                         <div class="hero-stat">
                           <div class="hero-stat-number">
-                            <span class="counter-number" data-target="2500">0</span>+
+                            <span class="hero-stat-plus">+</span><span class="counter-number" data-target="5000">0</span>
                           </div>
                           <div class="hero-stat-label">Alunos Formados</div>
                         </div>
+
+                        <div class="hero-stat">
+                          <div
+                            class="hero-stat-number counter-number"
+                            data-target="20">
+                            <span class="hero-stat-plus">+</span>0
+                          </div>
+                          <div class="hero-stat-label">Cursos Ativos</div>
+                        </div>
+
                         <div class="hero-stat">
                           <div
                             class="hero-stat-number counter-number"
                             data-target="15">
-                            0
-                          </div>
-                          <div class="hero-stat-label">Cursos Ativos</div>
-                        </div>
-                        <div class="hero-stat">
-                          <div class="hero-stat-number">
-                            <span class="counter-number" data-target="96">0</span>%
-                          </div>
-                          <div class="hero-stat-label">Empregabilidade</div>
-                        </div>
-                        <div class="hero-stat">
-                          <div
-                            class="hero-stat-number counter-number"
-                            data-target="12">
-                            0
+                            <span class="hero-stat-plus">+</span>0
                           </div>
                           <div class="hero-stat-label">Anos de Mercado</div>
                         </div>
+                      </div>
+                      <div class="hero-highlight-note">
+                        <i class="bi bi-stars"></i>
+                        Pós Graduação a partir 2026/2
                       </div>
                     </div>
                   </div>
@@ -88,7 +88,7 @@
                             <i class="bi bi-trophy-fill"></i>
                           </div>
                           <div>
-                            <div class="afc-number">+12 anos</div>
+                            <div class="afc-number">+15 anos</div>
                             <div class="afc-label">
                               de excelência educacional
                             </div>
@@ -163,23 +163,23 @@
                         Nenhum curso disponível no momento.
                       </div>
                     <?php else: ?>
-                    <?php foreach ($cursosDisponiveis as $index => $course): ?>
+                      <?php foreach ($cursosDisponiveis as $index => $course): ?>
                         <?php
-                          $courseImage = trim((string) ($course['imagem_card'] ?? ''));
-                          $courseName = htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8');
-                          $courseLocation = htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8');
-                          $courseHorario = htmlspecialchars((string) ($course['horario'] ?? '-'), ENT_QUOTES, 'UTF-8');
-                          $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
-                          $rawDate = (string) ($course['data_curso'] ?? '');
-                          $dateText = '-';
-                          $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
-                          if ($dtDate instanceof \DateTime) {
-                            $dateText = $dtDate->format('d/m/Y');
-                          } elseif ($rawDate !== '') {
-                            $dateText = $rawDate;
-                          }
-                          $delay = 100 + ($index % 3) * 100;
-                          $isConfirmed = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S';
+                        $courseImage = trim((string) ($course['imagem_card'] ?? ''));
+                        $courseName = htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                        $courseLocation = htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                        $courseHorario = htmlspecialchars((string) ($course['horario'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                        $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
+                        $rawDate = (string) ($course['data_curso'] ?? '');
+                        $dateText = '-';
+                        $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
+                        if ($dtDate instanceof \DateTime) {
+                          $dateText = $dtDate->format('d/m/Y');
+                        } elseif ($rawDate !== '') {
+                          $dateText = $rawDate;
+                        }
+                        $delay = 100 + ($index % 3) * 100;
+                        $isConfirmed = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S';
                         ?>
                         <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
                           <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">
@@ -188,8 +188,7 @@
                                 <img
                                   src="/<?= htmlspecialchars($courseImage, ENT_QUOTES, 'UTF-8') ?>"
                                   alt="Imagem do curso <?= $courseName ?>"
-                                  style="width: 100%; height: 100%; object-fit: cover; display: block;"
-                                />
+                                  style="width: 100%; height: 100%; object-fit: cover; display: block;" />
                               <?php else: ?>
                                 <div class="course-img-placeholder" style="background: linear-gradient(135deg, #2c3e50, #0f172a);">
                                   <i class="bi bi-journal-bookmark"></i>
@@ -218,23 +217,22 @@
                                     class="course-btn"
                                     href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>"
                                     target="_blank"
-                                    rel="noopener noreferrer"
-                                  >
+                                    rel="noopener noreferrer">
                                     Inscreva-se
                                   </a>
                                 <?php else: ?>
                                   <span class="course-btn" style="pointer-events: none; opacity: 0.5;">Inscrições em breve</span>
                                 <?php endif; ?>
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </div>
-                  </div>
                       <?php endforeach; ?>
                     <?php endif; ?>
                   </div>
                 </div>
               </section>
-              
+
               <!-- ==================== FEATURES ==================== -->
               <section class="section-dark" id="diferenciais">
                 <div class="container">
@@ -257,9 +255,9 @@
                         <div class="feature-icon">
                           <i class="bi bi-people-fill"></i>
                         </div>
-                        <h3 class="feature-title">Professores Expert</h3>
+                        <h3 class="feature-title">Corpo Docente</h3>
                         <p class="feature-desc">
-                          Docentes com experiência real no mercado e formação
+                          Docentes com ampla experiência real no mercado e formação
                           acadêmica sólida.
                         </p>
                       </div>
@@ -272,10 +270,9 @@
                         <div class="feature-icon">
                           <i class="bi bi-tools"></i>
                         </div>
-                        <h3 class="feature-title">Aulas Práticas</h3>
+                        <h3 class="feature-title">Horários flexíveis</h3>
                         <p class="feature-desc">
-                          80% do conteúdo é aplicado em laboratórios e oficinas
-                          equipadas.
+                          Diversas modalidades de cursos, para se adequar à sua rotina.
                         </p>
                       </div>
                     </div>
@@ -289,8 +286,7 @@
                         </div>
                         <h3 class="feature-title">Inserção no Mercado</h3>
                         <p class="feature-desc">
-                          Parceria com +200 empresas para estágios e
-                          oportunidades de emprego.
+                          Ensino alinhado às exigências do mercado.
                         </p>
                       </div>
                     </div>
@@ -304,8 +300,7 @@
                         </div>
                         <h3 class="feature-title">Certificação MEC</h3>
                         <p class="feature-desc">
-                          Diploma reconhecido nacionalmente, válido em todo o
-                          território brasileiro.
+                          Diploma reconhecido pelo MEC e conselhos regionais, valorizado por empregadores em todo o Brasil.
                         </p>
                       </div>
                     </div>

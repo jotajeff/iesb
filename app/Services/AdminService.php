@@ -92,6 +92,7 @@ final class AdminService
         string $confirmado = 'N',
         string $imagemCard = '',
         int $modalidadeId = 0,
+        int $segmentoId = 0,
         int $nivelId = 0
     ): void {
         $slug = $this->generateUniqueCursoSlug($nome, $id);
@@ -108,6 +109,7 @@ final class AdminService
             'ativo' => trim($ativo),
             'confirmado' => trim($confirmado),
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
+            'segmento_id' => $segmentoId > 0 ? $segmentoId : null,
             'nivel_id' => $nivelId > 0 ? $nivelId : null,
         ]);
     }
@@ -131,6 +133,27 @@ final class AdminService
         ]);
     }
 
+    public function segmentos(): array
+    {
+        return $this->repository->listSegmentos();
+    }
+
+    public function findSegmento(int $id): ?array
+    {
+        return $this->repository->findSegmentoById($id);
+    }
+
+    public function saveSegmento(int $id, string $nome, string $ativo): int
+    {
+        $ativoSanitizado = strtoupper(trim($ativo)) === 'N' ? 'N' : 'S';
+
+        return $this->repository->saveSegmento([
+            'id' => $id,
+            'nome' => trim($nome),
+            'ativo' => $ativoSanitizado,
+        ]);
+    }
+
     public function niveis(): array
     {
         return $this->repository->listNiveis();
@@ -141,12 +164,13 @@ final class AdminService
         return $this->repository->findNivelById($id);
     }
 
-    public function saveNivel(int $id, string $nome, int $ativo): int
+    public function saveNivel(int $id, string $nome, int $ativo, string $apresentacao): int
     {
         return $this->repository->saveNivel([
             'id' => $id,
             'nome' => trim($nome),
             'ativo' => $ativo === 1 ? 1 : 0,
+            'apresentacao' => trim($apresentacao),
         ]);
     }
 
@@ -232,6 +256,7 @@ final class AdminService
         string $confirmado = 'N',
         string $imagemCard = '',
         int $modalidadeId = 0,
+        int $segmentoId = 0,
         int $nivelId = 0
     ): int {
         $slug = $this->generateUniqueCursoSlug($nome);
@@ -248,6 +273,7 @@ final class AdminService
             'ativo' => trim($ativo),
             'confirmado' => trim($confirmado),
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
+            'segmento_id' => $segmentoId > 0 ? $segmentoId : null,
             'nivel_id' => $nivelId > 0 ? $nivelId : null,
         ]);
     }

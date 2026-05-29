@@ -66,6 +66,10 @@
           <td><?= htmlspecialchars((string) ($course['data_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
         </tr>
         <tr>
+          <th class="bg-light">Segmento</th>
+          <td><?= htmlspecialchars((string) ($course['segmento_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+        </tr>
+        <tr>
           <th class="bg-light">Calendário</th>
           <td><?= htmlspecialchars($cursoCalendarioExibicao, ENT_QUOTES, 'UTF-8') ?></td>
         </tr>

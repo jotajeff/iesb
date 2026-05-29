@@ -40,6 +40,18 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Segmento</label>
+        <select class="form-select" name="segmento_id">
+          <option value="">Selecione...</option>
+          <?php $selSeg = (int) ($course['segmento_id'] ?? 0); ?>
+          <?php foreach (($segmentos ?? []) as $s): ?>
+            <option value="<?= (int) $s['id'] ?>" <?= (int)$s['id'] === $selSeg ? 'selected' : '' ?>>
+              <?= htmlspecialchars($s['nome']) ?>
+            </option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Calendário</label>
         <input class="form-control" type="date" name="curso_calendario" value="<?= htmlspecialchars($cursoCalendarioValue, ENT_QUOTES, 'UTF-8') ?>">
       </div>

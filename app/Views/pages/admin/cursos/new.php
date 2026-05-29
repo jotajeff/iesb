@@ -30,6 +30,15 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Segmento</label>
+        <select class="form-select" name="segmento_id">
+          <option value="">Selecione...</option>
+          <?php foreach (($segmentos ?? []) as $s): ?>
+            <option value="<?= (int) $s['id'] ?>"><?= htmlspecialchars($s['nome']) ?></option>
+          <?php endforeach; ?>
+        </select>
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Calendário</label>
         <input class="form-control" type="date" name="curso_calendario">
       </div>
