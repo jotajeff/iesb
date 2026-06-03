@@ -106,6 +106,7 @@ final class AdminController extends Controller
         $linkIngresso = (string) $this->input('link_ingresso', '');
         $cursoCalendario = (string) $this->input('curso_calendario', '');
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
+        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', 'N'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
         $modalidadeId = (int) $this->input('modalidade_id', 0);
         $segmentoId = (int) $this->input('segmento_id', 0);
@@ -117,7 +118,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, '', $modalidadeId, $segmentoId, $nivelId);
+        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId);
         $this->admin->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -164,6 +165,7 @@ final class AdminController extends Controller
         $linkIngresso = (string) $this->input('link_ingresso', '');
         $cursoCalendario = (string) $this->input('curso_calendario', '');
         $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
+        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', 'N'));
         $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
         $modalidadeId = (int) $this->input('modalidade_id', 0);
         $segmentoId = (int) $this->input('segmento_id', 0);
@@ -183,7 +185,7 @@ final class AdminController extends Controller
         }
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
-        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId);
+        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId);
         $this->admin->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -779,6 +781,12 @@ final class AdminController extends Controller
     }
 
     private function normalizeConfirmado(string $value): string
+    {
+        $normalized = strtoupper(trim($value));
+        return $normalized === 'S' ? 'S' : 'N';
+    }
+
+    private function normalizeExibirHome(string $value): string
     {
         $normalized = strtoupper(trim($value));
         return $normalized === 'S' ? 'S' : 'N';

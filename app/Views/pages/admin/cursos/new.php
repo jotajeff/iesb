@@ -50,6 +50,13 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Exibir na home</label>
+        <select class="form-select" name="exibir_home">
+          <option value="S" selected>Sim</option>
+          <option value="N">Não</option>
+        </select>
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Confirmado</label>
         <select class="form-select" name="confirmado">
           <option value="N" selected>Não</option>

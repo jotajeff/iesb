@@ -32,6 +32,7 @@
       }
       $ativoLabel = strtoupper(trim((string) ($course['ativo'] ?? 'S')));
       $ativoTexto = $ativoLabel === 'N' ? 'Não' : 'Sim';
+      $exibirHomeLabel = strtoupper(trim((string) ($course['exibir_home'] ?? 'N')));
       $confirmadoLabel = strtoupper(trim((string) ($course['confirmado'] ?? 'N')));
       $confirmadoTexto = $confirmadoLabel === 'S' ? 'Sim' : 'Não';
     ?>
@@ -97,6 +98,16 @@
         <tr>
           <th class="bg-light">Ativo</th>
           <td><?= htmlspecialchars($ativoTexto, ENT_QUOTES, 'UTF-8') ?></td>
+        </tr>
+        <tr>
+          <th class="bg-light">Exibir na home</th>
+          <td>
+            <?php if ($exibirHomeLabel === 'S'): ?>
+              <span class="badge bg-success">Sim</span>
+            <?php else: ?>
+              <span class="badge bg-danger">Não</span>
+            <?php endif; ?>
+          </td>
         </tr>
         <tr>
           <th class="bg-light">Confirmado</th>

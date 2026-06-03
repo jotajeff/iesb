@@ -407,21 +407,3 @@
                   </div>
                 </div>
               </section>
-
-              <!-- ==================== CTA ==================== -->
-              <section class="cta-section" style="padding: 80px 0">
-                <div
-                  class="container text-center position-relative"
-                  style="z-index: 2"
-                  data-aos="zoom-in"
-                  data-aos-duration="800">
-                  <h2 class="cta-title mb-3">
-                    Pronto para dar o próximo passo na sua carreira?
-                  </h2>
-                  <p class="cta-desc mb-4">
-                    As inscrições para o primeiro semestre de 2026 estão
-                    abertas. Vagas limitadas!
-                  </p>
-                  <a href="#contato" class="btn-primary-custom"><i class="bi bi-pencil-square"></i> Inscreva-se Agora</a>
-                </div>
-              </section>

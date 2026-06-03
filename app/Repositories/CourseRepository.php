@@ -13,14 +13,17 @@ final class CourseRepository extends JsonRepository
 
     public function all(): array
     {
-        return $this->allData();
+        return array_map(
+            fn (array $course): array => $this->normalizeCourse($course),
+            $this->allData()
+        );
     }
 
     public function findById(int $id): ?array
     {
         foreach ($this->allData() as $course) {
             if ((int) $course['id'] === $id) {
-                return $course;
+                return $this->normalizeCourse($course);
             }
         }
 
@@ -30,8 +33,32 @@ final class CourseRepository extends JsonRepository
     public function create(array $payload): void
     {
         $courses = $this->allData();
+        $payload = $this->normalizeCourse($payload);
         $payload['id'] = $this->nextId($courses);
         $courses[] = $payload;
         $this->saveAllData($courses);
+    }
+
+    public function update(int $id, array $payload): void
+    {
+        $courses = $this->allData();
+
+        foreach ($courses as $index => $course) {
+            if ((int) $course['id'] !== $id) {
+                continue;
+            }
+
+            $courses[$index] = $this->normalizeCourse(array_replace($course, $payload));
+            $courses[$index]['id'] = $id;
+            $this->saveAllData($courses);
+            return;
+        }
+    }
+
+    private function normalizeCourse(array $course): array
+    {
+        $course['exibir_home'] = strtoupper(trim((string) ($course['exibir_home'] ?? 'N'))) === 'S' ? 'S' : 'N';
+
+        return $course;
     }
 }

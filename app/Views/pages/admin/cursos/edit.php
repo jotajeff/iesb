@@ -9,6 +9,7 @@
       <input type="hidden" name="id" value="<?= (int) ($course['id'] ?? 0) ?>">
       <?php $cursoCalendarioValue = (string) ($course['curso_calendario'] ?? ''); ?>
       <?php $ativoAtual = strtoupper((string) ($course['ativo'] ?? 'S')); ?>
+      <?php $exibirHomeAtual = strtoupper((string) ($course['exibir_home'] ?? 'N')); ?>
       <?php $confirmadoAtual = strtoupper((string) ($course['confirmado'] ?? 'N')); ?>
       <div class="col-md-8">
         <label class="form-label">Nome</label>
@@ -60,6 +61,13 @@
         <select class="form-select" name="ativo">
           <option value="S" <?= $ativoAtual === 'S' ? 'selected' : '' ?>>Sim</option>
           <option value="N" <?= $ativoAtual === 'N' ? 'selected' : '' ?>>Não</option>
+        </select>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Exibir na home</label>
+        <select class="form-select" name="exibir_home">
+          <option value="S" <?= $exibirHomeAtual === 'S' ? 'selected' : '' ?>>Sim</option>
+          <option value="N" <?= $exibirHomeAtual === 'N' ? 'selected' : '' ?>>Não</option>
         </select>
       </div>
       <div class="col-md-4">

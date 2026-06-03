@@ -38,7 +38,7 @@ final class AdminRepository
 
         try {
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso,
-                        c.ativo, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at,
+                        c.ativo, c.exibir_home, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at,
                         m.nome AS modalidade_nome, s.nome AS segmento_nome, n.nome AS nivel_nome
                  FROM cursos_iesb c
                  LEFT JOIN modalidade m ON m.id = c.modalidade
@@ -68,9 +68,9 @@ final class AdminRepository
 
         $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
 
-        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.exibir_home, c.confirmado
                 FROM cursos_iesb c
-                WHERE c.ativo = "S" AND c.curso_calendario > "0000-00-00" AND c.curso_calendario >= :maxDate
+                WHERE c.ativo = "S" AND c.exibir_home = "S" AND c.curso_calendario > "0000-00-00" AND c.curso_calendario >= :maxDate
                 ORDER BY c.curso_calendario ASC, c.id DESC
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
@@ -91,9 +91,9 @@ final class AdminRepository
 
         $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
 
-        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.exibir_home, c.confirmado
                 FROM cursos_iesb c
-                WHERE c.ativo = "S" AND c.curso_calendario > "0000-00-00" AND c.curso_calendario >= :maxDate
+                WHERE c.ativo = "S" AND c.exibir_home = "S" AND c.curso_calendario > "0000-00-00" AND c.curso_calendario >= :maxDate
                 ORDER BY c.curso_calendario ASC, c.id DESC
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
@@ -113,7 +113,7 @@ final class AdminRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome
                      FROM cursos_iesb c
                      LEFT JOIN segmento s ON s.id = c.segmento
                      WHERE c.id = :id';
@@ -138,7 +138,7 @@ final class AdminRepository
 
         $sql = 'UPDATE cursos_iesb
                 SET nome = :nome, slug = :slug, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
-                    imagem_card = :imagem_card, link_ingresso = :link_ingresso, ativo = :ativo, confirmado = :confirmado,
+                    imagem_card = :imagem_card, link_ingresso = :link_ingresso, ativo = :ativo, exibir_home = :exibir_home, confirmado = :confirmado,
                     modalidade = :modalidade_id, segmento = :segmento_id, nivel = :nivel_id
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
@@ -152,6 +152,7 @@ final class AdminRepository
         $stmt->bindValue(':imagem_card', $payload['imagem_card']);
         $stmt->bindValue(':link_ingresso', $payload['link_ingresso']);
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
+        $stmt->bindValue(':exibir_home', (string) ($payload['exibir_home'] ?? 'N'));
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
         $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':segmento_id', $payload['segmento_id'] ?? null, $payload['segmento_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
@@ -375,8 +376,8 @@ final class AdminRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, confirmado, modalidade, segmento, nivel)
-                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :ativo, :confirmado, :modalidade_id, :segmento_id, :nivel_id)';
+        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, exibir_home, confirmado, modalidade, segmento, nivel)
+                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :ativo, :exibir_home, :confirmado, :modalidade_id, :segmento_id, :nivel_id)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
         $stmt->bindValue(':slug', $payload['slug']);
@@ -387,6 +388,7 @@ final class AdminRepository
         $stmt->bindValue(':imagem_card', $payload['imagem_card']);
         $stmt->bindValue(':link_ingresso', $payload['link_ingresso']);
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
+        $stmt->bindValue(':exibir_home', (string) ($payload['exibir_home'] ?? 'N'));
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
         $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':segmento_id', $payload['segmento_id'] ?? null, $payload['segmento_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);

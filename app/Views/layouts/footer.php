@@ -1,3 +1,54 @@
+  <!-- ==================== CTA ==================== -->
+  <section class="cta-section" style="padding: 80px 0">
+    <div
+      class="container text-center position-relative"
+      style="z-index: 2"
+      data-aos="zoom-in"
+      data-aos-duration="800">
+      <h2 class="cta-title mb-0">
+        Parceria forte para seu crescimento
+      </h2>
+      <div class="row g-3 justify-content-center mt-4 cta-gallery">
+        <div class="col-6 col-md-3">
+          <div class="cta-image-wrap">
+            <img
+              src="/assets/img/mbrazil_1.jpg"
+              alt="Parceria IESB MBrazil"
+              class="img-fluid cta-image">
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="cta-image-wrap">
+            <img
+              src="/assets/img/mbrazil_iesb_2.jpg"
+              alt="Parceria IESB MBrazil 2"
+              class="img-fluid cta-image">
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="cta-image-wrap">
+            <a href="https://faculdadesaomarcos.com.br/" target="_blank" rel="noopener noreferrer">
+              <img
+                src="/assets/img/smarcos_3.jpg"
+                alt="Parceria IESB São Marcos"
+                class="img-fluid cta-image">
+            </a>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="cta-image-wrap">
+            <a href="https://faculdadesaomarcos.com.br/" target="_blank" rel="noopener noreferrer">
+              <img
+                src="/assets/img/fasm_4.jpg"
+                alt="Parceria IESB FASM"
+                class="img-fluid cta-image">
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <!-- ==================== CONTACT ==================== -->
   <section class="section-dark" id="contato">
     <div class="container">
@@ -139,14 +190,14 @@
                                   color: var(--text-primary);
                                 ">Curso de Interesse</label>
                   <?php
-                    $coursesForSelect = (new \App\Services\CourseService())->list();
-                    usort(
-                      $coursesForSelect,
-                      static fn (array $a, array $b): int => strcmp(
-                        (string) ($a['curso_calendario'] ?? ''),
-                        (string) ($b['curso_calendario'] ?? '')
-                      )
-                    );
+                  $coursesForSelect = (new \App\Services\CourseService())->list();
+                  usort(
+                    $coursesForSelect,
+                    static fn(array $a, array $b): int => strcmp(
+                      (string) ($a['curso_calendario'] ?? ''),
+                      (string) ($b['curso_calendario'] ?? '')
+                    )
+                  );
                   ?>
                   <select class="form-select-custom">
                     <option value="">Selecione um curso</option>
@@ -208,19 +259,19 @@
           </div>
 
         </div>
-        <div class="col-lg-2 col-md-6" id="emec">
+        <div class="col-lg-4 col-md-6" id="emec">
           <h5>e-MEC</h5>
 
           <p>O selo e-MEC do IESB comprova o reconhecimento da instituição pelo MEC e reforça seu compromisso com a qualidade do ensino superior.
           </p>
 
           <a href="https://emec.mec.gov.br/emec/consulta-cadastro/detalhamento/d96957f455f6405d14c6542552b0f6eb/MTM2NDg=" target="_blank" rel="noopener noreferrer">
-            <img src="/assets/img/emec.png" alt="e-MEC" class="img-fluid" style="max-width: 120px; margin-top: 10px;" />
+            <img src="/assets/img/emec.png" alt="e-MEC" class="img-fluid" style="max-width: 180px; margin-top: 10px;" />
           </a>
 
         </div>
 
-        <div class="col-lg-3 col-md-6">
+        <div class="col-lg-4 col-md-6">
           <h5>Canais</h5>
           <ul class="footer-links">
             <li><a href="/parcerias">Parcerias</a></li>
@@ -228,16 +279,6 @@
             <li><a href="mailto:contato@iesb.edu.br">contato@iesb.edu.br</a></li>
             <li><a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer">WhatsApp: (51) 99297-5503</a></li>
           </ul>
-        </div>
-        <div class="col-lg-3 col-md-6">
-          <h5>Newsletter</h5>
-          <p style="font-size: 0.85rem">Receba novidades por e-mail.</p>
-          <div class="d-flex gap-2 mt-3">
-            <input type="email" class="form-control-custom" placeholder="seu@email.com" style="flex: 1; padding: 10px 14px; font-size: 0.85rem;" />
-            <button class="btn-primary-custom" style="padding: 10px 16px; font-size: 0.85rem; white-space: nowrap;">
-              <i class="bi bi-arrow-right"></i>
-            </button>
-          </div>
         </div>
       </div>
       <div class="footer-bottom text-center">
