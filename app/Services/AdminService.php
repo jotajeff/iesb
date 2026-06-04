@@ -74,6 +74,52 @@ final class AdminService
         );
     }
 
+    public function cursosPorNivel(int $nivelId, int $limit = 200): array
+    {
+        return array_map(
+            fn (array $course): array => $this->normalizeCursoSlug($course),
+            $this->repository->listCursosByNivel($nivelId, $limit)
+        );
+    }
+
+    public function catalogoCursosPorNivel(int $nivelId, int $segmentoId = 0, int $limit = 200): array
+    {
+        $nivel = $this->findNivel($nivelId);
+        if (!$nivel || (int) ($nivel['ativo'] ?? 0) !== 1) {
+            return [
+                'nivel' => null,
+                'segmentos' => [],
+                'segmentoSelecionado' => null,
+                'cursos' => [],
+            ];
+        }
+
+        $segmentos = $this->repository->listSegmentosByNivel($nivelId);
+        $segmentoSelecionado = null;
+        $segmentoFiltroId = 0;
+        if ($segmentoId > 0) {
+            foreach ($segmentos as $segmento) {
+                if ((int) ($segmento['id'] ?? 0) === $segmentoId) {
+                    $segmentoSelecionado = $segmento;
+                    $segmentoFiltroId = $segmentoId;
+                    break;
+                }
+            }
+        }
+
+        $cursos = array_map(
+            fn (array $course): array => $this->formatCatalogoCurso($course),
+            $this->repository->listCursosByNivelAndSegmento($nivelId, $segmentoFiltroId > 0 ? $segmentoFiltroId : null, $limit)
+        );
+
+        return [
+            'nivel' => $nivel,
+            'segmentos' => $segmentos,
+            'segmentoSelecionado' => $segmentoSelecionado,
+            'cursos' => $cursos,
+        ];
+    }
+
     public function findCurso(int $id): ?array
     {
         $course = $this->repository->findCursoById($id);
@@ -164,6 +210,11 @@ final class AdminService
     public function findNivel(int $id): ?array
     {
         return $this->repository->findNivelById($id);
+    }
+
+    public function findNivelBySlug(string $slug): ?array
+    {
+        return $this->repository->findNivelBySlug($slug);
     }
 
     public function saveNivel(int $id, string $nome, int $ativo, string $apresentacao): int
@@ -305,6 +356,33 @@ final class AdminService
         }
 
         return $course;
+    }
+
+    private function formatCatalogoCurso(array $course): array
+    {
+        $course = $this->normalizeCursoSlug($course);
+
+        $dateText = '-';
+        $rawDate = (string) ($course['data_curso'] ?? '');
+        $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
+        if ($dtDate instanceof \DateTime) {
+            $dateText = $dtDate->format('d/m/Y');
+        } elseif ($rawDate !== '') {
+            $dateText = $rawDate;
+        }
+
+        return [
+            'id' => (int) ($course['id'] ?? 0),
+            'nome' => trim((string) ($course['nome'] ?? '-')),
+            'imagem_card' => trim((string) ($course['imagem_card'] ?? '')),
+            'local_curso' => trim((string) ($course['local_curso'] ?? '-')),
+            'horario' => trim((string) ($course['horario'] ?? '-')),
+            'link_ingresso' => trim((string) ($course['link_ingresso'] ?? '')),
+            'confirmado' => strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S' ? 'S' : 'N',
+            'date_text' => $dateText,
+            'segmento_id' => (int) ($course['segmento_id'] ?? 0),
+            'segmento_nome' => trim((string) ($course['segmento_nome'] ?? '')),
+        ];
     }
 
     public function visits(int $limit = 100): array

@@ -1,54 +1,94 @@
+<?php
+$nivelSelecionado = $nivelSelecionado ?? null;
+$nivelNome = trim((string) ($nivelSelecionado['nome'] ?? 'Cursos'));
+$nivelApresentacao = (string) ($nivelSelecionado['apresentacao'] ?? '');
+$nivelApresentacaoHtml = trim($nivelApresentacao) !== ''
+  ? $nivelApresentacao
+  : '<p class="mb-0">Escolha um nível no menu para ver a apresentação e os cursos disponíveis.</p>';
+$cursosDisponiveis = $courses ?? [];
+$segmentosMenu = $segmentosMenu ?? [];
+$segmentoSelecionado = $segmentoSelecionado ?? null;
+$segmentoSelecionadoNome = trim((string) ($segmentoSelecionado['nome'] ?? ''));
+$nivelCursoUrl = (string) ($nivelCursoUrl ?? '/cursos');
+?>
+
 <section class="hero-section" id="home" style="min-height: 60vh;">
   <div class="hero-bg"></div>
-  <div class="container hero-content" style="padding-top: 120px;">
+  <div class="hero-bubbles" aria-hidden="true">
+    <span class="hero-bubble hero-bubble-1"></span>
+    <span class="hero-bubble hero-bubble-2"></span>
+    <span class="hero-bubble hero-bubble-3"></span>
+    <span class="hero-bubble hero-bubble-4"></span>
+  </div>
+  <div class="container hero-content" style="padding-top: 40px;">
     <div class="row justify-content-center">
-      <div class="col-lg-10 text-center" data-aos="fade-up">
+      <div class="col-lg-10 text-center courses-hero-copy" data-aos="fade-up">
         <div class="hero-badge"><i class="bi bi-journal-bookmark-fill"></i> Agenda de Cursos</div>
-        <h1 class="hero-title">Nossos <span class="highlight">Cursos</span></h1>
-        <p class="hero-subtitle">
-          Conheça nossa agenda de cursos e escolha a formação ideal para impulsionar sua carreira.
-        </p>
+        <h1 class="hero-title"><span class="highlight"><?= htmlspecialchars($nivelNome, ENT_QUOTES, 'UTF-8') ?></span></h1>
+
+        <div class="hero-presentation-content hero-presentation-content--hero">
+          <?= $nivelApresentacaoHtml ?>
+        </div>
       </div>
     </div>
   </div>
 </section>
 
-<section class="py-5">
+<section class="py-2">
   <div class="container">
-    <div class="section-header text-center mb-4" data-aos="fade-up">
-      <div class="section-label justify-content-center">
-        Cursos Disponíveis
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-2" data-aos="fade-up">
+      <div>
+        <div class="section-label">Segmentos</div>
+        <h4 class="section-title mb-0">Filtre os cursos por segmento</h4>
       </div>
-      <h2 class="section-title">Confira nossa agenda completa</h2>
-      <p class="section-desc centered">
-        Cursos com metodologia prática, professores especializados e certificação reconhecida.
-      </p>
+      <?php if ($segmentoSelecionadoNome !== ''): ?>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= htmlspecialchars($nivelCursoUrl, ENT_QUOTES, 'UTF-8') ?>">
+          <i class="bi bi-x-circle me-1"></i>Limpar filtro
+        </a>
+      <?php endif; ?>
     </div>
 
+    <div class="d-flex flex-wrap gap-2 mb-2" data-aos="fade-up" data-aos-delay="100">
+      <a
+        class="btn btn-sm <?= $segmentoSelecionadoNome === '' ? 'btn-primary' : 'btn-outline-secondary' ?>"
+        href="<?= htmlspecialchars($nivelCursoUrl, ENT_QUOTES, 'UTF-8') ?>">
+        Todos os segmentos
+      </a>
+
+      <?php if (empty($segmentosMenu)): ?>
+        <span class="text-muted small align-self-center">Nenhum segmento encontrado para este nível.</span>
+      <?php else: ?>
+        <?php foreach ($segmentosMenu as $segmento): ?>
+          <a
+            class="btn btn-sm <?= !empty($segmento['active']) ? 'btn-primary' : 'btn-outline-secondary' ?>"
+            href="<?= htmlspecialchars((string) ($segmento['url'] ?? $nivelCursoUrl), ENT_QUOTES, 'UTF-8') ?>">
+            <?= htmlspecialchars((string) ($segmento['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+          </a>
+        <?php endforeach; ?>
+      <?php endif; ?>
+    </div>
+  </div>
+</section>
+
+<section class="pt-3 pb-5" id="lista-cursos">
+  <div class="container">
     <div class="row g-4">
-      <?php $cursosDisponiveis = $courses ?? []; ?>
       <?php if (empty($cursosDisponiveis)): ?>
         <div class="col-12 text-center text-muted" data-aos="fade-up" data-aos-delay="100">
-          Nenhum curso disponível no momento.
+          Nenhum curso encontrado para este filtro.
         </div>
       <?php else: ?>
         <?php foreach ($cursosDisponiveis as $index => $course): ?>
           <?php
-            $courseImage = trim((string) ($course['imagem_card'] ?? ''));
-            $courseName = htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8');
-            $courseLocation = htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8');
-            $courseHorario = htmlspecialchars((string) ($course['horario'] ?? '-'), ENT_QUOTES, 'UTF-8');
-            $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
-            $dateText = '-';
-            $rawDate = (string) ($course['data_curso'] ?? '');
-            $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
-            if ($dtDate instanceof \DateTime) {
-              $dateText = $dtDate->format('d/m/Y');
-            } elseif ($rawDate !== '') {
-              $dateText = $rawDate;
-            }
-            $delay = 100 + ($index % 3) * 100;
-            $isConfirmed = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S';
+          $courseImage = trim((string) ($course['imagem_card'] ?? ''));
+          $courseName = (string) ($course['nome'] ?? '-');
+          $courseLocation = (string) ($course['local_curso'] ?? '-');
+          $courseHorario = (string) ($course['horario'] ?? '-');
+          $courseDate = (string) ($course['date_text'] ?? '-');
+          $courseSegmento = trim((string) ($course['segmento_nome'] ?? ''));
+          $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
+          $delay = 100 + ($index % 3) * 100;
+          $isConfirmed = (string) ($course['confirmado'] ?? 'N') === 'S';
           ?>
           <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
             <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">
@@ -56,9 +96,8 @@
                 <?php if ($courseImage !== ''): ?>
                   <img
                     src="/<?= htmlspecialchars($courseImage, ENT_QUOTES, 'UTF-8') ?>"
-                    alt="Imagem do curso <?= $courseName ?>"
-                    style="width: 100%; height: 100%; object-fit: cover; display: block;"
-                  />
+                    alt="Imagem do curso <?= htmlspecialchars($courseName, ENT_QUOTES, 'UTF-8') ?>"
+                    style="width: 100%; height: 100%; object-fit: cover; display: block;" />
                 <?php else: ?>
                   <div class="course-img-placeholder" style="background: linear-gradient(135deg, #2c3e50, #0f172a);">
                     <i class="bi bi-journal-bookmark"></i>
@@ -69,16 +108,21 @@
                     <i class="bi bi-award-fill"></i> Confirmado
                   </span>
                 <?php endif; ?>
+                <?php if ($courseSegmento !== ''): ?>
+                  <span class="course-badge course-badge-segment">
+                    <?= htmlspecialchars($courseSegmento, ENT_QUOTES, 'UTF-8') ?>
+                  </span>
+                <?php endif; ?>
               </div>
               <div class="course-card-body">
-                <h3 class="course-card-title"><?= $courseName ?></h3>
-                <p class="course-card-desc"><?= $courseLocation ?></p>
+                <h3 class="course-card-title"><?= htmlspecialchars($courseName, ENT_QUOTES, 'UTF-8') ?></h3>
+                <p class="course-card-desc"><?= htmlspecialchars($courseLocation, ENT_QUOTES, 'UTF-8') ?></p>
                 <div class="course-meta">
                   <div class="course-meta-item">
-                    <i class="bi bi-calendar-event"></i> <?= htmlspecialchars($dateText, ENT_QUOTES, 'UTF-8') ?>
+                    <i class="bi bi-calendar-event"></i> <?= htmlspecialchars($courseDate, ENT_QUOTES, 'UTF-8') ?>
                   </div>
                   <div class="course-meta-item">
-                    <i class="bi bi-clock"></i> <?= $courseHorario ?>
+                    <i class="bi bi-clock"></i> <?= htmlspecialchars($courseHorario, ENT_QUOTES, 'UTF-8') ?>
                   </div>
                 </div>
                 <div class="course-card-footer">
@@ -87,8 +131,7 @@
                       class="course-btn"
                       href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>"
                       target="_blank"
-                      rel="noopener noreferrer"
-                    >
+                      rel="noopener noreferrer">
                       Inscreva-se
                     </a>
                   <?php else: ?>
@@ -129,8 +172,7 @@
               href="https://www.sympla.com.br/produtor/magdabrazilcursos"
               target="_blank"
               rel="noopener noreferrer"
-              class="btn-primary-custom"
-            >
+              class="btn-primary-custom">
               <i class="bi bi-box-arrow-up-right"></i> Acessar Página de Inscrições
             </a>
           </div>

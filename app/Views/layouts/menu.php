@@ -18,6 +18,12 @@
           '/eventos' => 'Eventos',
           '/parcerias' => 'Parcerias',
         ];
+
+        $niveisMenuDisponiveis = array_values(array_filter(
+          $niveisMenu ?? [],
+          static fn (array $nivel): bool => (int) ($nivel['ativo'] ?? 0) === 1
+        ));
+        $nivelSelecionadoId = (int) (($nivelSelecionado['id'] ?? 0) ?: 0);
         ?>
         <?php foreach ($menuItemsBeforeCursos as $path => $label): ?>
           <li class="nav-item">
@@ -29,9 +35,23 @@
             Cursos
           </a>
           <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="/cursos?tipo=graduacao">Graduação</a></li>
-            <li><a class="dropdown-item" href="/cursos?tipo=pos-graduacao">Pós Graduação</a></li>
-            <li><a class="dropdown-item" href="/cursos?tipo=cursos-livres">Cursos Livres</a></li>
+            <?php if (empty($niveisMenuDisponiveis)): ?>
+              <li><span class="dropdown-item-text text-muted">Nenhum nível disponível</span></li>
+            <?php else: ?>
+              <?php foreach ($niveisMenuDisponiveis as $nivel): ?>
+                <?php $nivelId = (int) ($nivel['id'] ?? 0); ?>
+                <?php $nivelSlug = trim((string) ($nivel['slug'] ?? '')); ?>
+                <?php $nivelUrl = $nivelSlug !== ''
+                  ? '/cursos?nivel=' . rawurlencode($nivelSlug)
+                  : '/cursos?nivel_id=' . $nivelId;
+                ?>
+                <li>
+                  <a class="dropdown-item <?= $nivelSelecionadoId === $nivelId ? 'active' : '' ?>" href="<?= htmlspecialchars($nivelUrl, ENT_QUOTES, 'UTF-8') ?>">
+                    <?= htmlspecialchars((string) ($nivel['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                  </a>
+                </li>
+              <?php endforeach; ?>
+            <?php endif; ?>
           </ul>
         </li>
         <?php foreach ($menuItemsAfterCursos as $path => $label): ?>

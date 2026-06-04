@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use App\Services\AdminService;
 use App\Support\Session;
 
 abstract class Controller
@@ -13,6 +14,8 @@ abstract class Controller
         $shared = [
             'authUser' => Session::get('user'),
             'flash' => Session::getFlash('flash'),
+            'niveisMenu' => (new AdminService())->niveis(),
+            'nivelSelecionado' => Session::get('nivel_selecionado'),
         ];
 
         View::render($view, array_merge($shared, $data), $layout);

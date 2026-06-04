@@ -105,6 +105,71 @@ final class AdminRepository
         return is_array($rows) ? $rows : [];
     }
 
+    public function listCursosByNivel(int $nivelId, int $limit = 200): array
+    {
+        return $this->listCursosByNivelAndSegmento($nivelId, null, $limit);
+    }
+
+    public function listCursosByNivelAndSegmento(int $nivelId, ?int $segmentoId = null, int $limit = 200): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        if ($nivelId <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado,
+                       c.segmento AS segmento_id, s.nome AS segmento_nome
+                FROM cursos_iesb c
+                LEFT JOIN segmento s ON s.id = c.segmento
+                WHERE c.ativo = "S" AND c.nivel = :nivel_id';
+
+        if ($segmentoId !== null && $segmentoId > 0) {
+            $sql .= ' AND c.segmento = :segmento_id';
+        }
+
+        $sql .= ' ORDER BY c.curso_calendario ASC, c.id DESC LIMIT :limit';
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nivel_id', $nivelId, PDO::PARAM_INT);
+        if ($segmentoId !== null && $segmentoId > 0) {
+            $stmt->bindValue(':segmento_id', $segmentoId, PDO::PARAM_INT);
+        }
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function listSegmentosByNivel(int $nivelId): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        if ($nivelId <= 0) {
+            return [];
+        }
+
+        $sql = 'SELECT DISTINCT s.id, s.nome, s.ativo
+                FROM cursos_iesb c
+                INNER JOIN segmento s ON s.id = c.segmento
+                WHERE c.ativo = "S" AND s.ativo = "S" AND c.nivel = :nivel_id
+                ORDER BY s.nome ASC';
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nivel_id', $nivelId, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
     public function findCursoById(int $id): ?array
     {
         $pdo = Database::connection();
@@ -310,7 +375,7 @@ final class AdminRepository
                 return [];
             }
 
-            $sql = 'SELECT id, nome, ativo, apresentacao FROM nivel ORDER BY nome ASC';
+            $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM nivel ORDER BY nome ASC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -327,9 +392,30 @@ final class AdminRepository
             return null;
         }
 
-        $sql = 'SELECT id, nome, ativo, apresentacao FROM nivel WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM nivel WHERE id = :id LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function findNivelBySlug(string $slug): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $slug = trim($slug);
+        if ($slug === '') {
+            return null;
+        }
+
+        $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM nivel WHERE slug = :slug LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':slug', $slug);
         $stmt->execute();
         $row = $stmt->fetch();
 
