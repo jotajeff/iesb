@@ -70,6 +70,10 @@ final class AdminController extends Controller
         if ($order !== 'asc') {
             $order = 'desc';
         }
+        $nivelSelecionado = (int) ($_GET['nivel'] ?? 0);
+        if ($nivelSelecionado < 0) {
+            $nivelSelecionado = 0;
+        }
 
         try {
             $this->admin->sincronizarSlugsCursos();
@@ -80,8 +84,10 @@ final class AdminController extends Controller
         $this->render('pages/admin/cursos/index', [
             'title' => 'Cursos IESB',
             'currentRoute' => '/admin/cursos',
-            'courses' => $this->admin->cursos($order),
+            'courses' => $this->admin->cursos($order, 200, $nivelSelecionado),
             'order' => $order,
+            'niveis' => $this->admin->niveis(),
+            'nivelSelecionado' => $nivelSelecionado,
         ], 'admin');
     }
 
@@ -766,6 +772,18 @@ final class AdminController extends Controller
         }
 
         [$tarefas, $authUser, $isAdmin] = $this->prepareTarefasData();
+        $situacaoFiltro = strtolower(trim((string) ($_GET['situacao'] ?? '')));
+        $situacoesValidas = array_keys($this->taskSituations());
+        if ($situacaoFiltro !== '' && !in_array($situacaoFiltro, $situacoesValidas, true)) {
+            $situacaoFiltro = '';
+        }
+
+        if ($situacaoFiltro !== '') {
+            $tarefas = array_values(array_filter(
+                $tarefas,
+                static fn (array $tarefa): bool => strtolower((string) ($tarefa['situacao'] ?? '')) === $situacaoFiltro
+            ));
+        }
 
         $this->render('pages/admin/tarefas/lista', [
             'title' => 'Lista de Tarefas',
@@ -773,6 +791,8 @@ final class AdminController extends Controller
             'tarefas' => $tarefas,
             'isAdmin' => $isAdmin,
             'authUser' => $authUser,
+            'situacoes' => $this->taskSituations(),
+            'filtroSituacao' => $situacaoFiltro,
         ], 'admin');
     }
 

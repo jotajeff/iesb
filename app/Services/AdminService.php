@@ -122,11 +122,12 @@ final class AdminService
         ]);
     }
 
-    public function cursos(string $order = 'desc', int $limit = 200): array
+    public function cursos(string $order = 'desc', int $limit = 200, int $nivelId = 0): array
     {
+        $nivelFilter = $nivelId > 0 ? $nivelId : null;
         return array_map(
             fn (array $course): array => $this->normalizeCursoSlug($course),
-            $this->repository->listCursos($limit, $order)
+            $this->repository->listCursos($limit, $order, $nivelFilter)
         );
     }
 

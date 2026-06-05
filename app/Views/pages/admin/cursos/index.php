@@ -8,6 +8,22 @@
   }
 
   $coursesView = is_array($courses ?? null) ? $courses : [];
+  $niveisLista = array_filter(is_array($niveis ?? null) ? $niveis : [], static fn ($n) => is_array($n));
+  $currentNivelId = (int) ($nivelSelecionado ?? ($_GET['nivel'] ?? 0));
+  if ($currentNivelId < 0) {
+      $currentNivelId = 0;
+  }
+  $nivelLabels = [];
+  foreach ($niveisLista as $nivelItem) {
+      $nivelId = (int) ($nivelItem['id'] ?? 0);
+      if ($nivelId <= 0) {
+          continue;
+      }
+      $nivelLabels[$nivelId] = (string) ($nivelItem['nome'] ?? ('Nível #' . $nivelId));
+  }
+  $currentNivelLabel = $currentNivelId > 0 && isset($nivelLabels[$currentNivelId])
+      ? $nivelLabels[$currentNivelId]
+      : 'Todos os níveis';
 
   if ($currentAtivo !== '') {
       $coursesView = array_values(array_filter($coursesView, static function ($course) use ($currentAtivo): bool {
@@ -57,9 +73,9 @@
           <span class="text-muted small">Ordenar por ID</span>
            <div class="btn-group" role="group" aria-label="Ordenar cursos por ID">
              <a
-               class="btn btn-outline-secondary btn-sm<?= $currentOrder === 'desc' ? ' active' : '' ?>"
-               title="Mais novos primeiro (clique para ordenar decrescente)"
-               href="<?= htmlspecialchars($buildUrl(['order' => 'desc']), ENT_QUOTES, 'UTF-8') ?>"
+                class="btn btn-outline-secondary btn-sm<?= $currentOrder === 'desc' ? ' active' : '' ?>"
+                title="Mais novos primeiro (clique para ordenar decrescente)"
+                href="<?= htmlspecialchars($buildUrl(['order' => 'desc']), ENT_QUOTES, 'UTF-8') ?>"
              >
                <i class="bi bi-arrow-down"></i>
              </a>
@@ -88,6 +104,28 @@
             >
               Ativo N
             </a>
+          </div>
+
+          <span class="text-muted small ms-2">Nível</span>
+          <div class="dropdown">
+            <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <?= htmlspecialchars($currentNivelLabel, ENT_QUOTES, 'UTF-8') ?>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li>
+                <a class="dropdown-item<?= $currentNivelId === 0 ? ' active' : '' ?>" href="<?= htmlspecialchars($buildUrl(['nivel' => null]), ENT_QUOTES, 'UTF-8') ?>">
+                  Todos os níveis
+                </a>
+              </li>
+              <?php foreach ($niveisLista as $nivel): ?>
+                <?php $nivelId = (int) ($nivel['id'] ?? 0); if ($nivelId <= 0) { continue; } ?>
+                <li>
+                  <a class="dropdown-item<?= $nivelId === $currentNivelId ? ' active' : '' ?>" href="<?= htmlspecialchars($buildUrl(['nivel' => $nivelId]), ENT_QUOTES, 'UTF-8') ?>">
+                    <?= htmlspecialchars((string) ($nivel['nome'] ?? ('Nível #' . $nivelId)), ENT_QUOTES, 'UTF-8') ?>
+                  </a>
+                </li>
+              <?php endforeach; ?>
+            </ul>
           </div>
 
           <a class="btn btn-primary btn-sm" href="/admin/cursos/novo"><i class="bi bi-plus-circle me-1"></i>Novo curso</a>

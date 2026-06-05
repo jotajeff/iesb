@@ -81,7 +81,7 @@ final class AdminRepository
         }
     }
 
-    public function listCursos(int $limit = 200, string $order = 'desc'): array
+    public function listCursos(int $limit = 200, string $order = 'desc', ?int $nivelId = null): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -89,6 +89,7 @@ final class AdminRepository
         }
 
         $direction = strtoupper($order) === 'asc' ? 'ASC' : 'DESC';
+        $nivelFilter = ($nivelId !== null && $nivelId > 0) ? (int) $nivelId : null;
 
         try {
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso,
@@ -97,11 +98,18 @@ final class AdminRepository
                  FROM cursos_iesb c
                  LEFT JOIN modalidade m ON m.id = c.modalidade
                  LEFT JOIN segmento s ON s.id = c.segmento
-                 LEFT JOIN nivel n ON n.id = c.nivel
-                 ORDER BY c.id ' . $direction . '
-                 LIMIT :limit';
-        
+                 LEFT JOIN nivel n ON n.id = c.nivel';
+
+            if ($nivelFilter !== null) {
+                $sql .= ' WHERE c.nivel = :nivel_id';
+            }
+
+            $sql .= ' ORDER BY c.id ' . $direction . ' LIMIT :limit';
+
             $stmt = $pdo->prepare($sql);
+            if ($nivelFilter !== null) {
+                $stmt->bindValue(':nivel_id', $nivelFilter, PDO::PARAM_INT);
+            }
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();
 

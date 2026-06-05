@@ -1,6 +1,8 @@
 <?php
 $tarefas = $tarefas ?? [];
 $isAdmin = (bool) ($isAdmin ?? false);
+$situacoes = $situacoes ?? [];
+$filtroSituacao = (string) ($filtroSituacao ?? '');
 ?>
 <section class="container py-4">
   <div class="bg-white border rounded-3 p-4 shadow-sm">
@@ -25,6 +27,23 @@ $isAdmin = (bool) ($isAdmin ?? false);
         <i class="bi bi-info-circle me-1"></i>Você está visualizando apenas as tarefas atribuídas ao seu usuário.
       </div>
     <?php endif; ?>
+
+    <form method="get" action="/admin/tarefas/lista" class="row g-3 mb-3">
+      <div class="col-12 col-md-4 col-lg-3">
+        <label for="situacaoSelect" class="form-label small text-uppercase text-muted">Filtrar por situação</label>
+        <div class="input-group">
+          <select class="form-select" id="situacaoSelect" name="situacao">
+            <option value="" <?= $filtroSituacao === '' ? 'selected' : '' ?>>Todas</option>
+            <?php foreach ($situacoes as $slug => $label): ?>
+              <option value="<?= htmlspecialchars($slug, ENT_QUOTES, 'UTF-8') ?>" <?= $filtroSituacao === $slug ? 'selected' : '' ?>>
+                <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
+              </option>
+            <?php endforeach; ?>
+          </select>
+          <button class="btn btn-outline-primary" type="submit"><i class="bi bi-filter"></i></button>
+        </div>
+      </div>
+    </form>
 
     <div class="table-responsive">
       <table class="table table-hover align-middle">
