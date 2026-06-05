@@ -23,6 +23,7 @@ return static function (Router $router): void {
     $router->get('/admin/dashboard', [AdminController::class, 'dashboard']);
     $router->get('/admin/cursos', [AdminController::class, 'cursos']);
     $router->get('/admin/tarefas', [AdminController::class, 'tarefas']);
+    $router->get('/admin/tarefas/lista', [AdminController::class, 'listaTarefas']);
     $router->get('/admin/tarefas/novo', [AdminController::class, 'novaTarefaForm']);
     $router->post('/admin/tarefas/salvar', [AdminController::class, 'createTarefa']);
     $router->get('/admin/tarefas/show', [AdminController::class, 'showTarefa']);

@@ -21,16 +21,26 @@
         <input class="form-control" type="password" name="senha" placeholder="Deixe em branco para manter">
         <small class="text-muted">Preencha apenas se quiser alterar.</small>
       </div>
+      <?php $tipoAtual = (string) ($usuario['tipo'] ?? 'operador'); ?>
       <div class="col-md-4">
         <label class="form-label">Tipo</label>
         <?php if (!empty($isAdmin)): ?>
           <select class="form-select" name="tipo">
-            <option value="admin" <?= ($usuario['tipo'] ?? '') === 'admin' ? 'selected' : '' ?>>Admin</option>
-            <option value="operador" <?= ($usuario['tipo'] ?? '') === 'operador' ? 'selected' : '' ?>>Operador</option>
+            <option value="admin" <?= $tipoAtual === 'admin' ? 'selected' : '' ?>>Admin</option>
+            <option value="operador" <?= $tipoAtual === 'operador' ? 'selected' : '' ?>>Operador</option>
+            <option value="professor" <?= $tipoAtual === 'professor' ? 'selected' : '' ?>>Professor</option>
           </select>
         <?php else: ?>
-          <input type="text" class="form-control" value="<?= ($usuario['tipo'] ?? '') === 'admin' ? 'Admin' : 'Operador' ?>" readonly disabled>
-          <input type="hidden" name="tipo" value="<?= htmlspecialchars((string) ($usuario['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+          <?php
+            $tipoLabel = match ($tipoAtual) {
+              'admin' => 'Admin',
+              'operador' => 'Operador',
+              'professor' => 'Professor',
+              default => ucfirst($tipoAtual ?: 'Operador'),
+            };
+          ?>
+          <input type="text" class="form-control" value="<?= $tipoLabel ?>" readonly disabled>
+          <input type="hidden" name="tipo" value="<?= htmlspecialchars($tipoAtual, ENT_QUOTES, 'UTF-8') ?>">
         <?php endif; ?>
       </div>
       <div class="col-md-4">

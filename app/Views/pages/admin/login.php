@@ -4,7 +4,13 @@
     <div class="row justify-content-center">
       <div class="col-md-6 col-lg-5" data-aos="fade-up">
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--card-shadow);">
-          <h2 class="mb-3">Login Admin</h2>
+          <h2 class="mb-2">Login Administrativo</h2>
+          <p class="text-muted mb-3">Use suas credenciais de <strong>Admin</strong>, <strong>Operador</strong> ou <strong>Professor</strong> para acessar o painel.</p>
+          <div class="d-flex flex-wrap gap-2 mb-4">
+            <span class="badge bg-dark">Admin</span>
+            <span class="badge bg-warning text-dark">Operador</span>
+            <span class="badge bg-primary">Professor</span>
+          </div>
 
           <form method="post" action="/admin/login" class="d-grid gap-3">
             <input type="email" name="email" class="form-control-custom" placeholder="E-mail" required>
@@ -14,7 +20,7 @@
                 <i class="bi bi-eye" id="olhoIcone"></i>
               </button>
             </div>
-            <button class="btn-primary-custom justify-content-center" type="submit">Entrar no Admin</button>
+            <button class="btn-primary-custom justify-content-center" type="submit">Entrar no Painel</button>
           </form>
           <script>
           function alternarSenha() {

@@ -1,9 +1,15 @@
 <section class="container py-4">
     <div class="bg-white border rounded-3 p-4 shadow-sm">
+      <?php
+        $currentRole = (string) ($authUser['role'] ?? '');
+        $currentUserId = (int) ($authUser['id'] ?? 0);
+        $isAdmin = $currentRole === 'admin';
+        $canCreateUser = $isAdmin || $currentRole === 'operador';
+      ?>
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-people me-2"></i>Usuários IESB</h4>
         <div class="d-flex flex-wrap align-items-center gap-2">
-          <?php if (($authUser['role'] ?? '') === 'admin'): ?>
+          <?php if ($canCreateUser): ?>
             <a class="btn btn-primary btn-sm" href="/admin/usuarios/novo"><i class="bi bi-plus-circle me-1"></i>Novo usuário</a>
           <?php endif; ?>
         </div>
@@ -23,10 +29,6 @@
         </thead>
         <tbody>
           <?php
-          $currentRole = (string) ($authUser['role'] ?? '');
-          $currentUserId = (int) ($authUser['id'] ?? 0);
-          $isAdmin = $currentRole === 'admin';
-
           $filtered = $isAdmin
               ? ($usuarios ?? [])
               : array_filter($usuarios ?? [], fn($u) => (int) ($u['id'] ?? 0) === $currentUserId);
@@ -48,6 +50,8 @@
                   <span class="badge bg-dark">Admin</span>
                 <?php elseif ($tipo === 'operador'): ?>
                   <span class="badge bg-warning text-dark">Operador</span>
+                <?php elseif ($tipo === 'professor'): ?>
+                  <span class="badge bg-primary">Professor</span>
                 <?php else: ?>
                   <span class="badge bg-info text-dark">Aluno</span>
                 <?php endif; ?>

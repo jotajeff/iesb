@@ -28,7 +28,7 @@ final class AdminController extends Controller
     public function dashboard(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar o painel.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar o painel.');
             $this->redirect('/admin/login');
         }
 
@@ -48,7 +48,7 @@ final class AdminController extends Controller
     public function logs(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar os logs.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os logs.');
             $this->redirect('/admin/login');
         }
 
@@ -62,7 +62,7 @@ final class AdminController extends Controller
     public function cursos(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar os cursos.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os cursos.');
             $this->redirect('/admin/login');
         }
 
@@ -309,7 +309,7 @@ final class AdminController extends Controller
     public function usuarios(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar os usuários.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os usuários.');
             $this->redirect('/admin/login');
         }
 
@@ -340,6 +340,11 @@ final class AdminController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $authUser = $this->authUser();
+        $currentRole = (string) ($authUser['role'] ?? $authUser['type'] ?? '');
+        $isAdmin = $currentRole === 'admin';
+        $isOperador = $currentRole === 'operador';
+
         $nome = (string) $this->input('nome', '');
         $email = (string) $this->input('email', '');
         $senha = (string) $this->input('senha', '');
@@ -352,9 +357,13 @@ final class AdminController extends Controller
             return;
         }
 
-        $tiposValidos = ['admin', 'operador'];
+        $tiposValidos = ['admin', 'operador', 'professor'];
         if (!in_array($tipo, $tiposValidos, true)) {
-            $tipo = 'aluno';
+            $tipo = $isOperador ? 'professor' : 'operador';
+        }
+
+        if ($isOperador) {
+            $tipo = 'professor';
         }
 
         $usuarioId = $this->admin->criarUsuario($nome, $email, $senha, $tipo, $ativo);
@@ -437,7 +446,7 @@ final class AdminController extends Controller
                 $tipo = (string) ($usuario['tipo'] ?? '');
             }
 
-            $tiposValidos = ['admin', 'operador'];
+            $tiposValidos = ['admin', 'operador', 'professor'];
             if (!in_array($tipo, $tiposValidos, true)) {
                 $tipo = (string) ($usuario['tipo'] ?? 'operador');
             }
@@ -721,22 +730,11 @@ final class AdminController extends Controller
     public function tarefas(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as tarefas.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as tarefas.');
             $this->redirect('/admin/login');
         }
 
-        $tarefas = $this->admin->tarefas();
-        $authUser = $this->authUser();
-        $isAdmin = (string) ($authUser['role'] ?? $authUser['type'] ?? '') === 'admin';
-        $currentUserId = (int) ($authUser['id'] ?? 0);
-
-        if (!$isAdmin && $currentUserId > 0) {
-            $tarefas = array_values(array_filter(
-                $tarefas,
-                static fn (array $tarefa) => (int) ($tarefa['responsavel_id'] ?? 0) === $currentUserId
-            ));
-        }
-
+        [$tarefas, $authUser, $isAdmin] = $this->prepareTarefasData();
         $colunas = [
             'tarefa' => [],
             'execucao' => [],
@@ -745,12 +743,6 @@ final class AdminController extends Controller
 
         foreach ($tarefas as $tarefa) {
             $coluna = $this->taskColumnForStatus((string) ($tarefa['situacao'] ?? 'criada'));
-            $tarefa['situacao_label'] = $this->taskStatusLabel((string) ($tarefa['situacao'] ?? 'criada'));
-            $tarefa['situacao_class'] = $this->taskStatusClass((string) ($tarefa['situacao'] ?? 'criada'));
-            $prioridade = (int) ($tarefa['prioridade'] ?? 1);
-            $tarefa['prioridade_label'] = $this->taskPriorityLabel($prioridade);
-            $tarefa['prioridade_class'] = $this->taskPriorityClass($prioridade);
-            $tarefa['comentarios_total'] = (int) ($tarefa['comentarios_total'] ?? 0);
             $tarefa['coluna'] = $coluna;
             $colunas[$coluna][] = $tarefa;
         }
@@ -761,6 +753,24 @@ final class AdminController extends Controller
             'colunas' => $colunas,
             'setores' => $this->admin->setores(),
             'usuarios' => $this->admin->usuarios(1000),
+            'isAdmin' => $isAdmin,
+            'authUser' => $authUser,
+        ], 'admin');
+    }
+
+    public function listaTarefas(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as tarefas.');
+            $this->redirect('/admin/login');
+        }
+
+        [$tarefas, $authUser, $isAdmin] = $this->prepareTarefasData();
+
+        $this->render('pages/admin/tarefas/lista', [
+            'title' => 'Lista de Tarefas',
+            'currentRoute' => '/admin/tarefas',
+            'tarefas' => $tarefas,
             'isAdmin' => $isAdmin,
             'authUser' => $authUser,
         ], 'admin');
@@ -872,7 +882,7 @@ final class AdminController extends Controller
     public function showTarefa(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as tarefas.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as tarefas.');
             $this->redirect('/admin/login');
         }
 
@@ -928,12 +938,43 @@ final class AdminController extends Controller
         $this->redirect('/admin/tarefas/show?id=' . $tarefaId);
     }
 
+    /**
+     * @return array{0: array<int, array>, 1: array, 2: bool}
+     */
+    private function prepareTarefasData(): array
+    {
+        $tarefas = $this->admin->tarefas();
+        $authUser = $this->authUser();
+        $isAdmin = (string) ($authUser['role'] ?? $authUser['type'] ?? '') === 'admin';
+        $currentUserId = (int) ($authUser['id'] ?? 0);
+
+        if (!$isAdmin && $currentUserId > 0) {
+            $tarefas = array_values(array_filter(
+                $tarefas,
+                static fn (array $tarefa): bool => (int) ($tarefa['responsavel_id'] ?? 0) === $currentUserId
+            ));
+        }
+
+        $tarefas = array_map(function (array $tarefa): array {
+            $situacao = (string) ($tarefa['situacao'] ?? 'criada');
+            $prioridade = (int) ($tarefa['prioridade'] ?? 1);
+            $tarefa['situacao_label'] = $this->taskStatusLabel($situacao);
+            $tarefa['situacao_class'] = $this->taskStatusClass($situacao);
+            $tarefa['prioridade_label'] = $this->taskPriorityLabel($prioridade);
+            $tarefa['prioridade_class'] = $this->taskPriorityClass($prioridade);
+            $tarefa['comentarios_total'] = (int) ($tarefa['comentarios_total'] ?? 0);
+            return $tarefa;
+        }, $tarefas);
+
+        return [$tarefas, $authUser, $isAdmin];
+    }
+
     // ==================== VISITAS (STAFF) ====================
 
     public function visitas(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as visitas.');
             $this->redirect('/admin/login');
         }
 
@@ -947,7 +988,7 @@ final class AdminController extends Controller
     public function visitasMensal(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as visitas.');
             $this->redirect('/admin/login');
         }
 
@@ -964,7 +1005,7 @@ final class AdminController extends Controller
     public function visitasAnalytics(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as visitas.');
             $this->redirect('/admin/login');
         }
 
@@ -981,7 +1022,7 @@ final class AdminController extends Controller
     public function visitasPaginas(): void
     {
         if (!$this->auth->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as visitas.');
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as visitas.');
             $this->redirect('/admin/login');
         }
 

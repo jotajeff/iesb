@@ -31,21 +31,23 @@ final class AuthController extends Controller
         $password = (string) $this->input('password', '');
 
         $user = $this->auth->authenticate($email, $password);
+        $role = (string) ($user['role'] ?? '');
+        $staffRoles = ['admin', 'operador', 'professor'];
 
-        if ($user !== null) {
+        if ($user !== null && in_array($role, $staffRoles, true)) {
             Session::set('user', [
                 'id'   => (int) $user['id'],
                 'name' => $user['name'],
                 'email'=> $user['email'],
-                'role' => $user['role'],
-                'type' => $user['role'],
+                'role' => $role,
+                'type' => $role,
             ]);
 
             $this->admin->log('login', 'admin', 0, "Login realizado: $email");
             $this->redirect('/admin');
         }
 
-        Session::setFlash('flash', 'Credenciais inválidas.');
+        Session::setFlash('flash', 'Credenciais inválidas ou perfil sem acesso.');
         $this->redirect('/admin/login');
     }
 

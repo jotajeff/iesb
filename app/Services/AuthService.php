@@ -66,9 +66,14 @@ final class AuthService
         return $this->checkRole('operador');
     }
 
+    public function isProfessor(): bool
+    {
+        return $this->checkRole('professor');
+    }
+
     public function isStaff(): bool
     {
-        return $this->isAdmin() || $this->isOperador();
+        return $this->isAdmin() || $this->isOperador() || $this->isProfessor();
     }
 
     /**

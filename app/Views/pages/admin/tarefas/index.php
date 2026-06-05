@@ -43,6 +43,9 @@ $isAdmin = (bool) ($isAdmin ?? ((string) ($authUser['role'] ?? $authUser['type']
         <a class="btn btn-outline-secondary btn-sm" href="/admin/tarefas">
           <i class="bi bi-arrow-clockwise me-1"></i>Atualizar lista
         </a>
+        <a class="btn btn-outline-primary btn-sm" href="/admin/tarefas/lista">
+          <i class="bi bi-list-ul me-1"></i>Ver como lista
+        </a>
         <a class="btn btn-primary btn-sm" href="/admin/tarefas/novo">
           <i class="bi bi-plus-circle me-1"></i>Nova tarefa
         </a>
