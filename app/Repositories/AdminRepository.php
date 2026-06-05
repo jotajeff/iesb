@@ -27,6 +27,60 @@ final class AdminRepository
         ];
     }
 
+    public function dashboardTaskIndicators(int $userId, bool $isAdmin): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [
+                'tarefas_criadas' => 0,
+                'tarefas_execucao' => 0,
+                'tarefas_finalizadas' => 0,
+            ];
+        }
+
+        try {
+            $sql = 'SELECT
+                        COALESCE(SUM(CASE WHEN t.situacao = "criada" THEN 1 ELSE 0 END), 0) AS tarefas_criadas,
+                        COALESCE(SUM(CASE WHEN t.situacao IN ("execucao", "revisao") THEN 1 ELSE 0 END), 0) AS tarefas_execucao,
+                        COALESCE(SUM(CASE WHEN t.situacao = "finalizada" THEN 1 ELSE 0 END), 0) AS tarefas_finalizadas
+                    FROM tarefas t';
+
+            $params = [];
+            if (!$isAdmin && $userId > 0) {
+                $sql .= ' WHERE t.responsavel = :responsavel';
+                $params[':responsavel'] = $userId;
+            }
+
+            $stmt = $pdo->prepare($sql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            }
+            $stmt->execute();
+
+            $row = $stmt->fetch();
+            if (!is_array($row)) {
+                return [
+                    'tarefas_criadas' => 0,
+                    'tarefas_execucao' => 0,
+                    'tarefas_finalizadas' => 0,
+                ];
+            }
+
+            return [
+                'tarefas_criadas' => (int) ($row['tarefas_criadas'] ?? 0),
+                'tarefas_execucao' => (int) ($row['tarefas_execucao'] ?? 0),
+                'tarefas_finalizadas' => (int) ($row['tarefas_finalizadas'] ?? 0),
+            ];
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro em dashboardTaskIndicators: ' . $e->getMessage());
+            return [
+                'tarefas_criadas' => 0,
+                'tarefas_execucao' => 0,
+                'tarefas_finalizadas' => 0,
+            ];
+        }
+    }
+
     public function listCursos(int $limit = 200, string $order = 'desc'): array
     {
         $pdo = Database::connection();
@@ -344,27 +398,32 @@ final class AdminRepository
             return 0;
         }
 
-        $id = (int) ($payload['id'] ?? 0);
-        $nome = trim((string) ($payload['nome'] ?? ''));
-        $ativo = strtoupper(trim((string) ($payload['ativo'] ?? 'S'))) === 'N' ? 'N' : 'S';
+        try {
+            $id = (int) ($payload['id'] ?? 0);
+            $nome = trim((string) ($payload['nome'] ?? ''));
+            $ativo = strtoupper(trim((string) ($payload['ativo'] ?? 'S'))) === 'N' ? 'N' : 'S';
 
-        if ($id > 0) {
-            $sql = 'UPDATE segmento SET nome = :nome, ativo = :ativo WHERE id = :id';
+            if ($id > 0) {
+                $sql = 'UPDATE segmento SET nome = :nome, ativo = :ativo WHERE id = :id';
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+                $stmt->bindValue(':nome', $nome);
+                $stmt->bindValue(':ativo', $ativo);
+                $stmt->execute();
+                return $id;
+            }
+
+            $sql = 'INSERT INTO segmento (nome, ativo) VALUES (:nome, :ativo)';
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->bindValue(':nome', $nome);
             $stmt->bindValue(':ativo', $ativo);
             $stmt->execute();
-            return $id;
+
+            return (int) $pdo->lastInsertId();
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro ao salvar segmento: ' . $e->getMessage());
+            return 0;
         }
-
-        $sql = 'INSERT INTO segmento (nome, ativo) VALUES (:nome, :ativo)';
-        $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':nome', $nome);
-        $stmt->bindValue(':ativo', $ativo);
-        $stmt->execute();
-
-        return (int) $pdo->lastInsertId();
     }
 
     public function listNiveis(): array
@@ -748,6 +807,275 @@ final class AdminRepository
         $stmt->execute();
 
         return (int) $pdo->lastInsertId();
+    }
+
+    public function listSetores(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT id, setor FROM setores ORDER BY setor ASC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro ao carregar setores: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function findSetorById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $sql = 'SELECT id, setor FROM setores WHERE id = :id LIMIT 1';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro ao buscar setor: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function saveSetor(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            $id = (int) ($payload['id'] ?? 0);
+            $setor = trim((string) ($payload['setor'] ?? ''));
+
+            if ($id > 0) {
+                $sql = 'UPDATE setores SET setor = :setor WHERE id = :id';
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+                $stmt->bindValue(':setor', $setor);
+                $stmt->execute();
+                return $id;
+            }
+
+            $nextId = (int) ($pdo->query('SELECT COALESCE(MAX(id), 0) + 1 FROM setores')->fetchColumn() ?: 1);
+
+            $sql = 'INSERT INTO setores (id, setor) VALUES (:id, :setor)';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $nextId, PDO::PARAM_INT);
+            $stmt->bindValue(':setor', $setor);
+            $stmt->execute();
+
+            return $nextId;
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro ao salvar setor: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function listTarefas(int $limit = 300): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            return $this->fetchTarefas($pdo, $limit, true);
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro ao listar tarefas com comentários: ' . $e->getMessage());
+
+            try {
+                return $this->fetchTarefas($pdo, $limit, false);
+            } catch (\Throwable $fallbackError) {
+                error_log('[TAREFAS] Erro no fallback da listagem: ' . $fallbackError->getMessage());
+                return [];
+            }
+        }
+    }
+
+    public function findTarefaById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            return $this->fetchTarefaById($pdo, $id, true);
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro ao buscar tarefa com comentários: ' . $e->getMessage());
+
+            try {
+                return $this->fetchTarefaById($pdo, $id, false);
+            } catch (\Throwable $fallbackError) {
+                error_log('[TAREFAS] Erro no fallback da busca: ' . $fallbackError->getMessage());
+                return null;
+            }
+        }
+    }
+
+    public function createTarefa(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            $sql = 'INSERT INTO tarefas (setor, tarefa, prioridade, criado_por, responsavel, situacao)
+                    VALUES (:setor, :tarefa, :prioridade, :criado_por, :responsavel, :situacao)';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':setor', (int) $payload['setor'], PDO::PARAM_INT);
+            $stmt->bindValue(':tarefa', (string) $payload['tarefa']);
+            $stmt->bindValue(':prioridade', (int) ($payload['prioridade'] ?? 1), PDO::PARAM_INT);
+            $stmt->bindValue(':criado_por', (int) $payload['criado_por'], PDO::PARAM_INT);
+            $responsavel = isset($payload['responsavel']) && (int) $payload['responsavel'] > 0 ? (int) $payload['responsavel'] : null;
+            $stmt->bindValue(':responsavel', $responsavel, $responsavel !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmt->bindValue(':situacao', (string) $payload['situacao']);
+            $stmt->execute();
+
+            return (int) $pdo->lastInsertId();
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro ao criar tarefa: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function updateTarefa(int $id, array $payload): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        try {
+            $sql = 'UPDATE tarefas
+                    SET setor = :setor,
+                        tarefa = :tarefa,
+                        prioridade = :prioridade,
+                        responsavel = :responsavel,
+                        situacao = :situacao
+                    WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':setor', (int) $payload['setor'], PDO::PARAM_INT);
+            $stmt->bindValue(':tarefa', (string) $payload['tarefa']);
+            $stmt->bindValue(':prioridade', (int) ($payload['prioridade'] ?? 1), PDO::PARAM_INT);
+            $responsavel = isset($payload['responsavel']) && (int) $payload['responsavel'] > 0 ? (int) $payload['responsavel'] : null;
+            $stmt->bindValue(':responsavel', $responsavel, $responsavel !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmt->bindValue(':situacao', (string) $payload['situacao']);
+            $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[TAREFAS] Erro ao atualizar tarefa: ' . $e->getMessage());
+        }
+    }
+
+    private function fetchTarefas(PDO $pdo, int $limit, bool $withComments): array
+    {
+        $sql = 'SELECT t.id,
+                       t.setor AS setor_id,
+                       s.setor AS setor_nome,
+                       t.tarefa,
+                       t.prioridade,
+                       t.criado_em,
+                       t.criado_por AS criado_por_id,
+                       uc.nome AS criado_por_nome,
+                       t.responsavel AS responsavel_id,
+                       ur.nome AS responsavel_nome,
+                       t.situacao';
+
+        if ($withComments) {
+            $sql .= ',
+                       COALESCE(com.total_comentarios, 0) AS comentarios_total';
+        } else {
+            $sql .= ',
+                       0 AS comentarios_total';
+        }
+
+        $sql .= ' FROM tarefas t
+                  LEFT JOIN setores s ON s.id = t.setor
+                  LEFT JOIN usuarios uc ON uc.id = t.criado_por
+                  LEFT JOIN usuarios ur ON ur.id = t.responsavel';
+
+        if ($withComments) {
+            $sql .= '
+                  LEFT JOIN (
+                      SELECT id_fg, COUNT(*) AS total_comentarios
+                      FROM comentarios
+                      WHERE tabela_fg = "tarefas"
+                      GROUP BY id_fg
+                  ) com ON com.id_fg = t.id';
+        }
+
+        $sql .= ' ORDER BY t.id DESC
+                  LIMIT :limit';
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    private function fetchTarefaById(PDO $pdo, int $id, bool $withComments): ?array
+    {
+        $sql = 'SELECT t.id,
+                       t.setor AS setor_id,
+                       s.setor AS setor_nome,
+                       t.tarefa,
+                       t.prioridade,
+                       t.criado_em,
+                       t.criado_por AS criado_por_id,
+                       uc.nome AS criado_por_nome,
+                       t.responsavel AS responsavel_id,
+                       ur.nome AS responsavel_nome,
+                       t.situacao';
+
+        if ($withComments) {
+            $sql .= ',
+                       COALESCE(com.total_comentarios, 0) AS comentarios_total';
+        } else {
+            $sql .= ',
+                       0 AS comentarios_total';
+        }
+
+        $sql .= ' FROM tarefas t
+                  LEFT JOIN setores s ON s.id = t.setor
+                  LEFT JOIN usuarios uc ON uc.id = t.criado_por
+                  LEFT JOIN usuarios ur ON ur.id = t.responsavel';
+
+        if ($withComments) {
+            $sql .= '
+                  LEFT JOIN (
+                      SELECT id_fg, COUNT(*) AS total_comentarios
+                      FROM comentarios
+                      WHERE tabela_fg = "tarefas"
+                      GROUP BY id_fg
+                  ) com ON com.id_fg = t.id';
+        }
+
+        $sql .= ' WHERE t.id = :id
+                  LIMIT 1';
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $row = $stmt->fetch();
+        return is_array($row) ? $row : null;
     }
 
     public function registrarLog(int $usuarioId, string $perfil, string $acao, string $entidade, int $entidadeId, string $descricao, bool $sucesso = true): void

@@ -22,6 +22,13 @@ return static function (Router $router): void {
     $router->get('/admin', [AdminController::class, 'dashboard']);
     $router->get('/admin/dashboard', [AdminController::class, 'dashboard']);
     $router->get('/admin/cursos', [AdminController::class, 'cursos']);
+    $router->get('/admin/tarefas', [AdminController::class, 'tarefas']);
+    $router->get('/admin/tarefas/novo', [AdminController::class, 'novaTarefaForm']);
+    $router->post('/admin/tarefas/salvar', [AdminController::class, 'createTarefa']);
+    $router->get('/admin/tarefas/show', [AdminController::class, 'showTarefa']);
+    $router->get('/admin/tarefas/editar', [AdminController::class, 'editarTarefaForm']);
+    $router->post('/admin/tarefas/atualizar', [AdminController::class, 'updateTarefa']);
+    $router->post('/admin/tarefas/comentario', [AdminController::class, 'createTarefaComment']);
     $router->get('/admin/cursos/novo', [AdminController::class, 'novoCursoForm']);
     $router->get('/admin/cursos/show', [AdminController::class, 'showCurso']);
     $router->post('/admin/cursos/salvar', [AdminController::class, 'createCourse']);
@@ -47,6 +54,9 @@ return static function (Router $router): void {
     $router->get('/admin/segmento', [AdminController::class, 'segmento']);
     $router->get('/admin/segmento/edit', [AdminController::class, 'editSegmentoForm']);
     $router->post('/admin/segmento/update', [AdminController::class, 'updateSegmento']);
+    $router->get('/admin/setor', [AdminController::class, 'setor']);
+    $router->get('/admin/setor/edit', [AdminController::class, 'editSetorForm']);
+    $router->post('/admin/setor/update', [AdminController::class, 'updateSetor']);
     $router->get('/admin/nivel', [AdminController::class, 'nivel']);
     $router->get('/admin/nivel/edit', [AdminController::class, 'editNivelForm']);
     $router->post('/admin/nivel/update', [AdminController::class, 'updateNivel']);

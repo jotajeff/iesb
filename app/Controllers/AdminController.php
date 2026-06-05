@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Database;
+use App\Services\CommentService;
 use App\Services\AdminService;
 use App\Services\AuthService;
 use App\Support\Session;
@@ -15,11 +16,13 @@ final class AdminController extends Controller
 {
     private AuthService $auth;
     private AdminService $admin;
+    private CommentService $comments;
 
     public function __construct()
     {
         $this->auth = new AuthService();
         $this->admin = new AdminService();
+        $this->comments = new CommentService();
     }
 
     public function dashboard(): void
@@ -29,10 +32,16 @@ final class AdminController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $authUser = $this->authUser();
+        $isAdmin = (string) ($authUser['role'] ?? $authUser['type'] ?? '') === 'admin';
+        $userId = (int) ($authUser['id'] ?? 0);
+
         $this->render('pages/admin/dashboard/index', [
             'title' => 'Painel Admin',
             'currentRoute' => '/admin',
             'indicators' => $this->admin->indicators(),
+            'taskIndicators' => $this->admin->taskIndicators($userId, $isAdmin),
+            'isAdmin' => $isAdmin,
         ], 'admin');
     }
 
@@ -572,6 +581,76 @@ final class AdminController extends Controller
         $this->redirect('/admin/segmento');
     }
 
+    public function setor(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/setor/index', [
+            'title' => 'Setores',
+            'currentRoute' => '/admin/setor',
+            'setores' => $this->admin->setores(),
+        ], 'admin');
+    }
+
+    public function editSetorForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $setor = $id > 0 ? $this->admin->findSetor($id) : null;
+
+        if ($id > 0 && !$setor) {
+            Session::setFlash('flash', 'Setor não encontrado.');
+            $this->redirect('/admin/setor');
+            return;
+        }
+
+        $this->render('pages/admin/setor/edit', [
+            'title' => $id > 0 ? 'Editar Setor' : 'Novo Setor',
+            'currentRoute' => '/admin/setor',
+            'setor' => $setor,
+        ], 'admin');
+    }
+
+    public function updateSetor(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $setorNome = trim((string) $this->input('setor', ''));
+
+        if ($setorNome === '') {
+            Session::setFlash('flash', 'Informe o nome do setor.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/setor/edit' . $suffix);
+            return;
+        }
+
+        $setorId = $this->admin->saveSetor($id, $setorNome);
+        if ($setorId <= 0) {
+            Session::setFlash('flash', 'Nao foi possivel salvar o setor. Verifique a tabela setores e tente novamente.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/setor/edit' . $suffix);
+            return;
+        }
+
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricao = ($id > 0 ? 'Setor atualizado: ' : 'Setor criado: ') . $setorNome;
+        $this->admin->log($acao, 'setor', $setorId, $descricao);
+
+        Session::setFlash('flash', $id > 0 ? 'Setor atualizado com sucesso.' : 'Setor criado com sucesso.');
+        $this->redirect('/admin/setor');
+    }
+
     public function nivel(): void
     {
         if (!$this->auth->isStaff()) {
@@ -635,6 +714,218 @@ final class AdminController extends Controller
 
         Session::setFlash('flash', $id > 0 ? 'Nível atualizado com sucesso.' : 'Nível criado com sucesso.');
         $this->redirect('/admin/nivel');
+    }
+
+    // ==================== TAREFAS (STAFF) ====================
+
+    public function tarefas(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as tarefas.');
+            $this->redirect('/admin/login');
+        }
+
+        $tarefas = $this->admin->tarefas();
+        $authUser = $this->authUser();
+        $isAdmin = (string) ($authUser['role'] ?? $authUser['type'] ?? '') === 'admin';
+        $currentUserId = (int) ($authUser['id'] ?? 0);
+
+        if (!$isAdmin && $currentUserId > 0) {
+            $tarefas = array_values(array_filter(
+                $tarefas,
+                static fn (array $tarefa) => (int) ($tarefa['responsavel_id'] ?? 0) === $currentUserId
+            ));
+        }
+
+        $colunas = [
+            'tarefa' => [],
+            'execucao' => [],
+            'finalizado' => [],
+        ];
+
+        foreach ($tarefas as $tarefa) {
+            $coluna = $this->taskColumnForStatus((string) ($tarefa['situacao'] ?? 'criada'));
+            $tarefa['situacao_label'] = $this->taskStatusLabel((string) ($tarefa['situacao'] ?? 'criada'));
+            $tarefa['situacao_class'] = $this->taskStatusClass((string) ($tarefa['situacao'] ?? 'criada'));
+            $prioridade = (int) ($tarefa['prioridade'] ?? 1);
+            $tarefa['prioridade_label'] = $this->taskPriorityLabel($prioridade);
+            $tarefa['prioridade_class'] = $this->taskPriorityClass($prioridade);
+            $tarefa['comentarios_total'] = (int) ($tarefa['comentarios_total'] ?? 0);
+            $tarefa['coluna'] = $coluna;
+            $colunas[$coluna][] = $tarefa;
+        }
+
+        $this->render('pages/admin/tarefas/index', [
+            'title' => 'Tarefas',
+            'currentRoute' => '/admin/tarefas',
+            'colunas' => $colunas,
+            'setores' => $this->admin->setores(),
+            'usuarios' => $this->admin->usuarios(1000),
+            'isAdmin' => $isAdmin,
+            'authUser' => $authUser,
+        ], 'admin');
+    }
+
+    public function novaTarefaForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/tarefas/novo', [
+            'title' => 'Nova Tarefa',
+            'currentRoute' => '/admin/tarefas',
+            'setores' => $this->admin->setores(),
+            'usuarios' => $this->admin->usuarios(1000),
+            'situacoes' => $this->taskSituations(),
+            'prioridades' => $this->taskPriorities(),
+        ], 'admin');
+    }
+
+    public function createTarefa(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $setorId = (int) $this->input('setor', 0);
+        $tarefa = trim((string) $this->input('tarefa', ''));
+        $responsavel = (int) $this->input('responsavel', 0);
+        $situacao = $this->normalizeTaskSituation((string) $this->input('situacao', 'criada'));
+        $prioridade = $this->normalizeTaskPriority((int) $this->input('prioridade', 1));
+        $criadoPor = (int) (($this->authUser()['id'] ?? 0));
+
+        if ($setorId <= 0 || $tarefa === '' || $criadoPor <= 0) {
+            Session::setFlash('flash', 'Preencha setor e descrição da tarefa.');
+            $this->redirect('/admin/tarefas/novo');
+            return;
+        }
+
+        $tarefaId = $this->admin->criarTarefa($setorId, $tarefa, $criadoPor, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
+        $this->admin->log('criar', 'tarefa', $tarefaId, 'Tarefa criada: ' . $tarefa);
+        Session::setFlash('flash', 'Tarefa criada com sucesso.');
+        $this->redirect('/admin/tarefas');
+    }
+
+    public function editarTarefaForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $tarefa = $this->admin->findTarefa($id);
+
+        if (!$tarefa) {
+            Session::setFlash('flash', 'Tarefa não encontrada.');
+            $this->redirect('/admin/tarefas');
+            return;
+        }
+
+        $this->render('pages/admin/tarefas/editar', [
+            'title' => 'Editar Tarefa',
+            'currentRoute' => '/admin/tarefas',
+            'tarefa' => $tarefa,
+            'setores' => $this->admin->setores(),
+            'usuarios' => $this->admin->usuarios(1000),
+            'situacoes' => $this->taskSituations(),
+            'prioridades' => $this->taskPriorities(),
+        ], 'admin');
+    }
+
+    public function updateTarefa(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $setorId = (int) $this->input('setor', 0);
+        $tarefa = trim((string) $this->input('tarefa', ''));
+        $responsavel = (int) $this->input('responsavel', 0);
+        $situacao = $this->normalizeTaskSituation((string) $this->input('situacao', 'criada'));
+        $prioridade = $this->normalizeTaskPriority((int) $this->input('prioridade', 1));
+
+        if ($id <= 0 || $setorId <= 0 || $tarefa === '') {
+            Session::setFlash('flash', 'Preencha setor e descrição da tarefa.');
+            $this->redirect('/admin/tarefas/editar?id=' . $id);
+            return;
+        }
+
+        $existing = $this->admin->findTarefa($id);
+        if (!$existing) {
+            Session::setFlash('flash', 'Tarefa não encontrada.');
+            $this->redirect('/admin/tarefas');
+            return;
+        }
+
+        $this->admin->atualizarTarefa($id, $setorId, $tarefa, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
+        $this->admin->log('atualizar', 'tarefa', $id, 'Tarefa atualizada: ' . $tarefa);
+        Session::setFlash('flash', 'Tarefa atualizada com sucesso.');
+        $this->redirect('/admin/tarefas');
+    }
+
+    public function showTarefa(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin ou operador para acessar as tarefas.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($_GET['id'] ?? 0);
+        $tarefa = $this->admin->findTarefa($id);
+
+        if (!$tarefa) {
+            Session::setFlash('flash', 'Tarefa não encontrada.');
+            $this->redirect('/admin/tarefas');
+            return;
+        }
+
+        $tarefa['situacao_label'] = $this->taskStatusLabel((string) ($tarefa['situacao'] ?? 'criada'));
+        $tarefa['situacao_class'] = $this->taskStatusClass((string) ($tarefa['situacao'] ?? 'criada'));
+        $tarefa['prioridade_label'] = $this->taskPriorityLabel((int) ($tarefa['prioridade'] ?? 1));
+        $tarefa['prioridade_class'] = $this->taskPriorityClass((int) ($tarefa['prioridade'] ?? 1));
+        $tarefa['comentarios_total'] = $this->comments->countFor('tarefas', $id);
+
+        $this->render('pages/admin/tarefas/show', [
+            'title' => 'Tarefa #' . $id,
+            'currentRoute' => '/admin/tarefas',
+            'tarefa' => $tarefa,
+            'comentarios' => $this->comments->listFor('tarefas', $id),
+        ], 'admin');
+    }
+
+    public function createTarefaComment(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $tarefaId = (int) $this->input('tarefa_id', 0);
+        $comentario = trim((string) $this->input('comentario', ''));
+
+        if ($tarefaId <= 0 || $comentario === '') {
+            Session::setFlash('flash', 'Digite um comentário válido.');
+            $this->redirect('/admin/tarefas/show?id=' . $tarefaId);
+            return;
+        }
+
+        $tarefa = $this->admin->findTarefa($tarefaId);
+        if (!$tarefa) {
+            Session::setFlash('flash', 'Tarefa não encontrada.');
+            $this->redirect('/admin/tarefas');
+            return;
+        }
+
+        $comentarioId = $this->comments->createFor('tarefas', $tarefaId, $comentario);
+        $this->admin->log('criar', 'comentario', $comentarioId, 'Comentário adicionado na tarefa #' . $tarefaId);
+        Session::setFlash('flash', 'Comentário adicionado com sucesso.');
+        $this->redirect('/admin/tarefas/show?id=' . $tarefaId);
     }
 
     // ==================== VISITAS (STAFF) ====================
@@ -790,5 +1081,87 @@ final class AdminController extends Controller
     {
         $normalized = strtoupper(trim($value));
         return $normalized === 'S' ? 'S' : 'N';
+    }
+
+    private function taskSituations(): array
+    {
+        return [
+            'criada' => 'Criada',
+            'execucao' => 'Execução',
+            'finalizada' => 'Finalizada',
+            'revisao' => 'Revisão',
+        ];
+    }
+
+    private function taskPriorities(): array
+    {
+        return [
+            1 => 'Baixa',
+            2 => 'Média',
+            3 => 'Alta',
+        ];
+    }
+
+    private function normalizeTaskSituation(string $value): string
+    {
+        $value = strtolower(trim($value));
+        return array_key_exists($value, $this->taskSituations()) ? $value : 'criada';
+    }
+
+    private function normalizeTaskPriority(int $value): int
+    {
+        return match (true) {
+            $value >= 3 => 3,
+            $value === 2 => 2,
+            default => 1,
+        };
+    }
+
+    private function taskColumnForStatus(string $status): string
+    {
+        $status = $this->normalizeTaskSituation($status);
+
+        return match ($status) {
+            'finalizada' => 'finalizado',
+            'execucao', 'revisao' => 'execucao',
+            default => 'tarefa',
+        };
+    }
+
+    private function taskStatusLabel(string $status): string
+    {
+        $status = $this->normalizeTaskSituation($status);
+        return $this->taskSituations()[$status] ?? 'Criada';
+    }
+
+    private function taskStatusClass(string $status): string
+    {
+        return match ($this->normalizeTaskSituation($status)) {
+            'criada' => 'bg-secondary',
+            'execucao' => 'bg-primary',
+            'finalizada' => 'bg-success',
+            'revisao' => 'bg-warning text-dark',
+            default => 'bg-secondary',
+        };
+    }
+
+    private function taskPriorityLabel(int $priority): string
+    {
+        return $this->taskPriorities()[$this->normalizeTaskPriority($priority)] ?? 'Baixa';
+    }
+
+    private function taskPriorityClass(int $priority): string
+    {
+        return match ($this->normalizeTaskPriority($priority)) {
+            3 => 'bg-danger',
+            2 => 'bg-warning text-dark',
+            default => 'bg-success',
+        };
+    }
+
+    private function authUser(): array
+    {
+        $user = \App\Support\Session::get('user');
+        return is_array($user) ? $user : [];
     }
 }

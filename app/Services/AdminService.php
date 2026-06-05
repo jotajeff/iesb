@@ -20,6 +20,11 @@ final class AdminService
         return $this->repository->dashboardIndicators();
     }
 
+    public function taskIndicators(int $userId, bool $isAdmin): array
+    {
+        return $this->repository->dashboardTaskIndicators($userId, $isAdmin);
+    }
+
     public function logs(int $limit = 50): array
     {
         return $this->repository->recentLogs($limit);
@@ -64,6 +69,57 @@ final class AdminService
         $payload['ativo'] = $ativo;
 
         $this->repository->updateUsuario($id, $payload);
+    }
+
+    public function setores(): array
+    {
+        return $this->repository->listSetores();
+    }
+
+    public function findSetor(int $id): ?array
+    {
+        return $this->repository->findSetorById($id);
+    }
+
+    public function saveSetor(int $id, string $setor): int
+    {
+        return $this->repository->saveSetor([
+            'id' => $id,
+            'setor' => trim($setor),
+        ]);
+    }
+
+    public function tarefas(int $limit = 300): array
+    {
+        return $this->repository->listTarefas($limit);
+    }
+
+    public function findTarefa(int $id): ?array
+    {
+        return $this->repository->findTarefaById($id);
+    }
+
+    public function criarTarefa(int $setorId, string $tarefa, int $criadoPor, ?int $responsavelId, string $situacao, int $prioridade = 1): int
+    {
+        return $this->repository->createTarefa([
+            'setor' => $setorId,
+            'tarefa' => trim($tarefa),
+            'criado_por' => $criadoPor,
+            'responsavel' => $responsavelId ?? 0,
+            'situacao' => $situacao,
+            'prioridade' => $prioridade,
+        ]);
+    }
+
+    public function atualizarTarefa(int $id, int $setorId, string $tarefa, ?int $responsavelId, string $situacao, int $prioridade = 1): void
+    {
+        $this->repository->updateTarefa($id, [
+            'setor' => $setorId,
+            'tarefa' => trim($tarefa),
+            'responsavel' => $responsavelId ?? 0,
+            'situacao' => $situacao,
+            'prioridade' => $prioridade,
+        ]);
     }
 
     public function cursos(string $order = 'desc', int $limit = 200): array

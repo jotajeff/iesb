@@ -38,6 +38,7 @@ final class AuthController extends Controller
                 'name' => $user['name'],
                 'email'=> $user['email'],
                 'role' => $user['role'],
+                'type' => $user['role'],
             ]);
 
             $this->admin->log('login', 'admin', 0, "Login realizado: $email");
