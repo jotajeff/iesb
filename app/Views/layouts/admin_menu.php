@@ -8,10 +8,11 @@
       <ul class="navbar-nav me-auto">
         <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin' ? 'active' : '' ?>" href="/admin"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
         <li class="nav-item dropdown">
-          <a class="nav-link dropdown-toggle <?= ((strpos(($currentRoute ?? ''), '/admin/cursos') === 0) || (strpos(($currentRoute ?? ''), '/admin/turmas') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-bookmark-fill me-1"></i>Cadastros</a>
+          <a class="nav-link dropdown-toggle <?= ((strpos(($currentRoute ?? ''), '/admin/cursos') === 0) || (strpos(($currentRoute ?? ''), '/admin/turmas') === 0) || (strpos(($currentRoute ?? ''), '/admin/alunos') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-bookmark-fill me-1"></i>Cadastros</a>
           <ul class="dropdown-menu">
             <li><a class="dropdown-item" href="/admin/cursos"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
             <li><a class="dropdown-item" href="/admin/turmas"><i class="bi bi-people me-1"></i>Turmas</a></li>
+            <li><a class="dropdown-item" href="/admin/alunos"><i class="bi bi-person-badge me-1"></i>Alunos</a></li>
           </ul>
         </li>
         <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="/admin/tarefas"><i class="bi bi-kanban me-1"></i>Tarefas</a></li>

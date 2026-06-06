@@ -20,13 +20,14 @@
               <th>Curso</th>
               <th>Nível</th>
               <th>Data Início</th>
+              <th>Inscritos</th>
               <th>Ativa</th>
               <th><i class="bi bi-gear me-1"></i>Ações</th>
             </tr>
           </thead>
           <tbody>
             <?php if (empty($turmasView)): ?>
-              <tr><td colspan="7" class="text-muted">Sem registro.</td></tr>
+              <tr><td colspan="8" class="text-muted">Sem registro.</td></tr>
             <?php endif; ?>
 
             <?php foreach ($turmasView as $turma): ?>
@@ -40,6 +41,7 @@
                   $dt = $rawDate !== '' ? \DateTime::createFromFormat('Y-m-d', $rawDate) : false;
                   echo htmlspecialchars($dt ? $dt->format('d/m/Y') : ($rawDate ?: '-'), ENT_QUOTES, 'UTF-8');
                 ?></td>
+                <td class="text-center"><span class="badge bg-info"><?= (int) ($turma['total_inscritos'] ?? 0) ?></span></td>
                 <td>
                   <?php if (strtoupper(trim((string) ($turma['ativa'] ?? 'N'))) === 'S'): ?>
                     <span class="badge bg-primary">Sim</span>

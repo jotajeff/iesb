@@ -168,7 +168,70 @@ final class AdminService
         return $this->repository->findTurmaById($id);
     }
 
-    
+    public function alunos(int $limit = 200): array
+    {
+        return $this->repository->listAlunos($limit);
+    }
+
+    public function findAluno(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        return $this->repository->findAlunoById($id);
+    }
+
+    public function criarAluno(string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, string $ativo = 'S'): int
+    {
+        $payload = [
+            'nome' => trim($nome),
+            'cpf' => trim($cpf),
+            'data_nascimento' => $dataNascimento,
+            'telefone' => trim($telefone),
+            'email' => trim($email),
+            'ativo' => strtoupper(trim($ativo)) === 'S' ? 'S' : 'N',
+        ];
+        return $this->repository->saveAluno($payload);
+    }
+
+    public function atualizarAluno(int $id, string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, string $ativo = 'S'): void
+    {
+        $payload = [
+            'id' => $id,
+            'nome' => trim($nome),
+            'cpf' => trim($cpf),
+            'data_nascimento' => $dataNascimento,
+            'telefone' => trim($telefone),
+            'email' => trim($email),
+            'ativo' => strtoupper(trim($ativo)) === 'S' ? 'S' : 'N',
+        ];
+        $this->repository->saveAluno($payload);
+    }
+
+    public function matriculasDoAluno(int $idAluno): array
+    {
+        return $this->repository->listMatriculasByAluno($idAluno);
+    }
+
+    public function criarMatricula(int $idAluno, int $idTurma, string $status = 'matriculado'): int
+    {
+        return $this->repository->saveMatricula([
+            'id_aluno' => $idAluno,
+            'id_turma' => $idTurma,
+            'status' => $status,
+        ]);
+    }
+
+    public function matriculaJaExiste(int $idAluno, int $idTurma): bool
+    {
+        return $this->repository->findMatriculaByAlunoAndTurma($idAluno, $idTurma) !== null;
+    }
+
+    public function inscritosPorTurma(int $idTurma): array
+    {
+        return $this->repository->listInscritosPorTurma($idTurma);
+    }
 
     public function cursosPorNivel(int $nivelId, int $limit = 200): array
     {

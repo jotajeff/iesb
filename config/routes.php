@@ -23,10 +23,18 @@ return static function (Router $router): void {
     $router->get('/admin/dashboard', [AdminController::class, 'dashboard']);
     $router->get('/admin/cursos', [AdminController::class, 'cursos']);
     $router->get('/admin/turmas', [AdminController::class, 'turmas']);
+    $router->get('/admin/turmas/show', [AdminController::class, 'showTurma']);
     $router->get('/admin/turmas/novo', [AdminController::class, 'novoTurmaForm']);
     $router->get('/admin/turmas/editar', [AdminController::class, 'editarTurmaForm']);
     $router->post('/admin/turmas/salvar', [AdminController::class, 'createTurma']);
     $router->post('/admin/turmas/atualizar', [AdminController::class, 'updateTurma']);
+    $router->get('/admin/alunos', [AdminController::class, 'alunos']);
+    $router->get('/admin/alunos/novo', [AdminController::class, 'novoAlunoForm']);
+    $router->get('/admin/alunos/editar', [AdminController::class, 'editarAlunoForm']);
+    $router->post('/admin/alunos/salvar', [AdminController::class, 'createAluno']);
+    $router->post('/admin/alunos/atualizar', [AdminController::class, 'updateAluno']);
+    $router->get('/admin/alunos/matricula', [AdminController::class, 'matriculaForm']);
+    $router->post('/admin/alunos/matricular', [AdminController::class, 'createMatricula']);
     $router->get('/admin/tarefas', [AdminController::class, 'tarefas']);
     $router->get('/admin/tarefas/lista', [AdminController::class, 'listaTarefas']);
     $router->get('/admin/tarefas/novo', [AdminController::class, 'novaTarefaForm']);
