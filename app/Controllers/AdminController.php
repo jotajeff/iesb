@@ -764,6 +764,125 @@ final class AdminController extends Controller
         ], 'admin');
     }
 
+    public function turmas(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as turmas.');
+            $this->redirect('/admin/login');
+        }
+
+        $turmas = $this->admin->turmas();
+
+        $this->render('pages/admin/turmas/index', [
+            'title' => 'Turmas',
+            'currentRoute' => '/admin/turmas',
+            'turmas' => $turmas,
+        ], 'admin');
+    }
+
+    public function novoTurmaForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/turmas/new', [
+            'title' => 'Nova Turma',
+            'currentRoute' => '/admin/turmas/novo',
+            'cursos' => $this->admin->cursos('asc', 500),
+        ], 'admin');
+    }
+
+    public function editarTurmaForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        if ($id <= 0) {
+            Session::setFlash('flash', 'Turma nao encontrada.');
+            $this->redirect('/admin/turmas');
+            return;
+        }
+
+        $turma = $this->admin->findTurma($id);
+        if (!$turma) {
+            Session::setFlash('flash', 'Turma nao encontrada.');
+            $this->redirect('/admin/turmas');
+            return;
+        }
+
+        $this->render('pages/admin/turmas/edit', [
+            'title' => 'Editar Turma',
+            'currentRoute' => '/admin/turmas/editar',
+            'turma' => $turma,
+            'cursos' => $this->admin->cursos('asc', 500),
+        ], 'admin');
+    }
+
+    public function createTurma(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $nome = trim((string) $this->input('nome', ''));
+        $curso = (int) $this->input('curso', 0);
+        $dataInicio = (string) $this->input('data_inicio', '');
+        $ativa = strtoupper(trim((string) $this->input('ativa', 'N')));
+
+        if ($nome === '' || $curso <= 0) {
+            Session::setFlash('flash', 'Informe o nome da turma e selecione o curso.');
+            $this->redirect('/admin/turmas/novo');
+            return;
+        }
+
+        $ativa = $ativa === 'S' ? 'S' : 'N';
+
+        $turmaId = $this->admin->criarTurma($nome, $curso, $dataInicio, $ativa);
+
+        if ($turmaId > 0) {
+            $this->admin->log('criar', 'turma', $turmaId, "Turma criada: $nome");
+            Session::setFlash('flash', 'Turma criada com sucesso.');
+            $this->redirect('/admin/turmas');
+        } else {
+            Session::setFlash('flash', 'Erro ao criar turma. Tente novamente.');
+            $this->redirect('/admin/turmas/novo');
+        }
+    }
+
+    public function updateTurma(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $curso = (int) $this->input('curso', 0);
+        $dataInicio = (string) $this->input('data_inicio', '');
+        $ativa = strtoupper(trim((string) $this->input('ativa', 'N')));
+
+        if ($id <= 0 || $nome === '' || $curso <= 0) {
+            Session::setFlash('flash', 'Dados inválidos para atualização.');
+            $this->redirect('/admin/turmas/editar?id=' . $id);
+            return;
+        }
+
+        $ativa = $ativa === 'S' ? 'S' : 'N';
+
+        $this->admin->atualizarTurma($id, $nome, $curso, $dataInicio, $ativa);
+
+        $this->admin->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
+        Session::setFlash('flash', 'Turma atualizada com sucesso.');
+        $this->redirect('/admin/turmas');
+    }
+
     public function listaTarefas(): void
     {
         if (!$this->auth->isStaff()) {

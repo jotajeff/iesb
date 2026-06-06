@@ -287,6 +287,95 @@ final class AdminRepository
         $stmt->execute();
     }
 
+    public function listTurmas(int $limit = 200): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT t.id, t.nome, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativa'
+                 . ' FROM turmas t'
+                 . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
+                 . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                 . ' ORDER BY t.id DESC'
+                 . ' LIMIT :limit';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em listTurmas: ' . $e->getMessage());
+            return [];
+        }
+    }    
+
+    public function saveTurma(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            if (!empty($payload['id'])) {
+                $sql = 'UPDATE turmas SET nome = :nome, id_curso = :id_curso, data_inicio = :data_inicio, ativa = :ativa WHERE id = :id';
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindValue(':id', $payload['id'], PDO::PARAM_INT);
+            } else {
+                $sql = 'INSERT INTO turmas (nome, id_curso, data_inicio, ativa) VALUES (:nome, :id_curso, :data_inicio, :ativa)';
+                $stmt = $pdo->prepare($sql);
+            }
+
+            $stmt->bindValue(':nome', trim($payload['nome'] ?? ''), PDO::PARAM_STR);
+            $stmt->bindValue(':id_curso', $payload['id_curso'], PDO::PARAM_INT);
+            $stmt->bindValue(':data_inicio', $payload['data_inicio'], PDO::PARAM_STR);
+            $stmt->bindValue(':ativa', strtoupper(trim($payload['ativa'] ?? 'N')), PDO::PARAM_STR);
+            $stmt->execute();
+
+            if (empty($payload['id'])) {
+                return (int) $pdo->lastInsertId();
+            }
+            return $payload['id'];
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em saveTurma: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function findTurmaById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $sql = 'SELECT t.id, t.nome, t.id_curso, t.data_inicio, t.ativa, '
+                 . 'c.nome AS curso_nome, n.nome AS nivel_nome'
+                 . ' FROM turmas t'
+                 . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
+                 . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                 . ' WHERE t.id = :id'
+                 . ' LIMIT 1';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em findTurmaById: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+
     public function updateCursoImagem(int $id, string $imagemPath): void
     {
         $pdo = Database::connection();

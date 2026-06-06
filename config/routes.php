@@ -22,6 +22,11 @@ return static function (Router $router): void {
     $router->get('/admin', [AdminController::class, 'dashboard']);
     $router->get('/admin/dashboard', [AdminController::class, 'dashboard']);
     $router->get('/admin/cursos', [AdminController::class, 'cursos']);
+    $router->get('/admin/turmas', [AdminController::class, 'turmas']);
+    $router->get('/admin/turmas/novo', [AdminController::class, 'novoTurmaForm']);
+    $router->get('/admin/turmas/editar', [AdminController::class, 'editarTurmaForm']);
+    $router->post('/admin/turmas/salvar', [AdminController::class, 'createTurma']);
+    $router->post('/admin/turmas/atualizar', [AdminController::class, 'updateTurma']);
     $router->get('/admin/tarefas', [AdminController::class, 'tarefas']);
     $router->get('/admin/tarefas/lista', [AdminController::class, 'listaTarefas']);
     $router->get('/admin/tarefas/novo', [AdminController::class, 'novaTarefaForm']);

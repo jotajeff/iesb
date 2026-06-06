@@ -131,6 +131,45 @@ final class AdminService
         );
     }
 
+    public function turmas(int $limit = 200): array
+    {
+        return $this->repository->listTurmas($limit);
+    }
+
+    public function criarTurma(string $nome, int $curso, string $dataInicio, string $ativa = 'N'): int
+    {
+        $payload = [
+            'nome' => trim($nome),
+            'id_curso' => $curso > 0 ? $curso : null,
+            'data_inicio' => $dataInicio,
+            'ativa' => strtoupper(trim($ativa)) === 'S' ? 'S' : 'N',
+        ];
+        return $this->repository->saveTurma($payload);
+    }    
+    
+    public function atualizarTurma(int $id, string $nome, int $curso, string $dataInicio, string $ativa = 'N'): void
+    {
+        $payload = [
+            'id' => $id,
+            'nome' => trim($nome),
+            'id_curso' => $curso > 0 ? $curso : null,
+            'data_inicio' => $dataInicio,
+            'ativa' => strtoupper(trim($ativa)) === 'S' ? 'S' : 'N',
+        ];
+        $this->repository->saveTurma($payload);
+    }
+
+    public function findTurma(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        return $this->repository->findTurmaById($id);
+    }
+
+    
+
     public function cursosPorNivel(int $nivelId, int $limit = 200): array
     {
         return array_map(
