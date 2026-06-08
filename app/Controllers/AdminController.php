@@ -921,6 +921,30 @@ final class AdminController extends Controller
         ], 'admin');
     }
 
+    public function showAluno(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os alunos.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $aluno = $this->admin->findAluno($id);
+
+        if (!$aluno) {
+            Session::setFlash('flash', 'Aluno não encontrado.');
+            $this->redirect('/admin/alunos');
+            return;
+        }
+
+        $this->render('pages/admin/alunos/show', [
+            'title' => 'Aluno: ' . ($aluno['nome'] ?? ''),
+            'currentRoute' => '/admin/alunos/show',
+            'aluno' => $aluno,
+            'cursos' => $this->admin->cursosDoAluno($id),
+        ], 'admin');
+    }
+
     public function novoAlunoForm(): void
     {
         if (!$this->auth->isStaff()) {

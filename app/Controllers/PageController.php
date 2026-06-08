@@ -111,4 +111,9 @@ final class PageController extends Controller
     {
         $this->render('pages/parcerias', ['title' => 'Parcerias', 'currentRoute' => '/parcerias']);
     }
+
+    public function privacidade(): void
+    {
+        $this->render('pages/privacidade', ['title' => 'Política de Privacidade', 'currentRoute' => '/privacidade']);
+    }
 }

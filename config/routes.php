@@ -16,6 +16,7 @@ return static function (Router $router): void {
     $router->get('/cursos', [PageController::class, 'cursos']);
     $router->get('/eventos', [PageController::class, 'eventos']);
     $router->get('/parcerias', [PageController::class, 'parcerias']);
+    $router->get('/privacidade', [PageController::class, 'privacidade']);
 
     $router->get('/admin/login', [AuthController::class, 'adminLoginForm']);
     $router->post('/admin/login', [AuthController::class, 'adminLogin']);
@@ -33,6 +34,7 @@ return static function (Router $router): void {
     $router->get('/admin/alunos/editar', [AdminController::class, 'editarAlunoForm']);
     $router->post('/admin/alunos/salvar', [AdminController::class, 'createAluno']);
     $router->post('/admin/alunos/atualizar', [AdminController::class, 'updateAluno']);
+    $router->get('/admin/alunos/show', [AdminController::class, 'showAluno']);
     $router->get('/admin/alunos/matricula', [AdminController::class, 'matriculaForm']);
     $router->post('/admin/alunos/matricular', [AdminController::class, 'createMatricula']);
     $router->get('/admin/tarefas', [AdminController::class, 'tarefas']);
@@ -78,6 +80,8 @@ return static function (Router $router): void {
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);
     $router->get('/aluno', [StudentController::class, 'dashboard']);
+    $router->get('/aluno/perfil', [StudentController::class, 'perfil']);
+    $router->post('/aluno/perfil/atualizar', [StudentController::class, 'atualizarPerfil']);
     $router->post('/aluno/matricular', [StudentController::class, 'enroll']);
 
     $router->get('/area-do-aluno', [StudentController::class, 'dashboard']);

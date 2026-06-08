@@ -278,6 +278,8 @@
             <li><a href="/area-do-aluno">Área do Aluno</a></li>
             <li><a href="mailto:contato@iesb.edu.br">contato@iesb.edu.br</a></li>
             <li><a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer">WhatsApp: (51) 99297-5503</a></li>
+
+
           </ul>
         </div>
       </div>

@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Repositories\AdminRepository;
 use App\Repositories\UserRepository;
 use App\Support\Session;
 
@@ -40,6 +41,34 @@ final class AuthService
             'email' => $user['email'],
             'role' => $user['role'],
             'type' => $user['role'],
+        ]);
+
+        return true;
+    }
+
+    public function alunoLogin(string $email, string $password): bool
+    {
+        $repo = new AdminRepository();
+        $aluno = $repo->findAlunoByEmail($email);
+
+        if ($aluno === null) {
+            return false;
+        }
+
+        if (strtoupper(trim((string) ($aluno['ativo'] ?? 'N'))) !== 'S') {
+            return false;
+        }
+
+        if (!password_verify($password, (string) $aluno['senha'])) {
+            return false;
+        }
+
+        Session::set('user', [
+            'id' => (int) $aluno['id'],
+            'name' => $aluno['nome'],
+            'email' => $aluno['email'],
+            'role' => 'aluno',
+            'type' => 'aluno',
         ]);
 
         return true;

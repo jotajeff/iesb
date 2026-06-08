@@ -21,13 +21,14 @@
               <th>Nascimento</th>
               <th>Telefone</th>
               <th>Email</th>
+              <th>Matrículas</th>
               <th>Ativo</th>
               <th><i class="bi bi-gear me-1"></i>Ações</th>
             </tr>
           </thead>
           <tbody>
             <?php if (empty($alunosView)): ?>
-              <tr><td colspan="8" class="text-muted">Sem registro.</td></tr>
+              <tr><td colspan="9" class="text-muted">Sem registro.</td></tr>
             <?php endif; ?>
 
             <?php foreach ($alunosView as $aluno): ?>
@@ -42,6 +43,12 @@
                 ?></td>
                 <td><?= htmlspecialchars((string) ($aluno['telefone'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($aluno['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td>
+                  <?php $totalMatriculas = (int) ($aluno['total_matriculas'] ?? 0); ?>
+                  <span class="badge bg-<?= $totalMatriculas > 0 ? 'success' : 'secondary' ?>">
+                    <?= $totalMatriculas ?>
+                  </span>
+                </td>
                 <td>
                   <?php if (strtoupper(trim((string) ($aluno['ativo'] ?? 'N'))) === 'S'): ?>
                     <span class="badge bg-primary">Sim</span>

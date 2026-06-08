@@ -11,6 +11,10 @@
     </div>
 
     <form action="/admin/alunos/salvar" method="post" class="needs-validation" novalidate>
+      <div class="alert alert-info d-flex align-items-center gap-2 py-2 mb-3">
+        <i class="bi bi-info-circle-fill"></i>
+        <span>A senha será gerada automaticamente com o prefixo do email + "#" + ano atual.</span>
+      </div>
       <div class="row g-3">
         <div class="col-md-6">
           <label for="nome" class="form-label">Nome <span class="text-danger">*</span></label>

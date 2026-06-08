@@ -61,7 +61,7 @@ final class AuthController extends Controller
         $email = (string) $this->input('email', '');
         $password = (string) $this->input('password', '');
 
-        if (!$this->auth->login($email, $password, 'aluno')) {
+        if (!$this->auth->alunoLogin($email, $password)) {
             Session::setFlash('flash', 'Credenciais de aluno inválidas.');
             $this->redirect('/aluno/login');
         }

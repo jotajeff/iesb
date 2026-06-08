@@ -184,6 +184,9 @@ final class AdminService
 
     public function criarAluno(string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, string $ativo = 'S'): int
     {
+        $prefix = explode('@', $email)[0] ?? '';
+        $senha = $prefix . '#' . date('Y');
+
         $payload = [
             'nome' => trim($nome),
             'cpf' => trim($cpf),
@@ -191,11 +194,12 @@ final class AdminService
             'telefone' => trim($telefone),
             'email' => trim($email),
             'ativo' => strtoupper(trim($ativo)) === 'S' ? 'S' : 'N',
+            'senha' => password_hash($senha, PASSWORD_DEFAULT),
         ];
         return $this->repository->saveAluno($payload);
     }
 
-    public function atualizarAluno(int $id, string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, string $ativo = 'S'): void
+    public function atualizarAluno(int $id, string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, string $ativo = 'S', ?string $senha = null): void
     {
         $payload = [
             'id' => $id,
@@ -206,12 +210,20 @@ final class AdminService
             'email' => trim($email),
             'ativo' => strtoupper(trim($ativo)) === 'S' ? 'S' : 'N',
         ];
+        if ($senha !== null && $senha !== '') {
+            $payload['senha'] = password_hash($senha, PASSWORD_DEFAULT);
+        }
         $this->repository->saveAluno($payload);
     }
 
     public function matriculasDoAluno(int $idAluno): array
     {
         return $this->repository->listMatriculasByAluno($idAluno);
+    }
+
+    public function cursosDoAluno(int $idAluno): array
+    {
+        return $this->repository->listCursosByAluno($idAluno);
     }
 
     public function criarMatricula(int $idAluno, int $idTurma, string $status = 'matriculado'): int
