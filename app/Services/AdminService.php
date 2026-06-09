@@ -226,6 +226,36 @@ final class AdminService
         return $this->repository->listCursosByAluno($idAluno);
     }
 
+    public function cursosAtivos(): array
+    {
+        return $this->repository->listCursosAtivos();
+    }
+
+    public function idsCursosComDetalhe(): array
+    {
+        return $this->repository->listarIdsCursosComDetalhe();
+    }
+
+    public function findDetalheByCurso(int $idCurso): ?array
+    {
+        return $this->repository->findDetalheByCursoId($idCurso);
+    }
+
+    public function salvarDetalhe(array $payload): int
+    {
+        return $this->repository->saveDetalhe($payload);
+    }
+
+    public function atualizarDetalhe(int $id, array $payload): void
+    {
+        $this->repository->updateDetalhe($id, $payload);
+    }
+
+    public function turmasDoCurso(int $idCurso): array
+    {
+        return $this->repository->listTurmasByCurso($idCurso);
+    }
+
     public function criarMatricula(int $idAluno, int $idTurma, string $status = 'matriculado'): int
     {
         return $this->repository->saveMatricula([

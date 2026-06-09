@@ -59,6 +59,8 @@ return static function (Router $router): void {
     $router->get('/admin/visitas/paginas', [AdminController::class, 'visitasPaginas']);
     $router->get('/admin/cursos/upload', [AdminController::class, 'uploadCursoForm']);
     $router->post('/admin/cursos/upload', [AdminController::class, 'uploadCursoImage']);
+    $router->get('/admin/cursos/detalhes', [AdminController::class, 'cursoDetalheForm']);
+    $router->post('/admin/cursos/detalhes/salvar', [AdminController::class, 'saveCursoDetalhe']);
     $router->get('/admin/usuarios', [AdminController::class, 'usuarios']);
     $router->get('/admin/usuarios/novo', [AdminController::class, 'novoUsuarioForm']);
     $router->post('/admin/usuarios/salvar', [AdminController::class, 'createUsuario']);
@@ -80,6 +82,9 @@ return static function (Router $router): void {
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);
     $router->get('/aluno', [StudentController::class, 'dashboard']);
+    $router->get('/aluno/cursos', [StudentController::class, 'cursos']);
+    $router->get('/aluno/detalhes', [StudentController::class, 'detalhes']);
+    $router->post('/aluno/matricular-curso', [StudentController::class, 'enrollCurso']);
     $router->get('/aluno/perfil', [StudentController::class, 'perfil']);
     $router->post('/aluno/perfil/atualizar', [StudentController::class, 'atualizarPerfil']);
     $router->post('/aluno/matricular', [StudentController::class, 'enroll']);

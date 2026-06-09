@@ -169,6 +169,7 @@
                         $courseName = htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8');
                         $courseLocation = htmlspecialchars((string) ($course['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8');
                         $courseHorario = htmlspecialchars((string) ($course['horario'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                        $courseSegmento = trim((string) ($course['segmento_nome'] ?? ''));
                         $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
                         $rawDate = (string) ($course['data_curso'] ?? '');
                         $dateText = '-';
@@ -197,6 +198,11 @@
                               <?php if ($isConfirmed): ?>
                                 <span class="course-badge course-badge-confirmed">
                                   <i class="bi bi-award-fill"></i> Confirmado
+                                </span>
+                              <?php endif; ?>
+                              <?php if ($courseSegmento !== ''): ?>
+                                <span class="course-badge course-badge-segment">
+                                  <?= htmlspecialchars($courseSegmento, ENT_QUOTES, 'UTF-8') ?>
                                 </span>
                               <?php endif; ?>
                             </div>

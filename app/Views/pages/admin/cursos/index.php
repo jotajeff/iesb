@@ -10,6 +10,7 @@
   $coursesView = is_array($courses ?? null) ? $courses : [];
   $niveisLista = array_filter(is_array($niveis ?? null) ? $niveis : [], static fn ($n) => is_array($n));
   $currentNivelId = (int) ($nivelSelecionado ?? ($_GET['nivel'] ?? 0));
+  $idsComDetalhe = is_array($idsComDetalhe ?? null) ? $idsComDetalhe : [];
   if ($currentNivelId < 0) {
       $currentNivelId = 0;
   }
@@ -194,10 +195,22 @@
                 <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/editar?id=<?= (int) ($course['id'] ?? 0) ?>">
                   <i class="bi bi-pencil-square me-1"></i>Editar
                 </a>
+                <?php $temDetalhe = in_array((int) ($course['id'] ?? 0), $idsComDetalhe, true); ?>
+                <br>
+                <a class="btn btn-<?= $temDetalhe ? 'primary' : 'warning' ?> btn-sm mt-1" href="/admin/cursos/detalhes?id=<?= (int) ($course['id'] ?? 0) ?>" title="<?= $temDetalhe ? 'Editar detalhe do curso' : 'Adicionar detalhe do curso' ?>">
+                  <i class="bi bi-journal-text me-1"></i><?= $temDetalhe ? 'Detalhe' : 'Add Detalhe' ?>
+                </a>
               </td>
             </tr>
           <?php endforeach; ?>
         </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="10" class="text-end fw-semibold text-muted">
+              Total de registros: <?= count($coursesView) ?>
+            </td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </div>

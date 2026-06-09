@@ -88,6 +88,7 @@ final class AdminController extends Controller
             'order' => $order,
             'niveis' => $this->admin->niveis(),
             'nivelSelecionado' => $nivelSelecionado,
+            'idsComDetalhe' => $this->admin->idsCursosComDetalhe(),
         ], 'admin');
     }
 
@@ -226,7 +227,70 @@ final class AdminController extends Controller
             'title' => $course['nome'] ?? 'Curso',
             'currentRoute' => '/admin/cursos/show',
             'course' => $course,
+            'detalhe' => $this->admin->findDetalheByCurso($id),
         ], 'admin');
+    }
+
+    public function cursoDetalheForm(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($_GET['id'] ?? 0);
+        $course = $this->admin->findCurso($id);
+
+        if (!$course) {
+            Session::setFlash('flash', 'Curso nao encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $detalhe = $this->admin->findDetalheByCurso($id);
+
+        $this->render('pages/admin/cursos/detalhes', [
+            'title' => 'Detalhes do Curso - ' . ($course['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos/detalhes',
+            'course' => $course,
+            'detalhe' => $detalhe,
+        ], 'admin');
+    }
+
+    public function saveCursoDetalhe(): void
+    {
+        if (!$this->auth->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) $this->input('curso_id', 0);
+        $detalheId = (int) $this->input('detalhe_id', 0);
+        $detalheTexto = (string) $this->input('detalhe', '');
+
+        if ($cursoId <= 0) {
+            Session::setFlash('flash', 'Curso inválido.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $payload = [
+            'id_curso' => $cursoId,
+            'detalhe' => $detalheTexto,
+            'ativo' => 'S',
+        ];
+
+        if ($detalheId > 0) {
+            $this->admin->atualizarDetalhe($detalheId, $payload);
+            $this->admin->log('atualizar', 'detalhe', $detalheId, "Detalhe atualizado para o curso #$cursoId");
+            Session::setFlash('flash', 'Detalhe atualizado com sucesso.');
+        } else {
+            $novoId = $this->admin->salvarDetalhe($payload);
+            $this->admin->log('criar', 'detalhe', $novoId, "Detalhe criado para o curso #$cursoId");
+            Session::setFlash('flash', 'Detalhe criado com sucesso.');
+        }
+
+        $this->redirect('/admin/cursos');
     }
 
     public function uploadCursoForm(): void
@@ -1428,6 +1492,7 @@ final class AdminController extends Controller
         $totalRows = 0;
         $error = '';
         $viewMode = 'structure';
+        $record = null;
 
         if (!$pdo instanceof PDO) {
             $error = 'Nao foi possivel conectar ao banco de dados.';
@@ -1446,8 +1511,19 @@ final class AdminController extends Controller
                 $totalRows = (int) $stmt->fetchColumn();
 
                 $viewMode = ($_GET['view'] ?? '') === 'records' ? 'records' : 'structure';
+                $recordId = (int) ($_GET['id'] ?? 0);
 
-                if ($viewMode === 'records') {
+                if ($recordId > 0) {
+                    $viewMode = 'detail';
+                    $firstCol = $columns[0]['Field'] ?? 'id';
+                    $stmt = $pdo->prepare('SELECT * FROM `' . $table . '` WHERE `' . $firstCol . '` = :id LIMIT 1');
+                    $stmt->bindValue(':id', $recordId, PDO::PARAM_INT);
+                    $stmt->execute();
+                    $record = $stmt->fetch();
+                    if (!$record) {
+                        $error = 'Registro #' . $recordId . ' nao encontrado na tabela ' . $table;
+                    }
+                } elseif ($viewMode === 'records') {
                     $limit = 200;
                     $stmt = $pdo->prepare('SELECT * FROM `' . $table . '` LIMIT :limit');
                     $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -1479,6 +1555,7 @@ final class AdminController extends Controller
             'totalRows' => $totalRows,
             'viewMode' => $viewMode,
             'error' => $error,
+            'record' => $record,
         ], 'admin');
     }
 

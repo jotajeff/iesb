@@ -47,40 +47,56 @@
     </div>
 
     <div class="row g-4">
-      <div class="col-lg-6" data-aos="fade-right">
+      <div class="col-12" data-aos="fade-up">
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--card-shadow);">
-          <h3>Catálogo de Cursos</h3>
-          <div class="d-grid gap-2 mt-3">
-            <?php foreach (($courses ?? []) as $course): ?>
-              <div class="p-3" style="border: 1px solid var(--border-color); border-radius: 12px;">
-                <strong><?= htmlspecialchars($course['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                <div><?= htmlspecialchars($course['description'], ENT_QUOTES, 'UTF-8') ?></div>
-                <small><?= htmlspecialchars($course['duration'], ENT_QUOTES, 'UTF-8') ?> | R$ <?= number_format((float) $course['price'], 2, ',', '.') ?></small>
-                <form method="post" action="/aluno/matricular" class="mt-2">
-                  <input type="hidden" name="course_id" value="<?= (int) $course['id'] ?>">
-                  <button type="submit" class="btn btn-sm btn-warning">Matricular</button>
-                </form>
-              </div>
-            <?php endforeach; ?>
-          </div>
-        </div>
-      </div>
-      <div class="col-lg-6" data-aos="fade-left">
-        <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--card-shadow);">
-          <h3>Meus Cursos</h3>
-          <div class="d-grid gap-2 mt-3">
-            <?php if (empty($enrollments)): ?>
-              <div class="p-3" style="border: 1px dashed var(--border-color); border-radius: 12px;">Você ainda não possui matrículas.</div>
-            <?php endif; ?>
-            <?php foreach (($enrollments ?? []) as $item): ?>
-              <div class="p-3" style="border: 1px solid var(--border-color); border-radius: 12px;">
-                <strong><?= htmlspecialchars($item['name'], ENT_QUOTES, 'UTF-8') ?></strong>
-                <div>Status: <?= htmlspecialchars($item['status'], ENT_QUOTES, 'UTF-8') ?></div>
-                <div>Progresso: <?= (int) $item['progress'] ?>%</div>
-                <small>Matrícula em <?= htmlspecialchars($item['created_at'], ENT_QUOTES, 'UTF-8') ?></small>
-              </div>
-            <?php endforeach; ?>
-          </div>
+          <h3 class="mb-3">Cursos Disponíveis</h3>
+          <?php if (empty($cursosDisponiveis)): ?>
+            <div class="text-center text-muted py-4">
+              <i class="bi bi-journal-bookmark" style="font-size: 2rem;"></i>
+              <p class="mt-2 mb-0">Nenhum curso disponível no momento.</p>
+            </div>
+          <?php else: ?>
+            <div class="table-responsive">
+              <table class="table table-hover align-middle mb-0">
+                <thead>
+                  <tr>
+                    <th style="width: 50px;"></th>
+                    <th>Curso</th>
+                    <th>Segmento</th>
+                    <th>Horário</th>
+                    <th style="width: 140px;"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <?php foreach ($cursosDisponiveis as $curso): ?>
+                    <tr>
+                      <td>
+                        <a href="/aluno/detalhes?id=<?= (int) $curso['id'] ?>" class="btn btn-sm btn-outline-info" title="Detalhes">
+                          <i class="bi bi-eye"></i>
+                        </a>
+                      </td>
+                      <td>
+                        <strong><?= htmlspecialchars($curso['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></strong>
+                        <?php if (!empty($curso['local_curso'])): ?>
+                          <br><small class="text-muted"><?= htmlspecialchars($curso['local_curso'], ENT_QUOTES, 'UTF-8') ?></small>
+                        <?php endif; ?>
+                      </td>
+                      <td><?= htmlspecialchars($curso['segmento_nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                      <td><?= htmlspecialchars($curso['horario'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                      <td>
+                        <form method="post" action="/aluno/matricular-curso">
+                          <input type="hidden" name="curso_id" value="<?= (int) $curso['id'] ?>">
+                          <button type="submit" class="btn btn-sm btn-warning w-100">
+                            <i class="bi bi-journal-plus me-1"></i>Matricular
+                          </button>
+                        </form>
+                      </td>
+                    </tr>
+                  <?php endforeach; ?>
+                </tbody>
+              </table>
+            </div>
+          <?php endif; ?>
         </div>
       </div>
     </div>

@@ -135,5 +135,21 @@
         </tr>
       </tbody>
     </table>
+
+    <hr class="my-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Detalhe do Curso</h5>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/detalhes?id=<?= (int) ($course['id'] ?? 0) ?>">
+        <i class="bi bi-pencil-square me-1"></i><?= $detalhe ? 'Editar' : 'Adicionar' ?>
+      </a>
+    </div>
+    <?php if ($detalhe && trim((string) ($detalhe['detalhe'] ?? '')) !== ''): ?>
+      <div class="border rounded p-3 bg-light">
+        <?= $detalhe['detalhe'] ?>
+      </div>
+    <?php else: ?>
+      <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>Nenhum detalhe cadastrado para este curso.</p>
+    <?php endif; ?>
   </div>
 </section>

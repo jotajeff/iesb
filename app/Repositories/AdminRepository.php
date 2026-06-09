@@ -153,8 +153,9 @@ final class AdminRepository
 
         $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
 
-        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.exibir_home, c.confirmado
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.exibir_home, c.confirmado, c.segmento, s.nome AS segmento_nome
                 FROM cursos_iesb c
+                LEFT JOIN segmento s ON s.id = c.segmento
                 WHERE c.ativo = "S" AND c.exibir_home = "S" AND c.curso_calendario > "0000-00-00" AND c.curso_calendario >= :maxDate
                 ORDER BY c.curso_calendario ASC, c.id DESC
                 LIMIT :limit';
@@ -230,6 +231,133 @@ final class AdminRepository
 
         $rows = $stmt->fetchAll();
         return is_array($rows) ? $rows : [];
+    }
+
+    public function listCursosAtivos(int $limit = 200): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, m.nome AS modalidade_nome, s.nome AS segmento_nome, n.nome AS nivel_nome
+                     FROM cursos_iesb c
+                     LEFT JOIN modalidade m ON m.id = c.modalidade
+                     LEFT JOIN segmento s ON s.id = c.segmento
+                     LEFT JOIN nivel n ON n.id = c.nivel
+                     WHERE c.ativo = "S"
+                     ORDER BY c.id DESC
+                     LIMIT :limit';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro em listCursosAtivos: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listTurmasByCurso(int $idCurso): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT id, nome, data_inicio, ativa FROM turmas WHERE id_curso = :id_curso AND ativa = "S" ORDER BY data_inicio DESC LIMIT 10';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em listTurmasByCurso: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listarIdsCursosComDetalhe(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT id_curso FROM detalhes WHERE ativo = "S"';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+            return is_array($rows) ? array_map('intval', $rows) : [];
+        } catch (\Throwable $e) {
+            error_log('[DETALHES] Erro em listarIdsCursosComDetalhe: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function findDetalheByCursoId(int $idCurso): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $sql = 'SELECT id, id_curso, detalhe, ativo, criado_em FROM detalhes WHERE id_curso = :id_curso LIMIT 1';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[DETALHES] Erro em findDetalheByCursoId: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function saveDetalhe(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            $sql = 'INSERT INTO detalhes (id_curso, detalhe, ativo) VALUES (:id_curso, :detalhe, :ativo)';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id_curso', $payload['id_curso'], PDO::PARAM_INT);
+            $stmt->bindValue(':detalhe', $payload['detalhe'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', $payload['ativo'] ?? 'S', PDO::PARAM_STR);
+            $stmt->execute();
+            return (int) $pdo->lastInsertId();
+        } catch (\Throwable $e) {
+            error_log('[DETALHES] Erro em saveDetalhe: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function updateDetalhe(int $id, array $payload): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        try {
+            $sql = 'UPDATE detalhes SET detalhe = :detalhe, ativo = :ativo WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':detalhe', $payload['detalhe'] ?? '', PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', $payload['ativo'] ?? 'S', PDO::PARAM_STR);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[DETALHES] Erro em updateDetalhe: ' . $e->getMessage());
+        }
     }
 
     public function findCursoById(int $id): ?array

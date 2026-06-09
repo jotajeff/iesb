@@ -22,6 +22,10 @@
           <?php if ($totalRows > 0): ?>
             <span class="badge bg-info"><?= $totalRows ?> registros</span>
           <?php endif; ?>
+        <?php elseif ($viewMode === 'detail'): ?>
+          <a class="btn btn-outline-primary btn-sm ms-auto" href="/admin/dbase?table=<?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?>&view=records">
+            <i class="bi bi-list-ul me-1"></i>Ver registros
+          </a>
         <?php else: ?>
           <a class="btn btn-outline-info btn-sm ms-auto" href="/admin/dbase?table=<?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?>">
             <i class="bi bi-diagram-3 me-1"></i>Ver estrutura
@@ -33,11 +37,6 @@
       <?php if ($viewMode === 'structure'): ?>
         <div class="table-responsive">
           <table class="table table-striped table-hover table-sm table-bordered align-middle">
-            <thead class="table-dark">
-              <tr>
-                <th colspan="7" class="small">DEBUG: columns = <?= htmlspecialchars(print_r($columns ?? [], true), ENT_QUOTES, 'UTF-8') ?></th>
-              </tr>
-            </thead>
             <thead class="table-dark">
               <tr>
                 <th class="text-nowrap small">#</th>
@@ -69,18 +68,36 @@
             </tbody>
           </table>
         </div>
+      <?php elseif ($viewMode === 'detail' && $record): ?>
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <a class="btn btn-outline-secondary btn-sm" href="/admin/dbase?table=<?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?>&view=records"><i class="bi bi-arrow-left me-1"></i>Voltar para registros</a>
+          <span class="text-muted small">Registro <code>#<?= (int) ($record[$columns[0]['Field'] ?? 'id'] ?? 0) ?></code> da tabela <code><?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?></code></span>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-bordered table-sm align-middle">
+            <tbody>
+              <?php foreach ($columns ?? [] as $col): ?>
+                <?php $fieldName = $col['Field'] ?? ''; ?>
+                <tr>
+                  <th class="bg-light text-nowrap small" style="width: 200px;"><?= htmlspecialchars($fieldName, ENT_QUOTES, 'UTF-8') ?></th>
+                  <td class="small"><?= htmlspecialchars((string) ($record[$fieldName] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
       <?php else: ?>
-        <div class="alert alert-info small mb-2">
-          <strong>DEBUG</strong> — viewMode=records |
-          columns (<?= is_countable($columns ?? []) ? count($columns) : 0 ?>):
-          <pre style="margin:4px 0 0;font-size:11px;"><?= htmlspecialchars(print_r($columns ?? [], true), ENT_QUOTES, 'UTF-8') ?></pre>
-          rows (<?= is_countable($rows ?? []) ? count($rows) : 0 ?>):
-          <pre style="margin:4px 0 0;font-size:11px;"><?= htmlspecialchars(print_r($rows ?? [], true), ENT_QUOTES, 'UTF-8') ?></pre>
+        <div class="d-flex align-items-center gap-2 mb-3">
+          <a class="btn btn-outline-info btn-sm ms-auto" href="/admin/dbase?table=<?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?>">
+            <i class="bi bi-diagram-3 me-1"></i>Ver estrutura
+          </a>
+          <span class="badge bg-primary"><?= $totalRows ?? 0 ?> registros</span>
         </div>
         <div class="table-responsive">
           <table class="table table-striped table-hover table-sm table-bordered align-middle">
             <thead class="table-light">
               <tr>
+                <th class="text-nowrap small">#</th>
                 <?php foreach ($columns ?? [] as $col): ?>
                   <th class="text-nowrap small"><?= htmlspecialchars($col['Field'] ?? '', ENT_QUOTES, 'UTF-8') ?></th>
                 <?php endforeach; ?>
@@ -88,13 +105,21 @@
             </thead>
             <tbody>
               <?php if (empty($rows)): ?>
-                <tr><td colspan="<?= count($columns ?? []) ?>" class="text-muted text-center"><i class="bi bi-inbox me-1"></i>Nenhum registro encontrado.</td></tr>
+                <tr><td colspan="<?= count($columns ?? []) + 1 ?>" class="text-muted text-center"><i class="bi bi-inbox me-1"></i>Nenhum registro encontrado.</td></tr>
               <?php else: ?>
                 <?php foreach ($rows as $row): ?>
                   <tr>
+                    <?php $firstField = $columns[0]['Field'] ?? ''; ?>
+                    <?php $rowId = (int) ($row[$firstField] ?? 0); ?>
+                    <td class="small text-muted">
+                      <a class="text-decoration-none fw-medium" href="/admin/dbase?table=<?= htmlspecialchars($currentTable, ENT_QUOTES, 'UTF-8') ?>&id=<?= $rowId ?>" title="Ver detalhes">
+                        <i class="bi bi-box-arrow-up-right me-1"></i><?= $rowId ?>
+                      </a>
+                    </td>
                     <?php foreach ($columns ?? [] as $col): ?>
-                      <td class="small" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars((string) ($row[$col['Field']] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                        <?= htmlspecialchars((string) ($row[$col['Field']] ?? ''), ENT_QUOTES, 'UTF-8') ?>
+                      <?php $val = (string) ($row[$col['Field']] ?? ''); ?>
+                      <td class="small" style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" title="<?= htmlspecialchars($val, ENT_QUOTES, 'UTF-8') ?>">
+                        <?= htmlspecialchars($val, ENT_QUOTES, 'UTF-8') ?>
                       </td>
                     <?php endforeach; ?>
                   </tr>

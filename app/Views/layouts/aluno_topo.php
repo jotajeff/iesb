@@ -28,10 +28,10 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="#meus-cursos">
+            <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/cursos' ? 'active' : '' ?>" href="/aluno/cursos">
               <i class="bi bi-book me-1"></i>Meus Cursos
-              <?php if (!empty($enrollments)): ?>
-                <span class="badge bg-warning text-dark ms-1"><?= count($enrollments) ?></span>
+              <?php if (!empty($cursosMatriculados ?? [])): ?>
+                <span class="badge bg-warning text-dark ms-1"><?= count($cursosMatriculados ?? []) ?></span>
               <?php endif; ?>
             </a>
           </li>
