@@ -2,7 +2,14 @@
 
 declare(strict_types=1);
 
-use App\Controllers\AdminController;
+use App\Controllers\Admin\AlunoController;
+use App\Controllers\Admin\ConfigController;
+use App\Controllers\Admin\CursoController;
+use App\Controllers\Admin\DashboardController;
+use App\Controllers\Admin\TarefaController;
+use App\Controllers\Admin\TurmaController;
+use App\Controllers\Admin\UsuarioController;
+use App\Controllers\Admin\VisitaController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -20,65 +27,77 @@ return static function (Router $router): void {
 
     $router->get('/admin/login', [AuthController::class, 'adminLoginForm']);
     $router->post('/admin/login', [AuthController::class, 'adminLogin']);
-    $router->get('/admin', [AdminController::class, 'dashboard']);
-    $router->get('/admin/dashboard', [AdminController::class, 'dashboard']);
-    $router->get('/admin/cursos', [AdminController::class, 'cursos']);
-    $router->get('/admin/turmas', [AdminController::class, 'turmas']);
-    $router->get('/admin/turmas/show', [AdminController::class, 'showTurma']);
-    $router->get('/admin/turmas/novo', [AdminController::class, 'novoTurmaForm']);
-    $router->get('/admin/turmas/editar', [AdminController::class, 'editarTurmaForm']);
-    $router->post('/admin/turmas/salvar', [AdminController::class, 'createTurma']);
-    $router->post('/admin/turmas/atualizar', [AdminController::class, 'updateTurma']);
-    $router->get('/admin/alunos', [AdminController::class, 'alunos']);
-    $router->get('/admin/alunos/novo', [AdminController::class, 'novoAlunoForm']);
-    $router->get('/admin/alunos/editar', [AdminController::class, 'editarAlunoForm']);
-    $router->post('/admin/alunos/salvar', [AdminController::class, 'createAluno']);
-    $router->post('/admin/alunos/atualizar', [AdminController::class, 'updateAluno']);
-    $router->get('/admin/alunos/show', [AdminController::class, 'showAluno']);
-    $router->get('/admin/alunos/matricula', [AdminController::class, 'matriculaForm']);
-    $router->post('/admin/alunos/matricular', [AdminController::class, 'createMatricula']);
-    $router->get('/admin/tarefas', [AdminController::class, 'tarefas']);
-    $router->get('/admin/tarefas/lista', [AdminController::class, 'listaTarefas']);
-    $router->get('/admin/tarefas/novo', [AdminController::class, 'novaTarefaForm']);
-    $router->post('/admin/tarefas/salvar', [AdminController::class, 'createTarefa']);
-    $router->get('/admin/tarefas/show', [AdminController::class, 'showTarefa']);
-    $router->get('/admin/tarefas/editar', [AdminController::class, 'editarTarefaForm']);
-    $router->post('/admin/tarefas/atualizar', [AdminController::class, 'updateTarefa']);
-    $router->post('/admin/tarefas/comentario', [AdminController::class, 'createTarefaComment']);
-    $router->get('/admin/cursos/novo', [AdminController::class, 'novoCursoForm']);
-    $router->get('/admin/cursos/show', [AdminController::class, 'showCurso']);
-    $router->post('/admin/cursos/salvar', [AdminController::class, 'createCourse']);
-    $router->get('/admin/cursos/editar', [AdminController::class, 'editarCursoForm']);
-    $router->get('/admin/cursos/edit', [AdminController::class, 'editarCursoForm']);
-    $router->get('/admin/cursos/edit.php', [AdminController::class, 'editarCursoForm']);
-    $router->post('/admin/cursos/atualizar', [AdminController::class, 'updateCourse']);
-    $router->get('/admin/logs', [AdminController::class, 'logs']);
-    $router->get('/admin/visitas', [AdminController::class, 'visitas']);
-    $router->get('/admin/visitas/mensal', [AdminController::class, 'visitasMensal']);
-    $router->get('/admin/visitas/analytics', [AdminController::class, 'visitasAnalytics']);
-    $router->get('/admin/visitas/paginas', [AdminController::class, 'visitasPaginas']);
-    $router->get('/admin/cursos/upload', [AdminController::class, 'uploadCursoForm']);
-    $router->post('/admin/cursos/upload', [AdminController::class, 'uploadCursoImage']);
-    $router->get('/admin/cursos/detalhes', [AdminController::class, 'cursoDetalheForm']);
-    $router->post('/admin/cursos/detalhes/salvar', [AdminController::class, 'saveCursoDetalhe']);
-    $router->get('/admin/usuarios', [AdminController::class, 'usuarios']);
-    $router->get('/admin/usuarios/novo', [AdminController::class, 'novoUsuarioForm']);
-    $router->post('/admin/usuarios/salvar', [AdminController::class, 'createUsuario']);
-    $router->get('/admin/usuarios/editar', [AdminController::class, 'editarUsuarioForm']);
-    $router->post('/admin/usuarios/atualizar', [AdminController::class, 'updateUsuario']);
-    $router->get('/admin/modalidade', [AdminController::class, 'modalidade']);
-    $router->get('/admin/modalidade/edit', [AdminController::class, 'editModalidadeForm']);
-    $router->post('/admin/modalidade/update', [AdminController::class, 'updateModalidade']);
-    $router->get('/admin/segmento', [AdminController::class, 'segmento']);
-    $router->get('/admin/segmento/edit', [AdminController::class, 'editSegmentoForm']);
-    $router->post('/admin/segmento/update', [AdminController::class, 'updateSegmento']);
-    $router->get('/admin/setor', [AdminController::class, 'setor']);
-    $router->get('/admin/setor/edit', [AdminController::class, 'editSetorForm']);
-    $router->post('/admin/setor/update', [AdminController::class, 'updateSetor']);
-    $router->get('/admin/nivel', [AdminController::class, 'nivel']);
-    $router->get('/admin/nivel/edit', [AdminController::class, 'editNivelForm']);
-    $router->post('/admin/nivel/update', [AdminController::class, 'updateNivel']);
-    $router->get('/admin/dbase', [AdminController::class, 'dbase']);
+
+    $router->get('/admin', [DashboardController::class, 'index']);
+    $router->get('/admin/dashboard', [DashboardController::class, 'index']);
+    $router->get('/admin/logs', [DashboardController::class, 'logs']);
+    $router->get('/admin/dbase', [DashboardController::class, 'dbase']);
+
+    $router->get('/admin/cursos', [CursoController::class, 'index']);
+    $router->get('/admin/cursos/novo', [CursoController::class, 'novo']);
+    $router->post('/admin/cursos/salvar', [CursoController::class, 'salvar']);
+    $router->get('/admin/cursos/show', [CursoController::class, 'show']);
+    $router->get('/admin/cursos/editar', [CursoController::class, 'editar']);
+    $router->get('/admin/cursos/edit', [CursoController::class, 'editar']);
+    $router->get('/admin/cursos/edit.php', [CursoController::class, 'editar']);
+    $router->post('/admin/cursos/atualizar', [CursoController::class, 'atualizar']);
+    $router->get('/admin/cursos/upload', [CursoController::class, 'uploadForm']);
+    $router->post('/admin/cursos/upload', [CursoController::class, 'uploadImagem']);
+    $router->get('/admin/cursos/detalhes', [CursoController::class, 'detalhes']);
+    $router->post('/admin/cursos/detalhes/salvar', [CursoController::class, 'salvarDetalhe']);
+
+    $router->get('/admin/usuarios', [UsuarioController::class, 'index']);
+    $router->get('/admin/usuarios/novo', [UsuarioController::class, 'novo']);
+    $router->post('/admin/usuarios/salvar', [UsuarioController::class, 'salvar']);
+    $router->get('/admin/usuarios/editar', [UsuarioController::class, 'editar']);
+    $router->post('/admin/usuarios/atualizar', [UsuarioController::class, 'atualizar']);
+
+    $router->get('/admin/alunos', [AlunoController::class, 'index']);
+    $router->get('/admin/alunos/novo', [AlunoController::class, 'novo']);
+    $router->get('/admin/alunos/editar', [AlunoController::class, 'editar']);
+    $router->post('/admin/alunos/salvar', [AlunoController::class, 'salvar']);
+    $router->post('/admin/alunos/atualizar', [AlunoController::class, 'atualizar']);
+    $router->get('/admin/alunos/show', [AlunoController::class, 'show']);
+    $router->get('/admin/alunos/matricula', [AlunoController::class, 'matricula']);
+    $router->post('/admin/alunos/matricular', [AlunoController::class, 'matricular']);
+
+    $router->get('/admin/tarefas', [TarefaController::class, 'index']);
+    $router->get('/admin/tarefas/lista', [TarefaController::class, 'lista']);
+    $router->get('/admin/tarefas/novo', [TarefaController::class, 'novo']);
+    $router->post('/admin/tarefas/salvar', [TarefaController::class, 'salvar']);
+    $router->get('/admin/tarefas/show', [TarefaController::class, 'show']);
+    $router->get('/admin/tarefas/editar', [TarefaController::class, 'editar']);
+    $router->post('/admin/tarefas/atualizar', [TarefaController::class, 'atualizar']);
+    $router->post('/admin/tarefas/comentario', [TarefaController::class, 'comentario']);
+
+    $router->get('/admin/turmas', [TurmaController::class, 'index']);
+    $router->get('/admin/turmas/show', [TurmaController::class, 'show']);
+    $router->get('/admin/turmas/novo', [TurmaController::class, 'novo']);
+    $router->get('/admin/turmas/editar', [TurmaController::class, 'editar']);
+    $router->post('/admin/turmas/salvar', [TurmaController::class, 'salvar']);
+    $router->post('/admin/turmas/atualizar', [TurmaController::class, 'atualizar']);
+
+    $router->get('/admin/modalidade', [ConfigController::class, 'modalidade']);
+    $router->get('/admin/modalidade/edit', [ConfigController::class, 'editModalidade']);
+    $router->post('/admin/modalidade/update', [ConfigController::class, 'updateModalidade']);
+
+    $router->get('/admin/segmento', [ConfigController::class, 'segmento']);
+    $router->get('/admin/segmento/edit', [ConfigController::class, 'editSegmento']);
+    $router->post('/admin/segmento/update', [ConfigController::class, 'updateSegmento']);
+
+    $router->get('/admin/setor', [ConfigController::class, 'setor']);
+    $router->get('/admin/setor/edit', [ConfigController::class, 'editSetor']);
+    $router->post('/admin/setor/update', [ConfigController::class, 'updateSetor']);
+
+    $router->get('/admin/nivel', [ConfigController::class, 'nivel']);
+    $router->get('/admin/nivel/edit', [ConfigController::class, 'editNivel']);
+    $router->post('/admin/nivel/update', [ConfigController::class, 'updateNivel']);
+
+    $router->get('/admin/visitas', [VisitaController::class, 'index']);
+    $router->get('/admin/visitas/mensal', [VisitaController::class, 'mensal']);
+    $router->get('/admin/visitas/analytics', [VisitaController::class, 'analytics']);
+    $router->get('/admin/visitas/paginas', [VisitaController::class, 'paginas']);
+
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);
     $router->get('/aluno', [StudentController::class, 'dashboard']);
