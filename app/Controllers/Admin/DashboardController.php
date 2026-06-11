@@ -31,7 +31,7 @@ final class DashboardController extends Controller
         $this->render('pages/admin/dashboard/index', [
             'title' => 'Painel Admin',
             'currentRoute' => '/admin',
-            'indicators' => $this->admin->indicators(),
+            'indicators' => $this->admin->indicators($userId, $isAdmin),
             'taskIndicators' => $this->admin->taskIndicators($userId, $isAdmin),
             'isAdmin' => $isAdmin,
         ], 'admin');

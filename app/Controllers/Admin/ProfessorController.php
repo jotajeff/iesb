@@ -115,6 +115,9 @@ final class ProfessorController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $authUser = Session::get('user');
+        $isProfessor = ((string) ($authUser['role'] ?? $authUser['tipo'] ?? '')) === 'professor';
+
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
         $professor = $this->usuarioService->findUsuario($id);
 
@@ -128,6 +131,7 @@ final class ProfessorController extends Controller
             'title' => 'Editar Professor',
             'currentRoute' => '/admin/professores/editar',
             'professor' => $professor,
+            'backRoute' => $isProfessor ? '/admin/professores/perfil' : '/admin/professores',
         ], 'admin');
     }
 
@@ -138,6 +142,10 @@ final class ProfessorController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $authUser = Session::get('user');
+        $isProfessor = ((string) ($authUser['role'] ?? $authUser['tipo'] ?? '')) === 'professor';
+        $redirectBase = $isProfessor ? '/admin/professores/perfil' : '/admin/professores';
+
         $id = (int) $this->input('id', 0);
         $nome = trim((string) $this->input('nome', ''));
         $telefone = trim((string) $this->input('telefone', ''));
@@ -145,21 +153,21 @@ final class ProfessorController extends Controller
 
         if ($id <= 0 || $nome === '') {
             Session::setFlash('flash', 'Dados inválidos.');
-            $this->redirect('/admin/professores');
+            $this->redirect($isProfessor ? '/admin/professores/editar?id=' . $id : $redirectBase);
             return;
         }
 
         $professor = $this->usuarioService->findUsuario($id);
         if (!$professor) {
             Session::setFlash('flash', 'Professor não encontrado.');
-            $this->redirect('/admin/professores');
+            $this->redirect($redirectBase);
             return;
         }
 
         $this->usuarioService->atualizarUsuario($id, '', $ativo, $nome, '', '', $telefone);
         $this->adminService->log('atualizar', 'usuario', $id, "Professor atualizado: $nome");
         Session::setFlash('flash', 'Professor atualizado com sucesso.');
-        $this->redirect('/admin/professores');
+        $this->redirect($redirectBase);
     }
 
     public function endereco(): void
@@ -173,6 +181,9 @@ final class ProfessorController extends Controller
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
+
+        $authUser = Session::get('user');
+        $isProfessor = ((string) ($authUser['role'] ?? $authUser['tipo'] ?? '')) === 'professor';
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
         $professor = $this->usuarioService->findUsuario($id);
@@ -194,6 +205,7 @@ final class ProfessorController extends Controller
             'currentRoute' => '/admin/professores/endereco',
             'professor' => $professor,
             'endereco' => $endereco,
+            'backRoute' => $isProfessor ? '/admin/professores/perfil' : '/admin/professores',
         ], 'admin');
     }
 
@@ -204,11 +216,15 @@ final class ProfessorController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $authUser = Session::get('user');
+        $isProfessor = ((string) ($authUser['role'] ?? $authUser['tipo'] ?? '')) === 'professor';
+        $redirectBase = $isProfessor ? '/admin/professores/perfil' : '/admin/professores';
+
         $id = (int) $this->input('id', 0);
         $professor = $this->usuarioService->findUsuario($id);
         if (!$professor) {
             Session::setFlash('flash', 'Professor não encontrado.');
-            $this->redirect('/admin/professores');
+            $this->redirect($redirectBase);
             return;
         }
 
@@ -251,7 +267,7 @@ final class ProfessorController extends Controller
         } catch (\Throwable) {
             Session::setFlash('flash', 'Erro ao salvar endereço. A tabela endereco pode não existir no banco.');
         }
-        $this->redirect('/admin/professores');
+        $this->redirect($redirectBase);
     }
 
     public function vincular(): void
@@ -349,6 +365,53 @@ final class ProfessorController extends Controller
         }
 
         $this->redirect('/admin/professores');
+    }
+
+    public function perfil(): void
+    {
+        $authUser = Session::get('user');
+        $userId = (int) ($authUser['id'] ?? 0);
+
+        if (!$this->isStaff() || $userId <= 0) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $usuario = $this->usuarioService->findUsuario($userId);
+
+        if (!$usuario || ((string) ($usuario['tipo'] ?? '')) !== 'professor') {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin');
+        }
+
+        try {
+            $endereco = $this->enderecoRepository->findByTipoAndFk('professor', $userId);
+        } catch (\Throwable) {
+            $endereco = null;
+        }
+
+        $social = [];
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, tipo, rede, link_perfil FROM social WHERE tipo = :tipo AND id_fk = :id_fk ORDER BY rede ASC');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $social = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable) {
+            $social = [];
+        }
+
+        $this->render('pages/admin/professores/perfil', [
+            'title' => 'Meu Perfil',
+            'currentRoute' => '/admin/professores/perfil',
+            'usuario' => $usuario,
+            'professor' => $usuario,
+            'endereco' => $endereco,
+            'social' => $social,
+        ], 'admin');
     }
 
     public function buscarCep(): void

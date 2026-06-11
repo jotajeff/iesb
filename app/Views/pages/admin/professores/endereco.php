@@ -2,7 +2,7 @@
     <div class="bg-white border rounded-3 p-4 shadow-sm">
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h4 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Endereço do Professor</h4>
-        <a class="btn btn-outline-secondary btn-sm" href="/admin/professores"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= htmlspecialchars((string) ($backRoute ?? '/admin/professores'), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
       </div>
 
       <p class="mb-3"><strong>Professor:</strong> <?= htmlspecialchars((string) ($professor['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?></p>

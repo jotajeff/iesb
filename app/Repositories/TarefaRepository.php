@@ -59,8 +59,8 @@ final class TarefaRepository
         }
 
         try {
-            $sql = 'INSERT INTO tarefas (setor, tarefa, prioridade, criado_por, responsavel, situacao)
-                    VALUES (:setor, :tarefa, :prioridade, :criado_por, :responsavel, :situacao)';
+            $sql = 'INSERT INTO tarefas (setor, tarefa, prioridade, criado_por, responsavel, situacao, criado_em)
+                    VALUES (:setor, :tarefa, :prioridade, :criado_por, :responsavel, :situacao, NOW())';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':setor', (int) $payload['setor'], PDO::PARAM_INT);
             $stmt->bindValue(':tarefa', (string) $payload['tarefa']);

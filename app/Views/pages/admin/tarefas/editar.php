@@ -50,7 +50,7 @@ $prioridadeAtual = (int) ($tarefa['prioridade'] ?? 1);
           <?php foreach ($usuarios ?? [] as $usuario): ?>
             <?php $usuarioId = (int) ($usuario['id'] ?? 0); ?>
             <option value="<?= $usuarioId ?>" <?= (string) $usuarioId === $responsavelAtual ? 'selected' : '' ?>>
-              <?= htmlspecialchars((string) ($usuario['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+              <?= htmlspecialchars((string) ($usuario['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars((string) ($usuario['tipo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>)
             </option>
           <?php endforeach; ?>
         </select>

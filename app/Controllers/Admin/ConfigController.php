@@ -185,6 +185,69 @@ final class ConfigController extends Controller
         ], 'admin');
     }
 
+    public function setor(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/setor/index', [
+            'title' => 'Setores',
+            'currentRoute' => '/admin/setor',
+            'setores' => $this->adminService->setores(),
+        ], 'admin');
+    }
+
+    public function editSetor(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $setor = $id > 0 ? $this->adminService->findSetor($id) : null;
+
+        if ($id > 0 && !$setor) {
+            Session::setFlash('flash', 'Setor não encontrado.');
+            $this->redirect('/admin/setor');
+            return;
+        }
+
+        $this->render('pages/admin/setor/edit', [
+            'title' => $id > 0 ? 'Editar Setor' : 'Novo Setor',
+            'currentRoute' => '/admin/setor',
+            'setor' => $setor,
+        ], 'admin');
+    }
+
+    public function updateSetor(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $setorNome = trim((string) $this->input('setor', ''));
+
+        if ($setorNome === '') {
+            Session::setFlash('flash', 'Informe o nome do setor.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/setor/edit' . $suffix);
+            return;
+        }
+
+        $setorId = $this->adminService->saveSetor($id, $setorNome);
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricao = ($id > 0 ? 'Setor atualizado: ' : 'Setor criado: ') . $setorNome;
+        $this->adminService->log($acao, 'setor', $setorId, $descricao);
+
+        Session::setFlash('flash', $id > 0 ? 'Setor atualizado com sucesso.' : 'Setor criado com sucesso.');
+        $this->redirect('/admin/setor');
+    }
+
     public function updateNivel(): void
     {
         if (!$this->isStaff()) {

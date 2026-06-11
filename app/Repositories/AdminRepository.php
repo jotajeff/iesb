@@ -9,7 +9,7 @@ use PDO;
 
 final class AdminRepository
 {
-    public function dashboardIndicators(): array
+    public function dashboardIndicators(?int $userId = null, bool $isAdmin = true): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -20,10 +20,33 @@ final class AdminRepository
             ];
         }
 
+        if ($isAdmin || !$userId) {
+            return [
+                'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos'),
+                'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos_iesb'),
+                'total_matriculas' => $this->count($pdo, 'SELECT COUNT(*) FROM matriculas'),
+            ];
+        }
+
+        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT c.id) FROM cursos_iesb c JOIN turmas t ON t.id_curso = c.id JOIN turma_professor tp ON tp.id_turma = t.id WHERE tp.id_usuario = :userId');
+        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $totalCursos = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT a.id) FROM alunos a JOIN matriculas m ON m.id_aluno = a.id JOIN turmas t ON t.id = m.id_turma JOIN turma_professor tp ON tp.id_turma = t.id WHERE tp.id_usuario = :userId');
+        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $totalAlunos = (int) $stmt->fetchColumn();
+
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM matriculas m JOIN turma_professor tp ON tp.id_turma = m.id_turma WHERE tp.id_usuario = :userId');
+        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        $stmt->execute();
+        $totalMatriculas = (int) $stmt->fetchColumn();
+
         return [
-            'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos'),
-            'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos_iesb'),
-            'total_matriculas' => $this->count($pdo, 'SELECT COUNT(*) FROM matriculas'),
+            'total_alunos' => $totalAlunos,
+            'total_cursos' => $totalCursos,
+            'total_matriculas' => $totalMatriculas,
         ];
     }
 
@@ -1403,8 +1426,8 @@ final class AdminRepository
         }
 
         try {
-            $sql = 'INSERT INTO tarefas (setor, tarefa, prioridade, criado_por, responsavel, situacao)
-                    VALUES (:setor, :tarefa, :prioridade, :criado_por, :responsavel, :situacao)';
+            $sql = 'INSERT INTO tarefas (setor, tarefa, prioridade, criado_por, responsavel, situacao, criado_em)
+                    VALUES (:setor, :tarefa, :prioridade, :criado_por, :responsavel, :situacao, NOW())';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':setor', (int) $payload['setor'], PDO::PARAM_INT);
             $stmt->bindValue(':tarefa', (string) $payload['tarefa']);

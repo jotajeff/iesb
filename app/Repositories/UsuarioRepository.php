@@ -18,7 +18,7 @@ final class UsuarioRepository
 
         $sql = 'SELECT id, nome, email, telefone, tipo, ativo, created_at, updated_at
                 FROM usuarios
-                ORDER BY id DESC
+                ORDER BY nome ASC
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
@@ -117,6 +117,10 @@ final class UsuarioRepository
         if (isset($payload['ativo'])) {
             $sets[] = 'ativo = :ativo';
             $params[':ativo'] = (int) $payload['ativo'];
+        }
+        if (array_key_exists('telefone', $payload)) {
+            $sets[] = 'telefone = :telefone';
+            $params[':telefone'] = $payload['telefone'];
         }
 
         if (empty($sets)) {

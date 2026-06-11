@@ -38,7 +38,7 @@ $currentUser = $authUser ?? [];
         <select class="form-select" name="responsavel">
           <option value="0">Sem responsável</option>
           <?php foreach ($usuarios ?? [] as $usuario): ?>
-            <option value="<?= (int) ($usuario['id'] ?? 0) ?>"><?= htmlspecialchars((string) ($usuario['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
+            <option value="<?= (int) ($usuario['id'] ?? 0) ?>"><?= htmlspecialchars((string) ($usuario['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?> (<?= htmlspecialchars((string) ($usuario['tipo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>)</option>
           <?php endforeach; ?>
         </select>
       </div>

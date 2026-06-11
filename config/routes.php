@@ -57,6 +57,7 @@ return static function (Router $router): void {
     $router->get('/admin/professores/vincular', [ProfessorController::class, 'vincular']);
     $router->post('/admin/professores/salvar-vinculo', [ProfessorController::class, 'salvarVinculo']);
     $router->get('/admin/professores/buscar-cep', [ProfessorController::class, 'buscarCep']);
+    $router->get('/admin/professores/perfil', [ProfessorController::class, 'perfil']);
 
     $router->get('/admin/usuarios', [UsuarioController::class, 'index']);
     $router->get('/admin/usuarios/novo', [UsuarioController::class, 'novo']);

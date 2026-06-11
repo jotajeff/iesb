@@ -15,9 +15,9 @@ final class AdminService
     ) {
     }
 
-    public function indicators(): array
+    public function indicators(?int $userId = null, bool $isAdmin = true): array
     {
-        return $this->repository->dashboardIndicators();
+        return $this->repository->dashboardIndicators($userId, $isAdmin);
     }
 
     public function taskIndicators(int $userId, bool $isAdmin): array
