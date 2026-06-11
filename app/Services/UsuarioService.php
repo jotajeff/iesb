@@ -18,23 +18,29 @@ final class UsuarioService
         return $this->repository->list($limit);
     }
 
+    public function usuariosPorTipo(string $tipo, int $limit = 200): array
+    {
+        return $this->repository->listByTipo($tipo, $limit);
+    }
+
     public function findUsuario(int $id): ?array
     {
         return $this->repository->findById($id);
     }
 
-    public function criarUsuario(string $nome, string $email, string $senha, string $tipo = 'aluno', string $ativo = '1'): int
+    public function criarUsuario(string $nome, string $email, string $senha, string $tipo = 'aluno', string $ativo = '1', string $telefone = ''): int
     {
         return $this->repository->create([
             'nome' => trim($nome),
             'email' => trim($email),
             'senha' => password_hash($senha, PASSWORD_DEFAULT),
             'tipo' => $tipo,
+            'telefone' => $telefone ?: null,
             'ativo' => $ativo,
         ]);
     }
 
-    public function atualizarUsuario(int $id, string $senha = '', string $ativo = '1', string $nome = '', string $email = '', string $tipo = ''): void
+    public function atualizarUsuario(int $id, string $senha = '', string $ativo = '1', string $nome = '', string $email = '', string $tipo = '', string $telefone = ''): void
     {
         $payload = [];
         if ($nome !== '') {
@@ -48,6 +54,9 @@ final class UsuarioService
         }
         if ($tipo !== '') {
             $payload['tipo'] = $tipo;
+        }
+        if ($telefone !== '') {
+            $payload['telefone'] = $telefone;
         }
         $payload['ativo'] = $ativo;
 

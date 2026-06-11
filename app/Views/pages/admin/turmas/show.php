@@ -63,6 +63,37 @@
       </table>
 
       <hr>
+      <h5 class="mb-3"><i class="bi bi-person-badge me-2"></i>Professores vinculados</h5>
+
+      <?php $professoresLista = is_array($professores ?? null) ? $professores : []; ?>
+      <?php if (empty($professoresLista)): ?>
+        <div class="alert alert-light border text-muted">
+          <i class="bi bi-inbox me-1"></i>Nenhum professor vinculado a esta turma.
+        </div>
+      <?php else: ?>
+        <div class="table-responsive mb-4">
+          <table class="table table-striped table-sm align-middle">
+            <thead>
+              <tr>
+                <th><i class="bi bi-hash"></i></th>
+                <th>Nome</th>
+                <th>Email</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($professoresLista as $prof): ?>
+                <tr>
+                  <td><?= (int) ($prof['id'] ?? 0) ?></td>
+                  <td><?= htmlspecialchars((string) ($prof['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                  <td><?= htmlspecialchars((string) ($prof['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+          </table>
+        </div>
+      <?php endif; ?>
+
+      <hr>
       <h5 class="mb-3"><i class="bi bi-people me-2"></i>Alunos inscritos (<?= $totalInscritos ?>)</h5>
 
       <?php if (empty($inscritosLista)): ?>

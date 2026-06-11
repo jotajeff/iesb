@@ -8,6 +8,7 @@ use App\Controllers\Admin\CursoController;
 use App\Controllers\Admin\DashboardController;
 use App\Controllers\Admin\TarefaController;
 use App\Controllers\Admin\TurmaController;
+use App\Controllers\Admin\ProfessorController;
 use App\Controllers\Admin\UsuarioController;
 use App\Controllers\Admin\VisitaController;
 use App\Controllers\AuthController;
@@ -45,6 +46,17 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/upload', [CursoController::class, 'uploadImagem']);
     $router->get('/admin/cursos/detalhes', [CursoController::class, 'detalhes']);
     $router->post('/admin/cursos/detalhes/salvar', [CursoController::class, 'salvarDetalhe']);
+
+    $router->get('/admin/professores', [ProfessorController::class, 'index']);
+    $router->get('/admin/professores/novo', [ProfessorController::class, 'novo']);
+    $router->post('/admin/professores/salvar', [ProfessorController::class, 'salvar']);
+    $router->get('/admin/professores/editar', [ProfessorController::class, 'editar']);
+    $router->post('/admin/professores/atualizar', [ProfessorController::class, 'atualizar']);
+    $router->get('/admin/professores/endereco', [ProfessorController::class, 'endereco']);
+    $router->post('/admin/professores/salvar-endereco', [ProfessorController::class, 'salvarEndereco']);
+    $router->get('/admin/professores/vincular', [ProfessorController::class, 'vincular']);
+    $router->post('/admin/professores/salvar-vinculo', [ProfessorController::class, 'salvarVinculo']);
+    $router->get('/admin/professores/buscar-cep', [ProfessorController::class, 'buscarCep']);
 
     $router->get('/admin/usuarios', [UsuarioController::class, 'index']);
     $router->get('/admin/usuarios/novo', [UsuarioController::class, 'novo']);

@@ -16,11 +16,32 @@ final class UsuarioRepository
             return [];
         }
 
-        $sql = 'SELECT id, nome, email, tipo, ativo, created_at, updated_at
+        $sql = 'SELECT id, nome, email, telefone, tipo, ativo, created_at, updated_at
                 FROM usuarios
                 ORDER BY id DESC
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function listByTipo(string $tipo, int $limit = 200): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $sql = 'SELECT id, nome, email, telefone, tipo, ativo, created_at, updated_at
+                FROM usuarios
+                WHERE tipo = :tipo
+                ORDER BY id DESC
+                LIMIT :limit';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
         $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
@@ -35,7 +56,7 @@ final class UsuarioRepository
             return null;
         }
 
-        $sql = 'SELECT id, nome, email, tipo, ativo, created_at, updated_at
+        $sql = 'SELECT id, nome, email, telefone, tipo, ativo, created_at, updated_at
                 FROM usuarios
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
@@ -53,13 +74,14 @@ final class UsuarioRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO usuarios (nome, email, senha, tipo, ativo)
-                VALUES (:nome, :email, :senha, :tipo, :ativo)';
+        $sql = 'INSERT INTO usuarios (nome, email, senha, tipo, telefone, ativo)
+                VALUES (:nome, :email, :senha, :tipo, :telefone, :ativo)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
         $stmt->bindValue(':email', $payload['email']);
         $stmt->bindValue(':senha', $payload['senha']);
         $stmt->bindValue(':tipo', $payload['tipo']);
+        $stmt->bindValue(':telefone', $payload['telefone'] ?? null, PDO::PARAM_STR);
         $stmt->bindValue(':ativo', (int) $payload['ativo'], PDO::PARAM_INT);
         $stmt->execute();
 

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Services\TurmaService;
 use App\Services\CursoService;
 use App\Services\AdminService;
@@ -60,7 +61,33 @@ final class TurmaController extends Controller
             'currentRoute' => '/admin/turmas/show',
             'turma' => $turma,
             'inscritos' => $this->turmaService->inscritosPorTurma($id),
+            'professores' => $this->professoresDaTurma($id),
         ], 'admin');
+    }
+
+    private function professoresDaTurma(int $idTurma): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            return [];
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT u.id, u.nome, u.email'
+                . ' FROM turma_professor tp'
+                . ' JOIN usuarios u ON tp.id_usuario = u.id'
+                . ' WHERE tp.id_turma = :id_turma AND tp.status = :status'
+                . ' ORDER BY u.nome ASC'
+            );
+            $stmt->bindValue(':id_turma', $idTurma, \PDO::PARAM_INT);
+            $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     public function novo(): void

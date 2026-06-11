@@ -4,7 +4,7 @@
         $currentRole = (string) ($authUser['role'] ?? '');
         $currentUserId = (int) ($authUser['id'] ?? 0);
         $isAdmin = $currentRole === 'admin';
-        $canCreateUser = $isAdmin || $currentRole === 'operador';
+        $canCreateUser = $isAdmin;
       ?>
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-people me-2"></i>Usuários IESB</h4>
@@ -30,8 +30,14 @@
         <tbody>
           <?php
           $filtered = $isAdmin
-              ? ($usuarios ?? [])
+              ? array_filter($usuarios ?? [], fn($u) => ((string) ($u['tipo'] ?? '')) !== 'professor')
               : array_filter($usuarios ?? [], fn($u) => (int) ($u['id'] ?? 0) === $currentUserId);
+
+          $order = ['admin' => 0, 'operador' => 1];
+          usort($filtered, fn($a, $b) =>
+              (($order[(string) ($a['tipo'] ?? '')] ?? 9) <=> ($order[(string) ($b['tipo'] ?? '')] ?? 9))
+              ?: strcasecmp((string) ($a['nome'] ?? ''), (string) ($b['nome'] ?? ''))
+          );
           ?>
 
           <?php if (empty($filtered)): ?>
@@ -73,6 +79,11 @@
               </td>
             </tr>
           <?php endforeach; ?>
+          <?php if (!empty($filtered)): ?>
+            <tr class="table-secondary fw-semibold">
+              <td colspan="6" class="text-end">Total: <?= count($filtered) ?> usuário(s)</td>
+            </tr>
+          <?php endif; ?>
         </tbody>
       </table>
     </div>
