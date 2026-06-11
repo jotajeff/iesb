@@ -55,7 +55,9 @@ final class UsuarioService
         if ($tipo !== '') {
             $payload['tipo'] = $tipo;
         }
-        $payload['telefone'] = $telefone !== '' ? $telefone : null;
+        if ($telefone !== '') {
+            $payload['telefone'] = $telefone;
+        }
         $payload['ativo'] = $ativo;
 
         $this->repository->update($id, $payload);

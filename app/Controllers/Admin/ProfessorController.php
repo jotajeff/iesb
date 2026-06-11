@@ -404,6 +404,22 @@ final class ProfessorController extends Controller
             $social = [];
         }
 
+        $curriculo = null;
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $row = $stmt->fetch();
+                $curriculo = $row ?: null;
+            }
+        } catch (\Throwable) {
+            $curriculo = null;
+        }
+
         $this->render('pages/admin/professores/perfil', [
             'title' => 'Meu Perfil',
             'currentRoute' => '/admin/professores/perfil',
@@ -411,7 +427,271 @@ final class ProfessorController extends Controller
             'professor' => $usuario,
             'endereco' => $endereco,
             'social' => $social,
+            'curriculo' => $curriculo,
         ], 'admin');
+    }
+
+    public function turmas(): void
+    {
+        $authUser = Session::get('user');
+        $userId = (int) ($authUser['id'] ?? 0);
+
+        if (!$this->isStaff() || $userId <= 0) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $pdo = Database::connection();
+        $turmas = [];
+        if ($pdo instanceof \PDO) {
+            try {
+                $sql = 'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativa,'
+                     . ' c.nome AS curso_nome, n.nome AS nivel_nome,'
+                     . ' (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos'
+                     . ' FROM turma_professor tp'
+                     . ' JOIN turmas t ON tp.id_turma = t.id'
+                     . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
+                     . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                     . ' WHERE tp.id_usuario = :id_usuario AND tp.status = :status'
+                     . ' ORDER BY t.nome ASC';
+
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindValue(':id_usuario', $userId, \PDO::PARAM_INT);
+                $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
+                $stmt->execute();
+                $turmas = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[PROFESSOR TURMAS] Erro: ' . $e->getMessage());
+                $turmas = [];
+            }
+        }
+
+        $this->render('pages/admin/professores/turmas', [
+            'title' => 'Minhas Turmas',
+            'currentRoute' => '/admin/professores/turmas',
+            'turmas' => $turmas,
+        ], 'admin');
+    }
+
+    public function social(): void
+    {
+        $authUser = Session::get('user');
+        $userId = (int) ($authUser['id'] ?? 0);
+
+        if (!$this->isStaff() || $userId <= 0) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $usuario = $this->usuarioService->findUsuario($userId);
+        if (!$usuario || ((string) ($usuario['tipo'] ?? '')) !== 'professor') {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin');
+        }
+
+        $social = [];
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, rede, link_perfil FROM social WHERE tipo = :tipo AND id_fk = :id_fk ORDER BY rede ASC');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $social = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable) {
+            $social = [];
+        }
+
+        $this->render('pages/admin/professores/social', [
+            'title' => 'Redes Sociais',
+            'currentRoute' => '/admin/professores/social',
+            'social' => $social,
+            'usuario' => $usuario,
+        ], 'admin');
+    }
+
+    public function salvarSocial(): void
+    {
+        $authUser = Session::get('user');
+        $userId = (int) ($authUser['id'] ?? 0);
+
+        if (!$this->isStaff() || $userId <= 0) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $rede = trim((string) $this->input('rede', ''));
+        $link = trim((string) $this->input('link_perfil', ''));
+
+        if ($rede === '' || $link === '') {
+            Session::setFlash('flash', 'Preencha a rede e o link.');
+            $this->redirect('/admin/professores/social');
+            return;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('INSERT INTO social (id_fk, tipo, rede, link_perfil) VALUES (:id_fk, :tipo, :rede, :link_perfil)');
+                $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':rede', $rede, \PDO::PARAM_STR);
+                $stmt->bindValue(':link_perfil', $link, \PDO::PARAM_STR);
+                $stmt->execute();
+
+                $this->adminService->log('criar', 'social', (int) $pdo->lastInsertId(), "Rede social adicionada: $rede");
+            }
+
+            $action = (string) $this->input('action', '');
+            if ($action === 'add_another') {
+                Session::setFlash('flash', 'Rede social cadastrada. Adicione outra.');
+                $this->redirect('/admin/professores/social');
+            } else {
+                Session::setFlash('flash', 'Rede social cadastrada com sucesso.');
+                $this->redirect('/admin/professores/perfil');
+            }
+        } catch (\Throwable $e) {
+            error_log('[SOCIAL] Erro ao salvar: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao cadastrar rede social.');
+            $this->redirect('/admin/professores/social');
+        }
+    }
+
+    public function deletarSocial(): void
+    {
+        $authUser = Session::get('user');
+        $userId = (int) ($authUser['id'] ?? 0);
+
+        if (!$this->isStaff() || $userId <= 0) {
+            http_response_code(403);
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) $this->input('id', 0);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'ID inválido.']);
+            return;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('DELETE FROM social WHERE id = :id AND id_fk = :id_fk AND tipo = :tipo');
+                $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->execute();
+
+                if ($stmt->rowCount() > 0) {
+                    $this->adminService->log('excluir', 'social', $id, "Rede social excluída");
+                    echo json_encode(['sucesso' => true]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['erro' => 'Registro não encontrado.']);
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('[SOCIAL] Erro ao excluir: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao excluir.']);
+        }
+    }
+
+    public function curriculo(): void
+    {
+        $authUser = Session::get('user');
+        $userId = (int) ($authUser['id'] ?? 0);
+
+        if (!$this->isStaff() || $userId <= 0) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $usuario = $this->usuarioService->findUsuario($userId);
+        if (!$usuario || ((string) ($usuario['tipo'] ?? '')) !== 'professor') {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin');
+        }
+
+        $curriculo = null;
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $row = $stmt->fetch();
+                $curriculo = $row ?: null;
+            }
+        } catch (\Throwable) {
+            $curriculo = null;
+        }
+
+        $this->render('pages/admin/professores/curriculo', [
+            'title' => 'Currículo',
+            'currentRoute' => '/admin/professores/curriculo',
+            'curriculo' => $curriculo,
+            'usuario' => $usuario,
+        ], 'admin');
+    }
+
+    public function salvarCurriculo(): void
+    {
+        $authUser = Session::get('user');
+        $userId = (int) ($authUser['id'] ?? 0);
+
+        if (!$this->isStaff() || $userId <= 0) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $conteudo = (string) $this->input('conteudo', '');
+
+        if ($conteudo === '') {
+            Session::setFlash('flash', 'O conteúdo do currículo não pode ficar vazio.');
+            $this->redirect('/admin/professores/curriculo');
+            return;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $existing = $stmt->fetch();
+
+                if ($existing) {
+                    $upd = $pdo->prepare('UPDATE curriculo SET conteudo = :conteudo WHERE id = :id');
+                    $upd->bindValue(':conteudo', $conteudo, \PDO::PARAM_STR);
+                    $upd->bindValue(':id', (int) $existing['id'], \PDO::PARAM_INT);
+                    $upd->execute();
+                    $this->adminService->log('atualizar', 'curriculo', (int) $existing['id'], 'Currículo atualizado');
+                } else {
+                    $ins = $pdo->prepare('INSERT INTO curriculo (id_fk, tipo, conteudo, ativo) VALUES (:id_fk, :tipo, :conteudo, :ativo)');
+                    $ins->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
+                    $ins->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                    $ins->bindValue(':conteudo', $conteudo, \PDO::PARAM_STR);
+                    $ins->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                    $ins->execute();
+                    $this->adminService->log('criar', 'curriculo', (int) $pdo->lastInsertId(), 'Currículo criado');
+                }
+            }
+
+            Session::setFlash('flash', 'Currículo salvo com sucesso.');
+            $this->redirect('/admin/professores/perfil');
+        } catch (\Throwable $e) {
+            error_log('[CURRICULO] Erro: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao salvar currículo.');
+            $this->redirect('/admin/professores/curriculo');
+        }
     }
 
     public function buscarCep(): void

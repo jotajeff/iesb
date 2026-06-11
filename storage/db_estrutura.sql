@@ -345,6 +345,47 @@ CREATE TABLE social (
 );
 
 
+CREATE TABLE `curriculo` (
+  `id` int(11) NOT NULL,
+  `id_fk` int(11) NOT NULL,
+  `tipo` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `conteudo` text COLLATE utf8_unicode_ci NOT NULL,
+  `ativo` char(1) COLLATE utf8_unicode_ci DEFAULT 'S',
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+--
+-- Índices para tabelas despejadas
+--
+
+--
+-- Índices de tabela `curriculo`
+--
+ALTER TABLE `curriculo`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_curriculo_usuario` (`id_fk`);
+
+--
+-- AUTO_INCREMENT para tabelas despejadas
+--
+
+--
+-- AUTO_INCREMENT de tabela `curriculo`
+--
+ALTER TABLE `curriculo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- Restrições para tabelas despejadas
+--
+
+--
+-- Restrições para tabelas `curriculo`
+--
+ALTER TABLE `curriculo`
+  ADD CONSTRAINT `fk_curriculo_usuario` FOREIGN KEY (`id_fk`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE;
+COMMIT;
+
 --
 -- Índices para tabelas despejadas
 --

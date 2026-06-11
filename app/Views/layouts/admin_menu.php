@@ -10,6 +10,7 @@
         <?php if ($userRole === 'professor'): ?>
           <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin' ? 'active' : '' ?>" href="/admin"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
           <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="/admin/tarefas"><i class="bi bi-kanban me-1"></i>Tarefas</a></li>
+          <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/professores/turmas') === 0 ? 'active' : '') ?>" href="/admin/professores/turmas"><i class="bi bi-people me-1"></i>Minhas Turmas</a></li>
           <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/professores/perfil') === 0 ? 'active' : '') ?>" href="/admin/professores/perfil"><i class="bi bi-person-circle me-1"></i>Perfil</a></li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/usuarios') === 0) || (($currentRoute ?? '') === '/admin/logs')) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-shield-lock me-1"></i>Acesso</a>

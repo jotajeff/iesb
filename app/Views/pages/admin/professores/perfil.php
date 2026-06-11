@@ -74,6 +74,28 @@
             <?php else: ?>
               <p class="text-muted mb-0">Nenhuma rede social vinculada.</p>
             <?php endif; ?>
+            <div class="mt-3">
+              <a class="btn btn-primary btn-sm" href="/admin/professores/social"><i class="bi bi-pencil me-1"></i>Gerenciar redes sociais</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#curriculo" aria-expanded="false">
+            <i class="bi bi-file-earmark-text me-2"></i>Currículo
+          </button>
+        </h2>
+        <div id="curriculo" class="accordion-collapse collapse" data-bs-parent="#perfilAccordion">
+          <div class="accordion-body">
+            <?php if ($curriculo): ?>
+              <div class="mb-3 p-3 border rounded bg-light"><?= ($curriculo['conteudo'] ?? '') ?></div>
+              <a class="btn btn-primary btn-sm" href="/admin/professores/curriculo"><i class="bi bi-pencil me-1"></i>Editar currículo</a>
+            <?php else: ?>
+              <p class="text-muted mb-3"><i class="bi bi-exclamation-circle text-warning me-1"></i>Sem currículo vinculado.</p>
+              <a class="btn btn-primary btn-sm" href="/admin/professores/curriculo"><i class="bi bi-plus-circle me-1"></i>Adicionar currículo</a>
+            <?php endif; ?>
           </div>
         </div>
       </div>

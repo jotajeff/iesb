@@ -58,6 +58,12 @@ return static function (Router $router): void {
     $router->post('/admin/professores/salvar-vinculo', [ProfessorController::class, 'salvarVinculo']);
     $router->get('/admin/professores/buscar-cep', [ProfessorController::class, 'buscarCep']);
     $router->get('/admin/professores/perfil', [ProfessorController::class, 'perfil']);
+    $router->get('/admin/professores/turmas', [ProfessorController::class, 'turmas']);
+    $router->get('/admin/professores/social', [ProfessorController::class, 'social']);
+    $router->post('/admin/professores/salvar-social', [ProfessorController::class, 'salvarSocial']);
+    $router->post('/admin/professores/deletar-social', [ProfessorController::class, 'deletarSocial']);
+    $router->get('/admin/professores/curriculo', [ProfessorController::class, 'curriculo']);
+    $router->post('/admin/professores/salvar-curriculo', [ProfessorController::class, 'salvarCurriculo']);
 
     $router->get('/admin/usuarios', [UsuarioController::class, 'index']);
     $router->get('/admin/usuarios/novo', [UsuarioController::class, 'novo']);

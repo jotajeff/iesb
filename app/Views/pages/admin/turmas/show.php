@@ -2,6 +2,8 @@
   $turmaSelecionada = is_array($turma ?? null) ? $turma : null;
   $inscritosLista = is_array($inscritos ?? null) ? $inscritos : [];
   $totalInscritos = count($inscritosLista);
+  $currentUserRole = (string) ($authUser['role'] ?? $authUser['tipo'] ?? '');
+  $isProfessor = $currentUserRole === 'professor';
 ?>
 
 <section class="container py-4">
@@ -9,8 +11,10 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
       <h4 class="mb-0"><i class="bi bi-eye me-2"></i><?= htmlspecialchars((string) ($turmaSelecionada['nome'] ?? 'Turma'), ENT_QUOTES, 'UTF-8') ?></h4>
       <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-sm" href="/admin/turmas"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
+        <a class="btn btn-outline-secondary btn-sm" href="<?= $isProfessor ? '/admin/professores/turmas' : '/admin/turmas' ?>"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
+        <?php if (!$isProfessor): ?>
         <a class="btn btn-outline-primary btn-sm" href="/admin/turmas/editar?id=<?= (int) ($turmaSelecionada['id'] ?? 0) ?>"><i class="bi bi-pencil-square me-1"></i>Editar</a>
+        <?php endif; ?>
       </div>
     </div>
 

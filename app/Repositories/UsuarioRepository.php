@@ -130,7 +130,13 @@ final class UsuarioRepository
         $sql = 'UPDATE usuarios SET ' . implode(', ', $sets) . ' WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         foreach ($params as $key => $value) {
-            $stmt->bindValue($key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+            $paramType = PDO::PARAM_STR;
+            if ($value === null) {
+                $paramType = PDO::PARAM_NULL;
+            } elseif (is_int($value)) {
+                $paramType = PDO::PARAM_INT;
+            }
+            $stmt->bindValue($key, $value, $paramType);
         }
         $stmt->execute();
     }
