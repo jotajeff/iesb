@@ -25,9 +25,39 @@ final class AdminService
         return $this->repository->dashboardTaskIndicators($userId, $isAdmin);
     }
 
-    public function logs(int $limit = 50): array
+    public function logs(int $page = 1, int $perPage = 50): array
     {
-        return $this->repository->recentLogs($limit);
+        $result = $this->repository->recentLogs($page, $perPage);
+        $logs = $result['data'];
+        $total = $result['total'];
+
+        $resolved = [];
+        foreach ($logs as $log) {
+            $ip = (string) ($log['ip'] ?? '');
+            if ($ip !== '' && $ip !== '-') {
+                $log['location'] = $this->ipLocation->resolve($ip);
+            } else {
+                $log['location'] = [
+                    'country' => '-',
+                    'city' => '-',
+                    'country_code' => '',
+                    'flag' => '🏳️',
+                ];
+            }
+            $resolved[] = $log;
+        }
+
+        $totalPages = max(1, (int) ceil($total / $perPage));
+
+        return [
+            'data' => $resolved,
+            'pagination' => [
+                'currentPage' => $page,
+                'perPage' => $perPage,
+                'total' => $total,
+                'totalPages' => $totalPages,
+            ],
+        ];
     }
 
     public function usuarios(int $limit = 200): array
@@ -214,6 +244,14 @@ final class AdminService
             $payload['senha'] = password_hash($senha, PASSWORD_DEFAULT);
         }
         $this->repository->saveAluno($payload);
+    }
+
+    public function atualizarFotoAluno(int $id, string $foto): void
+    {
+        $this->repository->saveAluno([
+            'id' => $id,
+            'foto' => $foto,
+        ]);
     }
 
     public function matriculasDoAluno(int $idAluno): array
@@ -494,7 +532,11 @@ final class AdminService
     ): void {
         $user = \App\Support\Session::get('user');
         $usuarioId = (int) ($user['id'] ?? 0);
-        $perfil = (string) ($user['role'] ?? 'admin');
+        $perfil = (string) ($user['role'] ?? 'sistema');
+        $perfisValidos = ['admin', 'aluno', 'professor', 'operador', 'sistema'];
+        if (!in_array($perfil, $perfisValidos, true)) {
+            $perfil = 'sistema';
+        }
 
         $this->repository->registrarLog($usuarioId, $perfil, $acao, $entidade, $entidadeId, $descricao, $sucesso);
     }

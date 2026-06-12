@@ -16,16 +16,16 @@
       <?php endif; ?>
     </div>
     <div class="table-responsive">
-      <table class="table table-sm align-middle">
+      <table class="table table-sm table-striped table-hover align-middle">
         <thead>
           <tr>
             <th>#</th>
+            <th>Usuário</th>
             <th>Ação</th>
             <th>Entidade</th>
-            <th>Usuário</th>
+            <th>Descrição</th>
             <th>IP</th>
             <th>Data</th>
-            <th>Status</th>
           </tr>
         </thead>
         <tbody>
@@ -48,26 +48,51 @@
                }
              ?>
              <tr>
-               <td><?= (int) $log['id'] ?></td>
-               <td><?= htmlspecialchars((string) $log['acao'], ENT_QUOTES, 'UTF-8') ?></td>
-               <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-               <td>
-                 <?php $nome = trim((string) ($log['usuario_nome'] ?? '')); ?>
-                 <?= $nome !== '' ? htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') : ('#' . (int) ($log['usuario_id'] ?? 0)) ?>
-               </td>
-               <td><?= htmlspecialchars((string) ($log['ip'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-               <td><?= htmlspecialchars($createdAtFormatted, ENT_QUOTES, 'UTF-8') ?></td>
-               <td>
-                  <?php if ((int) ($log['sucesso'] ?? 0) === 1): ?>
-                    <span class="badge text-bg-success">Sucesso</span>
-                  <?php else: ?>
-                  <span class="badge text-bg-danger">Falha</span>
-                <?php endif; ?>
-              </td>
-            </tr>
+                <td><?= (int) $log['id'] ?></td>
+                <td>
+                  <?php $nome = trim((string) ($log['usuario_nome'] ?? '')); ?>
+                  <?= $nome !== '' ? htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') : ('#' . (int) ($log['usuario_id'] ?? 0)) ?>
+                </td>
+                <td><?= htmlspecialchars((string) $log['acao'], ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($log['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td>
+                  <span title="<?= htmlspecialchars((string) ($log['ip'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>">
+                    <?php $loc = $log['location'] ?? []; ?>
+                    <?= $loc['flag'] ?? '🏳️' ?>
+                    <?= htmlspecialchars((string) ($loc['country'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    <?php if (!empty($loc['city']) && $loc['city'] !== '-'): ?>
+                      / <?= htmlspecialchars($loc['city'], ENT_QUOTES, 'UTF-8') ?>
+                    <?php endif; ?>
+                  </span>
+                </td>
+                <td><?= htmlspecialchars($createdAtFormatted, ENT_QUOTES, 'UTF-8') ?></td>
+             </tr>
           <?php endforeach; ?>
         </tbody>
       </table>
     </div>
+
+    <?php if ($isAdmin && !empty($pagination) && $pagination['totalPages'] > 1): ?>
+      <nav class="d-flex justify-content-center mt-3">
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item <?= $pagination['currentPage'] <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link" href="?page=<?= $pagination['currentPage'] - 1 ?>">Anterior</a>
+          </li>
+          <?php for ($p = 1; $p <= $pagination['totalPages']; $p++): ?>
+            <li class="page-item <?= $p === $pagination['currentPage'] ? 'active' : '' ?>">
+              <a class="page-link" href="?page=<?= $p ?>"><?= $p ?></a>
+            </li>
+          <?php endfor; ?>
+          <li class="page-item <?= $pagination['currentPage'] >= $pagination['totalPages'] ? 'disabled' : '' ?>">
+            <a class="page-link" href="?page=<?= $pagination['currentPage'] + 1 ?>">Próximo</a>
+          </li>
+        </ul>
+      </nav>
+
+      <div class="text-muted small text-center mt-2">
+        Exibindo <?= count($logEntries) ?> de <?= $pagination['total'] ?> registro(s)
+      </div>
+    <?php endif; ?>
   </div>
 </section>

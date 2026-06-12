@@ -66,6 +66,7 @@ final class AuthController extends Controller
             $this->redirect('/aluno/login');
         }
 
+        $this->admin->log('login', 'aluno', 0, "Login aluno: $email");
         $this->redirect('/aluno');
     }
 

@@ -1502,3 +1502,46 @@ footer .footer-links a:hover {
 [data-bs-theme="dark"] .shadow-soft {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2) !important;
 }
+
+/* ============================================
+           VIDEO BOX (aluno)
+           ============================================ */
+.video-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--card-shadow);
+}
+
+.video-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--bg-body-alt);
+}
+
+.video-box-header h5 {
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-heading);
+}
+
+.video-box-body {
+  padding: 1.5rem;
+}
+
+.video-box-player {
+  background: #000;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.video-box-player iframe {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  border: 0;
+}

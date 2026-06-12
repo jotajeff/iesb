@@ -36,6 +36,11 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/logs' ? 'active' : '' ?>" href="/aluno/logs">
+              <i class="bi bi-clock-history me-1"></i>Logs
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/perfil' ? 'active' : '' ?>" href="/aluno/perfil">
               <i class="bi bi-person me-1"></i>Perfil
             </a>

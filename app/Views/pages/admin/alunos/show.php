@@ -145,6 +145,73 @@
             </div>
           </div>
         </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#logsAluno" aria-expanded="false" aria-controls="logsAluno">
+              <i class="bi bi-clock-history me-2"></i>Logs (últimos 50)
+            </button>
+          </h2>
+          <div id="logsAluno" class="accordion-collapse collapse" data-bs-parent="#alunoAccordion">
+            <div class="accordion-body p-0">
+              <?php if (empty($logsAluno ?? [])): ?>
+                <div class="alert alert-light border text-muted m-3">
+                  <i class="bi bi-inbox me-1"></i>Nenhum registro de log.
+                </div>
+              <?php else: ?>
+                <div class="table-responsive">
+                  <table class="table table-striped table-hover table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>#</th>
+                        <th>Usuário</th>
+                        <th>Ação</th>
+                        <th>Entidade</th>
+                        <th>Descrição</th>
+                        <th>IP</th>
+                        <th>Data</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($logsAluno as $log): ?>
+                        <?php
+                          $raw = (string) ($log['created_at'] ?? '');
+                          $dt = '-';
+                          if ($raw !== '') {
+                              try {
+                                  $dtObj = new \DateTime($raw);
+                                  $dt = $dtObj->format('d/m/Y H:i');
+                              } catch (\Throwable $e) {
+                                  $dt = $raw;
+                              }
+                          }
+                        ?>
+                        <tr>
+                          <td><?= (int) ($log['id'] ?? 0) ?></td>
+                          <td><?= htmlspecialchars((string) ($log['aluno_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                          <td><?= htmlspecialchars((string) ($log['acao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                          <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                          <td><?= htmlspecialchars((string) ($log['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                          <td>
+                            <span title="<?= htmlspecialchars((string) ($log['ip'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>">
+                              <?php $loc = $log['location'] ?? []; ?>
+                              <?= $loc['flag'] ?? '🏳️' ?>
+                              <?= htmlspecialchars((string) ($loc['country'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                              <?php if (!empty($loc['city']) && $loc['city'] !== '-'): ?>
+                                / <?= htmlspecialchars($loc['city'], ENT_QUOTES, 'UTF-8') ?>
+                              <?php endif; ?>
+                            </span>
+                          </td>
+                          <td><?= htmlspecialchars($dt, ENT_QUOTES, 'UTF-8') ?></td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
       </div>
     <?php endif; ?>
   </div>

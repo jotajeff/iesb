@@ -52,10 +52,14 @@ final class AdminController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $result = $this->admin->logs($page, 50);
+
         $this->render('pages/admin/logs/index', [
             'title' => 'Logs de Auditoria',
             'currentRoute' => '/admin/logs',
-            'logs' => $this->admin->logs(),
+            'logs' => $result['data'],
+            'pagination' => $result['pagination'],
         ], 'admin');
     }
 

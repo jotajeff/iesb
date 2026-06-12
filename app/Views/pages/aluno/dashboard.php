@@ -8,7 +8,7 @@
   }
 ?>
 
-<section class="py-4" id="home" style="margin-top: 76px;">
+<section class="py-4" id="home" style="margin-top: 20px;">
   <div class="container">
     <div class="row g-3 mb-4">
       <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">

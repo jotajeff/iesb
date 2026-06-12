@@ -64,8 +64,10 @@ return static function (Router $router): void {
     $router->post('/admin/professores/deletar-social', [ProfessorController::class, 'deletarSocial']);
     $router->get('/admin/professores/curriculo', [ProfessorController::class, 'curriculo']);
     $router->post('/admin/professores/salvar-curriculo', [ProfessorController::class, 'salvarCurriculo']);
-    $router->get('/admin/professores/material', [ProfessorController::class, 'material']);
-    $router->post('/admin/professores/salvar-material', [ProfessorController::class, 'salvarMaterial']);
+    $router->get('/admin/professores/videos', [ProfessorController::class, 'videos']);
+    $router->post('/admin/professores/salvar-video', [ProfessorController::class, 'salvarVideo']);
+    $router->get('/admin/professores/drive', [ProfessorController::class, 'drive']);
+    $router->post('/admin/professores/salvar-drive', [ProfessorController::class, 'salvarDrive']);
 
     $router->get('/admin/usuarios', [UsuarioController::class, 'index']);
     $router->get('/admin/usuarios/novo', [UsuarioController::class, 'novo']);
@@ -125,10 +127,13 @@ return static function (Router $router): void {
     $router->get('/aluno/cursos', [StudentController::class, 'cursos']);
     $router->get('/aluno/show', [StudentController::class, 'show']);
     $router->get('/aluno/video', [StudentController::class, 'video']);
+    $router->get('/aluno/drive', [StudentController::class, 'drive']);
     $router->get('/aluno/detalhes', [StudentController::class, 'detalhes']);
     $router->post('/aluno/matricular-curso', [StudentController::class, 'enrollCurso']);
+    $router->get('/aluno/logs', [StudentController::class, 'logs']);
     $router->get('/aluno/perfil', [StudentController::class, 'perfil']);
     $router->post('/aluno/perfil/atualizar', [StudentController::class, 'atualizarPerfil']);
+    $router->post('/aluno/foto', [StudentController::class, 'foto']);
     $router->post('/aluno/matricular', [StudentController::class, 'enroll']);
 
     $router->get('/area-do-aluno', [StudentController::class, 'dashboard']);

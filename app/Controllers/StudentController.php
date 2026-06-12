@@ -10,6 +10,7 @@ use App\Services\AdminService;
 use App\Services\AuthService;
 use App\Services\CourseService;
 use App\Services\EnrollmentService;
+use App\Services\IpLocationService;
 use App\Support\Session;
 
 final class StudentController extends Controller
@@ -191,8 +192,52 @@ final class StudentController extends Controller
             return;
         }
 
+        $this->admin->log('visualizar', 'video', $materialId, "Aluno visualizou vídeo: {$material['titulo']}");
+
         $this->render('pages/aluno/video', [
             'title' => $material['titulo'] ?? 'Vídeo',
+            'currentRoute' => '/aluno/cursos',
+            'material' => $material,
+        ], 'aluno');
+    }
+
+    public function drive(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $materialId = (int) ($_GET['id'] ?? 0);
+
+        $pdo = Database::connection();
+        $material = null;
+
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT id, titulo, link, tipo, criado_em'
+                    . ' FROM material WHERE id = :id AND ativo = :ativo'
+                );
+                $stmt->bindValue(':id', $materialId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $material = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[STUDENT DRIVE] Erro: ' . $e->getMessage());
+            }
+        }
+
+        if (!$material) {
+            Session::setFlash('flash', 'Documento não encontrado.');
+            $this->redirect('/aluno/cursos');
+            return;
+        }
+
+        $this->admin->log('visualizar', 'drive', $materialId, "Aluno visualizou documento do Drive: {$material['titulo']}");
+
+        $this->render('pages/aluno/drive', [
+            'title' => $material['titulo'] ?? 'Drive',
             'currentRoute' => '/aluno/cursos',
             'material' => $material,
         ], 'aluno');
@@ -251,7 +296,8 @@ final class StudentController extends Controller
             $this->redirect('/aluno');
         }
 
-        $this->admin->criarMatricula($studentId, (int) $turmas[0]['id']);
+        $matriculaId = $this->admin->criarMatricula($studentId, (int) $turmas[0]['id']);
+        $this->admin->log('criar', 'matricula', $matriculaId, "Aluno matriculou-se no curso $cursoId");
         Session::setFlash('flash', 'Matrícula realizada com sucesso!');
         $this->redirect('/aluno');
     }
@@ -292,9 +338,115 @@ final class StudentController extends Controller
         $senha = (string) $this->input('senha', '');
 
         $this->admin->atualizarAluno($studentId, $nome, $cpf, $dataNascimento, $telefone, $email, 'S', $senha ?: null);
+        $this->admin->log('atualizar', 'aluno', $studentId, "Aluno atualizou o próprio perfil");
 
         Session::setFlash('flash', 'Perfil atualizado com sucesso.');
         $this->redirect('/aluno/perfil');
+    }
+
+    public function foto(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $file = $_FILES['foto'] ?? null;
+
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            Session::setFlash('flash', 'Erro ao enviar a foto.');
+            $this->redirect('/aluno/perfil');
+            return;
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png'];
+
+        if (!in_array($ext, $allowed, true)) {
+            Session::setFlash('flash', 'Formato não permitido. Use jpg, jpeg ou png.');
+            $this->redirect('/aluno/perfil');
+            return;
+        }
+
+        if ($file['size'] > 1048576) {
+            Session::setFlash('flash', 'A foto deve ter no máximo 1MB.');
+            $this->redirect('/aluno/perfil');
+            return;
+        }
+
+        $filename = 'aluno_' . $studentId . '_' . time() . '.' . $ext;
+        $destDir = dirname(__DIR__, 2) . '/public/assets/img/alunos';
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        $destPath = $destDir . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+            Session::setFlash('flash', 'Falha ao salvar a foto.');
+            $this->redirect('/aluno/perfil');
+            return;
+        }
+
+        $filePath = 'assets/img/alunos/' . $filename;
+        $this->admin->atualizarFotoAluno($studentId, $filePath);
+        $this->admin->log('atualizar', 'aluno', $studentId, "Aluno atualizou a própria foto");
+
+        Session::setFlash('flash', 'Foto atualizada com sucesso.');
+        $this->redirect('/aluno/perfil');
+    }
+
+    public function logs(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $pdo = Database::connection();
+        $entries = [];
+
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT l.id, l.acao, l.entidade, l.descricao, l.ip, l.created_at, a.nome AS aluno_nome'
+                    . ' FROM logs_auditoria l'
+                    . ' LEFT JOIN alunos a ON a.id = l.usuario_id'
+                    . ' WHERE l.usuario_id = :usuario_id AND l.perfil = :perfil'
+                    . ' ORDER BY l.id DESC'
+                    . ' LIMIT 100'
+                );
+                $stmt->bindValue(':usuario_id', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':perfil', 'aluno', \PDO::PARAM_STR);
+                $stmt->execute();
+                $entries = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT LOGS] Erro: ' . $e->getMessage());
+            }
+        }
+
+        $geo = new IpLocationService();
+        $ipCache = [];
+        foreach ($entries as &$log) {
+            $ip = (string) ($log['ip'] ?? '127.0.0.1');
+            if (!array_key_exists($ip, $ipCache)) {
+                $ipCache[$ip] = $geo->resolve($ip);
+            }
+            $log['location'] = $ipCache[$ip];
+        }
+        unset($log);
+
+        $this->render('pages/aluno/logs', [
+            'title' => 'Meus Logs',
+            'currentRoute' => '/aluno/logs',
+            'entries' => $entries,
+        ], 'aluno');
     }
 
     public function enroll(): void
@@ -309,6 +461,9 @@ final class StudentController extends Controller
         $courseId = (int) $this->input('course_id', 0);
 
         $result = $this->enrollments->enroll($studentId, $courseId);
+        if (($result['ok'] ?? false)) {
+            $this->admin->log('criar', 'matricula', 0, "Aluno matriculou-se no curso $courseId");
+        }
         Session::setFlash('flash', $result['message']);
         $this->redirect('/aluno');
     }

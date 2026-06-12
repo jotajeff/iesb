@@ -1,7 +1,7 @@
 <section class="container py-4">
     <div class="bg-white border rounded-3 p-4 shadow-sm">
         <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-            <h4 class="mb-0"><i class="bi bi-camera-reels me-2"></i>Materiais - Turma</h4>
+            <h4 class="mb-0"><i class="bi bi-camera-reels me-2"></i>Vídeos - Turma</h4>
             <a class="btn btn-outline-secondary btn-sm" href="/admin/professores/turmas"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
         </div>
 
@@ -13,7 +13,7 @@
             <?php endif; ?>
         </p>
 
-        <form method="post" action="/admin/professores/salvar-material">
+        <form method="post" action="/admin/professores/salvar-video">
             <input type="hidden" name="id_fk" value="<?= (int) ($turma['id'] ?? 0) ?>">
             <input type="hidden" name="tipo" value="video">
 
@@ -55,7 +55,13 @@
                     <?php endif; ?>
                     <?php foreach ($materiais ?? [] as $m): ?>
                         <tr>
-                            <td><?= (int) ($m['id'] ?? 0) ?></td>
+                            <td>
+                                <a href="#" class="text-decoration-none fw-bold" data-bs-toggle="modal" data-bs-target="#verVideoModal"
+                                   data-titulo="<?= htmlspecialchars((string) ($m['titulo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>"
+                                   data-link="<?= htmlspecialchars((string) ($m['link'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                    #<?= (int) ($m['id'] ?? 0) ?>
+                                </a>
+                            </td>
                             <td><?= htmlspecialchars((string) ($m['titulo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-break"><?= htmlspecialchars((string) ($m['link'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) ($m['criado_em'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
@@ -66,3 +72,35 @@
         </div>
     </div>
 </section>
+
+<?php require __DIR__ . '/ver_video.php'; ?>
+
+<script>
+document.querySelectorAll('[data-bs-target="#verVideoModal"]').forEach(function(el) {
+    el.addEventListener('click', function(e) {
+        e.preventDefault();
+        var titulo = this.getAttribute('data-titulo');
+        var link = this.getAttribute('data-link');
+        var embedSrc = '';
+
+        if (link.indexOf('youtube.com/watch') !== -1 || link.indexOf('youtu.be') !== -1) {
+            var vid = '';
+            var match = link.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+            if (match) vid = match[1];
+            if (vid) embedSrc = 'https://www.youtube.com/embed/' + vid;
+        } else if (link.indexOf('<iframe') !== -1) {
+            var srcMatch = link.match(/src=["']([^"']+)["']/);
+            if (srcMatch) embedSrc = srcMatch[1];
+        } else if (link.match(/^https?:\/\//)) {
+            embedSrc = link;
+        }
+
+        document.getElementById('videoTitulo').textContent = titulo;
+        document.getElementById('videoIframe').src = embedSrc;
+    });
+});
+
+document.getElementById('verVideoModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('videoIframe').src = '';
+});
+</script>

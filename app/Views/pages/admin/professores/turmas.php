@@ -47,8 +47,14 @@
                   <a class="btn btn-outline-info btn-sm" href="/admin/turmas/show?id=<?= $tid ?>" title="Visualizar inscritos">
                     <i class="bi bi-eye"></i><span class="ms-1">Inscritos</span>
                   </a>
-                  <a class="btn btn-outline-danger btn-sm" href="/admin/professores/material?turma_id=<?= $tid ?>" title="Inserir material">
+                  <a class="btn btn-outline-danger btn-sm" href="/admin/professores/videos?turma_id=<?= $tid ?>" title="Gerenciar vídeos">
                     <i class="bi bi-camera-reels"></i>
+                  </a>
+                  <a class="btn btn-outline-success btn-sm" href="/admin/professores/pdf?turma_id=<?= $tid ?>" title="Enviar apostila PDF">
+                    <i class="bi bi-filetype-pdf"></i>
+                  </a>
+                  <a class="btn btn-outline-primary btn-sm" href="/admin/professores/drive?turma_id=<?= $tid ?>" title="Google Drive">
+                    <i class="bi bi-google"></i>
                   </a>
                 </div>
               </td>

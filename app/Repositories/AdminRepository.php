@@ -561,7 +561,7 @@ final class AdminRepository
         }
 
         try {
-            $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, ativo, criado_em, atualizado_em'
+            $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, foto, ativo, criado_em, atualizado_em'
                  . ' FROM alunos'
                  . ' WHERE id = :id'
                  . ' LIMIT 1';
@@ -614,6 +614,7 @@ final class AdminRepository
             if (!empty($payload['id'])) {
                 $sql = 'UPDATE alunos SET nome = :nome, cpf = :cpf, data_nascimento = :data_nascimento, telefone = :telefone, email = :email, ativo = :ativo';
                 $sql .= isset($payload['senha']) ? ', senha = :senha' : '';
+                $sql .= isset($payload['foto']) ? ', foto = :foto' : '';
                 $sql .= ' WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $payload['id'], PDO::PARAM_INT);
@@ -630,6 +631,9 @@ final class AdminRepository
             $stmt->bindValue(':ativo', strtoupper(trim($payload['ativo'] ?? 'N')), PDO::PARAM_STR);
             if (isset($payload['senha'])) {
                 $stmt->bindValue(':senha', $payload['senha'], PDO::PARAM_STR);
+            }
+            if (isset($payload['foto'])) {
+                $stmt->bindValue(':foto', $payload['foto'], PDO::PARAM_STR);
             }
             $stmt->execute();
 
@@ -1088,25 +1092,39 @@ final class AdminRepository
         return $stmt->fetchColumn() !== false;
     }
 
-    public function recentLogs(int $limit = 50): array
+    public function recentLogs(int $page = 1, int $perPage = 50): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
-            return [];
+            return ['data' => [], 'total' => 0];
         }
 
-        $sql = 'SELECT l.id, l.usuario_id, l.acao, l.entidade, l.entidade_id, l.descricao, l.ip, l.sucesso, l.created_at,
+        $offset = max(0, ($page - 1) * $perPage);
+
+        $countSql = 'SELECT COUNT(*) FROM logs_auditoria l WHERE l.perfil != :exclude_perfil';
+        $countStmt = $pdo->prepare($countSql);
+        $countStmt->bindValue(':exclude_perfil', 'aluno', PDO::PARAM_STR);
+        $countStmt->execute();
+        $total = (int) $countStmt->fetchColumn();
+
+        $sql = 'SELECT l.id, l.usuario_id, l.perfil, l.acao, l.entidade, l.entidade_id, l.descricao, l.ip, l.sucesso, l.created_at,
                        u.nome AS usuario_nome
                 FROM logs_auditoria l
                 LEFT JOIN usuarios u ON u.id = l.usuario_id
+                WHERE l.perfil != :exclude_perfil2
                 ORDER BY l.id DESC
-                LIMIT :limit';
+                LIMIT :limit OFFSET :offset';
         $stmt = $pdo->prepare($sql);
-        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->bindValue(':exclude_perfil2', 'aluno', PDO::PARAM_STR);
         $stmt->execute();
 
         $rows = $stmt->fetchAll();
-        return is_array($rows) ? $rows : [];
+        return [
+            'data' => is_array($rows) ? $rows : [],
+            'total' => $total,
+        ];
     }
 
     public function recentVisits(int $limit = 100): array

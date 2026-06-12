@@ -1,5 +1,6 @@
 <?php
   $alunoData = is_array($aluno ?? null) ? $aluno : [];
+  $fotoAtual = (string) ($alunoData['foto'] ?? '');
 
   $fields = [
     'nome' => ['label' => 'Nome completo', 'icon' => 'bi-person', 'required' => true],
@@ -10,22 +11,36 @@
   ];
 ?>
 
-<section class="py-4" id="perfil" style="margin-top: 76px;">
+<section class="py-4" id="perfil" style="margin-top: 20px;">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-8" data-aos="fade-up">
-        <div class="d-flex align-items-center gap-3 mb-4">
-          <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 64px; height: 64px; background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff; font-size: 1.75rem;">
-            <i class="bi bi-person-fill"></i>
+        <div class="bg-white border rounded-3 p-4 shadow-sm" style="background: var(--bg-card); border-color: var(--border-color);">
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <div class="position-relative" style="width: 80px; height: 80px;">
+              <label for="fotoInput" class="d-block rounded-circle overflow-hidden cursor-pointer" style="width:80px;height:80px;cursor:pointer;" title="Clique para alterar a foto">
+                <?php if ($fotoAtual !== ''): ?>
+                  <img src="/<?= htmlspecialchars($fotoAtual, ENT_QUOTES, 'UTF-8') ?>" alt="Foto" id="fotoPreview" class="w-100 h-100" style="object-fit:cover;">
+                <?php else: ?>
+                  <div id="fotoPreview" class="d-flex align-items-center justify-content-center rounded-circle bg-secondary text-white" style="width:80px;height:80px;font-size:2rem;">
+                    <i class="bi bi-person"></i>
+                  </div>
+                <?php endif; ?>
+                <div class="position-absolute bottom-0 end-0 rounded-circle bg-primary d-flex align-items-center justify-content-center" style="width:28px;height:28px;border:2px solid var(--bg-card);">
+                  <i class="bi bi-camera-fill text-white" style="font-size:.8rem;"></i>
+                </div>
+              </label>
+              <form id="fotoForm" method="post" action="/aluno/foto" enctype="multipart/form-data">
+                <input type="file" id="fotoInput" name="foto" accept="image/jpg,image/jpeg,image/png" style="display:none;">
+              </form>
+            </div>
+            <div>
+              <h4 class="mb-0" style="color: var(--text-heading);">Meu Perfil</h4>
+              <small style="color: var(--text-secondary);">Mantenha seus dados sempre atualizados</small>
+            </div>
           </div>
-          <div>
-            <h4 class="mb-0">Meu Perfil</h4>
-            <small class="text-muted">Mantenha seus dados sempre atualizados</small>
-          </div>
-        </div>
 
-        <form method="post" action="/aluno/perfil/atualizar" class="needs-validation" novalidate>
-          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; box-shadow: var(--card-shadow);">
+          <form method="post" action="/aluno/perfil/atualizar" class="needs-validation" novalidate>
             <div class="row g-3">
               <?php foreach ($fields as $key => $field):
                 $value = (string) ($alunoData[$key] ?? '');
@@ -65,8 +80,8 @@
               <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Salvar</button>
               <a href="/aluno" class="btn btn-outline-secondary"><i class="bi bi-x-lg me-1"></i>Cancelar</a>
             </div>
-          </div>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   </div>
@@ -85,5 +100,26 @@
       form.classList.add('was-validated')
     }, false)
   })
-})()
+})();
+
+document.getElementById('fotoInput').addEventListener('change', function() {
+  if (this.files && this.files[0]) {
+    var reader = new FileReader();
+    reader.onload = function(e) {
+      var preview = document.getElementById('fotoPreview');
+      if (preview.tagName === 'IMG') {
+        preview.src = e.target.result;
+      } else {
+        var img = document.createElement('img');
+        img.id = 'fotoPreview';
+        img.className = 'w-100 h-100 rounded-circle';
+        img.style.objectFit = 'cover';
+        img.src = e.target.result;
+        preview.parentNode.replaceChild(img, preview);
+      }
+    };
+    reader.readAsDataURL(this.files[0]);
+    document.getElementById('fotoForm').submit();
+  }
+});
 </script>

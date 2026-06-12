@@ -11,7 +11,7 @@
   $isConfirmed = strtoupper(trim((string) ($curso['confirmado'] ?? 'N'))) === 'S';
 ?>
 
-<section class="py-4" id="detalhes" style="margin-top: 76px;">
+<section class="py-4" id="detalhes" style="margin-top: 20px;">
   <div class="container">
     <div class="row justify-content-center">
       <div class="col-lg-8" data-aos="fade-up">

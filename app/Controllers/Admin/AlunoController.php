@@ -5,10 +5,12 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Services\AlunoService;
 use App\Services\TurmaService;
 use App\Services\CursoService;
 use App\Services\AdminService;
+use App\Services\IpLocationService;
 use App\Support\Session;
 
 final class AlunoController extends Controller
@@ -56,11 +58,42 @@ final class AlunoController extends Controller
             return;
         }
 
+        $logs = [];
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT l.id, l.acao, l.entidade, l.descricao, l.ip, l.created_at, a.nome AS aluno_nome'
+                    . ' FROM logs_auditoria l'
+                    . ' LEFT JOIN alunos a ON a.id = l.usuario_id'
+                    . ' WHERE l.usuario_id = :usuario_id AND l.perfil = :perfil'
+                    . ' ORDER BY l.id DESC'
+                    . ' LIMIT 50'
+                );
+                $stmt->bindValue(':usuario_id', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':perfil', 'aluno', \PDO::PARAM_STR);
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+                if (is_array($rows)) {
+                    $geo = new IpLocationService();
+                    foreach ($rows as &$log) {
+                        $ip = (string) ($log['ip'] ?? '127.0.0.1');
+                        $log['location'] = $geo->resolve($ip);
+                    }
+                    unset($log);
+                    $logs = $rows;
+                }
+            } catch (\Throwable $e) {
+                error_log('[ALUNO LOGS] Erro: ' . $e->getMessage());
+            }
+        }
+
         $this->render('pages/admin/alunos/show', [
             'title' => 'Aluno: ' . ($aluno['nome'] ?? ''),
             'currentRoute' => '/admin/alunos/show',
             'aluno' => $aluno,
             'cursos' => $this->alunoService->cursosDoAluno($id),
+            'logsAluno' => $logs,
         ], 'admin');
     }
 
