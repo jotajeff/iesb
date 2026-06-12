@@ -42,12 +42,18 @@
               <p class="mb-0 text-muted small">
                 <i class="bi bi-calendar me-1"></i>
                 Matrícula em <?= htmlspecialchars(
-                  \DateTime::createFromFormat('Y-m-d', $matricula['data_matricula'] ?? '')
-                    ?->format('d/m/Y') ?? ($matricula['data_matricula'] ?? '-'),
+                  ($matricula['data_matricula'] ?? '') !== ''
+                    ? (new \DateTime($matricula['data_matricula']))->format('d/m/Y')
+                    : '-',
                   ENT_QUOTES,
                   'UTF-8'
                 ) ?>
               </p>
+              <div class="mt-3">
+                <a class="btn btn-outline-primary btn-sm" href="/aluno/show?matricula_id=<?= (int) ($matricula['matricula_id'] ?? 0) ?>">
+                  <i class="bi bi-eye me-1"></i>Detalhes
+                </a>
+              </div>
             </div>
           </div>
         <?php endforeach; ?>

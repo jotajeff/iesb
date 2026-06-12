@@ -47,6 +47,9 @@
                   <a class="btn btn-outline-info btn-sm" href="/admin/turmas/show?id=<?= $tid ?>" title="Visualizar inscritos">
                     <i class="bi bi-eye"></i><span class="ms-1">Inscritos</span>
                   </a>
+                  <a class="btn btn-outline-danger btn-sm" href="/admin/professores/material?turma_id=<?= $tid ?>" title="Inserir material">
+                    <i class="bi bi-camera-reels"></i>
+                  </a>
                 </div>
               </td>
             </tr>

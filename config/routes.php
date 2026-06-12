@@ -64,6 +64,8 @@ return static function (Router $router): void {
     $router->post('/admin/professores/deletar-social', [ProfessorController::class, 'deletarSocial']);
     $router->get('/admin/professores/curriculo', [ProfessorController::class, 'curriculo']);
     $router->post('/admin/professores/salvar-curriculo', [ProfessorController::class, 'salvarCurriculo']);
+    $router->get('/admin/professores/material', [ProfessorController::class, 'material']);
+    $router->post('/admin/professores/salvar-material', [ProfessorController::class, 'salvarMaterial']);
 
     $router->get('/admin/usuarios', [UsuarioController::class, 'index']);
     $router->get('/admin/usuarios/novo', [UsuarioController::class, 'novo']);
@@ -121,6 +123,8 @@ return static function (Router $router): void {
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);
     $router->get('/aluno', [StudentController::class, 'dashboard']);
     $router->get('/aluno/cursos', [StudentController::class, 'cursos']);
+    $router->get('/aluno/show', [StudentController::class, 'show']);
+    $router->get('/aluno/video', [StudentController::class, 'video']);
     $router->get('/aluno/detalhes', [StudentController::class, 'detalhes']);
     $router->post('/aluno/matricular-curso', [StudentController::class, 'enrollCurso']);
     $router->get('/aluno/perfil', [StudentController::class, 'perfil']);

@@ -354,6 +354,24 @@ CREATE TABLE `curriculo` (
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
+
+
+CREATE TABLE material (
+    id INT AUTO_INCREMENT,
+    tipo VARCHAR(50) NOT NULL, -- Ex: 'PDF', 'Vídeo', 'Artigo', 'Apostila'
+    titulo VARCHAR(255) NOT NULL,
+    link TEXT NOT NULL, -- Usado TEXT caso a URL seja muito longa (comum em links do Drive/Cloud)
+    id_fk INT NOT NULL, -- ID da entidade relacionada (Ex: id_aula, id_disciplina, id_professor)
+    ativo CHAR(1) DEFAULT 'S', -- 'S' para Sim, 'N' para Não
+    criado_em DATETIME DEFAULT CURRENT_TIMESTAMP, -- Preenche automaticamente com a data/hora atual
+    
+    -- Definição da Chave Primária
+    CONSTRAINT pk_material PRIMARY KEY (id)
+    
+   
+);
+
+
 --
 -- Índices para tabelas despejadas
 --

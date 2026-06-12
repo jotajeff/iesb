@@ -1,4 +1,4 @@
-<footer class="mt-auto" style="background:#111827; color:#cbd5e1;">
+<footer style="background:#111827; color:#cbd5e1;">
   <div class="container py-3 d-flex justify-content-between align-items-center">
     <small>Área do Aluno IESB</small>
     <small>&copy; 2026</small>

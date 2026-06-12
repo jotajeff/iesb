@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Services\AdminService;
 use App\Services\AuthService;
 use App\Services\CourseService;
@@ -68,6 +69,132 @@ final class StudentController extends Controller
             'currentRoute' => '/aluno/cursos',
             'matriculasDB' => $this->admin->matriculasDoAluno($studentId),
             'cursosMatriculados' => $this->admin->cursosDoAluno($studentId),
+        ], 'aluno');
+    }
+
+    public function show(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $matriculaId = (int) ($_GET['matricula_id'] ?? 0);
+
+        $pdo = Database::connection();
+        $matricula = null;
+        $professores = [];
+        $materiais = [];
+
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT m.id AS matricula_id, m.status, m.data_matricula,'
+                    . ' t.id AS turma_id, t.nome AS turma_nome, t.data_inicio, t.data_fim,'
+                    . ' c.id AS curso_id, c.nome AS curso_nome, c.local_curso, c.horario, c.imagem_card'
+                    . ' FROM matriculas m'
+                    . ' JOIN turmas t ON m.id_turma = t.id'
+                    . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
+                    . ' WHERE m.id = :id AND m.id_aluno = :id_aluno'
+                );
+                $stmt->bindValue(':id', $matriculaId, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_aluno', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $matricula = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[STUDENT SHOW] Erro ao buscar matrícula: ' . $e->getMessage());
+            }
+
+            if (!$matricula) {
+                Session::setFlash('flash', 'Matrícula não encontrada.');
+                $this->redirect('/aluno/cursos');
+                return;
+            }
+
+            $turmaId = (int) ($matricula['turma_id'] ?? 0);
+
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT u.id, u.nome, u.email, u.telefone, u.foto'
+                    . ' FROM turma_professor tp'
+                    . ' JOIN usuarios u ON tp.id_usuario = u.id'
+                    . ' WHERE tp.id_turma = :id_turma AND tp.status = :status'
+                );
+                $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
+                $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
+                $stmt->execute();
+                $professores = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT SHOW] Erro ao buscar professores: ' . $e->getMessage());
+                $professores = [];
+            }
+
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT id, titulo, link, tipo, criado_em'
+                    . ' FROM material'
+                    . ' WHERE id_fk = :id_fk AND ativo = :ativo'
+                    . ' ORDER BY FIELD(tipo, \'video\', \'PDF\', \'Artigo\', \'Apostila\'), criado_em DESC'
+                );
+                $stmt->bindValue(':id_fk', $turmaId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $materiais = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT SHOW] Erro ao buscar materiais: ' . $e->getMessage());
+                $materiais = [];
+            }
+        }
+
+        $this->render('pages/aluno/show', [
+            'title' => $matricula['curso_nome'] ?? 'Detalhes do Curso',
+            'currentRoute' => '/aluno/cursos',
+            'matricula' => $matricula,
+            'professores' => $professores,
+            'materiais' => $materiais,
+        ], 'aluno');
+    }
+
+    public function video(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $materialId = (int) ($_GET['id'] ?? 0);
+
+        $pdo = Database::connection();
+        $material = null;
+
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT id, titulo, link, tipo, criado_em'
+                    . ' FROM material WHERE id = :id AND ativo = :ativo'
+                );
+                $stmt->bindValue(':id', $materialId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $material = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[STUDENT VIDEO] Erro: ' . $e->getMessage());
+            }
+        }
+
+        if (!$material) {
+            Session::setFlash('flash', 'Vídeo não encontrado.');
+            $this->redirect('/aluno/cursos');
+            return;
+        }
+
+        $this->render('pages/aluno/video', [
+            'title' => $material['titulo'] ?? 'Vídeo',
+            'currentRoute' => '/aluno/cursos',
+            'material' => $material,
         ], 'aluno');
     }
 

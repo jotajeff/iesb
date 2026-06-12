@@ -694,6 +694,97 @@ final class ProfessorController extends Controller
         }
     }
 
+    public function material(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $turmaId = (int) ($this->input('turma_id', 0) ?: ($_GET['turma_id'] ?? 0));
+
+        $pdo = Database::connection();
+        $turma = null;
+        $materiais = [];
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare('SELECT t.*, c.nome AS curso_nome FROM turmas t LEFT JOIN cursos_iesb c ON t.id_curso = c.id WHERE t.id = :id');
+                $stmt->bindValue(':id', $turmaId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $turma = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[MATERIAL] Erro ao buscar turma: ' . $e->getMessage());
+            }
+
+            if (!$turma) {
+                Session::setFlash('flash', 'Turma não encontrada.');
+                $this->redirect('/admin/professores/turmas');
+                return;
+            }
+
+            try {
+                $stmtMat = $pdo->prepare("SELECT m.id, m.titulo, m.link, m.criado_em, t.nome AS turma_nome"
+                    . " FROM material m"
+                    . " JOIN turmas t ON m.id_fk = t.id"
+                    . " WHERE m.tipo = ? AND m.id_fk = ?"
+                    . " ORDER BY m.criado_em DESC");
+                $stmtMat->bindValue(1, 'video', \PDO::PARAM_STR);
+                $stmtMat->bindValue(2, $turmaId, \PDO::PARAM_INT);
+                $stmtMat->execute();
+                $materiais = $stmtMat->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[MATERIAL] Erro ao listar materiais: ' . $e->getMessage());
+                $materiais = [];
+            }
+        }
+
+        $this->render('pages/admin/professores/material', [
+            'title' => 'Materiais - ' . ($turma['nome'] ?? 'Turma'),
+            'currentRoute' => '/admin/professores/material',
+            'turma' => $turma,
+            'materiais' => $materiais,
+        ], 'admin');
+    }
+
+    public function salvarMaterial(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $idTurma = (int) $this->input('id_fk', 0);
+        $tipo = trim((string) $this->input('tipo', ''));
+        $link = trim((string) $this->input('link', ''));
+        $titulo = trim((string) $this->input('titulo', ''));
+
+        if ($idTurma <= 0 || $tipo === '' || $link === '' || $titulo === '') {
+            Session::setFlash('flash', 'Preencha todos os campos.');
+            $this->redirect('/admin/professores/material?turma_id=' . $idTurma);
+            return;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('INSERT INTO material (tipo, link, id_fk, titulo) VALUES (:tipo, :link, :id_fk, :titulo)');
+                $stmt->bindValue(':tipo', $tipo, \PDO::PARAM_STR);
+                $stmt->bindValue(':link', $link, \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $idTurma, \PDO::PARAM_INT);
+                $stmt->bindValue(':titulo', $titulo, \PDO::PARAM_STR);
+                $stmt->execute();
+
+                $this->adminService->log('criar', 'material', (int) $pdo->lastInsertId(), "Material $tipo adicionado à turma $idTurma");
+            }
+            Session::setFlash('flash', 'Material adicionado com sucesso.');
+        } catch (\Throwable $e) {
+            error_log('[MATERIAL] Erro ao salvar: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao salvar material.');
+        }
+
+        $this->redirect('/admin/professores/material?turma_id=' . $idTurma);
+    }
+
     public function buscarCep(): void
     {
         ini_set('display_errors', '0');
