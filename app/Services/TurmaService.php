@@ -18,6 +18,11 @@ final class TurmaService
         return $this->repository->list($limit);
     }
 
+    public function turmasAtivas(int $limit = 500): array
+    {
+        return $this->repository->listAtivas($limit);
+    }
+
     public function findTurma(int $id): ?array
     {
         if ($id <= 0) {
@@ -48,6 +53,11 @@ final class TurmaService
             'ativa' => strtoupper(trim($ativa)) === 'S' ? 'S' : 'N',
         ];
         $this->repository->save($payload);
+    }
+
+    public function trocaHistorico(int $limit = 200): array
+    {
+        return $this->repository->listTrocaHistorico($limit);
     }
 
     public function inscritosPorTurma(int $idTurma): array

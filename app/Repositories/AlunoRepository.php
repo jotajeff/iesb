@@ -43,7 +43,7 @@ final class AlunoRepository
         }
 
         try {
-            $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, ativo, criado_em, atualizado_em
+            $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, foto, ativo, criado_em, atualizado_em
                      FROM alunos
                      WHERE id = :id
                      LIMIT 1';

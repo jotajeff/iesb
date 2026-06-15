@@ -206,7 +206,7 @@ final class CursoRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome
                      FROM cursos_iesb c
                      LEFT JOIN segmento s ON s.id = c.segmento
                      WHERE c.id = :id';
@@ -229,8 +229,8 @@ final class CursoRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, exibir_home, confirmado, modalidade, segmento, nivel)
-                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :ativo, :exibir_home, :confirmado, :modalidade_id, :segmento_id, :nivel_id)';
+        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, exibir_home, confirmado, carga_horaria, modalidade, segmento, nivel)
+                VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :ativo, :exibir_home, :confirmado, :carga_horaria, :modalidade_id, :segmento_id, :nivel_id)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
         $stmt->bindValue(':slug', $payload['slug']);
@@ -243,6 +243,7 @@ final class CursoRepository
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
         $stmt->bindValue(':exibir_home', (string) ($payload['exibir_home'] ?? 'N'));
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
+        $stmt->bindValue(':carga_horaria', $payload['carga_horaria'] ?? 0, PDO::PARAM_INT);
         $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':segmento_id', $payload['segmento_id'] ?? null, $payload['segmento_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':nivel_id', $payload['nivel_id'] ?? null, $payload['nivel_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
@@ -261,7 +262,7 @@ final class CursoRepository
         $sql = 'UPDATE cursos_iesb
                 SET nome = :nome, slug = :slug, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
                     imagem_card = :imagem_card, link_ingresso = :link_ingresso, ativo = :ativo, exibir_home = :exibir_home, confirmado = :confirmado,
-                    modalidade = :modalidade_id, segmento = :segmento_id, nivel = :nivel_id
+                    carga_horaria = :carga_horaria, modalidade = :modalidade_id, segmento = :segmento_id, nivel = :nivel_id
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -276,6 +277,7 @@ final class CursoRepository
         $stmt->bindValue(':ativo', (string) $payload['ativo']);
         $stmt->bindValue(':exibir_home', (string) ($payload['exibir_home'] ?? 'N'));
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
+        $stmt->bindValue(':carga_horaria', $payload['carga_horaria'] ?? 0, PDO::PARAM_INT);
         $stmt->bindValue(':modalidade_id', $payload['modalidade_id'] ?? null, $payload['modalidade_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':segmento_id', $payload['segmento_id'] ?? null, $payload['segmento_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);
         $stmt->bindValue(':nivel_id', $payload['nivel_id'] ?? null, $payload['nivel_id'] ? PDO::PARAM_INT : PDO::PARAM_NULL);

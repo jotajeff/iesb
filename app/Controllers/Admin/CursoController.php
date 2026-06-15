@@ -91,6 +91,7 @@ final class CursoController extends Controller
         $modalidadeId = (int) $this->input('modalidade_id', 0);
         $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
+        $cargaHoraria = (int) $this->input('carga_horaria', 0);
 
         if ($nome === '' || $localCurso === '') {
             Session::setFlash('flash', 'Preencha ao menos nome e local do curso.');
@@ -98,7 +99,7 @@ final class CursoController extends Controller
             return;
         }
 
-        $cursoId = $this->cursoService->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId);
+        $cursoId = $this->cursoService->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId, $cargaHoraria);
         $this->adminService->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -150,6 +151,7 @@ final class CursoController extends Controller
         $modalidadeId = (int) $this->input('modalidade_id', 0);
         $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
+        $cargaHoraria = (int) $this->input('carga_horaria', 0);
 
         if ($nome === '' || $localCurso === '') {
             Session::setFlash('flash', 'Preencha ao menos nome e local do curso.');
@@ -165,7 +167,7 @@ final class CursoController extends Controller
         }
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
-        $this->cursoService->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId);
+        $this->cursoService->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId, $cargaHoraria);
         $this->adminService->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');

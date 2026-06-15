@@ -98,6 +98,34 @@ final class TurmaRepository
         }
     }
 
+    public function listAtivas(int $limit = 500): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT t.id, t.nome, t.id_curso, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio'
+                 . ' FROM turmas t'
+                 . ' INNER JOIN cursos_iesb c ON t.id_curso = c.id'
+                 . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                 . ' WHERE t.ativa = "S"'
+                 . ' ORDER BY c.nome ASC, t.nome ASC'
+                 . ' LIMIT :limit';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em listAtivas: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function listByCurso(int $idCurso): array
     {
         $pdo = Database::connection();
@@ -189,6 +217,111 @@ final class TurmaRepository
         } catch (\Throwable $e) {
             error_log('[MATRICULAS] Erro em findMatriculaByAlunoAndTurma: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    public function findMatriculaById(int $idMatricula): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $sql = 'SELECT m.id, m.id_aluno, m.id_turma, m.data_matricula, m.status,'
+                 . ' t.nome AS turma_nome, c.nome AS curso_nome'
+                 . ' FROM matriculas m'
+                 . ' INNER JOIN turmas t ON m.id_turma = t.id'
+                 . ' INNER JOIN cursos_iesb c ON t.id_curso = c.id'
+                 . ' WHERE m.id = :id'
+                 . ' LIMIT 1';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $idMatricula, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[MATRICULAS] Erro em findMatriculaById: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function updateMatriculaTurma(int $idMatricula, int $idNovaTurma): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return false;
+        }
+
+        try {
+            $sql = 'UPDATE matriculas SET id_turma = :id_turma WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id_turma', $idNovaTurma, PDO::PARAM_INT);
+            $stmt->bindValue(':id', $idMatricula, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[MATRICULAS] Erro em updateMatriculaTurma: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function listTrocaHistorico(int $limit = 200): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT tt.id, tt.id_aluno, tt.id_origem, tt.id_destino, tt.motivo, tt.criado_em,'
+                 . ' a.nome AS aluno_nome,'
+                 . ' to_nome.nome AS turma_origem_nome, co.nome AS curso_origem_nome,'
+                 . ' td_nome.nome AS turma_destino_nome, cd.nome AS curso_destino_nome'
+                 . ' FROM turma_troca tt'
+                 . ' INNER JOIN alunos a ON tt.id_aluno = a.id'
+                 . ' INNER JOIN turmas to_nome ON tt.id_origem = to_nome.id'
+                 . ' INNER JOIN cursos_iesb co ON to_nome.id_curso = co.id'
+                 . ' INNER JOIN turmas td_nome ON tt.id_destino = td_nome.id'
+                 . ' INNER JOIN cursos_iesb cd ON td_nome.id_curso = cd.id'
+                 . ' ORDER BY tt.id DESC'
+                 . ' LIMIT :limit';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em listTrocaHistorico: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function insertTroca(int $idOrigem, int $idDestino, int $idAluno, string $motivo): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            $sql = 'INSERT INTO turma_troca (id_origem, id_destino, id_aluno, motivo)'
+                 . ' VALUES (:id_origem, :id_destino, :id_aluno, :motivo)';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id_origem', $idOrigem, PDO::PARAM_INT);
+            $stmt->bindValue(':id_destino', $idDestino, PDO::PARAM_INT);
+            $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+            $stmt->bindValue(':motivo', $motivo, PDO::PARAM_STR);
+            $stmt->execute();
+
+            return (int) $pdo->lastInsertId();
+        } catch (\Throwable $e) {
+            error_log('[MATRICULAS] Erro em insertTroca: ' . $e->getMessage());
+            return 0;
         }
     }
 }

@@ -39,6 +39,10 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Carga Horária</label>
+        <input class="form-control" type="number" name="carga_horaria" placeholder="ex: 40">
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Calendário</label>
         <input class="form-control" type="date" name="curso_calendario">
       </div>

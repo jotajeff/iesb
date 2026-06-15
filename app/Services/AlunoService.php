@@ -87,6 +87,24 @@ final class AlunoService
         return $this->turmaRepository->findMatriculaByAlunoAndTurma($idAluno, $idTurma) !== null;
     }
 
+    public function findMatriculaById(int $idMatricula): ?array
+    {
+        if ($idMatricula <= 0) {
+            return null;
+        }
+        return $this->turmaRepository->findMatriculaById($idMatricula);
+    }
+
+    public function atualizarMatriculaTurma(int $idMatricula, int $idNovaTurma): bool
+    {
+        return $this->turmaRepository->updateMatriculaTurma($idMatricula, $idNovaTurma);
+    }
+
+    public function registrarTroca(int $idOrigem, int $idDestino, int $idAluno, string $motivo): int
+    {
+        return $this->turmaRepository->insertTroca($idOrigem, $idDestino, $idAluno, $motivo);
+    }
+
     public function atualizarSenha(int $id, string $senha): void
     {
         $this->repository->save([

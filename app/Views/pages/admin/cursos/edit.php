@@ -53,6 +53,10 @@
         </select>
       </div>
       <div class="col-md-4">
+        <label class="form-label">Carga Horária</label>
+        <input class="form-control" type="number" name="carga_horaria" value="<?= (int) ($course['carga_horaria'] ?? 0) ?>">
+      </div>
+      <div class="col-md-4">
         <label class="form-label">Calendário</label>
         <input class="form-control" type="date" name="curso_calendario" value="<?= htmlspecialchars($cursoCalendarioValue, ENT_QUOTES, 'UTF-8') ?>">
       </div>

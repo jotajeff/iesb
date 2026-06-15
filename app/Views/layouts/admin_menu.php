@@ -28,6 +28,7 @@
               <li><a class="dropdown-item" href="/admin/turmas"><i class="bi bi-people me-1"></i>Turmas</a></li>
               <li><a class="dropdown-item" href="/admin/alunos"><i class="bi bi-person-badge me-1"></i>Alunos</a></li>
               <li><a class="dropdown-item" href="/admin/professores"><i class="bi bi-person-workspace me-1"></i>Professores</a></li>
+              <li><a class="dropdown-item" href="/admin/alunos/troca-historico"><i class="bi bi-arrow-left-right me-1"></i>Troca de Turmas</a></li>
             </ul>
           </li>
           <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="/admin/tarefas"><i class="bi bi-kanban me-1"></i>Tarefas</a></li>

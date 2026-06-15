@@ -272,6 +272,125 @@ final class AlunoController extends Controller
         $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
     }
 
+    public function trocaHistorico(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar o histórico.');
+            $this->redirect('/admin/login');
+        }
+
+        $trocas = $this->turmaService->trocaHistorico();
+
+        $this->render('pages/admin/alunos/troca_historico', [
+            'title' => 'Histórico de Trocas',
+            'currentRoute' => '/admin/alunos/troca-historico',
+            'trocas' => $trocas,
+        ], 'admin');
+    }
+
+    public function troca(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar a troca de turma.');
+            $this->redirect('/admin/login');
+        }
+
+        $idAluno = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $idMatricula = (int) ($this->input('matricula_id', 0) ?: ($_GET['matricula_id'] ?? 0));
+
+        if ($idAluno <= 0 || $idMatricula <= 0) {
+            Session::setFlash('flash', 'Parâmetros inválidos.');
+            $this->redirect('/admin/alunos');
+            return;
+        }
+
+        $aluno = $this->alunoService->findAluno($idAluno);
+        if (!$aluno) {
+            Session::setFlash('flash', 'Aluno não encontrado.');
+            $this->redirect('/admin/alunos');
+            return;
+        }
+
+        $matricula = $this->alunoService->findMatriculaById($idMatricula);
+        if (!$matricula) {
+            Session::setFlash('flash', 'Matrícula não encontrada.');
+            $this->redirect('/admin/alunos/show?id=' . $idAluno);
+            return;
+        }
+
+        $todas = $this->turmaService->turmas(500);
+        $turmasAtivas = array_values(
+            array_filter($todas, static fn (array $t): bool => (($t['ativa'] ?? 'N') === 'S'))
+        );
+
+        $this->render('pages/admin/alunos/troca', [
+            'title' => 'Trocar Turma',
+            'currentRoute' => '/admin/alunos/troca',
+            'aluno' => $aluno,
+            'matricula' => $matricula,
+            'turmasAtivas' => $turmasAtivas,
+        ], 'admin');
+    }
+
+    public function trocar(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $idAluno = (int) $this->input('id_aluno', 0);
+        $idMatricula = (int) $this->input('id_matricula', 0);
+        $idTurmaDestino = (int) $this->input('id_turma_destino', 0);
+        $motivo = trim((string) $this->input('motivo', ''));
+
+        if ($idAluno <= 0 || $idMatricula <= 0 || $idTurmaDestino <= 0) {
+            Session::setFlash('flash', 'Parâmetros inválidos.');
+            $this->redirect('/admin/alunos');
+            return;
+        }
+
+        if ($motivo === '') {
+            Session::setFlash('flash', 'Informe o motivo da troca.');
+            $this->redirect('/admin/alunos/troca?id=' . $idAluno . '&matricula_id=' . $idMatricula);
+            return;
+        }
+
+        $matricula = $this->alunoService->findMatriculaById($idMatricula);
+        if (!$matricula) {
+            Session::setFlash('flash', 'Matrícula não encontrada.');
+            $this->redirect('/admin/alunos');
+            return;
+        }
+
+        $idTurmaOrigem = (int) ($matricula['id_turma'] ?? 0);
+
+        if ($idTurmaOrigem === $idTurmaDestino) {
+            Session::setFlash('flash', 'A turma de destino deve ser diferente da turma atual.');
+            $this->redirect('/admin/alunos/troca?id=' . $idAluno . '&matricula_id=' . $idMatricula);
+            return;
+        }
+
+        if ($this->alunoService->matriculaJaExiste($idAluno, $idTurmaDestino)) {
+            Session::setFlash('flash', 'Aluno já está matriculado na turma de destino.');
+            $this->redirect('/admin/alunos/troca?id=' . $idAluno . '&matricula_id=' . $idMatricula);
+            return;
+        }
+
+        $atualizou = $this->alunoService->atualizarMatriculaTurma($idMatricula, $idTurmaDestino);
+
+        if ($atualizou) {
+            $trocaId = $this->alunoService->registrarTroca($idTurmaOrigem, $idTurmaDestino, $idAluno, $motivo);
+            $nomeAluno = (string) ($matricula['turma_nome'] ?? '');
+            $this->adminService->log('atualizar', 'matricula', $idMatricula, "Troca de turma do aluno ID $idAluno: origem $idTurmaOrigem -> destino $idTurmaDestino");
+            Session::setFlash('flash', 'Troca de turma realizada com sucesso.');
+        } else {
+            Session::setFlash('flash', 'Erro ao realizar troca de turma. Tente novamente.');
+        }
+
+        $this->redirect('/admin/alunos/show?id=' . $idAluno);
+    }
+
     public function restaurarSenha(): void
     {
         if (!$this->isStaff()) {

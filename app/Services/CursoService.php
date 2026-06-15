@@ -118,7 +118,8 @@ final class CursoService
         string $imagemCard = '',
         int $modalidadeId = 0,
         int $segmentoId = 0,
-        int $nivelId = 0
+        int $nivelId = 0,
+        int $cargaHoraria = 0
     ): int {
         $slug = $this->generateUniqueSlug($nome);
 
@@ -134,6 +135,7 @@ final class CursoService
             'ativo' => trim($ativo),
             'exibir_home' => trim($exibirHome),
             'confirmado' => trim($confirmado),
+            'carga_horaria' => $cargaHoraria,
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
             'segmento_id' => $segmentoId > 0 ? $segmentoId : null,
             'nivel_id' => $nivelId > 0 ? $nivelId : null,
@@ -154,7 +156,8 @@ final class CursoService
         string $imagemCard = '',
         int $modalidadeId = 0,
         int $segmentoId = 0,
-        int $nivelId = 0
+        int $nivelId = 0,
+        int $cargaHoraria = 0
     ): void {
         $slug = $this->generateUniqueSlug($nome, $id);
 
@@ -170,6 +173,7 @@ final class CursoService
             'ativo' => trim($ativo),
             'exibir_home' => trim($exibirHome),
             'confirmado' => trim($confirmado),
+            'carga_horaria' => $cargaHoraria,
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
             'segmento_id' => $segmentoId > 0 ? $segmentoId : null,
             'nivel_id' => $nivelId > 0 ? $nivelId : null,
