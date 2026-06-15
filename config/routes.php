@@ -66,6 +66,7 @@ return static function (Router $router): void {
     $router->post('/admin/professores/salvar-curriculo', [ProfessorController::class, 'salvarCurriculo']);
     $router->get('/admin/professores/videos', [ProfessorController::class, 'videos']);
     $router->post('/admin/professores/salvar-video', [ProfessorController::class, 'salvarVideo']);
+    $router->post('/admin/professores/deletar-video', [ProfessorController::class, 'deletarVideo']);
     $router->get('/admin/professores/drive', [ProfessorController::class, 'drive']);
     $router->post('/admin/professores/salvar-drive', [ProfessorController::class, 'salvarDrive']);
 

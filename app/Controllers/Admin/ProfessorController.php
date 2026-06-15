@@ -785,6 +785,44 @@ final class ProfessorController extends Controller
         $this->redirect('/admin/professores/videos?turma_id=' . $idTurma);
     }
 
+    public function deletarVideo(): void
+    {
+        if (!$this->isStaff()) {
+            http_response_code(403);
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) $this->input('id', 0);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'ID inválido.']);
+            return;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('DELETE FROM material WHERE id = :id AND tipo = :tipo');
+                $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':tipo', 'video', \PDO::PARAM_STR);
+                $stmt->execute();
+
+                if ($stmt->rowCount() > 0) {
+                    $this->adminService->log('excluir', 'video', $id, 'Vídeo excluído');
+                    echo json_encode(['sucesso' => true]);
+                } else {
+                    http_response_code(404);
+                    echo json_encode(['erro' => 'Vídeo não encontrado.']);
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('[VIDEOS] Erro ao excluir: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao excluir vídeo.']);
+        }
+    }
+
     public function drive(): void
     {
         if (!$this->isStaff()) {

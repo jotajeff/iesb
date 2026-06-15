@@ -47,11 +47,12 @@
                         <th><i class="bi bi-fonts me-1"></i>Título</th>
                         <th><i class="bi bi-link-45deg me-1"></i>Link / Iframe</th>
                         <th><i class="bi bi-calendar me-1"></i>Cadastrado em</th>
+                        <th class="text-center"><i class="bi bi-gear"></i></th>
                     </tr>
                 </thead>
                 <tbody>
                     <?php if (empty($materiais ?? [])): ?>
-                        <tr><td colspan="4" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum vídeo cadastrado.</td></tr>
+                        <tr><td colspan="5" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum vídeo cadastrado.</td></tr>
                     <?php endif; ?>
                     <?php foreach ($materiais ?? [] as $m): ?>
                         <tr>
@@ -65,6 +66,12 @@
                             <td><?= htmlspecialchars((string) ($m['titulo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-break"><?= htmlspecialchars((string) ($m['link'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) ($m['criado_em'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td class="text-center">
+                                <button type="button" class="btn btn-sm btn-outline-danger"
+                                        onclick="confirmarExclusaoVideo(<?= (int) ($m['id'] ?? 0) ?>)">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>
@@ -76,6 +83,29 @@
 <?php require __DIR__ . '/ver_video.php'; ?>
 
 <script>
+function confirmarExclusaoVideo(id) {
+    if (!confirm('Tem certeza que deseja excluir este vídeo?')) return;
+
+    var formData = new FormData();
+    formData.append('id', id);
+
+    fetch('/admin/professores/deletar-video', {
+        method: 'POST',
+        body: formData
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+        if (data.sucesso) {
+            window.location.reload();
+        } else {
+            alert('Erro: ' + (data.erro || 'não foi possível excluir.'));
+        }
+    })
+    .catch(function() {
+        alert('Erro de rede ao tentar excluir o vídeo.');
+    });
+}
+
 document.querySelectorAll('[data-bs-target="#verVideoModal"]').forEach(function(el) {
     el.addEventListener('click', function(e) {
         e.preventDefault();
