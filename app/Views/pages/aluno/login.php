@@ -16,6 +16,12 @@
             </div>
             <button class="btn-primary-custom justify-content-center" type="submit">Entrar na Área do Aluno</button>
           </form>
+
+          <div class="text-center mt-3">
+            <a href="/aluno/solicitar-redefinicao" style="color: var(--accent); text-decoration: none; font-size: 14px;">
+              <i class="bi bi-question-circle me-1"></i>Esqueceu a senha?
+            </a>
+          </div>
         </div>
       </div>
     </div>

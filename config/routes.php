@@ -104,6 +104,8 @@ return static function (Router $router): void {
     $router->get('/admin/turmas/editar', [TurmaController::class, 'editar']);
     $router->post('/admin/turmas/salvar', [TurmaController::class, 'salvar']);
     $router->post('/admin/turmas/atualizar', [TurmaController::class, 'atualizar']);
+    $router->get('/admin/turmas/ver-video', [TurmaController::class, 'verVideo']);
+    $router->get('/admin/turmas/ver-drive', [TurmaController::class, 'verDrive']);
 
     $router->get('/admin/modalidade', [ConfigController::class, 'modalidade']);
     $router->get('/admin/modalidade/edit', [ConfigController::class, 'editModalidade']);
@@ -128,6 +130,10 @@ return static function (Router $router): void {
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);
+    $router->get('/aluno/solicitar-redefinicao', [AuthController::class, 'mostrarSolicitarRedefinicao']);
+    $router->post('/aluno/solicitar-redefinicao', [AuthController::class, 'solicitarRedefinicao']);
+    $router->get('/aluno/redefinir-senha', [AuthController::class, 'mostrarRedefinirSenha']);
+    $router->post('/aluno/redefinir-senha', [AuthController::class, 'redefinirSenha']);
     $router->get('/aluno', [StudentController::class, 'dashboard']);
     $router->get('/aluno/cursos', [StudentController::class, 'cursos']);
     $router->get('/aluno/show', [StudentController::class, 'show']);

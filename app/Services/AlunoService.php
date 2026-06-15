@@ -112,4 +112,32 @@ final class AlunoService
             'senha' => password_hash($senha, PASSWORD_DEFAULT),
         ]);
     }
+
+    public function findByEmail(string $email): ?array
+    {
+        return $this->repository->findByEmail($email);
+    }
+
+    public function salvarResetToken(int $id, string $token, string $expires): void
+    {
+        $this->repository->save([
+            'id' => $id,
+            'reset_token' => $token,
+            'reset_token_expires' => $expires,
+        ]);
+    }
+
+    public function buscarPorResetToken(string $token): ?array
+    {
+        return $this->repository->findByResetToken($token);
+    }
+
+    public function limparResetToken(int $id): void
+    {
+        $this->repository->save([
+            'id' => $id,
+            'reset_token' => null,
+            'reset_token_expires' => null,
+        ]);
+    }
 }

@@ -85,6 +85,31 @@ final class AlunoRepository
         }
     }
 
+    public function findByResetToken(string $token): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $sql = 'SELECT id, nome, email, reset_token, reset_token_expires'
+                . ' FROM alunos'
+                . ' WHERE reset_token = :token AND reset_token_expires > NOW()'
+                . ' LIMIT 1';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':token', $token, PDO::PARAM_STR);
+            $stmt->execute();
+
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[ALUNOS] Erro em findByResetToken: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function save(array $payload): int
     {
         $pdo = Database::connection();
@@ -95,7 +120,7 @@ final class AlunoRepository
         try {
             if (!empty($payload['id'])) {
                 $set = [];
-                $fields = ['nome', 'cpf', 'data_nascimento', 'telefone', 'email', 'ativo', 'senha', 'foto'];
+                $fields = ['nome', 'cpf', 'data_nascimento', 'telefone', 'email', 'ativo', 'senha', 'foto', 'reset_token', 'reset_token_expires'];
                 foreach ($fields as $field) {
                     if (array_key_exists($field, $payload)) {
                         $set[] = "$field = :$field";
@@ -129,6 +154,12 @@ final class AlunoRepository
             }
             if (array_key_exists('senha', $payload)) {
                 $stmt->bindValue(':senha', $payload['senha'], PDO::PARAM_STR);
+            }
+            if (array_key_exists('reset_token', $payload)) {
+                $stmt->bindValue(':reset_token', $payload['reset_token'], $payload['reset_token'] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            }
+            if (array_key_exists('reset_token_expires', $payload)) {
+                $stmt->bindValue(':reset_token_expires', $payload['reset_token_expires'], $payload['reset_token_expires'] === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
             }
             $stmt->execute();
 

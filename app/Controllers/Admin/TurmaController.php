@@ -62,6 +62,7 @@ final class TurmaController extends Controller
             'turma' => $turma,
             'inscritos' => $this->turmaService->inscritosPorTurma($id),
             'professores' => $this->professoresDaTurma($id),
+            'materiais' => $this->materiaisDaTurma($id),
         ], 'admin');
     }
 
@@ -191,6 +192,99 @@ final class TurmaController extends Controller
         $this->adminService->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
         Session::setFlash('flash', 'Turma atualizada com sucesso.');
         $this->redirect('/admin/turmas');
+    }
+
+    public function verVideo(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor.');
+            $this->redirect('/admin/login');
+        }
+
+        $materialId = (int) ($_GET['id'] ?? 0);
+        $material = $this->buscarMaterial($materialId, 'video');
+
+        if (!$material) {
+            Session::setFlash('flash', 'Vídeo não encontrado.');
+            $this->redirect('/admin/turmas');
+            return;
+        }
+
+        $this->render('pages/admin/turmas/ver_video', [
+            'title' => $material['titulo'] ?? 'Vídeo',
+            'currentRoute' => '/admin/turmas/show',
+            'material' => $material,
+        ], 'admin');
+    }
+
+    public function verDrive(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor.');
+            $this->redirect('/admin/login');
+        }
+
+        $materialId = (int) ($_GET['id'] ?? 0);
+        $material = $this->buscarMaterial($materialId, 'drive');
+
+        if (!$material) {
+            Session::setFlash('flash', 'Documento não encontrado.');
+            $this->redirect('/admin/turmas');
+            return;
+        }
+
+        $this->render('pages/admin/turmas/ver_drive', [
+            'title' => $material['titulo'] ?? 'Drive',
+            'currentRoute' => '/admin/turmas/show',
+            'material' => $material,
+        ], 'admin');
+    }
+
+    private function buscarMaterial(int $id, string $tipo): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, titulo, link, tipo, id_fk, criado_em'
+                . ' FROM material WHERE id = :id AND tipo = :tipo AND ativo = :ativo'
+            );
+            $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+            $stmt->bindValue(':tipo', $tipo, \PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function materiaisDaTurma(int $idTurma): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            return [];
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, tipo, titulo, link, criado_em'
+                . ' FROM material'
+                . ' WHERE id_fk = :id_turma AND ativo = :ativo'
+                . ' ORDER BY tipo ASC, titulo ASC'
+            );
+            $stmt->bindValue(':id_turma', $idTurma, \PDO::PARAM_INT);
+            $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable) {
+            return [];
+        }
     }
 
     private function isStaff(): bool

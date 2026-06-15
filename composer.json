@@ -3,7 +3,8 @@
   "description": "Estrutura base MVC com PHP 8",
   "type": "project",
   "require": {
-    "php": ">=8.0"
+    "php": ">=8.0",
+    "phpmailer/phpmailer": "^7.1"
   },
   "autoload": {
     "psr-4": {
