@@ -86,4 +86,12 @@ final class AlunoService
     {
         return $this->turmaRepository->findMatriculaByAlunoAndTurma($idAluno, $idTurma) !== null;
     }
+
+    public function atualizarSenha(int $id, string $senha): void
+    {
+        $this->repository->save([
+            'id' => $id,
+            'senha' => password_hash($senha, PASSWORD_DEFAULT),
+        ]);
+    }
 }

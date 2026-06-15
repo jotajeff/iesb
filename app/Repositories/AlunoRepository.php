@@ -94,9 +94,14 @@ final class AlunoRepository
 
         try {
             if (!empty($payload['id'])) {
-                $sql = 'UPDATE alunos SET nome = :nome, cpf = :cpf, data_nascimento = :data_nascimento, telefone = :telefone, email = :email, ativo = :ativo';
-                $sql .= isset($payload['senha']) ? ', senha = :senha' : '';
-                $sql .= ' WHERE id = :id';
+                $set = [];
+                $fields = ['nome', 'cpf', 'data_nascimento', 'telefone', 'email', 'ativo', 'senha', 'foto'];
+                foreach ($fields as $field) {
+                    if (array_key_exists($field, $payload)) {
+                        $set[] = "$field = :$field";
+                    }
+                }
+                $sql = 'UPDATE alunos SET ' . implode(', ', $set) . ' WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $payload['id'], PDO::PARAM_INT);
             } else {
@@ -104,13 +109,25 @@ final class AlunoRepository
                 $stmt = $pdo->prepare($sql);
             }
 
-            $stmt->bindValue(':nome', trim($payload['nome'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':cpf', trim($payload['cpf'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':data_nascimento', $payload['data_nascimento'] ?? null, PDO::PARAM_STR);
-            $stmt->bindValue(':telefone', trim($payload['telefone'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':email', trim($payload['email'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':ativo', strtoupper(trim($payload['ativo'] ?? 'N')), PDO::PARAM_STR);
-            if (isset($payload['senha'])) {
+            if (array_key_exists('nome', $payload)) {
+                $stmt->bindValue(':nome', trim($payload['nome']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('cpf', $payload)) {
+                $stmt->bindValue(':cpf', trim($payload['cpf']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('data_nascimento', $payload)) {
+                $stmt->bindValue(':data_nascimento', $payload['data_nascimento'] ?? null, PDO::PARAM_STR);
+            }
+            if (array_key_exists('telefone', $payload)) {
+                $stmt->bindValue(':telefone', trim($payload['telefone']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('email', $payload)) {
+                $stmt->bindValue(':email', trim($payload['email']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('ativo', $payload)) {
+                $stmt->bindValue(':ativo', strtoupper(trim($payload['ativo'])), PDO::PARAM_STR);
+            }
+            if (array_key_exists('senha', $payload)) {
                 $stmt->bindValue(':senha', $payload['senha'], PDO::PARAM_STR);
             }
             $stmt->execute();

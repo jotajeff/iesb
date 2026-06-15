@@ -69,6 +69,16 @@
                     </td>
                   </tr>
                   <tr>
+                    <th class="bg-light">Senha</th>
+                    <td>
+                      <button type="button" class="btn btn-sm btn-outline-warning"
+                              onclick="restaurarSenha(<?= (int) ($alunoData['id'] ?? 0) ?>)">
+                        <i class="bi bi-key me-1"></i>Restaurar Senha
+                      </button>
+                      <small class="text-muted ms-2">(senha será gerada automaticamente)</small>
+                    </td>
+                  </tr>
+                  <tr>
                     <th class="bg-light">Criado em</th>
                     <td><?php
                       $rawCriado = (string) ($alunoData['criado_em'] ?? '');
@@ -216,3 +226,28 @@
     <?php endif; ?>
   </div>
 </section>
+
+<script>
+function restaurarSenha(id) {
+  if (!confirm('Tem certeza que deseja restaurar a senha deste aluno?')) return;
+
+  var formData = new FormData();
+  formData.append('id', id);
+
+  fetch('/admin/alunos/restaurar-senha', {
+    method: 'POST',
+    body: formData
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(data) {
+    if (data.sucesso) {
+      alert('Senha restaurada com sucesso!\nNova senha: ' + data.senha);
+    } else {
+      alert('Erro: ' + (data.erro || 'não foi possível restaurar a senha.'));
+    }
+  })
+  .catch(function() {
+    alert('Erro de rede ao tentar restaurar a senha.');
+  });
+}
+</script>

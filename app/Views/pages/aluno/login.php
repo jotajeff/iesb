@@ -8,7 +8,12 @@
 
           <form method="post" action="/aluno/login" class="d-grid gap-3">
             <input type="email" name="email" class="form-control-custom" placeholder="E-mail" required>
-            <input type="password" name="password" class="form-control-custom" placeholder="Senha" required>
+            <div class="position-relative">
+              <input type="password" name="password" id="senhaInput" class="form-control-custom" placeholder="Senha" required>
+              <button type="button" id="toggleSenha" class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 border-0 bg-transparent" tabindex="-1" style="color: var(--text-secondary);">
+                <i class="bi bi-eye"></i>
+              </button>
+            </div>
             <button class="btn-primary-custom justify-content-center" type="submit">Entrar na Área do Aluno</button>
           </form>
         </div>
@@ -16,3 +21,17 @@
     </div>
   </div>
 </section>
+
+<script>
+document.getElementById('toggleSenha').addEventListener('click', function() {
+  var input = document.getElementById('senhaInput');
+  var icon = this.querySelector('i');
+  if (input.type === 'password') {
+    input.type = 'text';
+    icon.className = 'bi bi-eye-slash';
+  } else {
+    input.type = 'password';
+    icon.className = 'bi bi-eye';
+  }
+});
+</script>

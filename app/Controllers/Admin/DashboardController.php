@@ -45,13 +45,20 @@ final class DashboardController extends Controller
         }
 
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $result = $this->admin->logs($page, 50);
+        $perfil = trim((string) ($_GET['perfil'] ?? ''));
+        $perfil = $perfil !== '' && in_array($perfil, ['sistema', 'aluno'], true) ? $perfil : null;
+        $nome = trim((string) ($_GET['nome'] ?? ''));
+        $nome = $nome !== '' ? $nome : null;
+
+        $result = $this->admin->logs($page, 50, $perfil, $nome);
 
         $this->render('pages/admin/logs/index', [
             'title' => 'Logs de Auditoria',
             'currentRoute' => '/admin/logs',
             'logs' => $result['data'],
             'pagination' => $result['pagination'],
+            'perfil' => $perfil,
+            'nome' => $nome,
         ], 'admin');
     }
 

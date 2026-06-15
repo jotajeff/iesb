@@ -272,6 +272,42 @@ final class AlunoController extends Controller
         $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
     }
 
+    public function restaurarSenha(): void
+    {
+        if (!$this->isStaff()) {
+            http_response_code(403);
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) $this->input('id', 0);
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'ID inválido.']);
+            return;
+        }
+
+        $aluno = $this->alunoService->findAluno($id);
+        if (!$aluno) {
+            http_response_code(404);
+            echo json_encode(['erro' => 'Aluno não encontrado.']);
+            return;
+        }
+
+        $email = strtolower(trim((string) ($aluno['email'] ?? '')));
+        if ($email === '') {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Aluno não possui email cadastrado.']);
+            return;
+        }
+
+        $senha = explode('@', $email)[0] . '#' . date('Y');
+        $this->alunoService->atualizarSenha($id, $senha);
+        $this->adminService->log('atualizar', 'aluno', $id, "Senha do aluno restaurada");
+
+        echo json_encode(['sucesso' => true, 'senha' => $senha]);
+    }
+
     private function isStaff(): bool
     {
         return (new \App\Services\AuthService())->isStaff();

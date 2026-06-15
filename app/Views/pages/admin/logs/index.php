@@ -5,16 +5,55 @@
     $currentUserId = (int) ($authUser['id'] ?? 0);
     $isAdmin = $currentRole === 'admin';
     $logEntries = $logs ?? [];
+    $currentPerfil = $perfil ?? '';
+    $currentNome = $nome ?? '';
+
     if (!$isAdmin && $currentUserId > 0) {
       $logEntries = array_values(array_filter($logEntries, static fn(array $log): bool => (int) ($log['usuario_id'] ?? 0) === $currentUserId));
     }
+
+    function queryString(array $extra = []): string {
+      $params = array_merge($_GET, $extra);
+      unset($params['page']);
+      return http_build_query($params);
+    }
     ?>
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
-      <h4 class="mb-0"><i class="bi bi-clock-history"></i> &nbsp; Logs </h4>
+      <h4 class="mb-0"><i class="bi bi-clock-history"></i> &nbsp; Logs</h4>
       <?php if (!$isAdmin): ?>
         <span class="badge bg-secondary">Exibindo apenas seus registros</span>
       <?php endif; ?>
     </div>
+
+    <?php if ($isAdmin): ?>
+    <div class="mb-3">
+      <div class="d-flex flex-wrap gap-2 align-items-center">
+        <div class="btn-group btn-group-sm">
+          <a href="?<?= queryString(['perfil' => 'sistema']) ?>"
+             class="btn <?= $currentPerfil !== 'aluno' ? 'btn-primary' : 'btn-outline-secondary' ?>">
+            <i class="bi bi-server me-1"></i>Sistema
+          </a>
+          <a href="?<?= queryString(['perfil' => 'aluno']) ?>"
+             class="btn <?= $currentPerfil === 'aluno' ? 'btn-primary' : 'btn-outline-secondary' ?>">
+            <i class="bi bi-people me-1"></i>Aluno
+          </a>
+        </div>
+
+        <form method="get" action="/admin/logs" class="d-flex gap-2 ms-2">
+          <?php if ($currentPerfil !== ''): ?>
+            <input type="hidden" name="perfil" value="<?= htmlspecialchars($currentPerfil, ENT_QUOTES, 'UTF-8') ?>">
+          <?php endif; ?>
+          <input type="text" name="nome" class="form-control form-control-sm" style="width:220px;"
+                 placeholder="Buscar por nome..." value="<?= htmlspecialchars($currentNome, ENT_QUOTES, 'UTF-8') ?>">
+          <button class="btn btn-sm btn-outline-primary" type="submit"><i class="bi bi-search"></i></button>
+          <?php if ($currentNome !== ''): ?>
+            <a href="?<?= queryString(['nome' => '', 'page' => 1]) ?>" class="btn btn-sm btn-outline-secondary"><i class="bi bi-x-lg"></i></a>
+          <?php endif; ?>
+        </form>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <div class="table-responsive">
       <table class="table table-sm table-striped table-hover align-middle">
         <thead>
@@ -50,8 +89,8 @@
              <tr>
                 <td><?= (int) $log['id'] ?></td>
                 <td>
-                  <?php $nome = trim((string) ($log['usuario_nome'] ?? '')); ?>
-                  <?= $nome !== '' ? htmlspecialchars($nome, ENT_QUOTES, 'UTF-8') : ('#' . (int) ($log['usuario_id'] ?? 0)) ?>
+                  <?php $nomeLog = trim((string) ($log['usuario_nome'] ?? '')); ?>
+                  <?= $nomeLog !== '' ? htmlspecialchars($nomeLog, ENT_QUOTES, 'UTF-8') : ('#' . (int) ($log['usuario_id'] ?? 0)) ?>
                 </td>
                 <td><?= htmlspecialchars((string) $log['acao'], ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
@@ -77,15 +116,15 @@
       <nav class="d-flex justify-content-center mt-3">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item <?= $pagination['currentPage'] <= 1 ? 'disabled' : '' ?>">
-            <a class="page-link" href="?page=<?= $pagination['currentPage'] - 1 ?>">Anterior</a>
+            <a class="page-link" href="?<?= queryString(['page' => $pagination['currentPage'] - 1]) ?>">Anterior</a>
           </li>
           <?php for ($p = 1; $p <= $pagination['totalPages']; $p++): ?>
             <li class="page-item <?= $p === $pagination['currentPage'] ? 'active' : '' ?>">
-              <a class="page-link" href="?page=<?= $p ?>"><?= $p ?></a>
+              <a class="page-link" href="?<?= queryString(['page' => $p]) ?>"><?= $p ?></a>
             </li>
           <?php endfor; ?>
           <li class="page-item <?= $pagination['currentPage'] >= $pagination['totalPages'] ? 'disabled' : '' ?>">
-            <a class="page-link" href="?page=<?= $pagination['currentPage'] + 1 ?>">Próximo</a>
+            <a class="page-link" href="?<?= queryString(['page' => $pagination['currentPage'] + 1]) ?>">Próximo</a>
           </li>
         </ul>
       </nav>

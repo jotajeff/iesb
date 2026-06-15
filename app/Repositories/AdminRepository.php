@@ -612,10 +612,14 @@ final class AdminRepository
 
         try {
             if (!empty($payload['id'])) {
-                $sql = 'UPDATE alunos SET nome = :nome, cpf = :cpf, data_nascimento = :data_nascimento, telefone = :telefone, email = :email, ativo = :ativo';
-                $sql .= isset($payload['senha']) ? ', senha = :senha' : '';
-                $sql .= isset($payload['foto']) ? ', foto = :foto' : '';
-                $sql .= ' WHERE id = :id';
+                $set = [];
+                $fields = ['nome', 'cpf', 'data_nascimento', 'telefone', 'email', 'ativo', 'senha', 'foto'];
+                foreach ($fields as $field) {
+                    if (array_key_exists($field, $payload)) {
+                        $set[] = "$field = :$field";
+                    }
+                }
+                $sql = 'UPDATE alunos SET ' . implode(', ', $set) . ' WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $payload['id'], PDO::PARAM_INT);
             } else {
@@ -623,16 +627,28 @@ final class AdminRepository
                 $stmt = $pdo->prepare($sql);
             }
 
-            $stmt->bindValue(':nome', trim($payload['nome'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':cpf', trim($payload['cpf'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':data_nascimento', $payload['data_nascimento'] ?? null, PDO::PARAM_STR);
-            $stmt->bindValue(':telefone', trim($payload['telefone'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':email', trim($payload['email'] ?? ''), PDO::PARAM_STR);
-            $stmt->bindValue(':ativo', strtoupper(trim($payload['ativo'] ?? 'N')), PDO::PARAM_STR);
-            if (isset($payload['senha'])) {
+            if (array_key_exists('nome', $payload)) {
+                $stmt->bindValue(':nome', trim($payload['nome']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('cpf', $payload)) {
+                $stmt->bindValue(':cpf', trim($payload['cpf']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('data_nascimento', $payload)) {
+                $stmt->bindValue(':data_nascimento', $payload['data_nascimento'] ?? null, PDO::PARAM_STR);
+            }
+            if (array_key_exists('telefone', $payload)) {
+                $stmt->bindValue(':telefone', trim($payload['telefone']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('email', $payload)) {
+                $stmt->bindValue(':email', trim($payload['email']), PDO::PARAM_STR);
+            }
+            if (array_key_exists('ativo', $payload)) {
+                $stmt->bindValue(':ativo', strtoupper(trim($payload['ativo'])), PDO::PARAM_STR);
+            }
+            if (array_key_exists('senha', $payload)) {
                 $stmt->bindValue(':senha', $payload['senha'], PDO::PARAM_STR);
             }
-            if (isset($payload['foto'])) {
+            if (array_key_exists('foto', $payload)) {
                 $stmt->bindValue(':foto', $payload['foto'], PDO::PARAM_STR);
             }
             $stmt->execute();
@@ -1092,7 +1108,7 @@ final class AdminRepository
         return $stmt->fetchColumn() !== false;
     }
 
-    public function recentLogs(int $page = 1, int $perPage = 50): array
+    public function recentLogs(int $page = 1, int $perPage = 50, ?string $perfil = null, ?string $nome = null): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -1100,24 +1116,53 @@ final class AdminRepository
         }
 
         $offset = max(0, ($page - 1) * $perPage);
+        $isAluno = $perfil === 'aluno';
 
-        $countSql = 'SELECT COUNT(*) FROM logs_auditoria l WHERE l.perfil != :exclude_perfil';
+        $join = $isAluno
+            ? 'LEFT JOIN alunos a ON a.id = l.usuario_id'
+            : 'LEFT JOIN usuarios u ON u.id = l.usuario_id';
+        $select = $isAluno
+            ? 'a.nome AS usuario_nome'
+            : 'u.nome AS usuario_nome';
+        $where = $isAluno
+            ? 'l.perfil = :perfil_val'
+            : 'l.perfil != :exclude_perfil';
+
+        $countSql = "SELECT COUNT(*) FROM logs_auditoria l WHERE $where";
         $countStmt = $pdo->prepare($countSql);
-        $countStmt->bindValue(':exclude_perfil', 'aluno', PDO::PARAM_STR);
+        if ($isAluno) {
+            $countStmt->bindValue(':perfil_val', 'aluno', PDO::PARAM_STR);
+        } else {
+            $countStmt->bindValue(':exclude_perfil', 'aluno', PDO::PARAM_STR);
+        }
         $countStmt->execute();
         $total = (int) $countStmt->fetchColumn();
 
-        $sql = 'SELECT l.id, l.usuario_id, l.perfil, l.acao, l.entidade, l.entidade_id, l.descricao, l.ip, l.sucesso, l.created_at,
-                       u.nome AS usuario_nome
+        $sql = "SELECT l.id, l.usuario_id, l.perfil, l.acao, l.entidade, l.entidade_id, l.descricao, l.ip, l.sucesso, l.created_at,
+                       $select
                 FROM logs_auditoria l
-                LEFT JOIN usuarios u ON u.id = l.usuario_id
-                WHERE l.perfil != :exclude_perfil2
-                ORDER BY l.id DESC
-                LIMIT :limit OFFSET :offset';
+                $join
+                WHERE $where";
+        $params = [];
+        if ($isAluno) {
+            $params[':perfil_val'] = ['value' => 'aluno', 'type' => PDO::PARAM_STR];
+        } else {
+            $params[':exclude_perfil'] = ['value' => 'aluno', 'type' => PDO::PARAM_STR];
+        }
+
+        if ($nome !== null && $nome !== '') {
+            $nomeCol = $isAluno ? 'a.nome' : 'u.nome';
+            $sql .= " AND $nomeCol LIKE :nome";
+            $params[':nome'] = ['value' => "%$nome%", 'type' => PDO::PARAM_STR];
+        }
+
+        $sql .= ' ORDER BY l.id DESC LIMIT :limit OFFSET :offset';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':limit', $perPage, PDO::PARAM_INT);
         $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
-        $stmt->bindValue(':exclude_perfil2', 'aluno', PDO::PARAM_STR);
+        foreach ($params as $key => $binding) {
+            $stmt->bindValue($key, $binding['value'], $binding['type']);
+        }
         $stmt->execute();
 
         $rows = $stmt->fetchAll();

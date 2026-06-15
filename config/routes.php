@@ -84,6 +84,7 @@ return static function (Router $router): void {
     $router->get('/admin/alunos/show', [AlunoController::class, 'show']);
     $router->get('/admin/alunos/matricula', [AlunoController::class, 'matricula']);
     $router->post('/admin/alunos/matricular', [AlunoController::class, 'matricular']);
+    $router->post('/admin/alunos/restaurar-senha', [AlunoController::class, 'restaurarSenha']);
 
     $router->get('/admin/tarefas', [TarefaController::class, 'index']);
     $router->get('/admin/tarefas/lista', [TarefaController::class, 'lista']);

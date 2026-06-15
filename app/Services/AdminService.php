@@ -25,9 +25,9 @@ final class AdminService
         return $this->repository->dashboardTaskIndicators($userId, $isAdmin);
     }
 
-    public function logs(int $page = 1, int $perPage = 50): array
+    public function logs(int $page = 1, int $perPage = 50, ?string $perfil = null, ?string $nome = null): array
     {
-        $result = $this->repository->recentLogs($page, $perPage);
+        $result = $this->repository->recentLogs($page, $perPage, $perfil, $nome);
         $logs = $result['data'];
         $total = $result['total'];
 
