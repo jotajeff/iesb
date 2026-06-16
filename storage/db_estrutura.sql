@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 15/06/2026 às 15:47
+-- Tempo de geração: 15/06/2026 às 21:04
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -35,6 +35,8 @@ CREATE TABLE `alunos` (
   `telefone` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
   `email` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
   `senha` varchar(64) COLLATE utf8_unicode_ci NOT NULL,
+  `reset_token` varchar(64) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `reset_token_expires` datetime DEFAULT NULL,
   `foto` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
   `ativo` char(1) COLLATE utf8_unicode_ci DEFAULT 'S',
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -158,6 +160,28 @@ CREATE TABLE `endereco` (
   `numero` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
   `cidade` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `uf` char(2) COLLATE utf8_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `instituicao`
+--
+
+CREATE TABLE `instituicao` (
+  `id` int(11) NOT NULL,
+  `razao_social` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `nome_fantasia` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `documento` varchar(18) COLLATE utf8_unicode_ci NOT NULL,
+  `inscricao_estadual` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `telefone` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `email` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `senha` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `responsavel_nome` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `tipo_cliente` varchar(20) COLLATE utf8_unicode_ci DEFAULT 'PJ',
+  `status` varchar(20) COLLATE utf8_unicode_ci DEFAULT 'Ativo',
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
+  `atualizado_em` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -447,6 +471,14 @@ ALTER TABLE `endereco`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `instituicao`
+--
+ALTER TABLE `instituicao`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uc_instituicao_documento` (`documento`),
+  ADD UNIQUE KEY `uc_instituicao_email` (`email`);
+
+--
 -- Índices de tabela `logs_auditoria`
 --
 ALTER TABLE `logs_auditoria`
@@ -604,6 +636,12 @@ ALTER TABLE `detalhes`
 -- AUTO_INCREMENT de tabela `endereco`
 --
 ALTER TABLE `endereco`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `instituicao`
+--
+ALTER TABLE `instituicao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --

@@ -123,6 +123,10 @@ return static function (Router $router): void {
     $router->get('/admin/nivel/edit', [ConfigController::class, 'editNivel']);
     $router->post('/admin/nivel/update', [ConfigController::class, 'updateNivel']);
 
+    $router->get('/admin/config/cliente', [ConfigController::class, 'cliente']);
+    $router->get('/admin/config/cliente/editar', [ConfigController::class, 'editCliente']);
+    $router->post('/admin/config/cliente/atualizar', [ConfigController::class, 'updateCliente']);
+
     $router->get('/admin/visitas', [VisitaController::class, 'index']);
     $router->get('/admin/visitas/mensal', [VisitaController::class, 'mensal']);
     $router->get('/admin/visitas/analytics', [VisitaController::class, 'analytics']);

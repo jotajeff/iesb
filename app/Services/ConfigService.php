@@ -77,4 +77,19 @@ final class ConfigService
             'apresentacao' => trim($apresentacao),
         ]);
     }
+
+    public function instituicoes(): array
+    {
+        return $this->repository->listInstituicoes();
+    }
+
+    public function findInstituicao(int $id): ?array
+    {
+        return $this->repository->findInstituicaoById($id);
+    }
+
+    public function saveInstituicao(array $data): int
+    {
+        return $this->repository->saveInstituicao($data);
+    }
 }

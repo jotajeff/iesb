@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
+use App\Services\AuthService;
 use App\Services\ConfigService;
 use App\Services\AdminService;
 use App\Support\Session;
@@ -276,8 +277,122 @@ final class ConfigController extends Controller
         $this->redirect('/admin/nivel');
     }
 
+    public function cliente(): void
+    {
+        if (!$this->canAccessConfig()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/config/cliente/index', [
+            'title' => 'Configurações - Clientes',
+            'currentRoute' => '/admin/config/cliente',
+            'instituicoes' => $this->configService->instituicoes(),
+        ], 'admin');
+    }
+
+    public function editCliente(): void
+    {
+        if (!$this->canAccessConfig()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $instituicao = $id > 0 ? $this->configService->findInstituicao($id) : null;
+
+        if ($id > 0 && !$instituicao) {
+            Session::setFlash('flash', 'Instituição não encontrada.');
+            $this->redirect('/admin/config/cliente');
+            return;
+        }
+
+        $this->render('pages/admin/config/cliente/editar', [
+            'title' => $id > 0 ? 'Editar Instituição' : 'Nova Instituição',
+            'currentRoute' => '/admin/config/cliente',
+            'instituicao' => $instituicao,
+        ], 'admin');
+    }
+
+    public function updateCliente(): void
+    {
+        if (!$this->canAccessConfig()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $razaoSocial = trim((string) $this->input('razao_social', ''));
+        $nomeFantasia = trim((string) $this->input('nome_fantasia', ''));
+        $documento = trim((string) $this->input('documento', ''));
+        $inscricaoEstadual = trim((string) $this->input('inscricao_estadual', ''));
+        $telefone = trim((string) $this->input('telefone', ''));
+        $email = trim((string) $this->input('email', ''));
+        $responsavelNome = trim((string) $this->input('responsavel_nome', ''));
+        $tipoCliente = trim((string) $this->input('tipo_cliente', 'PJ'));
+        $status = trim((string) $this->input('status', 'Ativo'));
+        $senha = trim((string) $this->input('senha', ''));
+
+        if ($razaoSocial === '' || $documento === '' || $email === '') {
+            Session::setFlash('flash', 'Preencha razão social, documento e email.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/config/cliente/editar' . $suffix);
+            return;
+        }
+
+        if ($id === 0 && $senha === '') {
+            Session::setFlash('flash', 'Informe a senha.');
+            $this->redirect('/admin/config/cliente/editar');
+            return;
+        }
+
+        if ($id > 0 && $senha === '') {
+            $existing = $this->configService->findInstituicao($id);
+            $senha = (string) ($existing['senha'] ?? '');
+        }
+
+        $instituicaoId = $this->configService->saveInstituicao([
+            'id' => $id,
+            'razao_social' => $razaoSocial,
+            'nome_fantasia' => $nomeFantasia,
+            'documento' => $documento,
+            'inscricao_estadual' => $inscricaoEstadual,
+            'telefone' => $telefone,
+            'email' => $email,
+            'responsavel_nome' => $responsavelNome,
+            'tipo_cliente' => $tipoCliente,
+            'status' => $status,
+            'senha' => $senha,
+        ]);
+
+        if ($instituicaoId <= 0) {
+            Session::setFlash('flash', 'Erro ao salvar instituição.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/config/cliente/editar' . $suffix);
+            return;
+        }
+
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricao = ($id > 0 ? 'Instituição atualizada: ' : 'Instituição criada: ') . $razaoSocial;
+        $this->adminService->log($acao, 'instituicao', $instituicaoId, $descricao);
+
+        Session::setFlash('flash', $id > 0 ? 'Instituição atualizada com sucesso.' : 'Instituição criada com sucesso.');
+        $this->redirect('/admin/config/cliente');
+    }
+
+    private function canAccessConfig(): bool
+    {
+        $auth = new AuthService();
+        if (!$auth->isStaff()) {
+            return false;
+        }
+        $user = Session::get('user');
+        $userId = (int) ($user['id'] ?? 0);
+        return in_array($userId, [1, 6, 7], true);
+    }
+
     private function isStaff(): bool
     {
-        return (new \App\Services\AuthService())->isStaff();
+        return (new AuthService())->isStaff();
     }
 }

@@ -49,12 +49,15 @@
             </ul>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/modalidade') === 0) || (strpos($currentRoute ?? '', '/admin/segmento') === 0) || (strpos($currentRoute ?? '', '/admin/setor') === 0) || (strpos($currentRoute ?? '', '/admin/nivel') === 0) || (($currentRoute ?? '') === '/admin/dbase')) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear me-1"></i>Setup</a>
+            <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/modalidade') === 0) || (strpos($currentRoute ?? '', '/admin/segmento') === 0) || (strpos($currentRoute ?? '', '/admin/setor') === 0) || (strpos($currentRoute ?? '', '/admin/nivel') === 0) || (strpos($currentRoute ?? '', '/admin/config/cliente') === 0) || (($currentRoute ?? '') === '/admin/dbase')) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear me-1"></i>Setup</a>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="/admin/modalidade"><i class="bi bi-journal-bookmark-fill me-1"></i>Modalidade</a></li>
               <li><a class="dropdown-item" href="/admin/segmento"><i class="bi bi-diagram-3 me-1"></i>Segmento</a></li>
               <li><a class="dropdown-item" href="/admin/setor"><i class="bi bi-building me-1"></i>Setor</a></li>
               <li><a class="dropdown-item" href="/admin/nivel"><i class="bi bi-bar-chart-steps me-1"></i>Nível</a></li>
+              <?php if (in_array((int) ($authUser['id'] ?? 0), [1, 6, 7], true)): ?>
+              <li><a class="dropdown-item" href="/admin/config/cliente"><i class="bi bi-building-gear me-1"></i>Config</a></li>
+              <?php endif; ?>
               <li><a class="dropdown-item" href="/admin/dbase"><i class="bi bi-database me-1"></i>DB</a></li>
             </ul>
           </li>
