@@ -238,7 +238,7 @@ final class ConfigRepository
                 return [];
             }
 
-            $sql = 'SELECT id, razao_social, nome_fantasia, documento, inscricao_estadual, telefone, email, responsavel_nome, tipo_cliente, status, criado_em, atualizado_em FROM instituicao ORDER BY razao_social ASC';
+            $sql = 'SELECT id, razao_social, nome_fantasia, dominio, documento, inscricao_estadual, telefone, email, responsavel_nome, tipo_cliente, status, criado_em, atualizado_em FROM instituicao ORDER BY razao_social ASC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -255,7 +255,7 @@ final class ConfigRepository
             return null;
         }
 
-        $sql = 'SELECT id, razao_social, nome_fantasia, documento, inscricao_estadual, telefone, email, senha, responsavel_nome, tipo_cliente, status, criado_em, atualizado_em FROM instituicao WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, razao_social, nome_fantasia, dominio, documento, inscricao_estadual, telefone, email, senha, responsavel_nome, tipo_cliente, status, criado_em, atualizado_em FROM instituicao WHERE id = :id LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -275,6 +275,7 @@ final class ConfigRepository
             $id = (int) ($payload['id'] ?? 0);
             $razaoSocial = trim((string) ($payload['razao_social'] ?? ''));
             $nomeFantasia = trim((string) ($payload['nome_fantasia'] ?? ''));
+            $dominio = trim((string) ($payload['dominio'] ?? ''));
             $documento = trim((string) ($payload['documento'] ?? ''));
             $inscricaoEstadual = trim((string) ($payload['inscricao_estadual'] ?? ''));
             $telefone = trim((string) ($payload['telefone'] ?? ''));
@@ -289,11 +290,12 @@ final class ConfigRepository
             }
 
             if ($id > 0) {
-                $sql = 'UPDATE instituicao SET razao_social = :razao_social, nome_fantasia = :nome_fantasia, documento = :documento, inscricao_estadual = :inscricao_estadual, telefone = :telefone, email = :email, senha = :senha, responsavel_nome = :responsavel_nome, tipo_cliente = :tipo_cliente, status = :status WHERE id = :id';
+                $sql = 'UPDATE instituicao SET razao_social = :razao_social, nome_fantasia = :nome_fantasia, dominio = :dominio, documento = :documento, inscricao_estadual = :inscricao_estadual, telefone = :telefone, email = :email, senha = :senha, responsavel_nome = :responsavel_nome, tipo_cliente = :tipo_cliente, status = :status WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                 $stmt->bindValue(':razao_social', $razaoSocial);
                 $stmt->bindValue(':nome_fantasia', $nomeFantasia);
+                $stmt->bindValue(':dominio', $dominio);
                 $stmt->bindValue(':documento', $documento);
                 $stmt->bindValue(':inscricao_estadual', $inscricaoEstadual);
                 $stmt->bindValue(':telefone', $telefone);
@@ -306,10 +308,11 @@ final class ConfigRepository
                 return $id;
             }
 
-            $sql = 'INSERT INTO instituicao (razao_social, nome_fantasia, documento, inscricao_estadual, telefone, email, senha, responsavel_nome, tipo_cliente, status) VALUES (:razao_social, :nome_fantasia, :documento, :inscricao_estadual, :telefone, :email, :senha, :responsavel_nome, :tipo_cliente, :status)';
+            $sql = 'INSERT INTO instituicao (razao_social, nome_fantasia, dominio, documento, inscricao_estadual, telefone, email, senha, responsavel_nome, tipo_cliente, status) VALUES (:razao_social, :nome_fantasia, :dominio, :documento, :inscricao_estadual, :telefone, :email, :senha, :responsavel_nome, :tipo_cliente, :status)';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':razao_social', $razaoSocial);
             $stmt->bindValue(':nome_fantasia', $nomeFantasia);
+            $stmt->bindValue(':dominio', $dominio);
             $stmt->bindValue(':documento', $documento);
             $stmt->bindValue(':inscricao_estadual', $inscricaoEstadual);
             $stmt->bindValue(':telefone', $telefone);

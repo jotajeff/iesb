@@ -21,6 +21,11 @@
         <input class="form-control" type="text" name="nome_fantasia" value="<?= htmlspecialchars((string) ($instituicao['nome_fantasia'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
       </div>
 
+      <div class="col-md-6">
+        <label class="form-label">Domínio</label>
+        <input class="form-control" type="text" name="dominio" value="<?= htmlspecialchars((string) ($instituicao['dominio'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+      </div>
+
       <div class="col-md-4">
         <label class="form-label">Documento (CNPJ/CPF)</label>
         <input class="form-control" type="text" name="documento" required value="<?= htmlspecialchars((string) ($instituicao['documento'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">

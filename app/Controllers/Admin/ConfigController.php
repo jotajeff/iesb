@@ -324,6 +324,7 @@ final class ConfigController extends Controller
         $id = (int) $this->input('id', 0);
         $razaoSocial = trim((string) $this->input('razao_social', ''));
         $nomeFantasia = trim((string) $this->input('nome_fantasia', ''));
+        $dominio = trim((string) $this->input('dominio', ''));
         $documento = trim((string) $this->input('documento', ''));
         $inscricaoEstadual = trim((string) $this->input('inscricao_estadual', ''));
         $telefone = trim((string) $this->input('telefone', ''));
@@ -355,6 +356,7 @@ final class ConfigController extends Controller
             'id' => $id,
             'razao_social' => $razaoSocial,
             'nome_fantasia' => $nomeFantasia,
+            'dominio' => $dominio,
             'documento' => $documento,
             'inscricao_estadual' => $inscricaoEstadual,
             'telefone' => $telefone,

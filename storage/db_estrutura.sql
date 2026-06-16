@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 15/06/2026 às 21:04
+-- Tempo de geração: 16/06/2026 às 17:40
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -172,6 +172,7 @@ CREATE TABLE `instituicao` (
   `id` int(11) NOT NULL,
   `razao_social` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
   `nome_fantasia` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `dominio` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `documento` varchar(18) COLLATE utf8_unicode_ci NOT NULL,
   `inscricao_estadual` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
   `telefone` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,

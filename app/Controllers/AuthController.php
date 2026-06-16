@@ -113,7 +113,16 @@ final class AuthController extends Controller
         if ($enviado) {
             Session::setFlash('flash', 'Enviamos um link de redefinição para seu e-mail.');
         } else {
-            Session::setFlash('flash', 'Erro ao enviar o e-mail. Tente novamente mais tarde.');
+            $erro = $emailService->getLastError();
+            $configInfo = $emailService->getDebugInfo();
+            $msg = 'Erro ao enviar o e-mail.';
+            if ($configInfo !== '') {
+                $msg .= ' Config: ' . $configInfo . '.';
+            }
+            if ($erro !== '') {
+                $msg .= ' Erro: ' . $erro;
+            }
+            Session::setFlash('flash', $msg);
         }
 
         $this->redirect('/aluno/solicitar-redefinicao');

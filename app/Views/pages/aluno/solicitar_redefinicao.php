@@ -8,7 +8,10 @@
           <p class="text-muted mb-4">Informe seu e-mail cadastrado para receber o link de redefinição.</p>
 
           <?php if (!empty($flash)): ?>
-            <div class="alert alert-info"><?= htmlspecialchars((string) $flash, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php $isError = str_contains($flash, 'Erro'); ?>
+            <div class="alert <?= $isError ? 'alert-danger' : 'alert-info' ?>">
+              <?= htmlspecialchars((string) $flash, ENT_QUOTES, 'UTF-8') ?>
+            </div>
           <?php endif; ?>
 
           <form method="post" action="/aluno/solicitar-redefinicao" class="d-grid gap-3">

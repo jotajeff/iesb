@@ -4,38 +4,80 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\Core\Database;
+use PDO;
 use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\SMTP;
-use PHPMailer\PHPMailer\Exception;
 
 final class EmailService
 {
-  private PHPMailer $mail;
+    private PHPMailer $mail;
+    private string $lastError = '';
+    private bool $configured = false;
+    private string $debugInfo = '';
 
-  public function __construct()
-  {
-    $this->mail = new PHPMailer(true);
+    public function __construct()
+    {
+        $this->mail = new PHPMailer(true);
 
-    $this->mail->isSMTP();
-    $this->mail->Host = 'mail.meudominio.com.br';
-    $this->mail->SMTPAuth = true;
-    $this->mail->Username = 'email';
-    $this->mail->Password = 'senha';
-    $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-    $this->mail->Port = 465;
-    $this->mail->CharSet = 'UTF-8';
+        $pdo = Database::connection();
 
-    $this->mail->setFrom('ti@posmedica.com.br', 'IESB - Área do Aluno');
-  }
+        if ($pdo instanceof PDO) {
+            $stmt = $pdo->prepare('SELECT email, senha, dominio FROM instituicao WHERE status = ? ORDER BY id ASC LIMIT 1');
+            $stmt->execute(['Ativo']);
+            $row = $stmt->fetch();
 
-  public function enviarRedefinicaoSenha(string $destinatario, string $nome, string $link): bool
-  {
-    try {
-      $this->mail->addAddress($destinatario, $nome);
-      $this->mail->isHTML(true);
-      $this->mail->Subject = 'Redefinição de Senha - IESB';
+            if ($row && !empty($row['email']) && !empty($row['senha'])) {
+                $email = trim((string) $row['email']);
+                $senha = trim((string) $row['senha']);
+                $dominio = trim((string) ($row['dominio'] ?? ''));
 
-      $this->mail->Body = <<<HTML
+                $host = $dominio !== '' ? 'mail.' . $dominio : 'mail.posmedica.com.br';
+
+                $this->debugInfo = "Host: {$host}, Port: 465, User: {$email}, Dominio: {$dominio}";
+
+                $this->mail->isSMTP();
+                $this->mail->Host = $host;
+                $this->mail->SMTPAuth = true;
+                $this->mail->Username = $email;
+                $this->mail->Password = $senha;
+                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+                $this->mail->Port = 465;
+                $this->mail->CharSet = 'UTF-8';
+                $this->mail->SMTPAutoTLS = false;
+
+                $this->mail->setFrom($email, 'IESB - Área do Aluno');
+                $this->configured = true;
+            } else {
+                $this->lastError = 'Nenhuma instituição ativa encontrada com email e senha preenchidos.';
+            }
+        } else {
+            $this->lastError = 'Sem conexão com o banco de dados.';
+        }
+    }
+
+    public function isConfigured(): bool
+    {
+        return $this->configured;
+    }
+
+    public function getLastError(): string
+    {
+        return $this->lastError;
+    }
+
+    public function getDebugInfo(): string
+    {
+        return $this->debugInfo;
+    }
+
+    public function enviarRedefinicaoSenha(string $destinatario, string $nome, string $link): bool
+    {
+        try {
+            $this->mail->addAddress($destinatario, $nome);
+            $this->mail->isHTML(true);
+            $this->mail->Subject = 'Redefinição de Senha - IESB';
+
+            $this->mail->Body = <<<HTML
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
@@ -73,12 +115,13 @@ final class EmailService
 </html>
 HTML;
 
-      $this->mail->AltBody = "Olá, {$nome}!\n\nRecebemos uma solicitação de redefinição de senha.\n\nAcesse o link para definir uma nova senha: {$link}\n\nSe você não solicitou, ignore este email.\n\nEquipe IESB";
+            $this->mail->AltBody = "Olá, {$nome}!\n\nRecebemos uma solicitação de redefinição de senha.\n\nAcesse o link para definir uma nova senha: {$link}\n\nSe você não solicitou, ignore este email.\n\nEquipe IESB";
 
-      $this->mail->send();
-      return true;
-    } catch (Exception) {
-      return false;
+            $this->mail->send();
+            return true;
+        } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
     }
-  }
 }
