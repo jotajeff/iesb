@@ -17,7 +17,7 @@ final class EmailService
     $this->mail = new PHPMailer(true);
 
     $this->mail->isSMTP();
-    $this->mail->Host = 'mail.posmedica.com.br';
+    $this->mail->Host = 'mail.meudominio.com.br';
     $this->mail->SMTPAuth = true;
     $this->mail->Username = 'email';
     $this->mail->Password = 'senha';
