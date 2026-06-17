@@ -123,6 +123,11 @@ return static function (Router $router): void {
     $router->get('/admin/nivel/edit', [ConfigController::class, 'editNivel']);
     $router->post('/admin/nivel/update', [ConfigController::class, 'updateNivel']);
 
+    $router->get('/admin/config/carousel', [ConfigController::class, 'carousel']);
+    $router->get('/admin/config/carousel/editar', [ConfigController::class, 'editCarousel']);
+    $router->post('/admin/config/carousel/salvar', [ConfigController::class, 'updateCarousel']);
+    $router->post('/admin/config/carousel/item/upload', [ConfigController::class, 'uploadCarouselItem']);
+    $router->post('/admin/config/carousel/item/deletar', [ConfigController::class, 'deleteCarouselItem']);
     $router->get('/admin/config/cliente', [ConfigController::class, 'cliente']);
     $router->get('/admin/config/cliente/editar', [ConfigController::class, 'editCliente']);
     $router->post('/admin/config/cliente/atualizar', [ConfigController::class, 'updateCliente']);

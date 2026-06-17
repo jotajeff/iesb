@@ -92,7 +92,7 @@
                   <?php $nomeLog = trim((string) ($log['usuario_nome'] ?? '')); ?>
                   <?= $nomeLog !== '' ? htmlspecialchars($nomeLog, ENT_QUOTES, 'UTF-8') : ('#' . (int) ($log['usuario_id'] ?? 0)) ?>
                 </td>
-                <td><?= htmlspecialchars((string) $log['acao'], ENT_QUOTES, 'UTF-8') ?></td>
+                 <td><?= \App\Helpers\LogHelper::render((string) $log['acao']) ?></td>
                 <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($log['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td>

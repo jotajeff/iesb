@@ -5,3 +5,4 @@
 !/public/assets/upload/.gitkeep
 /storage/cache/*
 !/storage/cache/.gitkeep
+/storage

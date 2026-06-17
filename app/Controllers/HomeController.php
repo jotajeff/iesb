@@ -20,10 +20,23 @@ final class HomeController extends Controller
     {
         $cursosDestaque = $this->admin->cursosDisponiveisParaHome();
 
+        $carousels = $this->admin->carouselsAtivos();
+        $carouselData = [];
+        foreach ($carousels as $carousel) {
+            $items = $this->admin->carouselItems((int) $carousel['id']);
+            if (!empty($items)) {
+                $carouselData[] = [
+                    'carousel' => $carousel,
+                    'items' => $items,
+                ];
+            }
+        }
+
         $this->render('pages/home', [
             'title' => 'IESB :: Inteligência Educacional Souza Brazil',
             'currentRoute' => '/home',
             'cursosDestaque' => $cursosDestaque,
+            'carousels' => $carouselData,
         ]);
     }
 }

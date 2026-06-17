@@ -97,7 +97,7 @@
                 <div class="contact-info-label">E-mail</div>
                 <div class="contact-info-value">
                   atendimento@<br>
-                  inteligenciaeducacional.com.br
+                  inteligenciaeducacionalsouzabrazil.com
                 </div>
               </div>
             </div>
@@ -244,7 +244,7 @@
         <div class="col-lg-4 col-md-6">
           <h5><i class="bi bi-mortarboard-fill" style="color: var(--primary)"></i> IESB </h5>
           <p style="font-size: 0.9rem; line-height: 1.7; color: #a5aaaa;">
-            Formando profissionais qualificados desde 2014. Nossa missão é transformar vidas através da educação técnica de qualidade e acessível.
+            Formando profissionais qualificados . Nossa missão é transformar vidas através da educação técnica de qualidade e acessível.
           </p>
 
           <div class="logo-footer mt-3" style="max-width: 250px;">
@@ -275,8 +275,10 @@
           <h5>Canais</h5>
           <ul class="footer-links">
             <li><a href="/parcerias">Parcerias</a></li>
-            <li><a href="/area-do-aluno">Área do Aluno</a></li>
-            <li><a href="mailto:contato@iesb.edu.br">contato@iesb.edu.br</a></li>
+            <li><a href="/aluno/login/">Área do Aluno</a></li>
+            <li><a href="mailto:atendimento@
+inteligenciaeducacionalsouzabrazil.com">atendimento@
+                inteligenciaeducacionalsouzabrazil.com</a></li>
             <li><a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer">WhatsApp: (51) 99297-5503</a></li>
             <li><a href="/privacidade">Política de Privacidade</a></li>
           </ul>

@@ -523,6 +523,41 @@ final class AdminService
         return $updated;
     }
 
+    public function carousels(): array
+    {
+        return $this->repository->listCarousels();
+    }
+
+    public function carouselsAtivos(): array
+    {
+        return $this->repository->listCarouselsAtivos();
+    }
+
+    public function findCarousel(int $id): ?array
+    {
+        return $this->repository->findCarouselById($id);
+    }
+
+    public function carouselItems(int $idCarousel): array
+    {
+        return $this->repository->findCarouselItemsByCarouselId($idCarousel);
+    }
+
+    public function saveCarousel(array $data): int
+    {
+        return $this->repository->saveCarousel($data);
+    }
+
+    public function saveCarouselItem(array $data): int
+    {
+        return $this->repository->saveCarouselItem($data);
+    }
+
+    public function deleteCarouselItem(int $id): void
+    {
+        $this->repository->deleteCarouselItem($id);
+    }
+
     public function log(
         string $acao,
         string $entidade,

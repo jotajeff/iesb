@@ -36,7 +36,7 @@
                           <div class="hero-stat-number">
                             <span class="hero-stat-plus">+</span><span class="counter-number" data-target="5000">0</span>
                           </div>
-                          <div class="hero-stat-label">Alunos Formados</div>
+                          <div class="hero-stat-label">Alunos Capacitados MB Cursos/IESB</div>
                         </div>
 
                         <div class="hero-stat">
@@ -48,14 +48,6 @@
                           <div class="hero-stat-label">Cursos Ativos</div>
                         </div>
 
-                        <div class="hero-stat">
-                          <div
-                            class="hero-stat-number counter-number"
-                            data-target="15">
-                            <span class="hero-stat-plus">+</span>0
-                          </div>
-                          <div class="hero-stat-label">Anos de Mercado</div>
-                        </div>
                       </div>
                       <div class="hero-highlight-note">
                         <i class="bi bi-stars"></i>
@@ -71,74 +63,77 @@
                 </div>
               </section>
 
-              <!-- ==================== ABOUT ==================== -->
-              <section class="section-dark" id="sobre">
-                <div class="container">
-                  <div class="row align-items-center g-5">
-                    <div
-                      class="col-lg-6"
-                      data-aos="fade-right"
-                      data-aos-duration="800">
-                      <div class="about-image-wrapper">
-                        <div class="about-img-placeholder">
-                          <i class="bi bi-building"></i>
-                        </div>
-                        <div class="about-floating-card">
-                          <div class="afc-icon">
-                            <i class="bi bi-trophy-fill"></i>
-                          </div>
-                          <div>
-                            <div class="afc-number">+15 anos</div>
-                            <div class="afc-label">
-                              de excelência educacional
-                            </div>
-                          </div>
-                        </div>
+
+
+              <!-- ==================== CAROUSEL ==================== -->
+              <?php if (!empty($carousels)): ?>
+                <?php foreach ($carousels as $carouselData): ?>
+                  <?php
+                  $carousel = $carouselData['carousel'];
+                  $carouselItems = $carouselData['items'];
+                  $carouselId = 'carousel-' . ((int) ($carousel['id'] ?? 0));
+                  ?>
+                  <section class="py-5" id="<?= $carouselId ?>">
+                    <div class="container">
+                      <div class="section-header text-center" data-aos="fade-up">
+                        <div class="section-label justify-content-center">Destaque</div>
+                        <h2 class="section-title"><?= htmlspecialchars((string) ($carousel['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></h2>
+                        <?php $descricao = (string) ($carousel['descricao'] ?? ''); ?>
+                        <?php if ($descricao !== ''): ?>
+                          <p class="section-desc centered"><?= $descricao ?></p>
+                        <?php endif; ?>
                       </div>
+                      <?php if (!empty($carouselItems)): ?>
+                        <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-instagram-wrapper" data-bs-ride="carousel">
+                          <div class="carousel-indicators">
+                            <?php foreach ($carouselItems as $idx => $item): ?>
+                              <button type="button"
+                                data-bs-target="#<?= $carouselId ?>Slider"
+                                data-bs-slide-to="<?= $idx ?>"
+                                class="<?= $idx === 0 ? 'active' : '' ?>"
+                                aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
+                                aria-label="Slide <?= $idx + 1 ?>"></button>
+                            <?php endforeach; ?>
+                          </div>
+                          <div class="carousel-inner rounded-3 overflow-hidden shadow">
+                            <?php foreach ($carouselItems as $idx => $item): ?>
+                              <?php
+                              $imagem = trim((string) ($item['imagem'] ?? ''));
+                              $carouselLink = trim((string) ($carousel['link'] ?? ''));
+                              $link = $carouselLink !== '' ? $carouselLink : trim((string) ($item['link'] ?? ''));
+                              $target = '_blank';
+                              ?>
+                              <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                                <?php if ($link !== ''): ?>
+                                  <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8') ?>"
+                                    target="<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>"
+                                    rel="noopener noreferrer">
+                                  <?php endif; ?>
+                                  <img src="/<?= htmlspecialchars($imagem, ENT_QUOTES, 'UTF-8') ?>"
+                                    class="carousel-img-instagram"
+                                    alt="<?= htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                  <?php if ($link !== ''): ?>
+                                  </a>
+                                <?php endif; ?>
+                              </div>
+                            <?php endforeach; ?>
+                          </div>
+                          <button class="carousel-control-prev" type="button"
+                            data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                          </button>
+                          <button class="carousel-control-next" type="button"
+                            data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Próximo</span>
+                          </button>
+                        </div>
+                      <?php endif; ?>
                     </div>
-                    <div
-                      class="col-lg-6"
-                      data-aos="fade-left"
-                      data-aos-duration="800"
-                      data-aos-delay="200">
-                      <div class="section-header">
-                        <div class="section-label">Sobre Nós</div>
-                        <h2 class="section-title">
-                          Formando profissionais preparados para o mercado
-                        </h2>
-                        <p class="section-desc">
-                          A IESB Escola é referência em educação técnica,
-                          oferecendo cursos atualizados e alinhados com as
-                          demandas do mercado de trabalho. Nossa missão é
-                          transformar vidas através do conhecimento prático.
-                        </p>
-                      </div>
-                      <ul class="about-list">
-                        <li>
-                          <i class="bi bi-check-circle-fill"></i><span>Laboratórios modernos e equipados com tecnologia de
-                            ponta</span>
-                        </li>
-                        <li>
-                          <i class="bi bi-check-circle-fill"></i><span>Corpo docente com ampla experiência profissional e
-                            acadêmica</span>
-                        </li>
-                        <li>
-                          <i class="bi bi-check-circle-fill"></i><span>Parcerias com empresas para estágios e inserção no
-                            mercado</span>
-                        </li>
-                        <li>
-                          <i class="bi bi-check-circle-fill"></i><span>Certificação reconhecida pelo MEC e Conselhos
-                            Regionais</span>
-                        </li>
-                        <li>
-                          <i class="bi bi-check-circle-fill"></i><span>Horários flexíveis: manhã, tarde e noite</span>
-                        </li>
-                      </ul>
-                      <a href="#contato" class="btn-primary-custom">Saiba Mais <i class="bi bi-arrow-right"></i></a>
-                    </div>
-                  </div>
-                </div>
-              </section>
+                  </section>
+                <?php endforeach; ?>
+              <?php endif; ?>
 
               <!-- ==================== COURSES ==================== -->
               <section id="cursos">
@@ -304,110 +299,10 @@
                         <div class="feature-icon">
                           <i class="bi bi-patch-check-fill"></i>
                         </div>
-                        <h3 class="feature-title">Certificação MEC</h3>
+                        <h3 class="feature-title">Polo Educacional FACSM MEC</h3>
                         <p class="feature-desc">
-                          Diploma reconhecido pelo MEC e conselhos regionais, valorizado por empregadores em todo o Brasil.
+                          Diploma reconhecido pelo MEC , valorizado por empregadores em todo o Brasil.
                         </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </section>
-
-              <!-- ==================== TESTIMONIALS ==================== -->
-              <section id="depoimentos">
-                <div class="container">
-                  <div class="section-header text-center" data-aos="fade-up">
-                    <div class="section-label justify-content-center">
-                      Depoimentos
-                    </div>
-                    <h2 class="section-title">O que nossos alunos dizem</h2>
-                    <p class="section-desc centered">
-                      Histórias reais de transformação profissional de quem
-                      passou pela IESB.
-                    </p>
-                  </div>
-                  <div class="row g-4">
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="100">
-                      <div class="testimonial-card">
-                        <div class="quote-icon">
-                          <i class="bi bi-quote"></i>
-                        </div>
-                        <div class="testimonial-stars">
-                          <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                        </div>
-                        <p class="testimonial-text">
-                          "Graças ao curso de Informática da IESB, consegui
-                          minha primeira vaga como desenvolvedor em apenas 2
-                          meses após a formatura. Aulas práticas fizeram toda a
-                          diferença!"
-                        </p>
-                        <div class="testimonial-author">
-                          <div class="testimonial-avatar">RS</div>
-                          <div>
-                            <div class="testimonial-name">Rafael Silva</div>
-                            <div class="testimonial-role">
-                              Formado em Informática — 2024
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="200">
-                      <div class="testimonial-card">
-                        <div class="quote-icon">
-                          <i class="bi bi-quote"></i>
-                        </div>
-                        <div class="testimonial-stars">
-                          <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i>
-                        </div>
-                        <p class="testimonial-text">
-                          "A estrutura da escola é incrível e os professores são
-                          muito dedicados. Hoje trabalho em um hospital público
-                          graças à formação em Enfermagem que recebi."
-                        </p>
-                        <div class="testimonial-author">
-                          <div class="testimonial-avatar">AM</div>
-                          <div>
-                            <div class="testimonial-name">Ana Martins</div>
-                            <div class="testimonial-role">
-                              Formada em Enfermagem — 2023
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    <div
-                      class="col-lg-4 col-md-6"
-                      data-aos="fade-up"
-                      data-aos-delay="300">
-                      <div class="testimonial-card">
-                        <div class="quote-icon">
-                          <i class="bi bi-quote"></i>
-                        </div>
-                        <div class="testimonial-stars">
-                          <i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-fill"></i><i class="bi bi-star-half"></i>
-                        </div>
-                        <p class="testimonial-text">
-                          "Fiz o técnico em Administração à noite enquanto
-                          trabalhava. A flexibilidade de horários e o suporte
-                          dos professores me permitiram concluir com sucesso."
-                        </p>
-                        <div class="testimonial-author">
-                          <div class="testimonial-avatar">LC</div>
-                          <div>
-                            <div class="testimonial-name">Lucas Costa</div>
-                            <div class="testimonial-role">
-                              Formado em Administração — 2024
-                            </div>
-                          </div>
-                        </div>
                       </div>
                     </div>
                   </div>

@@ -10,9 +10,9 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
       <h4 class="mb-0"><i class="bi bi-eye me-2"></i><?= htmlspecialchars((string) ($alunoData['nome'] ?? 'Aluno'), ENT_QUOTES, 'UTF-8') ?></h4>
       <div class="d-flex gap-2">
-        <a class="btn btn-outline-secondary btn-sm" href="/admin/alunos"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
-        <a class="btn btn-outline-primary btn-sm" href="/admin/alunos/editar?id=<?= (int) ($alunoData['id'] ?? 0) ?>"><i class="bi bi-pencil-square me-1"></i>Editar</a>
-        <a class="btn btn-outline-success btn-sm" href="/admin/alunos/matricula?id=<?= (int) ($alunoData['id'] ?? 0) ?>"><i class="bi bi-journal-plus me-1"></i>Matricular</a>
+        <a class="btn btn-secondary btn-sm" href="/admin/alunos"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
+        <a class="btn btn-primary btn-sm" href="/admin/alunos/editar?id=<?= (int) ($alunoData['id'] ?? 0) ?>"><i class="bi bi-pencil-square me-1"></i>Editar</a>
+        <a class="btn btn-success btn-sm" href="/admin/alunos/matricula?id=<?= (int) ($alunoData['id'] ?? 0) ?>"><i class="bi bi-journal-plus me-1"></i>Matricular</a>
       </div>
     </div>
 
@@ -83,7 +83,7 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                   <tr>
                     <th class="bg-light">Senha</th>
                     <td>
-                      <button type="button" class="btn btn-sm btn-outline-warning"
+                      <button type="button" class="btn btn-sm btn-warning"
                         onclick="restaurarSenha(<?= (int) ($alunoData['id'] ?? 0) ?>)">
                         <i class="bi bi-key me-1"></i>Restaurar Senha
                       </button>
@@ -160,7 +160,7 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                               echo htmlspecialchars($dtm ? $dtm->format('d/m/Y H:i') : ($raw ?: '-'), ENT_QUOTES, 'UTF-8');
                               ?></td>
                           <td>
-                            <a class="btn btn-outline-info btn-sm" href="/admin/alunos/troca?id=<?= (int) ($alunoData['id'] ?? 0) ?>&matricula_id=<?= (int) ($curso['matricula_id'] ?? 0) ?>" title="Trocar de turma">
+                            <a class="btn btn-info btn-sm" href="/admin/alunos/troca?id=<?= (int) ($alunoData['id'] ?? 0) ?>&matricula_id=<?= (int) ($curso['matricula_id'] ?? 0) ?>" title="Trocar de turma">
                               <i class="bi bi-arrow-left-right"></i>
                             </a>
                           </td>
@@ -217,7 +217,7 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                         <tr>
                           <td><?= (int) ($log['id'] ?? 0) ?></td>
                           <td><?= htmlspecialchars((string) ($log['aluno_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                          <td><?= htmlspecialchars((string) ($log['acao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                          <td><?= \App\Helpers\LogHelper::render((string) ($log['acao'] ?? '-')) ?></td>
                           <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                           <td><?= htmlspecialchars((string) ($log['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                           <td>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 16/06/2026 às 17:40
+-- Tempo de geração: 17/06/2026 às 17:52
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -42,6 +42,48 @@ CREATE TABLE `alunos` (
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP,
   `atualizado_em` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `carousel`
+--
+
+CREATE TABLE `carousel` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `titulo` varchar(150) NOT NULL,
+  `descricao` text NOT NULL,
+  `slug` varchar(100) DEFAULT NULL,
+  `link` varchar(256) NOT NULL,
+  `ativo` enum('S','N') NOT NULL DEFAULT 'S',
+  `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `atualizado_em` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `criado_por` int(10) UNSIGNED NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `carousel_item`
+--
+
+CREATE TABLE `carousel_item` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `id_carousel` int(10) UNSIGNED NOT NULL,
+  `titulo` varchar(150) DEFAULT NULL,
+  `subtitulo` varchar(255) DEFAULT NULL,
+  `imagem` varchar(255) NOT NULL,
+  `link` varchar(255) DEFAULT NULL,
+  `target` varchar(20) NOT NULL DEFAULT '_self',
+  `texto_botao` varchar(50) DEFAULT NULL,
+  `ordem` int(11) NOT NULL DEFAULT '0',
+  `data_inicio` datetime DEFAULT NULL,
+  `data_fim` datetime DEFAULT NULL,
+  `ativo` enum('S','N') NOT NULL DEFAULT 'S',
+  `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `atualizado_em` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `criado_por` int(10) UNSIGNED NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -426,6 +468,23 @@ ALTER TABLE `alunos`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `carousel`
+--
+ALTER TABLE `carousel`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_ativo` (`ativo`),
+  ADD KEY `idx_slug` (`slug`);
+
+--
+-- Índices de tabela `carousel_item`
+--
+ALTER TABLE `carousel_item`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_carousel` (`id_carousel`),
+  ADD KEY `idx_ordem` (`ordem`),
+  ADD KEY `idx_ativo` (`ativo`);
+
+--
 -- Índices de tabela `comentarios`
 --
 ALTER TABLE `comentarios`
@@ -598,6 +657,18 @@ ALTER TABLE `alunos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `carousel`
+--
+ALTER TABLE `carousel`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `carousel_item`
+--
+ALTER TABLE `carousel_item`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `comentarios`
 --
 ALTER TABLE `comentarios`
@@ -732,6 +803,12 @@ ALTER TABLE `visitas_paginas`
 --
 -- Restrições para tabelas despejadas
 --
+
+--
+-- Restrições para tabelas `carousel_item`
+--
+ALTER TABLE `carousel_item`
+  ADD CONSTRAINT `fk_carousel_item_carousel` FOREIGN KEY (`id_carousel`) REFERENCES `carousel` (`id`) ON DELETE CASCADE;
 
 --
 -- Restrições para tabelas `curriculo`

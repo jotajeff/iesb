@@ -36,7 +36,7 @@
             <tr>
               <td><?= (int) ($log['id'] ?? 0) ?></td>
               <td><?= htmlspecialchars((string) ($log['aluno_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td><?= htmlspecialchars((string) ($log['acao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td><?= \App\Helpers\LogHelper::render((string) ($log['acao'] ?? '-')) ?></td>
               <td><?= htmlspecialchars((string) ($log['entidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td><?= htmlspecialchars((string) ($log['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td>

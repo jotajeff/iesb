@@ -186,6 +186,165 @@ final class ConfigController extends Controller
         ], 'admin');
     }
 
+    public function carousel(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/config/carousel/index', [
+            'title' => 'Carrosséis',
+            'currentRoute' => '/admin/config/carousel',
+            'carousels' => $this->adminService->carousels(),
+        ], 'admin');
+    }
+
+    public function editCarousel(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $carousel = $id > 0 ? $this->adminService->findCarousel($id) : null;
+
+        if ($id > 0 && !$carousel) {
+            Session::setFlash('flash', 'Carrossel não encontrado.');
+            $this->redirect('/admin/config/carousel');
+            return;
+        }
+
+        $items = $id > 0 ? $this->adminService->carouselItems($id) : [];
+
+        $this->render('pages/admin/config/carousel/editar', [
+            'title' => $id > 0 ? 'Editar Carrossel' : 'Novo Carrossel',
+            'currentRoute' => '/admin/config/carousel',
+            'carousel' => $carousel,
+            'items' => $items,
+        ], 'admin');
+    }
+
+    public function updateCarousel(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $titulo = trim((string) $this->input('titulo', ''));
+        $descricao = trim((string) $this->input('descricao', ''));
+        $slug = trim((string) $this->input('slug', ''));
+        $link = trim((string) $this->input('link', ''));
+        $ativo = (string) $this->input('ativo', 'S');
+
+        if ($titulo === '') {
+            Session::setFlash('flash', 'Informe o título do carrossel.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/config/carousel/editar' . $suffix);
+            return;
+        }
+
+        $user = \App\Support\Session::get('user');
+        $userId = (int) ($user['id'] ?? 1);
+
+        $carouselId = $this->adminService->saveCarousel([
+            'id' => $id,
+            'titulo' => $titulo,
+            'descricao' => $descricao,
+            'slug' => $slug,
+            'link' => $link,
+            'ativo' => $ativo,
+            'criado_por' => $userId,
+        ]);
+
+        if ($carouselId <= 0) {
+            Session::setFlash('flash', 'Erro ao salvar carrossel.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/config/carousel/editar' . $suffix);
+            return;
+        }
+
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricaoLog = ($id > 0 ? 'Carrossel atualizado: ' : 'Carrossel criado: ') . $titulo;
+        $this->adminService->log($acao, 'carousel', $carouselId, $descricaoLog);
+
+        Session::setFlash('flash', $id > 0 ? 'Carrossel atualizado com sucesso.' : 'Carrossel criado com sucesso.');
+        $this->redirect('/admin/config/carousel/editar?id=' . $carouselId);
+    }
+
+    public function uploadCarouselItem(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['sucesso' => false, 'erro' => 'Acesso negado.']);
+        }
+
+        $idCarousel = (int) ($this->input('id_carousel', 0) ?: ($_POST['id_carousel'] ?? 0));
+        $carousel = $this->adminService->findCarousel($idCarousel);
+
+        if (!$carousel) {
+            $this->json(['sucesso' => false, 'erro' => 'Carrossel não encontrado.']);
+        }
+
+        $file = $_FILES['imagem'] ?? null;
+
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            $this->json(['sucesso' => false, 'erro' => 'Erro ao enviar o arquivo.']);
+        }
+
+        $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+        $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+
+        if (!in_array($ext, $allowed, true)) {
+            $this->json(['sucesso' => false, 'erro' => 'Formato não permitido. Use jpg, png, gif ou webp.']);
+        }
+
+        $filename = 'carousel-' . $idCarousel . '-' . time() . '.' . $ext;
+
+        $destDir = dirname(__DIR__, 3) . '/public/assets/img/carousel';
+        if (!is_dir($destDir)) {
+            mkdir($destDir, 0755, true);
+        }
+
+        $destPath = $destDir . '/' . $filename;
+
+        if (!move_uploaded_file($file['tmp_name'], $destPath)) {
+            $this->json(['sucesso' => false, 'erro' => 'Falha ao salvar a imagem.']);
+        }
+
+        $itemId = $this->adminService->saveCarouselItem([
+            'id_carousel' => $idCarousel,
+            'imagem' => 'assets/img/carousel/' . $filename,
+            'criado_por' => (int) (Session::get('user')['id'] ?? 1),
+        ]);
+
+        if ($itemId <= 0) {
+            $this->json(['sucesso' => false, 'erro' => 'Erro ao registrar o item.']);
+        }
+
+        $this->adminService->log('upload_imagem', 'carousel_item', $itemId, "Imagem enviada: $filename");
+        $this->json(['sucesso' => true, 'item_id' => $itemId, 'imagem' => 'assets/img/carousel/' . $filename]);
+    }
+
+    public function deleteCarouselItem(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['sucesso' => false, 'erro' => 'Acesso negado.']);
+        }
+
+        $itemId = (int) ($this->input('item_id', 0) ?: ($_POST['item_id'] ?? 0));
+
+        if ($itemId <= 0) {
+            $this->json(['sucesso' => false, 'erro' => 'Item inválido.']);
+        }
+
+        $this->adminService->deleteCarouselItem($itemId);
+        $this->adminService->log('deletar', 'carousel_item', $itemId, 'Item do carrossel removido');
+        $this->json(['sucesso' => true]);
+    }
+
     public function setor(): void
     {
         if (!$this->isStaff()) {
