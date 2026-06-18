@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
-use App\Services\AdminService;
+use App\Services\DashboardService;
+use App\Services\LogService;
 use App\Support\Session;
 
 final class DashboardController extends Controller
 {
-    private AdminService $admin;
+    private DashboardService $dashboardService;
+    private LogService $logService;
 
     public function __construct()
     {
-        $this->admin = new AdminService();
+        $this->dashboardService = new DashboardService();
+        $this->logService = new LogService();
     }
 
     public function index(): void
@@ -31,8 +34,8 @@ final class DashboardController extends Controller
         $this->render('pages/admin/dashboard/index', [
             'title' => 'Painel Admin',
             'currentRoute' => '/admin',
-            'indicators' => $this->admin->indicators($userId, $isAdmin),
-            'taskIndicators' => $this->admin->taskIndicators($userId, $isAdmin),
+            'indicators' => $this->dashboardService->indicators($userId, $isAdmin),
+            'taskIndicators' => $this->dashboardService->taskIndicators($userId, $isAdmin),
             'isAdmin' => $isAdmin,
         ], 'admin');
     }
@@ -50,7 +53,7 @@ final class DashboardController extends Controller
         $nome = trim((string) ($_GET['nome'] ?? ''));
         $nome = $nome !== '' ? $nome : null;
 
-        $result = $this->admin->logs($page, 50, $perfil, $nome);
+        $result = $this->logService->logs($page, 50, $perfil, $nome);
 
         $this->render('pages/admin/logs/index', [
             'title' => 'Logs de Auditoria',

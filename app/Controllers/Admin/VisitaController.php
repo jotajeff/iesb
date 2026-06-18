@@ -5,16 +5,16 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
-use App\Services\AdminService;
+use App\Services\VisitaService;
 use App\Support\Session;
 
 final class VisitaController extends Controller
 {
-    private AdminService $adminService;
+    private VisitaService $visitaService;
 
     public function __construct()
     {
-        $this->adminService = new AdminService();
+        $this->visitaService = new VisitaService();
     }
 
     public function index(): void
@@ -27,7 +27,7 @@ final class VisitaController extends Controller
         $this->render('pages/admin/visitas/index', [
             'title' => 'Visitas de Páginas',
             'currentRoute' => '/admin/visitas',
-            'visits' => $this->adminService->visits(),
+            'visits' => $this->visitaService->visits(),
         ], 'admin');
     }
 
@@ -44,7 +44,7 @@ final class VisitaController extends Controller
         $this->render('pages/admin/visitas/monthly', [
             'title' => 'Visitas por Mês',
             'currentRoute' => '/admin/visitas',
-            'monthly' => $this->adminService->visitsByMonthDaily($month, $year),
+            'monthly' => $this->visitaService->visitsByMonthDaily($month, $year),
         ], 'admin');
     }
 
@@ -61,7 +61,7 @@ final class VisitaController extends Controller
         $this->render('pages/admin/visitas/analytics', [
             'title' => 'Analytics de Visitas',
             'currentRoute' => '/admin/visitas',
-            'analytics' => $this->adminService->visitsAnalytics($month, $year),
+            'analytics' => $this->visitaService->visitsAnalytics($month, $year),
         ], 'admin');
     }
 
@@ -78,7 +78,7 @@ final class VisitaController extends Controller
         $this->render('pages/admin/visitas/pages', [
             'title' => 'Visitas por Página',
             'currentRoute' => '/admin/visitas',
-            'pagesStats' => $this->adminService->visitsByPage($month, $year),
+            'pagesStats' => $this->visitaService->visitsByPage($month, $year),
         ], 'admin');
     }
 

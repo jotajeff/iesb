@@ -8,20 +8,20 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Services\TurmaService;
 use App\Services\CursoService;
-use App\Services\AdminService;
+use App\Services\LogService;
 use App\Support\Session;
 
 final class TurmaController extends Controller
 {
     private TurmaService $turmaService;
     private CursoService $cursoService;
-    private AdminService $adminService;
+    private LogService $logService;
 
     public function __construct()
     {
         $this->turmaService = new TurmaService();
         $this->cursoService = new CursoService();
-        $this->adminService = new AdminService();
+        $this->logService = new LogService();
     }
 
     public function index(): void
@@ -157,7 +157,7 @@ final class TurmaController extends Controller
         $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativa);
 
         if ($turmaId > 0) {
-            $this->adminService->log('criar', 'turma', $turmaId, "Turma criada: $nome");
+            $this->logService->log('criar', 'turma', $turmaId, "Turma criada: $nome");
             Session::setFlash('flash', 'Turma criada com sucesso.');
             $this->redirect('/admin/turmas');
         } else {
@@ -189,7 +189,7 @@ final class TurmaController extends Controller
 
         $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativa);
 
-        $this->adminService->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
+        $this->logService->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
         Session::setFlash('flash', 'Turma atualizada com sucesso.');
         $this->redirect('/admin/turmas');
     }

@@ -7,18 +7,24 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Services\AuthService;
 use App\Services\ConfigService;
-use App\Services\AdminService;
+use App\Services\CarouselService;
+use App\Services\LogService;
+use App\Services\TarefaService;
 use App\Support\Session;
 
 final class ConfigController extends Controller
 {
     private ConfigService $configService;
-    private AdminService $adminService;
+    private CarouselService $carouselService;
+    private LogService $logService;
+    private TarefaService $tarefaService;
 
     public function __construct()
     {
         $this->configService = new ConfigService();
-        $this->adminService = new AdminService();
+        $this->carouselService = new CarouselService();
+        $this->logService = new LogService();
+        $this->tarefaService = new TarefaService();
     }
 
     public function modalidade(): void
@@ -79,7 +85,7 @@ final class ConfigController extends Controller
         $modalidadeId = $this->configService->saveModalidade($id, $nome, $ativo);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Modalidade atualizada: ' : 'Modalidade criada: ') . $nome;
-        $this->adminService->log($acao, 'modalidade', $modalidadeId, $descricao);
+        $this->logService->log($acao, 'modalidade', $modalidadeId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Modalidade atualizada com sucesso.' : 'Modalidade criada com sucesso.');
         $this->redirect('/admin/modalidade');
@@ -143,7 +149,7 @@ final class ConfigController extends Controller
         $segmentoId = $this->configService->saveSegmento($id, $nome, $ativo);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Segmento atualizado: ' : 'Segmento criado: ') . $nome;
-        $this->adminService->log($acao, 'segmento', $segmentoId, $descricao);
+        $this->logService->log($acao, 'segmento', $segmentoId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Segmento atualizado com sucesso.' : 'Segmento criado com sucesso.');
         $this->redirect('/admin/segmento');
@@ -196,7 +202,7 @@ final class ConfigController extends Controller
         $this->render('pages/admin/config/carousel/index', [
             'title' => 'Carrosséis',
             'currentRoute' => '/admin/config/carousel',
-            'carousels' => $this->adminService->carousels(),
+            'carousels' => $this->carouselService->carousels(),
         ], 'admin');
     }
 
@@ -208,7 +214,7 @@ final class ConfigController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $carousel = $id > 0 ? $this->adminService->findCarousel($id) : null;
+        $carousel = $id > 0 ? $this->carouselService->findCarousel($id) : null;
 
         if ($id > 0 && !$carousel) {
             Session::setFlash('flash', 'Carrossel não encontrado.');
@@ -216,7 +222,7 @@ final class ConfigController extends Controller
             return;
         }
 
-        $items = $id > 0 ? $this->adminService->carouselItems($id) : [];
+        $items = $id > 0 ? $this->carouselService->carouselItems($id) : [];
 
         $this->render('pages/admin/config/carousel/editar', [
             'title' => $id > 0 ? 'Editar Carrossel' : 'Novo Carrossel',
@@ -250,7 +256,7 @@ final class ConfigController extends Controller
         $user = \App\Support\Session::get('user');
         $userId = (int) ($user['id'] ?? 1);
 
-        $carouselId = $this->adminService->saveCarousel([
+        $carouselId = $this->carouselService->saveCarousel([
             'id' => $id,
             'titulo' => $titulo,
             'descricao' => $descricao,
@@ -269,7 +275,7 @@ final class ConfigController extends Controller
 
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricaoLog = ($id > 0 ? 'Carrossel atualizado: ' : 'Carrossel criado: ') . $titulo;
-        $this->adminService->log($acao, 'carousel', $carouselId, $descricaoLog);
+        $this->logService->log($acao, 'carousel', $carouselId, $descricaoLog);
 
         Session::setFlash('flash', $id > 0 ? 'Carrossel atualizado com sucesso.' : 'Carrossel criado com sucesso.');
         $this->redirect('/admin/config/carousel/editar?id=' . $carouselId);
@@ -282,7 +288,7 @@ final class ConfigController extends Controller
         }
 
         $idCarousel = (int) ($this->input('id_carousel', 0) ?: ($_POST['id_carousel'] ?? 0));
-        $carousel = $this->adminService->findCarousel($idCarousel);
+        $carousel = $this->carouselService->findCarousel($idCarousel);
 
         if (!$carousel) {
             $this->json(['sucesso' => false, 'erro' => 'Carrossel não encontrado.']);
@@ -314,7 +320,7 @@ final class ConfigController extends Controller
             $this->json(['sucesso' => false, 'erro' => 'Falha ao salvar a imagem.']);
         }
 
-        $itemId = $this->adminService->saveCarouselItem([
+        $itemId = $this->carouselService->saveCarouselItem([
             'id_carousel' => $idCarousel,
             'imagem' => 'assets/img/carousel/' . $filename,
             'criado_por' => (int) (Session::get('user')['id'] ?? 1),
@@ -324,7 +330,7 @@ final class ConfigController extends Controller
             $this->json(['sucesso' => false, 'erro' => 'Erro ao registrar o item.']);
         }
 
-        $this->adminService->log('upload_imagem', 'carousel_item', $itemId, "Imagem enviada: $filename");
+        $this->logService->log('upload_imagem', 'carousel_item', $itemId, "Imagem enviada: $filename");
         $this->json(['sucesso' => true, 'item_id' => $itemId, 'imagem' => 'assets/img/carousel/' . $filename]);
     }
 
@@ -340,8 +346,8 @@ final class ConfigController extends Controller
             $this->json(['sucesso' => false, 'erro' => 'Item inválido.']);
         }
 
-        $this->adminService->deleteCarouselItem($itemId);
-        $this->adminService->log('deletar', 'carousel_item', $itemId, 'Item do carrossel removido');
+        $this->carouselService->deleteCarouselItem($itemId);
+        $this->logService->log('deletar', 'carousel_item', $itemId, 'Item do carrossel removido');
         $this->json(['sucesso' => true]);
     }
 
@@ -355,7 +361,7 @@ final class ConfigController extends Controller
         $this->render('pages/admin/setor/index', [
             'title' => 'Setores',
             'currentRoute' => '/admin/setor',
-            'setores' => $this->adminService->setores(),
+            'setores' => $this->tarefaService->setores(),
         ], 'admin');
     }
 
@@ -367,7 +373,7 @@ final class ConfigController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $setor = $id > 0 ? $this->adminService->findSetor($id) : null;
+        $setor = $id > 0 ? $this->tarefaService->findSetor($id) : null;
 
         if ($id > 0 && !$setor) {
             Session::setFlash('flash', 'Setor não encontrado.');
@@ -399,10 +405,10 @@ final class ConfigController extends Controller
             return;
         }
 
-        $setorId = $this->adminService->saveSetor($id, $setorNome);
+        $setorId = $this->tarefaService->saveSetor($id, $setorNome);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Setor atualizado: ' : 'Setor criado: ') . $setorNome;
-        $this->adminService->log($acao, 'setor', $setorId, $descricao);
+        $this->logService->log($acao, 'setor', $setorId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Setor atualizado com sucesso.' : 'Setor criado com sucesso.');
         $this->redirect('/admin/setor');
@@ -430,7 +436,7 @@ final class ConfigController extends Controller
         $nivelId = $this->configService->saveNivel($id, $nome, $ativo, $apresentacao);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Nível atualizado: ' : 'Nível criado: ') . $nome;
-        $this->adminService->log($acao, 'nivel', $nivelId, $descricao);
+        $this->logService->log($acao, 'nivel', $nivelId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Nível atualizado com sucesso.' : 'Nível criado com sucesso.');
         $this->redirect('/admin/nivel');
@@ -535,7 +541,7 @@ final class ConfigController extends Controller
 
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Instituição atualizada: ' : 'Instituição criada: ') . $razaoSocial;
-        $this->adminService->log($acao, 'instituicao', $instituicaoId, $descricao);
+        $this->logService->log($acao, 'instituicao', $instituicaoId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Instituição atualizada com sucesso.' : 'Instituição criada com sucesso.');
         $this->redirect('/admin/config/cliente');

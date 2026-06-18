@@ -5,16 +5,19 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Services\AdminService;
+use App\Services\ConfigService;
+use App\Services\CursoService;
 use App\Support\Session;
 
 final class PageController extends Controller
 {
-    private AdminService $admin;
+    private ConfigService $configService;
+    private CursoService $cursoService;
 
     public function __construct()
     {
-        $this->admin = new AdminService();
+        $this->configService = new ConfigService();
+        $this->cursoService = new CursoService();
     }
 
     public function sobre(): void
@@ -25,7 +28,7 @@ final class PageController extends Controller
     public function cursos(): void
     {
         $niveisAtivos = array_values(array_filter(
-            $this->admin->niveis(),
+            $this->configService->niveis(),
             static fn (array $nivel): bool => (int) ($nivel['ativo'] ?? 0) === 1
         ));
 
@@ -35,9 +38,9 @@ final class PageController extends Controller
         $nivelSelecionado = null;
 
         if ($nivelSlugRequest !== '') {
-            $nivelSelecionado = $this->admin->findNivelBySlug($nivelSlugRequest);
+            $nivelSelecionado = $this->configService->findNivelBySlug($nivelSlugRequest);
         } elseif ($nivelIdRequest > 0) {
-            $nivelSelecionado = $this->admin->findNivel($nivelIdRequest);
+            $nivelSelecionado = $this->configService->findNivel($nivelIdRequest);
         }
 
         if ($nivelSelecionado === null) {
@@ -45,7 +48,7 @@ final class PageController extends Controller
             $nivelSessionId = is_array($nivelSession) ? (int) ($nivelSession['id'] ?? 0) : 0;
 
             if ($nivelSessionId > 0) {
-                $nivelSelecionado = $this->admin->findNivel($nivelSessionId);
+                $nivelSelecionado = $this->configService->findNivel($nivelSessionId);
             }
         }
 
@@ -62,7 +65,7 @@ final class PageController extends Controller
         }
 
         $catalogo = $nivelSelecionado !== null
-            ? $this->admin->catalogoCursosPorNivel((int) ($nivelSelecionado['id'] ?? 0), $segmentoIdRequest)
+            ? $this->cursoService->catalogoCursosPorNivel((int) ($nivelSelecionado['id'] ?? 0), $segmentoIdRequest)
             : [
                 'nivel' => null,
                 'segmentos' => [],

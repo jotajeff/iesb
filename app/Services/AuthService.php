@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Repositories\AdminRepository;
+
 use App\Repositories\UserRepository;
 use App\Support\Session;
 
@@ -48,7 +48,7 @@ final class AuthService
 
     public function alunoLogin(string $email, string $password): bool
     {
-        $repo = new AdminRepository();
+        $repo = new \App\Repositories\AlunoRepository();
         $aluno = $repo->findAlunoByEmail($email);
 
         if ($aluno === null) {

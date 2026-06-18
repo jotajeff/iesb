@@ -60,6 +60,11 @@ final class TurmaService
         return $this->repository->listTrocaHistorico($limit);
     }
 
+    public function turmasDoCurso(int $idCurso): array
+    {
+        return $this->repository->listByCurso($idCurso);
+    }
+
     public function inscritosPorTurma(int $idTurma): array
     {
         return $this->repository->listInscritosPorTurma($idTurma);

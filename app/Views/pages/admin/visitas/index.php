@@ -46,6 +46,9 @@
           <?php endforeach; ?>
         </tbody>
       </table>
+      <div class="mt-2 text-muted small">
+        Total de registros: <?= count($visits ?? []) ?>
+      </div>
     </div>
   </div>
 </section>

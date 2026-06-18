@@ -7,7 +7,15 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Core\Database;
 use App\Services\CommentService;
-use App\Services\AdminService;
+use App\Services\LogService;
+use App\Services\DashboardService;
+use App\Services\VisitaService;
+use App\Services\CursoService;
+use App\Services\TurmaService;
+use App\Services\AlunoService;
+use App\Services\UsuarioService;
+use App\Services\TarefaService;
+use App\Services\ConfigService;
 use App\Services\AuthService;
 use App\Support\Session;
 use PDO;
@@ -15,13 +23,29 @@ use PDO;
 final class AdminController extends Controller
 {
     private AuthService $auth;
-    private AdminService $admin;
+    private LogService $logService;
+    private DashboardService $dashboardService;
+    private VisitaService $visitaService;
+    private CursoService $cursoService;
+    private TurmaService $turmaService;
+    private AlunoService $alunoService;
+    private UsuarioService $usuarioService;
+    private TarefaService $tarefaService;
+    private ConfigService $configService;
     private CommentService $comments;
 
     public function __construct()
     {
         $this->auth = new AuthService();
-        $this->admin = new AdminService();
+        $this->logService = new LogService();
+        $this->dashboardService = new DashboardService();
+        $this->visitaService = new VisitaService();
+        $this->cursoService = new CursoService();
+        $this->turmaService = new TurmaService();
+        $this->alunoService = new AlunoService();
+        $this->usuarioService = new UsuarioService();
+        $this->tarefaService = new TarefaService();
+        $this->configService = new ConfigService();
         $this->comments = new CommentService();
     }
 
@@ -39,8 +63,8 @@ final class AdminController extends Controller
         $this->render('pages/admin/dashboard/index', [
             'title' => 'Painel Admin',
             'currentRoute' => '/admin',
-            'indicators' => $this->admin->indicators(),
-            'taskIndicators' => $this->admin->taskIndicators($userId, $isAdmin),
+            'indicators' => $this->dashboardService->indicators(),
+            'taskIndicators' => $this->dashboardService->taskIndicators($userId, $isAdmin),
             'isAdmin' => $isAdmin,
         ], 'admin');
     }
@@ -53,7 +77,7 @@ final class AdminController extends Controller
         }
 
         $page = max(1, (int) ($_GET['page'] ?? 1));
-        $result = $this->admin->logs($page, 50);
+        $result = $this->logService->logs($page, 50);
 
         $this->render('pages/admin/logs/index', [
             'title' => 'Logs de Auditoria',
@@ -80,7 +104,7 @@ final class AdminController extends Controller
         }
 
         try {
-            $this->admin->sincronizarSlugsCursos();
+            $this->cursoService->sincronizarSlugs();
         } catch (\Throwable $e) {
             error_log('[CURSOS] Erro em sincronizarSlugsCursos: ' . $e->getMessage());
         }
@@ -88,11 +112,11 @@ final class AdminController extends Controller
         $this->render('pages/admin/cursos/index', [
             'title' => 'Cursos IESB',
             'currentRoute' => '/admin/cursos',
-            'courses' => $this->admin->cursos($order, 200, $nivelSelecionado),
+            'courses' => $this->cursoService->cursos($order, 200, $nivelSelecionado),
             'order' => $order,
-            'niveis' => $this->admin->niveis(),
+            'niveis' => $this->configService->niveis(),
             'nivelSelecionado' => $nivelSelecionado,
-            'idsComDetalhe' => $this->admin->idsCursosComDetalhe(),
+            'idsComDetalhe' => $this->cursoService->idsCursosComDetalhe(),
         ], 'admin');
     }
 
@@ -106,9 +130,9 @@ final class AdminController extends Controller
         $this->render('pages/admin/cursos/new', [
             'title' => 'Novo Curso',
             'currentRoute' => '/admin/cursos/novo',
-            'modalidades' => $this->admin->modalidades(),
-            'segmentos' => $this->admin->segmentos(),
-            'niveis' => $this->admin->niveis(),
+            'modalidades' => $this->configService->modalidades(),
+            'segmentos' => $this->configService->segmentos(),
+            'niveis' => $this->configService->niveis(),
         ], 'admin');
     }
 
@@ -138,8 +162,8 @@ final class AdminController extends Controller
             return;
         }
 
-        $cursoId = $this->admin->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId);
-        $this->admin->log('criar', 'curso', $cursoId, "Curso criado: $nome");
+        $cursoId = $this->cursoService->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId);
+        $this->logService->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
     }
@@ -152,7 +176,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $course = $this->admin->findCurso($id);
+        $course = $this->cursoService->findCurso($id);
 
         if (!$course) {
             Session::setFlash('flash', 'Curso nao encontrado.');
@@ -164,9 +188,9 @@ final class AdminController extends Controller
             'title' => 'Editar Curso',
             'currentRoute' => '/admin/cursos/editar',
             'course' => $course,
-            'modalidades' => $this->admin->modalidades(),
-            'segmentos' => $this->admin->segmentos(),
-            'niveis' => $this->admin->niveis(),
+            'modalidades' => $this->configService->modalidades(),
+            'segmentos' => $this->configService->segmentos(),
+            'niveis' => $this->configService->niveis(),
         ], 'admin');
     }
 
@@ -197,7 +221,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $existingCourse = $this->admin->findCurso($id);
+        $existingCourse = $this->cursoService->findCurso($id);
         if (!$existingCourse) {
             Session::setFlash('flash', 'Curso nao encontrado.');
             $this->redirect('/admin/cursos');
@@ -205,8 +229,8 @@ final class AdminController extends Controller
         }
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
-        $this->admin->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId);
-        $this->admin->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
+        $this->cursoService->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId);
+        $this->logService->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');
     }
@@ -219,7 +243,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($_GET['id'] ?? 0);
-        $course = $this->admin->findCurso($id);
+        $course = $this->cursoService->findCurso($id);
 
         if (!$course) {
             Session::setFlash('flash', 'Curso nao encontrado.');
@@ -231,7 +255,7 @@ final class AdminController extends Controller
             'title' => $course['nome'] ?? 'Curso',
             'currentRoute' => '/admin/cursos/show',
             'course' => $course,
-            'detalhe' => $this->admin->findDetalheByCurso($id),
+            'detalhe' => $this->cursoService->findDetalheByCurso($id),
         ], 'admin');
     }
 
@@ -243,7 +267,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($_GET['id'] ?? 0);
-        $course = $this->admin->findCurso($id);
+        $course = $this->cursoService->findCurso($id);
 
         if (!$course) {
             Session::setFlash('flash', 'Curso nao encontrado.');
@@ -251,7 +275,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $detalhe = $this->admin->findDetalheByCurso($id);
+        $detalhe = $this->cursoService->findDetalheByCurso($id);
 
         $this->render('pages/admin/cursos/detalhes', [
             'title' => 'Detalhes do Curso - ' . ($course['nome'] ?? ''),
@@ -285,12 +309,12 @@ final class AdminController extends Controller
         ];
 
         if ($detalheId > 0) {
-            $this->admin->atualizarDetalhe($detalheId, $payload);
-            $this->admin->log('atualizar', 'detalhe', $detalheId, "Detalhe atualizado para o curso #$cursoId");
+            $this->cursoService->atualizarDetalhe($detalheId, $payload);
+            $this->logService->log('atualizar', 'detalhe', $detalheId, "Detalhe atualizado para o curso #$cursoId");
             Session::setFlash('flash', 'Detalhe atualizado com sucesso.');
         } else {
-            $novoId = $this->admin->salvarDetalhe($payload);
-            $this->admin->log('criar', 'detalhe', $novoId, "Detalhe criado para o curso #$cursoId");
+            $novoId = $this->cursoService->salvarDetalhe($payload);
+            $this->logService->log('criar', 'detalhe', $novoId, "Detalhe criado para o curso #$cursoId");
             Session::setFlash('flash', 'Detalhe criado com sucesso.');
         }
 
@@ -305,7 +329,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($_GET['id'] ?? 0);
-        $course = $this->admin->findCurso($id);
+        $course = $this->cursoService->findCurso($id);
 
         if (!$course) {
             Session::setFlash('flash', 'Curso nao encontrado.');
@@ -328,7 +352,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $curso = $this->admin->findCurso($id);
+        $curso = $this->cursoService->findCurso($id);
 
         if (!$curso) {
             Session::setFlash('flash', 'Curso nao encontrado.');
@@ -355,7 +379,7 @@ final class AdminController extends Controller
 
         $slug = trim((string) ($curso['slug'] ?? ''));
         if ($slug === '') {
-            $slug = AdminService::slugify((string) ($curso['nome'] ?? 'curso'));
+            $slug = CursoService::slugify((string) ($curso['nome'] ?? 'curso'));
         }
         $filename = $slug . '-' . $id . '.' . $ext;
 
@@ -372,8 +396,8 @@ final class AdminController extends Controller
             return;
         }
 
-        $this->admin->atualizarCursoImagem($id, 'assets/img/cursos/' . $filename);
-        $this->admin->log('upload_imagem', 'curso', $id, "Imagem do card enviada: $filename");
+        $this->cursoService->atualizarImagem($id, 'assets/img/cursos/' . $filename);
+        $this->logService->log('upload_imagem', 'curso', $id, "Imagem do card enviada: $filename");
         Session::setFlash('flash', 'Imagem do card atualizada com sucesso.');
         $this->redirect('/admin/cursos');
     }
@@ -390,7 +414,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/usuarios/index', [
             'title' => 'Usuários',
             'currentRoute' => '/admin/usuarios',
-            'usuarios' => $this->admin->usuarios(),
+            'usuarios' => $this->usuarioService->usuarios(),
         ], 'admin');
     }
 
@@ -440,8 +464,8 @@ final class AdminController extends Controller
             $tipo = 'professor';
         }
 
-        $usuarioId = $this->admin->criarUsuario($nome, $email, $senha, $tipo, $ativo);
-        $this->admin->log('criar', 'usuario', $usuarioId, "Usuário criado: $nome");
+        $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, $tipo, $ativo);
+        $this->logService->log('criar', 'usuario', $usuarioId, "Usuário criado: $nome");
         Session::setFlash('flash', 'Usuário criado com sucesso.');
         $this->redirect('/admin/usuarios');
     }
@@ -459,7 +483,7 @@ final class AdminController extends Controller
         $isAdmin = $loggedRole === 'admin';
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $usuario = $this->admin->findUsuario($id);
+        $usuario = $this->usuarioService->findUsuario($id);
 
         if (!$usuario) {
             Session::setFlash('flash', 'Usuário não encontrado.');
@@ -497,7 +521,7 @@ final class AdminController extends Controller
         $id = (int) $this->input('id', 0);
         $senha = (string) $this->input('senha', '');
 
-        $usuario = $this->admin->findUsuario($id);
+        $usuario = $this->usuarioService->findUsuario($id);
         if (!$usuario) {
             Session::setFlash('flash', 'Usuário não encontrado.');
             $this->redirect('/admin/usuarios');
@@ -530,8 +554,8 @@ final class AdminController extends Controller
             $tipo = (string) ($usuario['tipo'] ?? 'operador');
         }
 
-        $this->admin->atualizarUsuario($id, $senha, $ativo, '', '', $tipo);
-        $this->admin->log('atualizar', 'usuario', $id, 'Usuário atualizado: ' . ($usuario['nome'] ?? ''));
+        $this->usuarioService->atualizarUsuario($id, $senha, $ativo, '', '', $tipo);
+        $this->logService->log('atualizar', 'usuario', $id, 'Usuário atualizado: ' . ($usuario['nome'] ?? ''));
         Session::setFlash('flash', 'Usuário atualizado com sucesso.');
         $this->redirect('/admin/usuarios');
     }
@@ -546,7 +570,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/modalidade/index', [
             'title' => 'Modalidades',
             'currentRoute' => '/admin/modalidade',
-            'modalidades' => $this->admin->modalidades(),
+            'modalidades' => $this->configService->modalidades(),
         ], 'admin');
     }
 
@@ -558,7 +582,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $modalidade = $id > 0 ? $this->admin->findModalidade($id) : null;
+        $modalidade = $id > 0 ? $this->configService->findModalidade($id) : null;
 
         if ($id > 0 && !$modalidade) {
             Session::setFlash('flash', 'Modalidade não encontrada.');
@@ -591,10 +615,10 @@ final class AdminController extends Controller
             return;
         }
 
-        $modalidadeId = $this->admin->saveModalidade($id, $nome, $ativo);
+        $modalidadeId = $this->configService->saveModalidade($id, $nome, $ativo);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Modalidade atualizada: ' : 'Modalidade criada: ') . $nome;
-        $this->admin->log($acao, 'modalidade', $modalidadeId, $descricao);
+        $this->logService->log($acao, 'modalidade', $modalidadeId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Modalidade atualizada com sucesso.' : 'Modalidade criada com sucesso.');
         $this->redirect('/admin/modalidade');
@@ -610,7 +634,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/segmento/index', [
             'title' => 'Segmentos',
             'currentRoute' => '/admin/segmento',
-            'segmentos' => $this->admin->segmentos(),
+            'segmentos' => $this->configService->segmentos(),
         ], 'admin');
     }
 
@@ -622,7 +646,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $segmento = $id > 0 ? $this->admin->findSegmento($id) : null;
+        $segmento = $id > 0 ? $this->configService->findSegmento($id) : null;
 
         if ($id > 0 && !$segmento) {
             Session::setFlash('flash', 'Segmento não encontrado.');
@@ -655,10 +679,10 @@ final class AdminController extends Controller
             return;
         }
 
-        $segmentoId = $this->admin->saveSegmento($id, $nome, $ativo);
+        $segmentoId = $this->configService->saveSegmento($id, $nome, $ativo);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Segmento atualizado: ' : 'Segmento criado: ') . $nome;
-        $this->admin->log($acao, 'segmento', $segmentoId, $descricao);
+        $this->logService->log($acao, 'segmento', $segmentoId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Segmento atualizado com sucesso.' : 'Segmento criado com sucesso.');
         $this->redirect('/admin/segmento');
@@ -674,7 +698,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/setor/index', [
             'title' => 'Setores',
             'currentRoute' => '/admin/setor',
-            'setores' => $this->admin->setores(),
+            'setores' => $this->tarefaService->setores(),
         ], 'admin');
     }
 
@@ -686,7 +710,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $setor = $id > 0 ? $this->admin->findSetor($id) : null;
+        $setor = $id > 0 ? $this->tarefaService->findSetor($id) : null;
 
         if ($id > 0 && !$setor) {
             Session::setFlash('flash', 'Setor não encontrado.');
@@ -718,7 +742,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $setorId = $this->admin->saveSetor($id, $setorNome);
+        $setorId = $this->tarefaService->saveSetor($id, $setorNome);
         if ($setorId <= 0) {
             Session::setFlash('flash', 'Nao foi possivel salvar o setor. Verifique a tabela setores e tente novamente.');
             $suffix = $id > 0 ? '?id=' . $id : '';
@@ -728,7 +752,7 @@ final class AdminController extends Controller
 
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Setor atualizado: ' : 'Setor criado: ') . $setorNome;
-        $this->admin->log($acao, 'setor', $setorId, $descricao);
+        $this->logService->log($acao, 'setor', $setorId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Setor atualizado com sucesso.' : 'Setor criado com sucesso.');
         $this->redirect('/admin/setor');
@@ -744,7 +768,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/nivel/index', [
             'title' => 'Níveis',
             'currentRoute' => '/admin/nivel',
-            'niveis' => $this->admin->niveis(),
+            'niveis' => $this->configService->niveis(),
         ], 'admin');
     }
 
@@ -756,7 +780,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $nivel = $id > 0 ? $this->admin->findNivel($id) : null;
+        $nivel = $id > 0 ? $this->configService->findNivel($id) : null;
 
         if ($id > 0 && !$nivel) {
             Session::setFlash('flash', 'Nível não encontrado.');
@@ -790,10 +814,10 @@ final class AdminController extends Controller
             return;
         }
 
-        $nivelId = $this->admin->saveNivel($id, $nome, $ativo, $apresentacao);
+        $nivelId = $this->configService->saveNivel($id, $nome, $ativo, $apresentacao);
         $acao = $id > 0 ? 'atualizar' : 'criar';
         $descricao = ($id > 0 ? 'Nível atualizado: ' : 'Nível criado: ') . $nome;
-        $this->admin->log($acao, 'nivel', $nivelId, $descricao);
+        $this->logService->log($acao, 'nivel', $nivelId, $descricao);
 
         Session::setFlash('flash', $id > 0 ? 'Nível atualizado com sucesso.' : 'Nível criado com sucesso.');
         $this->redirect('/admin/nivel');
@@ -825,8 +849,8 @@ final class AdminController extends Controller
             'title' => 'Tarefas',
             'currentRoute' => '/admin/tarefas',
             'colunas' => $colunas,
-            'setores' => $this->admin->setores(),
-            'usuarios' => $this->admin->usuarios(1000),
+            'setores' => $this->tarefaService->setores(),
+            'usuarios' => $this->usuarioService->usuarios(1000),
             'isAdmin' => $isAdmin,
             'authUser' => $authUser,
         ], 'admin');
@@ -839,7 +863,7 @@ final class AdminController extends Controller
             $this->redirect('/admin/login');
         }
 
-        $turmas = $this->admin->turmas();
+        $turmas = $this->turmaService->turmas();
 
         $this->render('pages/admin/turmas/index', [
             'title' => 'Turmas',
@@ -856,7 +880,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $turma = $this->admin->findTurma($id);
+        $turma = $this->turmaService->findTurma($id);
 
         if (!$turma) {
             Session::setFlash('flash', 'Turma não encontrada.');
@@ -868,7 +892,7 @@ final class AdminController extends Controller
             'title' => 'Turma: ' . ($turma['nome'] ?? ''),
             'currentRoute' => '/admin/turmas/show',
             'turma' => $turma,
-            'inscritos' => $this->admin->inscritosPorTurma($id),
+            'inscritos' => $this->turmaService->inscritosPorTurma($id),
         ], 'admin');
     }
 
@@ -882,7 +906,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/turmas/new', [
             'title' => 'Nova Turma',
             'currentRoute' => '/admin/turmas/novo',
-            'cursos' => $this->admin->cursos('asc', 500),
+            'cursos' => $this->cursoService->cursos('asc', 500),
         ], 'admin');
     }
 
@@ -900,7 +924,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $turma = $this->admin->findTurma($id);
+        $turma = $this->turmaService->findTurma($id);
         if (!$turma) {
             Session::setFlash('flash', 'Turma nao encontrada.');
             $this->redirect('/admin/turmas');
@@ -911,7 +935,7 @@ final class AdminController extends Controller
             'title' => 'Editar Turma',
             'currentRoute' => '/admin/turmas/editar',
             'turma' => $turma,
-            'cursos' => $this->admin->cursos('asc', 500),
+            'cursos' => $this->cursoService->cursos('asc', 500),
         ], 'admin');
     }
 
@@ -935,10 +959,10 @@ final class AdminController extends Controller
 
         $ativa = $ativa === 'S' ? 'S' : 'N';
 
-        $turmaId = $this->admin->criarTurma($nome, $curso, $dataInicio, $ativa);
+        $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativa);
 
         if ($turmaId > 0) {
-            $this->admin->log('criar', 'turma', $turmaId, "Turma criada: $nome");
+            $this->logService->log('criar', 'turma', $turmaId, "Turma criada: $nome");
             Session::setFlash('flash', 'Turma criada com sucesso.');
             $this->redirect('/admin/turmas');
         } else {
@@ -968,9 +992,9 @@ final class AdminController extends Controller
 
         $ativa = $ativa === 'S' ? 'S' : 'N';
 
-        $this->admin->atualizarTurma($id, $nome, $curso, $dataInicio, $ativa);
+        $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativa);
 
-        $this->admin->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
+        $this->logService->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
         Session::setFlash('flash', 'Turma atualizada com sucesso.');
         $this->redirect('/admin/turmas');
     }
@@ -985,7 +1009,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/alunos/index', [
             'title' => 'Alunos',
             'currentRoute' => '/admin/alunos',
-            'alunos' => $this->admin->alunos(),
+            'alunos' => $this->alunoService->alunos(),
         ], 'admin');
     }
 
@@ -997,7 +1021,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $aluno = $this->admin->findAluno($id);
+        $aluno = $this->alunoService->findAluno($id);
 
         if (!$aluno) {
             Session::setFlash('flash', 'Aluno não encontrado.');
@@ -1009,7 +1033,7 @@ final class AdminController extends Controller
             'title' => 'Aluno: ' . ($aluno['nome'] ?? ''),
             'currentRoute' => '/admin/alunos/show',
             'aluno' => $aluno,
-            'cursos' => $this->admin->cursosDoAluno($id),
+            'cursos' => $this->alunoService->cursosDoAluno($id),
         ], 'admin');
     }
 
@@ -1040,7 +1064,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $aluno = $this->admin->findAluno($id);
+        $aluno = $this->alunoService->findAluno($id);
         if (!$aluno) {
             Session::setFlash('flash', 'Aluno não encontrado.');
             $this->redirect('/admin/alunos');
@@ -1074,10 +1098,10 @@ final class AdminController extends Controller
             return;
         }
 
-        $alunoId = $this->admin->criarAluno($nome, $cpf, $dataNascimento, $telefone, $email, $ativo);
+        $alunoId = $this->alunoService->criarAluno($nome, $cpf, $dataNascimento, $telefone, $email, $ativo);
 
         if ($alunoId > 0) {
-            $this->admin->log('criar', 'aluno', $alunoId, "Aluno criado: $nome");
+            $this->logService->log('criar', 'aluno', $alunoId, "Aluno criado: $nome");
             Session::setFlash('flash', 'Aluno criado com sucesso.');
             $this->redirect('/admin/alunos');
         } else {
@@ -1107,9 +1131,9 @@ final class AdminController extends Controller
             return;
         }
 
-        $this->admin->atualizarAluno($id, $nome, $cpf, $dataNascimento, $telefone, $email, $ativo);
+        $this->alunoService->atualizarAluno($id, $nome, $cpf, $dataNascimento, $telefone, $email, $ativo);
 
-        $this->admin->log('atualizar', 'aluno', $id, "Aluno atualizado: $nome");
+        $this->logService->log('atualizar', 'aluno', $id, "Aluno atualizado: $nome");
         Session::setFlash('flash', 'Aluno atualizado com sucesso.');
         $this->redirect('/admin/alunos');
     }
@@ -1122,14 +1146,14 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $aluno = $this->admin->findAluno($id);
+        $aluno = $this->alunoService->findAluno($id);
         if (!$aluno) {
             Session::setFlash('flash', 'Aluno não encontrado.');
             $this->redirect('/admin/alunos');
             return;
         }
 
-        $matriculas = $this->admin->matriculasDoAluno($id);
+        $matriculas = $this->alunoService->matriculasDoAluno($id);
         $turmasMatriculadas = array_map(
             static fn (array $m) => (int) ($m['id_turma'] ?? 0),
             $matriculas
@@ -1139,7 +1163,7 @@ final class AdminController extends Controller
             'title' => 'Matricular Aluno',
             'currentRoute' => '/admin/alunos/matricula',
             'aluno' => $aluno,
-            'turmas' => $this->admin->turmas(500),
+            'turmas' => $this->turmaService->turmas(500),
             'matriculas' => $matriculas,
             'turmasMatriculadas' => $turmasMatriculadas,
         ], 'admin');
@@ -1162,24 +1186,24 @@ final class AdminController extends Controller
             return;
         }
 
-        $aluno = $this->admin->findAluno($idAluno);
+        $aluno = $this->alunoService->findAluno($idAluno);
         if (!$aluno) {
             Session::setFlash('flash', 'Aluno não encontrado.');
             $this->redirect('/admin/alunos');
             return;
         }
 
-        if ($this->admin->matriculaJaExiste($idAluno, $idTurma)) {
+        if ($this->alunoService->matriculaJaExiste($idAluno, $idTurma)) {
             Session::setFlash('flash', 'Aluno já está matriculado nesta turma.');
             $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
             return;
         }
 
-        $matriculaId = $this->admin->criarMatricula($idAluno, $idTurma, $status);
+        $matriculaId = $this->alunoService->criarMatricula($idAluno, $idTurma, $status);
 
         if ($matriculaId > 0) {
             $nomeAluno = (string) ($aluno['nome'] ?? '');
-            $this->admin->log('criar', 'matricula', $matriculaId, "Matrícula criada: $nomeAluno");
+            $this->logService->log('criar', 'matricula', $matriculaId, "Matrícula criada: $nomeAluno");
             Session::setFlash('flash', 'Matrícula realizada com sucesso.');
         } else {
             Session::setFlash('flash', 'Erro ao realizar matrícula. Tente novamente.');
@@ -1230,8 +1254,8 @@ final class AdminController extends Controller
         $this->render('pages/admin/tarefas/novo', [
             'title' => 'Nova Tarefa',
             'currentRoute' => '/admin/tarefas',
-            'setores' => $this->admin->setores(),
-            'usuarios' => $this->admin->usuarios(1000),
+            'setores' => $this->tarefaService->setores(),
+            'usuarios' => $this->usuarioService->usuarios(1000),
             'situacoes' => $this->taskSituations(),
             'prioridades' => $this->taskPriorities(),
         ], 'admin');
@@ -1257,8 +1281,8 @@ final class AdminController extends Controller
             return;
         }
 
-        $tarefaId = $this->admin->criarTarefa($setorId, $tarefa, $criadoPor, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
-        $this->admin->log('criar', 'tarefa', $tarefaId, 'Tarefa criada: ' . $tarefa);
+        $tarefaId = $this->tarefaService->criarTarefa($setorId, $tarefa, $criadoPor, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
+        $this->logService->log('criar', 'tarefa', $tarefaId, 'Tarefa criada: ' . $tarefa);
         Session::setFlash('flash', 'Tarefa criada com sucesso.');
         $this->redirect('/admin/tarefas');
     }
@@ -1271,7 +1295,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
-        $tarefa = $this->admin->findTarefa($id);
+        $tarefa = $this->tarefaService->findTarefa($id);
 
         if (!$tarefa) {
             Session::setFlash('flash', 'Tarefa não encontrada.');
@@ -1283,8 +1307,8 @@ final class AdminController extends Controller
             'title' => 'Editar Tarefa',
             'currentRoute' => '/admin/tarefas',
             'tarefa' => $tarefa,
-            'setores' => $this->admin->setores(),
-            'usuarios' => $this->admin->usuarios(1000),
+            'setores' => $this->tarefaService->setores(),
+            'usuarios' => $this->usuarioService->usuarios(1000),
             'situacoes' => $this->taskSituations(),
             'prioridades' => $this->taskPriorities(),
         ], 'admin');
@@ -1310,15 +1334,15 @@ final class AdminController extends Controller
             return;
         }
 
-        $existing = $this->admin->findTarefa($id);
+        $existing = $this->tarefaService->findTarefa($id);
         if (!$existing) {
             Session::setFlash('flash', 'Tarefa não encontrada.');
             $this->redirect('/admin/tarefas');
             return;
         }
 
-        $this->admin->atualizarTarefa($id, $setorId, $tarefa, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
-        $this->admin->log('atualizar', 'tarefa', $id, 'Tarefa atualizada: ' . $tarefa);
+        $this->tarefaService->atualizarTarefa($id, $setorId, $tarefa, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
+        $this->logService->log('atualizar', 'tarefa', $id, 'Tarefa atualizada: ' . $tarefa);
         Session::setFlash('flash', 'Tarefa atualizada com sucesso.');
         $this->redirect('/admin/tarefas');
     }
@@ -1331,7 +1355,7 @@ final class AdminController extends Controller
         }
 
         $id = (int) ($_GET['id'] ?? 0);
-        $tarefa = $this->admin->findTarefa($id);
+        $tarefa = $this->tarefaService->findTarefa($id);
 
         if (!$tarefa) {
             Session::setFlash('flash', 'Tarefa não encontrada.');
@@ -1369,7 +1393,7 @@ final class AdminController extends Controller
             return;
         }
 
-        $tarefa = $this->admin->findTarefa($tarefaId);
+        $tarefa = $this->tarefaService->findTarefa($tarefaId);
         if (!$tarefa) {
             Session::setFlash('flash', 'Tarefa não encontrada.');
             $this->redirect('/admin/tarefas');
@@ -1377,7 +1401,7 @@ final class AdminController extends Controller
         }
 
         $comentarioId = $this->comments->createFor('tarefas', $tarefaId, $comentario);
-        $this->admin->log('criar', 'comentario', $comentarioId, 'Comentário adicionado na tarefa #' . $tarefaId);
+        $this->logService->log('criar', 'comentario', $comentarioId, 'Comentário adicionado na tarefa #' . $tarefaId);
         Session::setFlash('flash', 'Comentário adicionado com sucesso.');
         $this->redirect('/admin/tarefas/show?id=' . $tarefaId);
     }
@@ -1387,7 +1411,7 @@ final class AdminController extends Controller
      */
     private function prepareTarefasData(): array
     {
-        $tarefas = $this->admin->tarefas();
+        $tarefas = $this->tarefaService->tarefas();
         $authUser = $this->authUser();
         $isAdmin = (string) ($authUser['role'] ?? $authUser['type'] ?? '') === 'admin';
         $currentUserId = (int) ($authUser['id'] ?? 0);
@@ -1425,7 +1449,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/visitas/index', [
             'title' => 'Visitas de Páginas',
             'currentRoute' => '/admin/visitas',
-            'visits' => $this->admin->visits(),
+            'visits' => $this->visitaService->visits(),
         ], 'admin');
     }
 
@@ -1442,7 +1466,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/visitas/monthly', [
             'title' => 'Visitas por Mês',
             'currentRoute' => '/admin/visitas',
-            'monthly' => $this->admin->visitsByMonthDaily($month, $year),
+            'monthly' => $this->visitaService->visitsByMonthDaily($month, $year),
         ], 'admin');
     }
 
@@ -1459,7 +1483,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/visitas/analytics', [
             'title' => 'Analytics de Visitas',
             'currentRoute' => '/admin/visitas',
-            'analytics' => $this->admin->visitsAnalytics($month, $year),
+            'analytics' => $this->visitaService->visitsAnalytics($month, $year),
         ], 'admin');
     }
 
@@ -1476,7 +1500,7 @@ final class AdminController extends Controller
         $this->render('pages/admin/visitas/pages', [
             'title' => 'Visitas por Página',
             'currentRoute' => '/admin/visitas',
-            'pagesStats' => $this->admin->visitsByPage($month, $year),
+            'pagesStats' => $this->visitaService->visitsByPage($month, $year),
         ], 'admin');
     }
 

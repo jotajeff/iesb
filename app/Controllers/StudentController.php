@@ -6,7 +6,10 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Database;
-use App\Services\AdminService;
+use App\Services\AlunoService;
+use App\Services\CursoService;
+use App\Services\LogService;
+use App\Services\TurmaService;
 use App\Services\AuthService;
 use App\Services\CourseService;
 use App\Services\EnrollmentService;
@@ -16,14 +19,20 @@ use App\Support\Session;
 final class StudentController extends Controller
 {
     private AuthService $auth;
-    private AdminService $admin;
+    private AlunoService $alunoService;
+    private CursoService $cursoService;
+    private LogService $logService;
+    private TurmaService $turmaService;
     private CourseService $courses;
     private EnrollmentService $enrollments;
 
     public function __construct()
     {
         $this->auth = new AuthService();
-        $this->admin = new AdminService();
+        $this->alunoService = new AlunoService();
+        $this->cursoService = new CursoService();
+        $this->logService = new LogService();
+        $this->turmaService = new TurmaService();
         $this->courses = new CourseService();
         $this->enrollments = new EnrollmentService();
     }
@@ -38,8 +47,8 @@ final class StudentController extends Controller
         $user = Session::get('user');
         $studentId = (int) ($user['id'] ?? 0);
 
-        $cursosAtivos = $this->admin->cursosAtivos();
-        $cursosMatriculados = $this->admin->cursosDoAluno($studentId);
+        $cursosAtivos = $this->cursoService->cursosAtivos();
+        $cursosMatriculados = $this->alunoService->cursosDoAluno($studentId);
         $idsMatriculados = array_map(static fn (array $m): int => (int) ($m['curso_id'] ?? 0), $cursosMatriculados);
 
         $cursosDisponiveis = array_values(array_filter(
@@ -51,7 +60,7 @@ final class StudentController extends Controller
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
             'cursosDisponiveis' => $cursosDisponiveis,
-            'matriculasDB' => $this->admin->matriculasDoAluno($studentId),
+            'matriculasDB' => $this->alunoService->matriculasDoAluno($studentId),
         ], 'aluno');
     }
 
@@ -68,8 +77,8 @@ final class StudentController extends Controller
         $this->render('pages/aluno/cursos', [
             'title' => 'Meus Cursos',
             'currentRoute' => '/aluno/cursos',
-            'matriculasDB' => $this->admin->matriculasDoAluno($studentId),
-            'cursosMatriculados' => $this->admin->cursosDoAluno($studentId),
+            'matriculasDB' => $this->alunoService->matriculasDoAluno($studentId),
+            'cursosMatriculados' => $this->alunoService->cursosDoAluno($studentId),
         ], 'aluno');
     }
 
@@ -192,7 +201,7 @@ final class StudentController extends Controller
             return;
         }
 
-        $this->admin->log('visualizar', 'video', $materialId, "Aluno visualizou vídeo: {$material['titulo']}");
+        $this->logService->log('visualizar', 'video', $materialId, "Aluno visualizou vídeo: {$material['titulo']}");
 
         $this->render('pages/aluno/video', [
             'title' => $material['titulo'] ?? 'Vídeo',
@@ -234,7 +243,7 @@ final class StudentController extends Controller
             return;
         }
 
-        $this->admin->log('visualizar', 'drive', $materialId, "Aluno visualizou documento do Drive: {$material['titulo']}");
+        $this->logService->log('visualizar', 'drive', $materialId, "Aluno visualizou documento do Drive: {$material['titulo']}");
 
         $this->render('pages/aluno/drive', [
             'title' => $material['titulo'] ?? 'Drive',
@@ -251,7 +260,7 @@ final class StudentController extends Controller
         }
 
         $cursoId = (int) ($_GET['id'] ?? 0);
-        $curso = $this->admin->findCurso($cursoId);
+        $curso = $this->cursoService->findCurso($cursoId);
 
         if ($curso === null) {
             Session::setFlash('flash', 'Curso não encontrado.');
@@ -281,7 +290,7 @@ final class StudentController extends Controller
             $this->redirect('/aluno');
         }
 
-        $cursosMatriculados = $this->admin->cursosDoAluno($studentId);
+        $cursosMatriculados = $this->alunoService->cursosDoAluno($studentId);
         $idsMatriculados = array_map(static fn (array $m): int => (int) ($m['curso_id'] ?? 0), $cursosMatriculados);
 
         if (in_array($cursoId, $idsMatriculados, true)) {
@@ -289,15 +298,15 @@ final class StudentController extends Controller
             $this->redirect('/aluno');
         }
 
-        $turmas = $this->admin->turmasDoCurso($cursoId);
+        $turmas = $this->turmaService->turmasDoCurso($cursoId);
 
         if (empty($turmas)) {
             Session::setFlash('flash', 'Não há turmas disponíveis para este curso no momento.');
             $this->redirect('/aluno');
         }
 
-        $matriculaId = $this->admin->criarMatricula($studentId, (int) $turmas[0]['id']);
-        $this->admin->log('criar', 'matricula', $matriculaId, "Aluno matriculou-se no curso $cursoId");
+        $matriculaId = $this->alunoService->criarMatricula($studentId, (int) $turmas[0]['id']);
+        $this->logService->log('criar', 'matricula', $matriculaId, "Aluno matriculou-se no curso $cursoId");
         Session::setFlash('flash', 'Matrícula realizada com sucesso!');
         $this->redirect('/aluno');
     }
@@ -311,7 +320,7 @@ final class StudentController extends Controller
 
         $user = Session::get('user');
         $studentId = (int) ($user['id'] ?? 0);
-        $aluno = $this->admin->findAluno($studentId);
+        $aluno = $this->alunoService->findAluno($studentId);
 
         $this->render('pages/aluno/perfil', [
             'title' => 'Meu Perfil',
@@ -337,8 +346,8 @@ final class StudentController extends Controller
         $email = trim((string) $this->input('email', ''));
         $senha = (string) $this->input('senha', '');
 
-        $this->admin->atualizarAluno($studentId, $nome, $cpf, $dataNascimento, $telefone, $email, 'S', $senha ?: null);
-        $this->admin->log('atualizar', 'aluno', $studentId, "Aluno atualizou o próprio perfil");
+        $this->alunoService->atualizarAluno($studentId, $nome, $cpf, $dataNascimento, $telefone, $email, 'S', $senha ?: null);
+        $this->logService->log('atualizar', 'aluno', $studentId, "Aluno atualizou o próprio perfil");
 
         Session::setFlash('flash', 'Perfil atualizado com sucesso.');
         $this->redirect('/aluno/perfil');
@@ -392,8 +401,8 @@ final class StudentController extends Controller
         }
 
         $filePath = 'assets/img/alunos/' . $filename;
-        $this->admin->atualizarFotoAluno($studentId, $filePath);
-        $this->admin->log('atualizar', 'aluno', $studentId, "Aluno atualizou a própria foto");
+        $this->alunoService->atualizarFotoAluno($studentId, $filePath);
+        $this->logService->log('atualizar', 'aluno', $studentId, "Aluno atualizou a própria foto");
 
         Session::setFlash('flash', 'Foto atualizada com sucesso.');
         $this->redirect('/aluno/perfil');
@@ -462,7 +471,7 @@ final class StudentController extends Controller
 
         $result = $this->enrollments->enroll($studentId, $courseId);
         if (($result['ok'] ?? false)) {
-            $this->admin->log('criar', 'matricula', 0, "Aluno matriculou-se no curso $courseId");
+            $this->logService->log('criar', 'matricula', 0, "Aluno matriculou-se no curso $courseId");
         }
         Session::setFlash('flash', $result['message']);
         $this->redirect('/aluno');

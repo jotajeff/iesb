@@ -7,20 +7,20 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Services\CursoService;
 use App\Services\ConfigService;
-use App\Services\AdminService;
+use App\Services\LogService;
 use App\Support\Session;
 
 final class CursoController extends Controller
 {
     private CursoService $cursoService;
     private ConfigService $configService;
-    private AdminService $adminService;
+    private LogService $logService;
 
     public function __construct()
     {
         $this->cursoService = new CursoService();
         $this->configService = new ConfigService();
-        $this->adminService = new AdminService();
+        $this->logService = new LogService();
     }
 
     public function index(): void
@@ -100,7 +100,7 @@ final class CursoController extends Controller
         }
 
         $cursoId = $this->cursoService->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId, $cargaHoraria);
-        $this->adminService->log('criar', 'curso', $cursoId, "Curso criado: $nome");
+        $this->logService->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
     }
@@ -168,7 +168,7 @@ final class CursoController extends Controller
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
         $this->cursoService->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId, $cargaHoraria);
-        $this->adminService->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
+        $this->logService->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');
     }
@@ -248,11 +248,11 @@ final class CursoController extends Controller
 
         if ($detalheId > 0) {
             $this->cursoService->atualizarDetalhe($detalheId, $payload);
-            $this->adminService->log('atualizar', 'detalhe', $detalheId, "Detalhe atualizado para o curso #$cursoId");
+            $this->logService->log('atualizar', 'detalhe', $detalheId, "Detalhe atualizado para o curso #$cursoId");
             Session::setFlash('flash', 'Detalhe atualizado com sucesso.');
         } else {
             $novoId = $this->cursoService->salvarDetalhe($payload);
-            $this->adminService->log('criar', 'detalhe', $novoId, "Detalhe criado para o curso #$cursoId");
+            $this->logService->log('criar', 'detalhe', $novoId, "Detalhe criado para o curso #$cursoId");
             Session::setFlash('flash', 'Detalhe criado com sucesso.');
         }
 
@@ -335,7 +335,7 @@ final class CursoController extends Controller
         }
 
         $this->cursoService->atualizarImagem($id, 'assets/img/cursos/' . $filename);
-        $this->adminService->log('upload_imagem', 'curso', $id, "Imagem do card enviada: $filename");
+        $this->logService->log('upload_imagem', 'curso', $id, "Imagem do card enviada: $filename");
         Session::setFlash('flash', 'Imagem do card atualizada com sucesso.');
         $this->redirect('/admin/cursos');
     }

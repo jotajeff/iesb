@@ -9,7 +9,7 @@ use App\Core\Database;
 use App\Services\AlunoService;
 use App\Services\TurmaService;
 use App\Services\CursoService;
-use App\Services\AdminService;
+use App\Services\LogService;
 use App\Services\IpLocationService;
 use App\Support\Session;
 
@@ -18,14 +18,14 @@ final class AlunoController extends Controller
     private AlunoService $alunoService;
     private TurmaService $turmaService;
     private CursoService $cursoService;
-    private AdminService $adminService;
+    private LogService $logService;
 
     public function __construct()
     {
         $this->alunoService = new AlunoService();
         $this->turmaService = new TurmaService();
         $this->cursoService = new CursoService();
-        $this->adminService = new AdminService();
+        $this->logService = new LogService();
     }
 
     public function index(): void
@@ -161,7 +161,7 @@ final class AlunoController extends Controller
         $alunoId = $this->alunoService->criarAluno($nome, $cpf, $dataNascimento, $telefone, $email, $ativo);
 
         if ($alunoId > 0) {
-            $this->adminService->log('criar', 'aluno', $alunoId, "Aluno criado: $nome");
+            $this->logService->log('criar', 'aluno', $alunoId, "Aluno criado: $nome");
             Session::setFlash('flash', 'Aluno criado com sucesso.');
             $this->redirect('/admin/alunos');
         } else {
@@ -193,7 +193,7 @@ final class AlunoController extends Controller
 
         $this->alunoService->atualizarAluno($id, $nome, $cpf, $dataNascimento, $telefone, $email, $ativo);
 
-        $this->adminService->log('atualizar', 'aluno', $id, "Aluno atualizado: $nome");
+        $this->logService->log('atualizar', 'aluno', $id, "Aluno atualizado: $nome");
         Session::setFlash('flash', 'Aluno atualizado com sucesso.');
         $this->redirect('/admin/alunos');
     }
@@ -263,7 +263,7 @@ final class AlunoController extends Controller
 
         if ($matriculaId > 0) {
             $nomeAluno = (string) ($aluno['nome'] ?? '');
-            $this->adminService->log('criar', 'matricula', $matriculaId, "Matrícula criada: $nomeAluno");
+            $this->logService->log('criar', 'matricula', $matriculaId, "Matrícula criada: $nomeAluno");
             Session::setFlash('flash', 'Matrícula realizada com sucesso.');
         } else {
             Session::setFlash('flash', 'Erro ao realizar matrícula. Tente novamente.');
@@ -382,7 +382,7 @@ final class AlunoController extends Controller
         if ($atualizou) {
             $trocaId = $this->alunoService->registrarTroca($idTurmaOrigem, $idTurmaDestino, $idAluno, $motivo);
             $nomeAluno = (string) ($matricula['turma_nome'] ?? '');
-            $this->adminService->log('atualizar', 'matricula', $idMatricula, "Troca de turma do aluno ID $idAluno: origem $idTurmaOrigem -> destino $idTurmaDestino");
+            $this->logService->log('atualizar', 'matricula', $idMatricula, "Troca de turma do aluno ID $idAluno: origem $idTurmaOrigem -> destino $idTurmaDestino");
             Session::setFlash('flash', 'Troca de turma realizada com sucesso.');
         } else {
             Session::setFlash('flash', 'Erro ao realizar troca de turma. Tente novamente.');
@@ -422,7 +422,7 @@ final class AlunoController extends Controller
 
         $senha = explode('@', $email)[0] . '#' . date('Y');
         $this->alunoService->atualizarSenha($id, $senha);
-        $this->adminService->log('atualizar', 'aluno', $id, "Senha do aluno restaurada");
+        $this->logService->log('atualizar', 'aluno', $id, "Senha do aluno restaurada");
 
         echo json_encode(['sucesso' => true, 'senha' => $senha]);
     }

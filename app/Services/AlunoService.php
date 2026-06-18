@@ -105,6 +105,14 @@ final class AlunoService
         return $this->turmaRepository->insertTroca($idOrigem, $idDestino, $idAluno, $motivo);
     }
 
+    public function atualizarFotoAluno(int $id, string $foto): void
+    {
+        $this->repository->save([
+            'id' => $id,
+            'foto' => $foto,
+        ]);
+    }
+
     public function atualizarSenha(int $id, string $senha): void
     {
         $this->repository->save([

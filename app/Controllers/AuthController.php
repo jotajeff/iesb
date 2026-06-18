@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Services\AdminService;
+use App\Services\LogService;
 use App\Services\AlunoService;
 use App\Services\AuthService;
 use App\Services\EmailService;
@@ -14,13 +14,13 @@ use App\Support\Session;
 final class AuthController extends Controller
 {
     private AuthService $auth;
-    private AdminService $admin;
+    private LogService $logService;
     private AlunoService $alunoService;
 
     public function __construct()
     {
         $this->auth = new AuthService();
-        $this->admin = new AdminService();
+        $this->logService = new LogService();
         $this->alunoService = new AlunoService();
     }
 
@@ -47,7 +47,7 @@ final class AuthController extends Controller
                 'type' => $role,
             ]);
 
-            $this->admin->log('login', 'admin', 0, "Login realizado: $email");
+            $this->logService->log('login', 'admin', 0, "Login realizado: $email");
             $this->redirect('/admin');
         }
 
@@ -70,7 +70,7 @@ final class AuthController extends Controller
             $this->redirect('/aluno/login');
         }
 
-        $this->admin->log('login', 'aluno', 0, "Login aluno: $email");
+        $this->logService->log('login', 'aluno', 0, "Login aluno: $email");
         $this->redirect('/aluno');
     }
 
@@ -182,7 +182,7 @@ final class AuthController extends Controller
         $this->alunoService->atualizarSenha((int) $aluno['id'], $senha);
         $this->alunoService->limparResetToken((int) $aluno['id']);
 
-        $this->admin->log('redefinir_senha', 'aluno', (int) $aluno['id'], "Senha redefinida via email: {$aluno['email']}");
+        $this->logService->log('redefinir_senha', 'aluno', (int) $aluno['id'], "Senha redefinida via email: {$aluno['email']}");
 
         Session::setFlash('flash', 'Senha redefinida com sucesso! Faça login com sua nova senha.');
         $this->redirect('/aluno/login');

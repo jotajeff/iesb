@@ -5,25 +5,28 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
-use App\Services\AdminService;
+use App\Services\CursoService;
+use App\Services\CarouselService;
 
 final class HomeController extends Controller
 {
-    private AdminService $admin;
+    private CursoService $cursoService;
+    private CarouselService $carouselService;
 
     public function __construct()
     {
-        $this->admin = new AdminService();
+        $this->cursoService = new CursoService();
+        $this->carouselService = new CarouselService();
     }
 
     public function index(): void
     {
-        $cursosDestaque = $this->admin->cursosDisponiveisParaHome();
+        $cursosDestaque = $this->cursoService->cursosDisponiveisParaHome();
 
-        $carousels = $this->admin->carouselsAtivos();
+        $carousels = $this->carouselService->carouselsAtivos();
         $carouselData = [];
         foreach ($carousels as $carousel) {
-            $items = $this->admin->carouselItems((int) $carousel['id']);
+            $items = $this->carouselService->carouselItems((int) $carousel['id']);
             if (!empty($items)) {
                 $carouselData[] = [
                     'carousel' => $carousel,

@@ -64,7 +64,9 @@
               <?php if (in_array((int) ($authUser['id'] ?? 0), [1, 6, 7], true)): ?>
               <li><a class="dropdown-item" href="/admin/config/cliente"><i class="bi bi-building-gear me-1"></i>Config</a></li>
               <?php endif; ?>
+              <?php if ((int) ($authUser['id'] ?? 0) === 1): ?>
               <li><a class="dropdown-item" href="/admin/dbase"><i class="bi bi-database me-1"></i>DB</a></li>
+              <?php endif; ?>
             </ul>
           </li>
         <?php endif; ?>

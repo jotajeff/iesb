@@ -6,18 +6,18 @@ namespace App\Controllers\Admin;
 
 use App\Core\Controller;
 use App\Services\UsuarioService;
-use App\Services\AdminService;
+use App\Services\LogService;
 use App\Support\Session;
 
 final class UsuarioController extends Controller
 {
     private UsuarioService $usuarioService;
-    private AdminService $adminService;
+    private LogService $logService;
 
     public function __construct()
     {
         $this->usuarioService = new UsuarioService();
-        $this->adminService = new AdminService();
+        $this->logService = new LogService();
     }
 
     public function index(): void
@@ -81,7 +81,7 @@ final class UsuarioController extends Controller
         }
 
         $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, $tipo, $ativo);
-        $this->adminService->log('criar', 'usuario', $usuarioId, "Usuário criado: $nome");
+        $this->logService->log('criar', 'usuario', $usuarioId, "Usuário criado: $nome");
         Session::setFlash('flash', 'Usuário criado com sucesso.');
         $this->redirect('/admin/usuarios');
     }
@@ -167,7 +167,7 @@ final class UsuarioController extends Controller
         }
 
         $this->usuarioService->atualizarUsuario($id, $senha, $ativo, '', '', $tipo);
-        $this->adminService->log('atualizar', 'usuario', $id, 'Usuário atualizado: ' . ($usuario['nome'] ?? ''));
+        $this->logService->log('atualizar', 'usuario', $id, 'Usuário atualizado: ' . ($usuario['nome'] ?? ''));
         Session::setFlash('flash', 'Usuário atualizado com sucesso.');
         $this->redirect('/admin/usuarios');
     }

@@ -7,7 +7,7 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Core\Database;
 use App\Services\UsuarioService;
-use App\Services\AdminService;
+use App\Services\LogService;
 use App\Services\TurmaService;
 use App\Repositories\EnderecoRepository;
 use App\Support\Session;
@@ -15,14 +15,14 @@ use App\Support\Session;
 final class ProfessorController extends Controller
 {
     private UsuarioService $usuarioService;
-    private AdminService $adminService;
+    private LogService $logService;
     private TurmaService $turmaService;
     private EnderecoRepository $enderecoRepository;
 
     public function __construct()
     {
         $this->usuarioService = new UsuarioService();
-        $this->adminService = new AdminService();
+        $this->logService = new LogService();
         $this->turmaService = new TurmaService();
         $this->enderecoRepository = new EnderecoRepository();
     }
@@ -103,7 +103,7 @@ final class ProfessorController extends Controller
         }
 
         $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, 'professor', $ativo, $telefone);
-        $this->adminService->log('criar', 'usuario', $usuarioId, "Professor criado: $nome");
+        $this->logService->log('criar', 'usuario', $usuarioId, "Professor criado: $nome");
         Session::setFlash('flash', 'Professor criado com sucesso.');
         $this->redirect('/admin/professores');
     }
@@ -165,7 +165,7 @@ final class ProfessorController extends Controller
         }
 
         $this->usuarioService->atualizarUsuario($id, '', $ativo, $nome, '', '', $telefone);
-        $this->adminService->log('atualizar', 'usuario', $id, "Professor atualizado: $nome");
+        $this->logService->log('atualizar', 'usuario', $id, "Professor atualizado: $nome");
         Session::setFlash('flash', 'Professor atualizado com sucesso.');
         $this->redirect($redirectBase);
     }
@@ -258,10 +258,10 @@ final class ProfessorController extends Controller
         try {
             if ($existente) {
                 $this->enderecoRepository->update((int) $existente['id'], $data);
-                $this->adminService->log('atualizar', 'endereco', (int) $existente['id'], "Endereço atualizado: $logradouro");
+                $this->logService->log('atualizar', 'endereco', (int) $existente['id'], "Endereço atualizado: $logradouro");
             } else {
                 $this->enderecoRepository->create($data);
-                $this->adminService->log('criar', 'endereco', $id, "Endereço criado: $logradouro");
+                $this->logService->log('criar', 'endereco', $id, "Endereço criado: $logradouro");
             }
             Session::setFlash('flash', 'Endereço salvo com sucesso.');
         } catch (\Throwable) {
@@ -352,7 +352,7 @@ final class ProfessorController extends Controller
 
             $pdo->commit();
 
-            $this->adminService->log('vincular', 'turma_professor', $id, sprintf(
+            $this->logService->log('vincular', 'turma_professor', $id, sprintf(
                 'Professor ID %d vinculado a %d turma(s)', $id, count($turmaIds)
             ));
             Session::setFlash('flash', count($turmaIds) > 0
@@ -540,7 +540,7 @@ final class ProfessorController extends Controller
                 $stmt->bindValue(':link_perfil', $link, \PDO::PARAM_STR);
                 $stmt->execute();
 
-                $this->adminService->log('criar', 'social', (int) $pdo->lastInsertId(), "Rede social adicionada: $rede");
+                $this->logService->log('criar', 'social', (int) $pdo->lastInsertId(), "Rede social adicionada: $rede");
             }
 
             $action = (string) $this->input('action', '');
@@ -586,7 +586,7 @@ final class ProfessorController extends Controller
                 $stmt->execute();
 
                 if ($stmt->rowCount() > 0) {
-                    $this->adminService->log('excluir', 'social', $id, "Rede social excluída");
+                    $this->logService->log('excluir', 'social', $id, "Rede social excluída");
                     echo json_encode(['sucesso' => true]);
                 } else {
                     http_response_code(404);
@@ -673,7 +673,7 @@ final class ProfessorController extends Controller
                     $upd->bindValue(':conteudo', $conteudo, \PDO::PARAM_STR);
                     $upd->bindValue(':id', (int) $existing['id'], \PDO::PARAM_INT);
                     $upd->execute();
-                    $this->adminService->log('atualizar', 'curriculo', (int) $existing['id'], 'Currículo atualizado');
+                    $this->logService->log('atualizar', 'curriculo', (int) $existing['id'], 'Currículo atualizado');
                 } else {
                     $ins = $pdo->prepare('INSERT INTO curriculo (id_fk, tipo, conteudo, ativo) VALUES (:id_fk, :tipo, :conteudo, :ativo)');
                     $ins->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
@@ -681,7 +681,7 @@ final class ProfessorController extends Controller
                     $ins->bindValue(':conteudo', $conteudo, \PDO::PARAM_STR);
                     $ins->bindValue(':ativo', 'S', \PDO::PARAM_STR);
                     $ins->execute();
-                    $this->adminService->log('criar', 'curriculo', (int) $pdo->lastInsertId(), 'Currículo criado');
+                    $this->logService->log('criar', 'curriculo', (int) $pdo->lastInsertId(), 'Currículo criado');
                 }
             }
 
@@ -774,7 +774,7 @@ final class ProfessorController extends Controller
                 $stmt->bindValue(':titulo', $titulo, \PDO::PARAM_STR);
                 $stmt->execute();
 
-                $this->adminService->log('criar', 'video', (int) $pdo->lastInsertId(), "Vídeo adicionado à turma $idTurma");
+                $this->logService->log('criar', 'video', (int) $pdo->lastInsertId(), "Vídeo adicionado à turma $idTurma");
             }
             Session::setFlash('flash', 'Vídeo adicionado com sucesso.');
         } catch (\Throwable $e) {
@@ -809,7 +809,7 @@ final class ProfessorController extends Controller
                 $stmt->execute();
 
                 if ($stmt->rowCount() > 0) {
-                    $this->adminService->log('excluir', 'video', $id, 'Vídeo excluído');
+                    $this->logService->log('excluir', 'video', $id, 'Vídeo excluído');
                     echo json_encode(['sucesso' => true]);
                 } else {
                     http_response_code(404);
@@ -903,7 +903,7 @@ final class ProfessorController extends Controller
                 $stmt->bindValue(':titulo', $titulo, \PDO::PARAM_STR);
                 $stmt->execute();
 
-                $this->adminService->log('criar', 'drive', (int) $pdo->lastInsertId(), "Arquivo do Drive adicionado à turma $idTurma");
+                $this->logService->log('criar', 'drive', (int) $pdo->lastInsertId(), "Arquivo do Drive adicionado à turma $idTurma");
             }
             Session::setFlash('flash', 'Arquivo adicionado com sucesso.');
         } catch (\Throwable $e) {

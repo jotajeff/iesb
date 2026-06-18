@@ -7,7 +7,7 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Services\TarefaService;
 use App\Services\UsuarioService;
-use App\Services\AdminService;
+use App\Services\LogService;
 use App\Services\CommentService;
 use App\Support\Session;
 
@@ -15,14 +15,14 @@ final class TarefaController extends Controller
 {
     private TarefaService $tarefaService;
     private UsuarioService $usuarioService;
-    private AdminService $adminService;
+    private LogService $logService;
     private CommentService $comments;
 
     public function __construct()
     {
         $this->tarefaService = new TarefaService();
         $this->usuarioService = new UsuarioService();
-        $this->adminService = new AdminService();
+        $this->logService = new LogService();
         $this->comments = new CommentService();
     }
 
@@ -127,7 +127,7 @@ final class TarefaController extends Controller
         }
 
         $tarefaId = $this->tarefaService->criarTarefa($setorId, $tarefa, $criadoPor, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
-        $this->adminService->log('criar', 'tarefa', $tarefaId, 'Tarefa criada: ' . $tarefa);
+        $this->logService->log('criar', 'tarefa', $tarefaId, 'Tarefa criada: ' . $tarefa);
         Session::setFlash('flash', 'Tarefa criada com sucesso.');
         $this->redirect('/admin/tarefas');
     }
@@ -187,7 +187,7 @@ final class TarefaController extends Controller
         }
 
         $this->tarefaService->atualizarTarefa($id, $setorId, $tarefa, $responsavel > 0 ? $responsavel : null, $situacao, $prioridade);
-        $this->adminService->log('atualizar', 'tarefa', $id, 'Tarefa atualizada: ' . $tarefa);
+        $this->logService->log('atualizar', 'tarefa', $id, 'Tarefa atualizada: ' . $tarefa);
         Session::setFlash('flash', 'Tarefa atualizada com sucesso.');
         $this->redirect('/admin/tarefas');
     }
@@ -246,7 +246,7 @@ final class TarefaController extends Controller
         }
 
         $comentarioId = $this->comments->createFor('tarefas', $tarefaId, $comentario);
-        $this->adminService->log('criar', 'comentario', $comentarioId, 'Comentário adicionado na tarefa #' . $tarefaId);
+        $this->logService->log('criar', 'comentario', $comentarioId, 'Comentário adicionado na tarefa #' . $tarefaId);
         Session::setFlash('flash', 'Comentário adicionado com sucesso.');
         $this->redirect('/admin/tarefas/show?id=' . $tarefaId);
     }
