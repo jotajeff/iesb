@@ -78,6 +78,30 @@ final class ConfigService
         ]);
     }
 
+    public function categorias(): array
+    {
+        return $this->repository->listCategorias();
+    }
+
+    public function findCategoria(int $id): ?array
+    {
+        return $this->repository->findCategoriaById($id);
+    }
+
+    public function saveCategoria(int $id, string $nome, string $slug, int $ativo): int
+    {
+        if ($slug === '') {
+            $slug = \App\Services\CursoService::slugify($nome);
+        }
+
+        return $this->repository->saveCategoria([
+            'id' => $id,
+            'nome' => trim($nome),
+            'slug' => trim($slug),
+            'ativo' => $ativo === 1 ? 1 : 0,
+        ]);
+    }
+
     public function instituicoes(): array
     {
         return $this->repository->listInstituicoes();

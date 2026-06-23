@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 17/06/2026 às 17:52
+-- Tempo de geração: 23/06/2026 às 16:33
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -84,6 +84,19 @@ CREATE TABLE `carousel_item` (
   `atualizado_em` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   `criado_por` int(10) UNSIGNED NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `categoria_noticia`
+--
+
+CREATE TABLE `categoria_noticia` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `nome` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `slug` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -308,6 +321,34 @@ CREATE TABLE `nivel` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `noticia`
+--
+
+CREATE TABLE `noticia` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `titulo` varchar(255) NOT NULL,
+  `slug` varchar(255) NOT NULL,
+  `resumo` text,
+  `conteudo` longtext NOT NULL,
+  `imagem_capa` varchar(255) DEFAULT NULL,
+  `legenda_imagem` varchar(255) DEFAULT NULL,
+  `categoria` varchar(100) DEFAULT NULL,
+  `autor` varchar(150) DEFAULT NULL,
+  `data_publicacao` datetime NOT NULL,
+  `data_evento` datetime DEFAULT NULL,
+  `destaque` tinyint(1) NOT NULL DEFAULT '0',
+  `status` enum('rascunho','publicado','arquivado') NOT NULL DEFAULT 'rascunho',
+  `visualizacoes` int(10) UNSIGNED NOT NULL DEFAULT '0',
+  `meta_title` varchar(255) DEFAULT NULL,
+  `meta_description` varchar(255) DEFAULT NULL,
+  `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `atualizado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `id_categoria` int(10) UNSIGNED DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `paginas`
 --
 
@@ -485,6 +526,13 @@ ALTER TABLE `carousel_item`
   ADD KEY `idx_ativo` (`ativo`);
 
 --
+-- Índices de tabela `categoria_noticia`
+--
+ALTER TABLE `categoria_noticia`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `slug` (`slug`);
+
+--
 -- Índices de tabela `comentarios`
 --
 ALTER TABLE `comentarios`
@@ -572,6 +620,18 @@ ALTER TABLE `modalidade`
 --
 ALTER TABLE `nivel`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `noticia`
+--
+ALTER TABLE `noticia`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `slug` (`slug`),
+  ADD KEY `idx_slug` (`slug`),
+  ADD KEY `idx_status` (`status`),
+  ADD KEY `idx_data_publicacao` (`data_publicacao`),
+  ADD KEY `idx_destaque` (`destaque`),
+  ADD KEY `fk_noticia_categoria` (`id_categoria`);
 
 --
 -- Índices de tabela `paginas`
@@ -669,6 +729,12 @@ ALTER TABLE `carousel_item`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `categoria_noticia`
+--
+ALTER TABLE `categoria_noticia`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `comentarios`
 --
 ALTER TABLE `comentarios`
@@ -747,6 +813,12 @@ ALTER TABLE `nivel`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `noticia`
+--
+ALTER TABLE `noticia`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `paginas`
 --
 ALTER TABLE `paginas`
@@ -822,6 +894,12 @@ ALTER TABLE `curriculo`
 ALTER TABLE `matriculas`
   ADD CONSTRAINT `matriculas_ibfk_1` FOREIGN KEY (`id_aluno`) REFERENCES `alunos` (`id`),
   ADD CONSTRAINT `matriculas_ibfk_2` FOREIGN KEY (`id_turma`) REFERENCES `turmas` (`id`);
+
+--
+-- Restrições para tabelas `noticia`
+--
+ALTER TABLE `noticia`
+  ADD CONSTRAINT `fk_noticia_categoria` FOREIGN KEY (`id_categoria`) REFERENCES `categoria_noticia` (`id`);
 
 --
 -- Restrições para tabelas `turmas`

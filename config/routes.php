@@ -11,6 +11,7 @@ use App\Controllers\Admin\TurmaController;
 use App\Controllers\Admin\ProfessorController;
 use App\Controllers\Admin\UsuarioController;
 use App\Controllers\Admin\VisitaController;
+use App\Controllers\Admin\NoticiaController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -128,6 +129,16 @@ return static function (Router $router): void {
     $router->post('/admin/config/carousel/salvar', [ConfigController::class, 'updateCarousel']);
     $router->post('/admin/config/carousel/item/upload', [ConfigController::class, 'uploadCarouselItem']);
     $router->post('/admin/config/carousel/item/deletar', [ConfigController::class, 'deleteCarouselItem']);
+
+    $router->get('/admin/config/noticias', [NoticiaController::class, 'index']);
+    $router->get('/admin/config/noticias/editar', [NoticiaController::class, 'editar']);
+    $router->post('/admin/config/noticias/salvar', [NoticiaController::class, 'salvar']);
+    $router->post('/admin/config/noticias/deletar', [NoticiaController::class, 'deletar']);
+
+    $router->get('/admin/config/categoria', [ConfigController::class, 'categoria']);
+    $router->get('/admin/config/categoria/edit', [ConfigController::class, 'editCategoria']);
+    $router->post('/admin/config/categoria/update', [ConfigController::class, 'updateCategoria']);
+
     $router->get('/admin/config/cliente', [ConfigController::class, 'cliente']);
     $router->get('/admin/config/cliente/editar', [ConfigController::class, 'editCliente']);
     $router->post('/admin/config/cliente/atualizar', [ConfigController::class, 'updateCliente']);

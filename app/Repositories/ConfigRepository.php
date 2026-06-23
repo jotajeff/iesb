@@ -330,6 +330,73 @@ final class ConfigRepository
         }
     }
 
+    public function listCategorias(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT id, nome, slug, ativo FROM categoria_noticia ORDER BY nome ASC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CONFIG] Erro ao carregar categorias: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function findCategoriaById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, slug, ativo FROM categoria_noticia WHERE id = :id LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function saveCategoria(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        $id = (int) ($payload['id'] ?? 0);
+        $nome = trim((string) ($payload['nome'] ?? ''));
+        $slug = trim((string) ($payload['slug'] ?? ''));
+        $ativo = (int) ($payload['ativo'] ?? 1);
+
+        if ($id > 0) {
+            $sql = 'UPDATE categoria_noticia SET nome = :nome, slug = :slug, ativo = :ativo WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':nome', $nome);
+            $stmt->bindValue(':slug', $slug);
+            $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+            $stmt->execute();
+            return $id;
+        }
+
+        $sql = 'INSERT INTO categoria_noticia (nome, slug, ativo) VALUES (:nome, :slug, :ativo)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':nome', $nome);
+        $stmt->bindValue(':slug', $slug);
+        $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int) $pdo->lastInsertId();
+    }
+
     public function listSegmentosByNivel(int $nivelId): array
     {
         $pdo = Database::connection();

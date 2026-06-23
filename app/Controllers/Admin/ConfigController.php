@@ -442,6 +442,71 @@ final class ConfigController extends Controller
         $this->redirect('/admin/nivel');
     }
 
+    public function categoria(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/categoria/index', [
+            'title' => 'Categorias',
+            'currentRoute' => '/admin/config/categoria',
+            'categorias' => $this->configService->categorias(),
+        ], 'admin');
+    }
+
+    public function editCategoria(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $categoria = $id > 0 ? $this->configService->findCategoria($id) : null;
+
+        if ($id > 0 && !$categoria) {
+            Session::setFlash('flash', 'Categoria não encontrada.');
+            $this->redirect('/admin/config/categoria');
+            return;
+        }
+
+        $this->render('pages/admin/categoria/edit', [
+            'title' => $id > 0 ? 'Editar Categoria' : 'Nova Categoria',
+            'currentRoute' => '/admin/config/categoria',
+            'categoria' => $categoria,
+        ], 'admin');
+    }
+
+    public function updateCategoria(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $slug = trim((string) $this->input('slug', ''));
+        $ativo = (int) $this->input('ativo', 1);
+
+        if ($nome === '') {
+            Session::setFlash('flash', 'Informe o nome da categoria.');
+            $suffix = $id > 0 ? '?id=' . $id : '';
+            $this->redirect('/admin/config/categoria/edit' . $suffix);
+            return;
+        }
+
+        $categoriaId = $this->configService->saveCategoria($id, $nome, $slug, $ativo);
+        $acao = $id > 0 ? 'atualizar' : 'criar';
+        $descricao = ($id > 0 ? 'Categoria atualizada: ' : 'Categoria criada: ') . $nome;
+        $this->logService->log($acao, 'categoria_noticia', $categoriaId, $descricao);
+
+        Session::setFlash('flash', $id > 0 ? 'Categoria atualizada com sucesso.' : 'Categoria criada com sucesso.');
+        $this->redirect('/admin/config/categoria');
+    }
+
     public function cliente(): void
     {
         if (!$this->canAccessConfig()) {
