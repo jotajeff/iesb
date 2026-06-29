@@ -161,9 +161,9 @@
       <div class="col-12 col-lg-8" data-aos="fade-up" data-aos-delay="120">
         <figure class="h-100 mb-0">
           <div class="p-2 rounded-4 shadow-sm" style="background: var(--bg-card); border: 1px solid var(--border-color);">
-            <img src="/assets/img/iesb_fachada.png" alt="Fachada da IESB" class="img-fluid w-100 rounded-3" style="aspect-ratio: 16 / 9; object-fit: cover;">
+            <img src="/assets/img/iesb_fachada.png" alt="fachada do prédio aonde se localiza a IESB" class="img-fluid w-100 rounded-3" style="aspect-ratio: 16 / 9; object-fit: cover;">
           </div>
-          <figcaption class="small mt-2 mb-0" style="color: var(--bs-secondary-color);">Fachada da IESB</figcaption>
+          <figcaption class="small mt-2 mb-0" style="color: var(--bs-secondary-color);">fachada do prédio aonde se localiza a IESB</figcaption>
         </figure>
       </div>
 
