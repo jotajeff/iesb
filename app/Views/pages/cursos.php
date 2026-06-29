@@ -12,21 +12,13 @@ $segmentoSelecionadoNome = trim((string) ($segmentoSelecionado['nome'] ?? ''));
 $nivelCursoUrl = (string) ($nivelCursoUrl ?? '/cursos');
 ?>
 
-<section class="hero-section" id="home" style="min-height: 60vh;">
-  <div class="hero-bg"></div>
-  <div class="hero-bubbles" aria-hidden="true">
-    <span class="hero-bubble hero-bubble-1"></span>
-    <span class="hero-bubble hero-bubble-2"></span>
-    <span class="hero-bubble hero-bubble-3"></span>
-    <span class="hero-bubble hero-bubble-4"></span>
-  </div>
-  <div class="container hero-content" style="padding-top: 40px;">
+<section class="hero-section hero-section--cursos" id="home">
+  <div class="hero-content container">
     <div class="row justify-content-center">
       <div class="col-lg-10 text-center courses-hero-copy" data-aos="fade-up">
-        <div class="hero-badge"><i class="bi bi-journal-bookmark-fill"></i> Agenda de Cursos</div>
-        <h1 class="hero-title"><span class="highlight"><?= htmlspecialchars($nivelNome, ENT_QUOTES, 'UTF-8') ?></span></h1>
+        <div class="hero-badge"><i class="bi bi-journal-bookmark-fill"></i> <?= htmlspecialchars($nivelNome, ENT_QUOTES, 'UTF-8') ?></div>
 
-        <div class="hero-presentation-content hero-presentation-content--hero">
+        <div class="hero-desc-box hero-presentation-content--hero">
           <?= $nivelApresentacaoHtml ?>
         </div>
       </div>

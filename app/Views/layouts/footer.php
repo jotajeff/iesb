@@ -85,7 +85,7 @@
               <div>
                 <div class="contact-info-label">WhatsApp</div>
                 <div class="contact-info-value">
-                  (51) 992975503
+                  <a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer">(51) 992975503</a>
                 </div>
               </div>
             </div>
@@ -96,8 +96,7 @@
               <div>
                 <div class="contact-info-label">E-mail</div>
                 <div class="contact-info-value">
-                  atendimento@<br>
-                  inteligenciaeducacionalsouzabrazil.com
+                  <a href="mailto:atendimento@inteligenciaeducacionalsouzabrazil.com">atendimento@inteligenciaeducacionalsouzabrazil.com</a>
                 </div>
               </div>
             </div>
