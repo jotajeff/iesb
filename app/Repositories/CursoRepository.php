@@ -116,7 +116,7 @@ final class CursoRepository
                        c.segmento AS segmento_id, s.nome AS segmento_nome
                 FROM cursos_iesb c
                 LEFT JOIN segmento s ON s.id = c.segmento
-                WHERE c.ativo = "S" AND c.nivel = :nivel_id';
+                WHERE c.ativo = "S" AND c.nivel = :nivel_id AND c.curso_calendario >= CURDATE()';
 
         if ($segmentoId !== null && $segmentoId > 0) {
             $sql .= ' AND c.segmento = :segmento_id';
