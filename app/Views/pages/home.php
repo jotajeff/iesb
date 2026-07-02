@@ -76,6 +76,21 @@
                 <?php endforeach; ?>
               <?php endif; ?>
 
+              <!-- ==================== CTA BUTTONS ==================== -->
+              <section class="hero-cta">
+                <div class="container">
+                  <div class="hero-cta-buttons">
+                    <a href="/cursos?nivel=graduacao" class="btn-cta btn-cta--orange">
+                      <i class="bi bi-info-circle"></i> Mais detalhes
+                    </a>
+                    <a href="https://faculdadesaomarcos.com.br/inscreva-se/"
+                      target="_blank" rel="noopener noreferrer" class="btn-cta btn-cta--blue">
+                      <i class="bi bi-pencil-square"></i> Inscreva-se Já!
+                    </a>
+                  </div>
+                </div>
+              </section>
+
               <!-- ==================== COURSES ==================== -->
               <section id="cursos">
                 <div class="container">

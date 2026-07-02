@@ -22,28 +22,24 @@ final class EmailService
         $pdo = Database::connection();
 
         if ($pdo instanceof PDO) {
-            $stmt = $pdo->prepare('SELECT email, senha, dominio FROM instituicao WHERE status = ? ORDER BY id ASC LIMIT 1');
-            $stmt->execute(['Ativo']);
+            $stmt = $pdo->prepare('SELECT email, senha FROM instituicao WHERE id = 1 LIMIT 1');
+            $stmt->execute();
             $row = $stmt->fetch();
 
             if ($row && !empty($row['email']) && !empty($row['senha'])) {
                 $email = trim((string) $row['email']);
                 $senha = trim((string) $row['senha']);
-                $dominio = trim((string) ($row['dominio'] ?? ''));
 
-                $host = $dominio !== '' ? 'mail.' . $dominio : 'mail.posmedica.com.br';
-
-                $this->debugInfo = "Host: {$host}, Port: 465, User: {$email}, Dominio: {$dominio}";
+                $this->debugInfo = "Host: smtp.gmail.com, Port: 587, User: {$email}";
 
                 $this->mail->isSMTP();
-                $this->mail->Host = $host;
+                $this->mail->Host = 'smtp.gmail.com';
                 $this->mail->SMTPAuth = true;
                 $this->mail->Username = $email;
                 $this->mail->Password = $senha;
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
-                $this->mail->Port = 465;
+                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+                $this->mail->Port = 587;
                 $this->mail->CharSet = 'UTF-8';
-                $this->mail->SMTPAutoTLS = false;
 
                 $this->mail->setFrom($email, 'IESB - Área do Aluno');
                 $this->configured = true;

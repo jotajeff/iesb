@@ -540,6 +540,84 @@ a {
 }
 
 /* ============================================
+   HERO — CTA BUTTONS
+   ============================================ */
+.hero-cta {
+  position: relative;
+  z-index: 2;
+  padding: 24px 0 0;
+  margin-top: -20px;
+}
+.hero-cta-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+.btn-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  border: none;
+  position: relative;
+}
+.btn-cta::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 15px;
+  border: 2px solid transparent;
+  animation: ctaPulse 2s ease-in-out infinite;
+}
+.btn-cta--orange::before {
+  border-color: rgba(232, 119, 46, 0.5);
+}
+.btn-cta--blue::before {
+  border-color: rgba(30, 111, 159, 0.5);
+}
+
+@keyframes ctaPulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: scale(1.08);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 0.6;
+  }
+}
+.btn-cta:hover {
+  transform: translateY(-2px);
+  color: #fff;
+}
+.btn-cta--orange {
+  background: #e8772e;
+  color: #fff;
+}
+.btn-cta--orange:hover {
+  background: #d1651f;
+  box-shadow: 0 6px 20px rgba(232, 119, 46, 0.35);
+}
+.btn-cta--blue {
+  background: #1e6f9f;
+  color: #fff;
+}
+.btn-cta--blue:hover {
+  background: #155780;
+  box-shadow: 0 6px 20px rgba(30, 111, 159, 0.35);
+}
+
+/* ============================================
    HERO LAYOUT 60% TEXTO / 40% IMAGEM
    ============================================ */
 
