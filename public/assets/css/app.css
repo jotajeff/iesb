@@ -439,6 +439,107 @@ a {
 }
 
 /* ============================================
+   HERO — CAROUSEL HOME
+   ============================================ */
+.hero-carousel {
+  position: relative;
+  min-height: 70vh;
+  max-height: 85vh;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: #2a2b2a;
+}
+.hero-carousel-bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(42, 43, 42, 0.92) 0%,
+    rgba(77, 79, 78, 0.8) 50%,
+    rgba(42, 43, 42, 0.9) 100%
+  );
+}
+.hero-carousel-inner {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+.hero-carousel-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+.hero-carousel-header .hero-badge {
+  background: rgba(239, 192, 43, 0.2);
+  border-color: rgba(239, 192, 43, 0.35);
+  color: var(--primary);
+  margin-bottom: 0.6rem;
+  transform: none;
+}
+.hero-carousel-header .hero-title {
+  color: #e5e5d9;
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  font-weight: 700;
+  max-width: 700px;
+  margin: 0 auto;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+.hero-carousel-slider {
+  max-width: 640px;
+  margin: 0 auto;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+}
+.hero-carousel-slider .carousel-item img {
+  width: 100%;
+  height: auto;
+  max-height: 55vh;
+  object-fit: cover;
+  display: block;
+}
+.hero-carousel-slider .carousel-control-prev,
+.hero-carousel-slider .carousel-control-next {
+  z-index: 3;
+}
+.hero-carousel-slider .carousel-indicators {
+  bottom: 10px;
+  z-index: 3;
+}
+.hero-carousel-slider .carousel-indicators button {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 1px solid rgba(229, 229, 217, 0.4);
+  background: transparent;
+}
+.hero-carousel-slider .carousel-indicators button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+@media (max-width: 767.98px) {
+  .hero-carousel {
+    min-height: 50vh;
+    max-height: 70vh;
+  }
+  .hero-carousel-header {
+    margin-bottom: 1rem;
+  }
+  .hero-carousel-header .hero-title {
+    font-size: 1.1rem;
+  }
+  .hero-carousel-slider {
+    max-width: 100%;
+    border-radius: 8px;
+  }
+  .hero-carousel-slider .carousel-item img {
+    max-height: 40vh;
+  }
+}
+
+/* ============================================
    HERO LAYOUT 60% TEXTO / 40% IMAGEM
    ============================================ */
 

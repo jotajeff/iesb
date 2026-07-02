@@ -101,7 +101,7 @@
                               $imagem = trim((string) ($item['imagem'] ?? ''));
                               $carouselLink = trim((string) ($carousel['link'] ?? ''));
                               $link = $carouselLink !== '' ? $carouselLink : trim((string) ($item['link'] ?? ''));
-                              $target = trim((string) ($item['target'] ?? '_blank'));
+                              $target = '_blank';
                               ?>
                               <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
                                 <?php if ($link !== ''): ?>
@@ -113,7 +113,6 @@
                                     class="carousel-img-instagram"
                                     alt="<?= htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                                   <?php if ($link !== ''): ?>
-
                                   </a>
                                 <?php endif; ?>
                               </div>
