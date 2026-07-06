@@ -49,7 +49,7 @@ final class AuthService
     public function alunoLogin(string $email, string $password): bool
     {
         $repo = new \App\Repositories\AlunoRepository();
-        $aluno = $repo->findAlunoByEmail($email);
+        $aluno = $repo->findByEmail($email);
 
         if ($aluno === null) {
             return false;
