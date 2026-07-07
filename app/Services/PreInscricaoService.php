@@ -18,8 +18,23 @@ final class PreInscricaoService
         return $this->repository->listar('recebido');
     }
 
+    public function listarTodos(): array
+    {
+        return $this->repository->listarTodos();
+    }
+
     public function salvar(array $data): int
     {
         return $this->repository->salvar($data);
+    }
+
+    public function findById(int $id): ?array
+    {
+        return $this->repository->findById($id);
+    }
+
+    public function atualizarSituacao(int $id, string $situacao): bool
+    {
+        return $this->repository->atualizarSituacao($id, $situacao);
     }
 }

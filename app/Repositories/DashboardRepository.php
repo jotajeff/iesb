@@ -17,6 +17,7 @@ final class DashboardRepository
                 'total_alunos' => 0,
                 'total_cursos' => 0,
                 'total_matriculas' => 0,
+                'total_pre_inscricoes' => 0,
             ];
         }
 
@@ -25,6 +26,7 @@ final class DashboardRepository
                 'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos'),
                 'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos_iesb'),
                 'total_matriculas' => $this->count($pdo, 'SELECT COUNT(*) FROM matriculas'),
+                'total_pre_inscricoes' => $this->count($pdo, "SELECT COUNT(*) FROM pre_inscricao WHERE situacao = 'recebido'"),
             ];
         }
 

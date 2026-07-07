@@ -7,7 +7,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Services\ConfigService;
 use App\Services\CursoService;
-use App\Services\EmailService;
+use App\Services\LogService;
 use App\Services\PreInscricaoService;
 use App\Support\Session;
 
@@ -169,7 +169,7 @@ final class PageController extends Controller
         $cursoNome = $this->getCursoNome($cursoId);
 
         $preService = new PreInscricaoService();
-        $preService->salvar([
+        $id = $preService->salvar([
             'nome' => $nome,
             'email' => $email,
             'whatsapp' => $whatsapp,
@@ -177,27 +177,14 @@ final class PageController extends Controller
             'curso_id' => $cursoId,
         ]);
 
-        $emailService = new EmailService();
-
-        if (!$emailService->isConfigured()) {
-            $this->render('pages/pre-inscricao', [
-                'title' => 'Pré-inscrição',
-                'currentRoute' => '/pre-inscricao',
-                'enviado' => false,
-                'erro' => 'Serviço de e-mail indisponível no momento. Tente novamente mais tarde.',
-                'cursoNome' => $cursoNome,
-                'cursoId' => $cursoId,
-            ]);
-            return;
+        if ($id > 0) {
+            (new LogService())->log('criar', 'pre_inscricao', $id, 'Pré-inscrição recebida: ' . $nome);
         }
-
-        $enviado = $emailService->enviarPreInscricao($nome, $email, $whatsapp, $cursoNome);
 
         $this->render('pages/pre-inscricao', [
             'title' => 'Pré-inscrição',
             'currentRoute' => '/pre-inscricao',
-            'enviado' => $enviado,
-            'erro' => $enviado ? null : 'Erro ao enviar. Tente novamente.',
+            'enviado' => true,
             'cursoNome' => $cursoNome,
             'cursoId' => $cursoId,
         ]);

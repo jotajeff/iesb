@@ -31,6 +31,65 @@ $dashboardTypeLabel = match ($dashboardType) {
   </div>
 
   <div class="row g-3 mb-4">
+    <div class="col-md-3">
+      <div class="dashboard-task-card task-card-alunos h-100">
+        <div class="task-card-top">
+          <div>
+            <small class="task-card-label">Total de Alunos</small>
+            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_alunos'] ?? 0) ?></h2>
+          </div>
+          <div class="task-card-icon task-card-icon-alunos">
+            <i class="bi bi-people-fill"></i>
+          </div>
+        </div>
+        <div class="task-card-footer">Base de alunos cadastrados</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="dashboard-task-card task-card-cursos h-100">
+        <div class="task-card-top">
+          <div>
+            <small class="task-card-label">Total de Cursos</small>
+            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_cursos'] ?? 0) ?></h2>
+          </div>
+          <div class="task-card-icon task-card-icon-cursos">
+            <i class="bi bi-book-fill"></i>
+          </div>
+        </div>
+        <div class="task-card-footer">Ofertas disponíveis</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="dashboard-task-card task-card-matriculas h-100">
+        <div class="task-card-top">
+          <div>
+            <small class="task-card-label">Total de Matrículas</small>
+            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_matriculas'] ?? 0) ?></h2>
+          </div>
+          <div class="task-card-icon task-card-icon-matriculas">
+            <i class="bi bi-card-checklist"></i>
+          </div>
+        </div>
+        <div class="task-card-footer">Matrículas realizadas</div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="dashboard-task-card task-card-preinscricao h-100">
+        <div class="task-card-top">
+          <div>
+            <small class="task-card-label">Pré-inscrições</small>
+            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_pre_inscricoes'] ?? 0) ?></h2>
+          </div>
+          <div class="task-card-icon task-card-icon-preinscricao">
+            <i class="bi bi-inbox-fill"></i>
+          </div>
+        </div>
+        <div class="task-card-footer">Aguardando contato</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row g-3 mb-4">
     <div class="col-md-4">
       <div class="dashboard-task-card task-card-tarefa h-100">
         <div class="task-card-top">
@@ -71,27 +130,6 @@ $dashboardTypeLabel = match ($dashboardType) {
           </div>
         </div>
         <div class="task-card-footer">Concluídas e prontas</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="row g-3 mb-4">
-    <div class="col-md-4">
-      <div class="p-3 bg-white border rounded-3 shadow-sm">
-        <small class="text-muted">Total de Alunos</small>
-        <h2 class="mb-0"><?= (int) ($indicators['total_alunos'] ?? 0) ?></h2>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="p-3 bg-white border rounded-3 shadow-sm">
-        <small class="text-muted">Total de Cursos</small>
-        <h2 class="mb-0"><?= (int) ($indicators['total_cursos'] ?? 0) ?></h2>
-      </div>
-    </div>
-    <div class="col-md-4">
-      <div class="p-3 bg-white border rounded-3 shadow-sm">
-        <small class="text-muted">Total de Matrículas</small>
-        <h2 class="mb-0"><?= (int) ($indicators['total_matriculas'] ?? 0) ?></h2>
       </div>
     </div>
   </div>
@@ -137,6 +175,22 @@ $dashboardTypeLabel = match ($dashboardType) {
 
 .task-card-finalizado::before {
   background: var(--success, #198754);
+}
+
+.task-card-alunos::before {
+  background: var(--info, #0dcaf0);
+}
+
+.task-card-cursos::before {
+  background: var(--purple, #6f42c1);
+}
+
+.task-card-matriculas::before {
+  background: var(--orange, #fd7e14);
+}
+
+.task-card-preinscricao::before {
+  background: var(--pink, #d63384);
 }
 
 .task-card-top {
@@ -186,6 +240,22 @@ $dashboardTypeLabel = match ($dashboardType) {
 
 .task-card-icon-finalizado {
   background: linear-gradient(135deg, #198754, #5dd39e);
+}
+
+.task-card-icon-alunos {
+  background: linear-gradient(135deg, #0dcaf0, #6edff7);
+}
+
+.task-card-icon-cursos {
+  background: linear-gradient(135deg, #6f42c1, #b197fc);
+}
+
+.task-card-icon-matriculas {
+  background: linear-gradient(135deg, #fd7e14, #ffb067);
+}
+
+.task-card-icon-preinscricao {
+  background: linear-gradient(135deg, #d63384, #e599c4);
 }
 
 .task-card-footer {

@@ -138,6 +138,10 @@ return static function (Router $router): void {
     $router->post('/admin/config/noticias/deletar', [NoticiaController::class, 'deletar']);
 
     $router->get('/admin/preinscricao', [PreInscricaoController::class, 'index']);
+    $router->get('/admin/preinscricao/kanban', [PreInscricaoController::class, 'kanban']);
+    $router->get('/admin/preinscricao/detalhe', [PreInscricaoController::class, 'detalhe']);
+    $router->post('/admin/preinscricao/comentario', [PreInscricaoController::class, 'comentario']);
+    $router->post('/admin/preinscricao/atualizar-situacao', [PreInscricaoController::class, 'atualizarSituacao']);
 
     $router->get('/admin/config/categoria', [ConfigController::class, 'categoria']);
     $router->get('/admin/config/categoria/edit', [ConfigController::class, 'editCategoria']);

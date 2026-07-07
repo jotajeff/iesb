@@ -2,6 +2,7 @@
   <div class="bg-white border rounded-3 p-4 shadow-sm">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h4 class="mb-0"><i class="bi bi-inbox me-2"></i>Pré-inscrições</h4>
+      <a class="btn btn-outline-secondary btn-sm" href="/admin/preinscricao/kanban"><i class="bi bi-kanban me-1"></i>Visão em quadro</a>
     </div>
 
     <?php if (!empty($flash ?? '')): ?>
@@ -24,22 +25,32 @@
         </thead>
         <tbody>
           <?php if (empty($preInscricoes ?? [])): ?>
-            <tr><td colspan="8" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhuma pré-inscrição recebida.</td></tr>
+            <tr><td colspan="8" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhuma pré-inscrição encontrada.</td></tr>
           <?php else: ?>
             <?php foreach ($preInscricoes as $p): ?>
               <?php
               $criadoEm = (string) ($p['criado_em'] ?? '');
               $dt = $criadoEm !== '' ? \DateTime::createFromFormat('Y-m-d H:i:s', $criadoEm) : false;
+              $sit = (string) ($p['situacao'] ?? 'recebido');
+              $sitClass = match ($sit) {
+                'recebido' => 'bg-warning text-dark',
+                'atendimento' => 'bg-info text-dark',
+                'finalizado' => 'bg-success text-white',
+                default => 'bg-secondary text-white',
+              };
               ?>
               <tr>
-                <td><?= (int) ($p['id'] ?? 0) ?></td>
-                <td><?= htmlspecialchars((string) ($p['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><a href="/admin/preinscricao/detalhe?id=<?= (int) ($p['id'] ?? 0) ?>" class="text-decoration-none">#<?= (int) ($p['id'] ?? 0) ?></a></td>
+                <td><a href="/admin/preinscricao/detalhe?id=<?= (int) ($p['id'] ?? 0) ?>" class="text-decoration-none fw-semibold"><?= htmlspecialchars((string) ($p['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></a></td>
                 <td><?= htmlspecialchars((string) ($p['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($p['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($p['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td class="small"><?= (string) ($p['bandeira'] ?? '') ?> <?= htmlspecialchars((string) ($p['cidade'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>, <?= htmlspecialchars((string) ($p['pais'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= $dt ? $dt->format('d/m/Y H:i') : ($criadoEm ?: '-') ?></td>
-                <td><span class="badge bg-warning text-dark"><?= htmlspecialchars((string) ($p['situacao'] ?? 'recebido'), ENT_QUOTES, 'UTF-8') ?></span></td>
+                <td>
+                  <span class="badge <?= $sitClass ?> situacao-badge" data-id="<?= (int) ($p['id'] ?? 0) ?>" data-situacao="<?= $sit ?>"><?= htmlspecialchars($sit, ENT_QUOTES, 'UTF-8') ?></span>
+                  <button class="btn btn-sm btn-outline-secondary border-0 ms-1 editar-situacao-btn" data-id="<?= (int) ($p['id'] ?? 0) ?>" data-situacao="<?= $sit ?>" data-nome="<?= htmlspecialchars((string) ($p['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" title="Alterar situação"><i class="bi bi-pencil"></i></button>
+                </td>
               </tr>
             <?php endforeach; ?>
           <?php endif; ?>
@@ -48,3 +59,88 @@
     </div>
   </div>
 </section>
+
+<div class="modal fade" id="modalSituacao" tabindex="-1">
+  <div class="modal-dialog modal-sm modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h6 class="modal-title"><i class="bi bi-pencil me-1"></i>Alterar situação</h6>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="fecharModal()"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3" id="modalSituacaoNome"></p>
+        <div class="d-grid gap-2">
+          <button class="btn btn-warning text-dark opcao-situacao" data-valor="recebido">Recebido</button>
+          <button class="btn btn-info text-dark opcao-situacao" data-valor="atendimento">Atendimento</button>
+          <button class="btn btn-success opcao-situacao" data-valor="finalizado">Finalizado</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var situacaoEditandoId = null;
+var situacaoEditandoBadge = null;
+
+function abrirModal(id, badge, nome) {
+  situacaoEditandoId = id;
+  situacaoEditandoBadge = badge;
+  document.getElementById('modalSituacaoNome').textContent = nome;
+  document.getElementById('modalSituacao').classList.add('show');
+  document.getElementById('modalSituacao').style.display = 'block';
+  document.body.classList.add('modal-open');
+}
+
+function fecharModal() {
+  document.getElementById('modalSituacao').classList.remove('show');
+  document.getElementById('modalSituacao').style.display = '';
+  document.body.classList.remove('modal-open');
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.editar-situacao-btn').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      abrirModal(this.dataset.id, this.closest('td').querySelector('.situacao-badge'), this.dataset.nome);
+    });
+  });
+
+  document.querySelectorAll('.opcao-situacao').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var situacao = this.dataset.valor;
+      var formData = new FormData();
+      formData.append('id', situacaoEditandoId);
+      formData.append('situacao', situacao);
+
+      fetch('/admin/preinscricao/atualizar-situacao', {
+        method: 'POST',
+        body: formData,
+      }).then(function(r) { return r.json(); }).then(function(data) {
+        if (data.sucesso) {
+          var classes = {
+            recebido: 'bg-warning text-dark',
+            atendimento: 'bg-info text-dark',
+            finalizado: 'bg-success text-white',
+          };
+          situacaoEditandoBadge.className = 'badge ' + (classes[situacao] || 'bg-secondary text-white') + ' situacao-badge';
+          situacaoEditandoBadge.textContent = situacao;
+          situacaoEditandoBadge.dataset.situacao = situacao;
+        }
+      }).catch(function() {
+        alert('Erro ao atualizar situação.');
+      });
+
+      fecharModal();
+    });
+  });
+
+  document.getElementById('modalSituacao').addEventListener('click', function(e) {
+    if (e.target === this) fecharModal();
+  });
+});
+</script>
+
+<style>
+#modalSituacao { background: rgba(0,0,0,.5); }
+#modalSituacao.show { display: block; }
+</style>
