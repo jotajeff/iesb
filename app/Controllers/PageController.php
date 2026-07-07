@@ -7,6 +7,8 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Services\ConfigService;
 use App\Services\CursoService;
+use App\Services\EmailService;
+use App\Services\PreInscricaoService;
 use App\Support\Session;
 
 final class PageController extends Controller
@@ -118,5 +120,95 @@ final class PageController extends Controller
     public function privacidade(): void
     {
         $this->render('pages/privacidade', ['title' => 'Política de Privacidade', 'currentRoute' => '/privacidade']);
+    }
+
+    public function preInscricao(): void
+    {
+        $cursoId = (int) ($_GET['curso_id'] ?? 0);
+        $cursoNome = '';
+
+        if ($cursoId > 0) {
+            $curso = $this->cursoService->findCurso($cursoId);
+            if ($curso) {
+                $cursoNome = (string) ($curso['nome'] ?? '');
+            }
+        }
+
+        $this->render('pages/pre-inscricao', [
+            'title' => 'Pré-inscrição',
+            'currentRoute' => '/pre-inscricao',
+            'enviado' => false,
+            'cursoNome' => $cursoNome,
+            'cursoId' => $cursoId,
+        ]);
+    }
+
+    public function enviarPreInscricao(): void
+    {
+        $nome = trim((string) $this->input('nome', ''));
+        $email = trim((string) $this->input('email', ''));
+        $whatsapp = trim((string) $this->input('whatsapp', ''));
+        $cursoId = (int) $this->input('curso_id', 0);
+        $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+
+        if ($nome === '' || $email === '' || $whatsapp === '') {
+            $this->render('pages/pre-inscricao', [
+                'title' => 'Pré-inscrição',
+                'currentRoute' => '/pre-inscricao',
+                'enviado' => false,
+                'erro' => 'Preencha todos os campos.',
+                'nome' => $nome,
+                'email' => $email,
+                'whatsapp' => $whatsapp,
+                'cursoNome' => $this->getCursoNome($cursoId),
+                'cursoId' => $cursoId,
+            ]);
+            return;
+        }
+
+        $cursoNome = $this->getCursoNome($cursoId);
+
+        $preService = new PreInscricaoService();
+        $preService->salvar([
+            'nome' => $nome,
+            'email' => $email,
+            'whatsapp' => $whatsapp,
+            'ip' => $ip,
+            'curso_id' => $cursoId,
+        ]);
+
+        $emailService = new EmailService();
+
+        if (!$emailService->isConfigured()) {
+            $this->render('pages/pre-inscricao', [
+                'title' => 'Pré-inscrição',
+                'currentRoute' => '/pre-inscricao',
+                'enviado' => false,
+                'erro' => 'Serviço de e-mail indisponível no momento. Tente novamente mais tarde.',
+                'cursoNome' => $cursoNome,
+                'cursoId' => $cursoId,
+            ]);
+            return;
+        }
+
+        $enviado = $emailService->enviarPreInscricao($nome, $email, $whatsapp, $cursoNome);
+
+        $this->render('pages/pre-inscricao', [
+            'title' => 'Pré-inscrição',
+            'currentRoute' => '/pre-inscricao',
+            'enviado' => $enviado,
+            'erro' => $enviado ? null : 'Erro ao enviar. Tente novamente.',
+            'cursoNome' => $cursoNome,
+            'cursoId' => $cursoId,
+        ]);
+    }
+
+    private function getCursoNome(int $cursoId): string
+    {
+        if ($cursoId < 1) {
+            return '';
+        }
+        $curso = $this->cursoService->findCurso($cursoId);
+        return $curso ? (string) ($curso['nome'] ?? '') : '';
     }
 }

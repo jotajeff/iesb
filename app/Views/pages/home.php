@@ -1,95 +1,69 @@
               <!-- ==================== HERO CAROUSEL ==================== -->
-              <?php if (!empty($carousels)): ?>
-                <?php foreach ($carousels as $carouselData): ?>
-                  <?php
-                  $carousel = $carouselData['carousel'];
-                  $carouselItems = $carouselData['items'];
-                  $carouselId = 'carousel-' . ((int) ($carousel['id'] ?? 0));
-                  $carouselTitulo = htmlspecialchars((string) ($carousel['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
-                  $carouselDescricao = (string) ($carousel['descricao'] ?? '');
-                  ?>
-                  <section class="hero-carousel" id="<?= $carouselId ?>">
-                    <div class="hero-carousel-bg"></div>
-                    <div class="hero-bubbles" aria-hidden="true">
-                      <span class="hero-bubble hero-bubble-1"></span>
-                      <span class="hero-bubble hero-bubble-2"></span>
-                      <span class="hero-bubble hero-bubble-3"></span>
-                      <span class="hero-bubble hero-bubble-4"></span>
-                    </div>
+              <?php if (!empty($carouselItems)): ?>
+                <?php
+                $carouselId = 'hero-carousel-items';
+                ?>
+                <section class="hero-carousel" id="<?= $carouselId ?>">
+                  <div class="hero-carousel-bg"></div>
+                  <div class="hero-bubbles" aria-hidden="true">
+                    <span class="hero-bubble hero-bubble-1"></span>
+                    <span class="hero-bubble hero-bubble-2"></span>
+                    <span class="hero-bubble hero-bubble-3"></span>
+                    <span class="hero-bubble hero-bubble-4"></span>
+                  </div>
 
-                    <div class="hero-carousel-inner">
-                      <div class="container">
-                        <div class="hero-carousel-header">
-                          <div class="hero-badge"><i class="bi bi-star-fill"></i> Destaque</div>
-                          <h1 class="hero-title"><?= $carouselTitulo ?></h1>
-                        </div>
+                  <div class="hero-carousel-inner">
+                    <div class="container">
 
-                        <?php if (!empty($carouselItems)): ?>
-                          <div class="hero-carousel-slider">
-                            <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
-                              <div class="carousel-indicators">
-                                <?php foreach ($carouselItems as $idx => $item): ?>
-                                  <button type="button"
-                                    data-bs-target="#<?= $carouselId ?>Slider"
-                                    data-bs-slide-to="<?= $idx ?>"
-                                    class="<?= $idx === 0 ? 'active' : '' ?>"
-                                    aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
-                                    aria-label="Slide <?= $idx + 1 ?>"></button>
-                                <?php endforeach; ?>
-                              </div>
-                              <div class="carousel-inner">
-                                <?php foreach ($carouselItems as $idx => $item): ?>
-                                  <?php
-                                  $imagem = trim((string) ($item['imagem'] ?? ''));
-                                  $carouselLink = trim((string) ($carousel['link'] ?? ''));
-                                  $link = $carouselLink !== '' ? $carouselLink : trim((string) ($item['link'] ?? ''));
-                                  ?>
-                                  <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
-                                    <?php if ($link !== ''): ?>
-                                      <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8') ?>"
-                                        target="_blank" rel="noopener noreferrer">
-                                    <?php endif; ?>
-                                      <img src="/<?= htmlspecialchars($imagem, ENT_QUOTES, 'UTF-8') ?>"
-                                        alt="<?= htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
-                                    <?php if ($link !== ''): ?>
-                                      </a>
-                                    <?php endif; ?>
-                                  </div>
-                                <?php endforeach; ?>
-                              </div>
-                              <button class="carousel-control-prev" type="button"
-                                data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="prev">
-                                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Anterior</span>
-                              </button>
-                              <button class="carousel-control-next" type="button"
-                                data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="next">
-                                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                                <span class="visually-hidden">Próximo</span>
-                              </button>
-                            </div>
+                      <div class="hero-carousel-slider">
+                        <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+                          <div class="carousel-indicators">
+                            <?php foreach ($carouselItems as $idx => $item): ?>
+                              <button type="button"
+                                data-bs-target="#<?= $carouselId ?>Slider"
+                                data-bs-slide-to="<?= $idx ?>"
+                                class="<?= $idx === 0 ? 'active' : '' ?>"
+                                aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
+                                aria-label="Slide <?= $idx + 1 ?>"></button>
+                            <?php endforeach; ?>
                           </div>
-                        <?php endif; ?>
+                          <div class="carousel-inner">
+                            <?php foreach ($carouselItems as $idx => $item): ?>
+                              <?php
+                              $imagem = trim((string) ($item['imagem'] ?? ''));
+                              $link = trim((string) ($item['link'] ?? ''));
+                              $titulo = htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
+                              $target = trim((string) ($item['target'] ?? '_blank'));
+                              ?>
+                              <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                                <?php if ($link !== ''): ?>
+                                  <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8') ?>"
+                                    target="<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>" rel="noopener noreferrer">
+                                <?php endif; ?>
+                                  <img src="/<?= htmlspecialchars($imagem, ENT_QUOTES, 'UTF-8') ?>"
+                                    alt="<?= $titulo ?>">
+                                <?php if ($link !== ''): ?>
+                                  </a>
+                                <?php endif; ?>
+                              </div>
+                            <?php endforeach; ?>
+                          </div>
+                          <button class="carousel-control-prev" type="button"
+                            data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                          </button>
+                          <button class="carousel-control-next" type="button"
+                            data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Próximo</span>
+                          </button>
+                        </div>
                       </div>
                     </div>
-                  </section>
-                <?php endforeach; ?>
-              <?php endif; ?>
-
-              <!-- ==================== CTA BUTTONS ==================== -->
-              <section class="hero-cta">
-                <div class="container">
-                  <div class="hero-cta-buttons">
-                    <a href="/cursos?nivel=graduacao" class="btn-cta btn-cta--orange">
-                      <i class="bi bi-info-circle"></i> Mais detalhes
-                    </a>
-                    <a href="https://faculdadesaomarcos.com.br/inscreva-se/"
-                      target="_blank" rel="noopener noreferrer" class="btn-cta btn-cta--blue">
-                      <i class="bi bi-pencil-square"></i> Inscreva-se Já!
-                    </a>
                   </div>
-                </div>
-              </section>
+                </section>
+              <?php endif; ?>
 
               <!-- ==================== COURSES ==================== -->
               <section id="cursos">
@@ -133,7 +107,7 @@
                         $delay = 100 + ($index % 3) * 100;
                         $isConfirmed = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S';
                         ?>
-                        <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
+                        <div class="col-lg-6 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
                           <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">
                             <div class="course-card-image">
                               <?php if ($courseImage !== ''): ?>

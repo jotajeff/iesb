@@ -120,4 +120,60 @@ HTML;
             return false;
         }
     }
+
+    public function enviarPreInscricao(string $nome, string $email, string $whatsapp, string $cursoNome = ''): bool
+    {
+        try {
+            $this->mail->addAddress('direcao@inteligenciasouzabrazil.com', 'Direção IESB');
+            $this->mail->addReplyTo($email, $nome);
+            $this->mail->isHTML(true);
+            $this->mail->Subject = 'Pré-inscrição - IESB';
+
+            $cursoRow = $cursoNome !== ''
+                ? '<tr><td style="font-weight: 700;">Curso:</td><td>' . htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') . '</td></tr>'
+                : '';
+
+            $this->mail->Body = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background: #f4f4f4; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="background: #efc02b; padding: 30px; text-align: center;">
+              <h1 style="color: #4d4f4e; margin: 0; font-size: 24px;">IESB - Pré-inscrição</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px;">
+              <p style="font-size: 16px; color: #333;">Nova pré-inscrição recebida:</p>
+              <table width="100%" cellpadding="8" style="font-size: 15px; color: #333;">
+                <tr><td style="font-weight: 700; width: 100px;">Nome:</td><td>{$nome}</td></tr>
+                <tr><td style="font-weight: 700;">E-mail:</td><td>{$email}</td></tr>
+                <tr><td style="font-weight: 700;">WhatsApp:</td><td>{$whatsapp}</td></tr>
+                {$cursoRow}
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+HTML;
+
+            $cursoAlt = $cursoNome !== '' ? "\nCurso: {$cursoNome}" : '';
+$this->mail->AltBody = "Nova pré-inscrição\n\nNome: {$nome}\nE-mail: {$email}\nWhatsApp: {$whatsapp}{$cursoAlt}";
+
+            $this->mail->send();
+            return true;
+        } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
 }

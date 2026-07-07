@@ -33,6 +33,21 @@ final class CarouselService
         return $this->repository->findItemsByCarouselId($idCarousel);
     }
 
+    public function allItemsAtivos(): array
+    {
+        return $this->repository->listAllItemsAtivos();
+    }
+
+    public function allItems(): array
+    {
+        return $this->repository->listAllItems();
+    }
+
+    public function findItem(int $id): ?array
+    {
+        return $this->repository->findItemById($id);
+    }
+
     public function saveCarousel(array $data): int
     {
         return $this->repository->save($data);

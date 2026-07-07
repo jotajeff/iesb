@@ -486,7 +486,7 @@ a {
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 .hero-carousel-slider {
-  max-width: 640px;
+  max-width: 900px;
   margin: 0 auto;
   border-radius: 12px;
   overflow: hidden;
@@ -495,8 +495,6 @@ a {
 .hero-carousel-slider .carousel-item img {
   width: 100%;
   height: auto;
-  max-height: 55vh;
-  object-fit: cover;
   display: block;
 }
 .hero-carousel-slider .carousel-control-prev,
@@ -938,7 +936,7 @@ section {
   animation: confirmedPulse 3.2s ease-out infinite;
 }
 .course-card-image {
-  height: 200px;
+  height: 280px;
   position: relative;
   overflow: hidden;
 }

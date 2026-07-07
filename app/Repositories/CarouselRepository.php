@@ -9,6 +9,75 @@ use PDO;
 
 final class CarouselRepository
 {
+    public function listAllItemsAtivos(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT ci.id, ci.id_carousel, ci.titulo, ci.subtitulo, ci.imagem, ci.link,
+                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.criado_em
+                    FROM carousel_item ci
+                    WHERE ci.ativo = :ativo
+                    ORDER BY ci.ordem ASC, ci.id ASC';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':ativo', 'S');
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CAROUSEL] Erro ao listar itens ativos: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listAllItems(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT ci.id, ci.id_carousel, ci.titulo, ci.subtitulo, ci.imagem, ci.link,
+                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.criado_em
+                    FROM carousel_item ci
+                    ORDER BY ci.ordem ASC, ci.id DESC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CAROUSEL] Erro ao listar itens: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function findItemById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $sql = 'SELECT ci.id, ci.id_carousel, ci.titulo, ci.subtitulo, ci.imagem, ci.link,
+                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.criado_em
+                    FROM carousel_item ci
+                    WHERE ci.id = :id
+                    LIMIT 1';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[CAROUSEL] Erro ao buscar item: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function list(): array
     {
         $pdo = Database::connection();

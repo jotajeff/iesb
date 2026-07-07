@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 23/06/2026 às 16:33
+-- Tempo de geração: 06/07/2026 às 22:16
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -364,6 +364,24 @@ CREATE TABLE `paginas` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `pre_inscricao`
+--
+
+CREATE TABLE `pre_inscricao` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `email` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `telefone` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `whatsapp` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `ip` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `curso_id` int(11) DEFAULT NULL,
+  `situacao` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'recebido',
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `segmento`
 --
 
@@ -642,6 +660,12 @@ ALTER TABLE `paginas`
   ADD KEY `idx_paginas_nome` (`nome`);
 
 --
+-- Índices de tabela `pre_inscricao`
+--
+ALTER TABLE `pre_inscricao`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `segmento`
 --
 ALTER TABLE `segmento`
@@ -823,6 +847,12 @@ ALTER TABLE `noticia`
 --
 ALTER TABLE `paginas`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `pre_inscricao`
+--
+ALTER TABLE `pre_inscricao`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `segmento`

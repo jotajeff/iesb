@@ -12,6 +12,7 @@ use App\Controllers\Admin\ProfessorController;
 use App\Controllers\Admin\UsuarioController;
 use App\Controllers\Admin\VisitaController;
 use App\Controllers\Admin\NoticiaController;
+use App\Controllers\Admin\PreInscricaoController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -26,6 +27,8 @@ return static function (Router $router): void {
     $router->get('/eventos', [PageController::class, 'eventos']);
     $router->get('/parcerias', [PageController::class, 'parcerias']);
     $router->get('/privacidade', [PageController::class, 'privacidade']);
+    $router->get('/pre-inscricao', [PageController::class, 'preInscricao']);
+    $router->post('/pre-inscricao', [PageController::class, 'enviarPreInscricao']);
 
     $router->get('/admin/login', [AuthController::class, 'adminLoginForm']);
     $router->post('/admin/login', [AuthController::class, 'adminLogin']);
@@ -127,13 +130,14 @@ return static function (Router $router): void {
     $router->get('/admin/config/carousel', [ConfigController::class, 'carousel']);
     $router->get('/admin/config/carousel/editar', [ConfigController::class, 'editCarousel']);
     $router->post('/admin/config/carousel/salvar', [ConfigController::class, 'updateCarousel']);
-    $router->post('/admin/config/carousel/item/upload', [ConfigController::class, 'uploadCarouselItem']);
-    $router->post('/admin/config/carousel/item/deletar', [ConfigController::class, 'deleteCarouselItem']);
+    $router->post('/admin/config/carousel/deletar', [ConfigController::class, 'deleteCarouselItem']);
 
     $router->get('/admin/config/noticias', [NoticiaController::class, 'index']);
     $router->get('/admin/config/noticias/editar', [NoticiaController::class, 'editar']);
     $router->post('/admin/config/noticias/salvar', [NoticiaController::class, 'salvar']);
     $router->post('/admin/config/noticias/deletar', [NoticiaController::class, 'deletar']);
+
+    $router->get('/admin/preinscricao', [PreInscricaoController::class, 'index']);
 
     $router->get('/admin/config/categoria', [ConfigController::class, 'categoria']);
     $router->get('/admin/config/categoria/edit', [ConfigController::class, 'editCategoria']);
