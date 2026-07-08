@@ -32,6 +32,20 @@ $dashboardTypeLabel = match ($dashboardType) {
 
   <div class="row g-3 mb-4">
     <div class="col-md-3">
+      <div class="dashboard-task-card task-card-preinscricao h-100">
+        <div class="task-card-top">
+          <div>
+            <small class="task-card-label">Pré-inscrições</small>
+            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_pre_inscricoes'] ?? 0) ?></h2>
+          </div>
+          <div class="task-card-icon task-card-icon-preinscricao">
+            <i class="bi bi-inbox-fill"></i>
+          </div>
+        </div>
+        <div class="task-card-footer">Aguardando contato</div>
+      </div>
+    </div>
+    <div class="col-md-3">
       <div class="dashboard-task-card task-card-alunos h-100">
         <div class="task-card-top">
           <div>
@@ -71,20 +85,6 @@ $dashboardTypeLabel = match ($dashboardType) {
           </div>
         </div>
         <div class="task-card-footer">Matrículas realizadas</div>
-      </div>
-    </div>
-    <div class="col-md-3">
-      <div class="dashboard-task-card task-card-preinscricao h-100">
-        <div class="task-card-top">
-          <div>
-            <small class="task-card-label">Pré-inscrições</small>
-            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_pre_inscricoes'] ?? 0) ?></h2>
-          </div>
-          <div class="task-card-icon task-card-icon-preinscricao">
-            <i class="bi bi-inbox-fill"></i>
-          </div>
-        </div>
-        <div class="task-card-footer">Aguardando contato</div>
       </div>
     </div>
   </div>

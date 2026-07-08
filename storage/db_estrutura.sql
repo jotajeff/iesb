@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 06/07/2026 às 22:16
+-- Tempo de geração: 07/07/2026 às 21:38
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -220,6 +220,22 @@ CREATE TABLE `endereco` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `imagem`
+--
+
+CREATE TABLE `imagem` (
+  `id` int(11) NOT NULL,
+  `path` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `legenda` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `id_fk` int(11) NOT NULL,
+  `tabela_fk` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `ativa` tinyint(1) DEFAULT '1',
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `instituicao`
 --
 
@@ -375,7 +391,7 @@ CREATE TABLE `pre_inscricao` (
   `whatsapp` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
   `ip` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,
   `curso_id` int(11) DEFAULT NULL,
-  `situacao` varchar(10) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'recebido',
+  `situacao` varchar(15) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'recebido',
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
@@ -389,6 +405,24 @@ CREATE TABLE `segmento` (
   `id` int(11) NOT NULL,
   `nome` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `ativo` char(1) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'S'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `sessao`
+--
+
+CREATE TABLE `sessao` (
+  `id` int(11) NOT NULL,
+  `slug` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `badge` varchar(50) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `apresenta` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `banner` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `titulo` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `texto` text COLLATE utf8_unicode_ci,
+  `midia` tinyint(4) DEFAULT NULL,
+  `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -597,6 +631,12 @@ ALTER TABLE `endereco`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `imagem`
+--
+ALTER TABLE `imagem`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `instituicao`
 --
 ALTER TABLE `instituicao`
@@ -669,6 +709,12 @@ ALTER TABLE `pre_inscricao`
 -- Índices de tabela `segmento`
 --
 ALTER TABLE `segmento`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `sessao`
+--
+ALTER TABLE `sessao`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -801,6 +847,12 @@ ALTER TABLE `endereco`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `imagem`
+--
+ALTER TABLE `imagem`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `instituicao`
 --
 ALTER TABLE `instituicao`
@@ -858,6 +910,12 @@ ALTER TABLE `pre_inscricao`
 -- AUTO_INCREMENT de tabela `segmento`
 --
 ALTER TABLE `segmento`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `sessao`
+--
+ALTER TABLE `sessao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --

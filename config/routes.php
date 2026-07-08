@@ -13,6 +13,7 @@ use App\Controllers\Admin\UsuarioController;
 use App\Controllers\Admin\VisitaController;
 use App\Controllers\Admin\NoticiaController;
 use App\Controllers\Admin\PreInscricaoController;
+use App\Controllers\Admin\SessaoController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -142,6 +143,14 @@ return static function (Router $router): void {
     $router->get('/admin/preinscricao/detalhe', [PreInscricaoController::class, 'detalhe']);
     $router->post('/admin/preinscricao/comentario', [PreInscricaoController::class, 'comentario']);
     $router->post('/admin/preinscricao/atualizar-situacao', [PreInscricaoController::class, 'atualizarSituacao']);
+
+    $router->get('/admin/sessao', [SessaoController::class, 'index']);
+    $router->get('/admin/sessao/novo', [SessaoController::class, 'novo']);
+    $router->get('/admin/sessao/editar', [SessaoController::class, 'editar']);
+    $router->post('/admin/sessao/salvar', [SessaoController::class, 'salvar']);
+    $router->post('/admin/sessao/deletar', [SessaoController::class, 'deletar']);
+    $router->get('/admin/sessao/imagem', [SessaoController::class, 'imagem']);
+    $router->post('/admin/sessao/upload-imagem', [SessaoController::class, 'uploadImagem']);
 
     $router->get('/admin/config/categoria', [ConfigController::class, 'categoria']);
     $router->get('/admin/config/categoria/edit', [ConfigController::class, 'editCategoria']);
