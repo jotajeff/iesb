@@ -31,6 +31,7 @@ $dashboardTypeLabel = match ($dashboardType) {
   </div>
 
   <div class="row g-3 mb-4">
+    <?php if ($dashboardType !== 'professor'): ?>
     <div class="col-md-3">
       <div class="dashboard-task-card task-card-preinscricao h-100">
         <div class="task-card-top">
@@ -45,6 +46,7 @@ $dashboardTypeLabel = match ($dashboardType) {
         <div class="task-card-footer">Aguardando contato</div>
       </div>
     </div>
+    <?php endif; ?>
     <div class="col-md-3">
       <div class="dashboard-task-card task-card-alunos h-100">
         <div class="task-card-top">
@@ -132,11 +134,6 @@ $dashboardTypeLabel = match ($dashboardType) {
         <div class="task-card-footer">Concluídas e prontas</div>
       </div>
     </div>
-  </div>
-  <div class="bg-white border rounded-3 p-4 shadow-sm">
-    <h5 class="mb-2">Gestao de cursos</h5>
-    <p class="text-muted mb-3">Use o modulo de cursos para listar, criar e editar registros da tabela <code>cursos_iesb</code>.</p>
-    <a class="btn btn-primary btn-sm" href="/admin/cursos">Abrir cursos</a>
   </div>
 </section>
 
