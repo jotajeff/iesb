@@ -1,6 +1,6 @@
-<section class="hero-section" id="home" style="min-height: 100vh;">
+<section class="hero-section" id="home" style="min-height: 100vh; display: flex; align-items: center;">
   <div class="hero-bg"></div>
-  <div class="container hero-content" style="padding-top: 120px;">
+  <div class="container hero-content">
     <div class="row justify-content-center">
       <div class="col-md-6 col-lg-5" data-aos="fade-up">
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--card-shadow);">
@@ -35,6 +35,9 @@
             }
           }
           </script>
+        </div>
+        <div class="text-center mt-3">
+          <a href="/" class="text-muted small"><i class="bi bi-arrow-left me-1"></i>Retornar ao site</a>
         </div>
       </div>
     </div>

@@ -1,3 +1,4 @@
+<?php if (!empty($authUser)): ?>
 <nav class="navbar navbar-expand-lg" style="background: #1f2937 !important; border-bottom: 0; position: sticky; top:0; z-index:1100;">
   <div class="container">
     <a class="navbar-brand text-white" href="/admin">/</a>
@@ -92,6 +93,7 @@
     </div>
   </div>
 </nav>
+<?php endif; ?>
 
 <?php if (!empty($flash)): ?>
   <div class="toast-container position-fixed top-0 end-0 p-3" style="z-index: 1300; margin-top: 70px;">
