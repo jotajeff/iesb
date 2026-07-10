@@ -13,52 +13,49 @@
                   </div>
 
                   <div class="hero-carousel-inner">
-                    <div class="container">
-
-                      <div class="hero-carousel-slider">
-                        <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
-                          <div class="carousel-indicators">
-                            <?php foreach ($carouselItems as $idx => $item): ?>
-                              <button type="button"
-                                data-bs-target="#<?= $carouselId ?>Slider"
-                                data-bs-slide-to="<?= $idx ?>"
-                                class="<?= $idx === 0 ? 'active' : '' ?>"
-                                aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
-                                aria-label="Slide <?= $idx + 1 ?>"></button>
-                            <?php endforeach; ?>
-                          </div>
-                          <div class="carousel-inner">
-                            <?php foreach ($carouselItems as $idx => $item): ?>
-                              <?php
-                              $imagem = trim((string) ($item['imagem'] ?? ''));
-                              $link = trim((string) ($item['link'] ?? ''));
-                              $titulo = htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
-                              $target = trim((string) ($item['target'] ?? '_blank'));
-                              ?>
-                              <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
-                                <?php if ($link !== ''): ?>
-                                  <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8') ?>"
-                                    target="<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>" rel="noopener noreferrer">
-                                <?php endif; ?>
-                                  <img src="/<?= htmlspecialchars($imagem, ENT_QUOTES, 'UTF-8') ?>"
-                                    alt="<?= $titulo ?>">
-                                <?php if ($link !== ''): ?>
-                                  </a>
-                                <?php endif; ?>
-                              </div>
-                            <?php endforeach; ?>
-                          </div>
-                          <button class="carousel-control-prev" type="button"
-                            data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="prev">
-                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Anterior</span>
-                          </button>
-                          <button class="carousel-control-next" type="button"
-                            data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="next">
-                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                            <span class="visually-hidden">Próximo</span>
-                          </button>
+                    <div class="hero-carousel-slider">
+                      <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+                        <div class="carousel-indicators">
+                          <?php foreach ($carouselItems as $idx => $item): ?>
+                            <button type="button"
+                              data-bs-target="#<?= $carouselId ?>Slider"
+                              data-bs-slide-to="<?= $idx ?>"
+                              class="<?= $idx === 0 ? 'active' : '' ?>"
+                              aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
+                              aria-label="Slide <?= $idx + 1 ?>"></button>
+                          <?php endforeach; ?>
                         </div>
+                        <div class="carousel-inner">
+                          <?php foreach ($carouselItems as $idx => $item): ?>
+                            <?php
+                            $imagem = trim((string) ($item['imagem'] ?? ''));
+                            $link = trim((string) ($item['link'] ?? ''));
+                            $titulo = htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
+                            $target = trim((string) ($item['target'] ?? '_blank'));
+                            ?>
+                            <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                              <?php if ($link !== ''): ?>
+                                <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8') ?>"
+                                  target="<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>" rel="noopener noreferrer">
+                              <?php endif; ?>
+                                <img src="/<?= htmlspecialchars($imagem, ENT_QUOTES, 'UTF-8') ?>"
+                                  alt="<?= $titulo ?>">
+                              <?php if ($link !== ''): ?>
+                                </a>
+                              <?php endif; ?>
+                            </div>
+                          <?php endforeach; ?>
+                        </div>
+                        <button class="carousel-control-prev" type="button"
+                          data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="prev">
+                          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                          <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next" type="button"
+                          data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="next">
+                          <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                          <span class="visually-hidden">Próximo</span>
+                        </button>
                       </div>
                     </div>
                   </div>

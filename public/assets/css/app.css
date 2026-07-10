@@ -441,102 +441,102 @@ a {
 /* ============================================
    HERO — CAROUSEL HOME
    ============================================ */
+/* ============================================
+   HERO - CAROUSEL HOME
+   ============================================ */
+
 .hero-carousel {
   position: relative;
-  min-height: 70vh;
-  max-height: 85vh;
-  display: flex;
-  align-items: center;
+
+  width: 100%;
+
+  padding: 78px 0 12px;
+
   overflow: hidden;
-  background: #2a2b2a;
+
+  background:
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(var(--primary-rgb), 0.18),
+      transparent 26%
+    ),
+    radial-gradient(
+      circle at 86% 24%,
+      rgba(255, 227, 126, 0.12),
+      transparent 22%
+    ),
+    linear-gradient(
+      135deg,
+      rgba(38, 39, 38, 0.98),
+      rgba(77, 79, 78, 0.95),
+      rgba(64, 66, 64, 0.98)
+    );
 }
+
 .hero-carousel-bg {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(42, 43, 42, 0.92) 0%,
-    rgba(77, 79, 78, 0.8) 50%,
-    rgba(42, 43, 42, 0.9) 100%
-  );
 }
+
 .hero-carousel-inner {
   position: relative;
+
   z-index: 2;
-  width: 100%;
+
+  display: flex;
+
+  justify-content: center;
 }
-.hero-carousel-header {
-  text-align: center;
-  margin-bottom: 1.5rem;
-}
-.hero-carousel-header .hero-badge {
-  background: rgba(239, 192, 43, 0.2);
-  border-color: rgba(239, 192, 43, 0.35);
-  color: var(--primary);
-  margin-bottom: 0.6rem;
-  transform: none;
-}
-.hero-carousel-header .hero-title {
-  color: #e5e5d9;
-  font-size: clamp(1rem, 2vw, 1.35rem);
-  font-weight: 700;
-  max-width: 700px;
-  margin: 0 auto;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-}
+
 .hero-carousel-slider {
-  max-width: 900px;
+  width: 70%;
+
+  max-width: 1200px;
+
   margin: 0 auto;
-  border-radius: 12px;
+
   overflow: hidden;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+
+  border-radius: 20px;
+
+  background: transparent;
+
+  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
 }
-.hero-carousel-slider .carousel-item img {
+
+.hero-carousel-slider .carousel,
+.hero-carousel-slider .carousel-inner,
+.hero-carousel-slider .carousel-item {
   width: 100%;
+
   height: auto;
+}
+
+.hero-carousel-slider img {
+  display: block;
+
+  width: 100%;
+
+  height: auto;
+}
+
+.hero-carousel-slider .carousel-item {
+  background: none;
+}
+
+.hero-carousel-slider .carousel-item a {
   display: block;
 }
+
 .hero-carousel-slider .carousel-control-prev,
 .hero-carousel-slider .carousel-control-next {
-  z-index: 3;
+  width: 55px;
 }
+
 .hero-carousel-slider .carousel-indicators {
-  bottom: 10px;
-  z-index: 3;
+  bottom: 12px;
 }
-.hero-carousel-slider .carousel-indicators button {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border: 1px solid rgba(229, 229, 217, 0.4);
-  background: transparent;
-}
-.hero-carousel-slider .carousel-indicators button.active {
-  background: var(--primary);
-  border-color: var(--primary);
-}
-
-@media (max-width: 767.98px) {
-  .hero-carousel {
-    min-height: 50vh;
-    max-height: 70vh;
-  }
-  .hero-carousel-header {
-    margin-bottom: 1rem;
-  }
-  .hero-carousel-header .hero-title {
-    font-size: 1.1rem;
-  }
-  .hero-carousel-slider {
-    max-width: 100%;
-    border-radius: 8px;
-  }
-  .hero-carousel-slider .carousel-item img {
-    max-height: 40vh;
-  }
-}
-
 /* ============================================
    HERO — CTA BUTTONS
    ============================================ */
@@ -566,7 +566,7 @@ a {
   position: relative;
 }
 .btn-cta::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: -3px;
   border-radius: 15px;
@@ -1620,9 +1620,14 @@ footer .footer-links a:hover {
     right: auto;
     margin-top: 1rem;
   }
-  .hero-section {
-    min-height: auto;
-    padding: 140px 0 80px;
+  .hero-carousel {
+    padding: 70px 0 10px;
+  }
+
+  .hero-carousel-slider {
+    width: 94%;
+
+    border-radius: 16px;
   }
   .hero-image {
     display: none !important;
