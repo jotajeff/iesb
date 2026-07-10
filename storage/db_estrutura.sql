@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 07/07/2026 às 21:38
+-- Tempo de geração: 09/07/2026 às 21:40
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -158,6 +158,8 @@ CREATE TABLE `cursos` (
 CREATE TABLE `cursos_iesb` (
   `id` int(11) NOT NULL,
   `nome` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `descricao` text COLLATE utf8_unicode_ci,
+  `resumo` varchar(500) COLLATE utf8_unicode_ci DEFAULT NULL,
   `slug` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
   `data_curso` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `horario` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -167,12 +169,56 @@ CREATE TABLE `cursos_iesb` (
   `segmento` int(3) NOT NULL,
   `carga_horaria` int(5) NOT NULL,
   `imagem_card` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `imagem_banner` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `link_ingresso` text COLLATE utf8_unicode_ci,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `curso_calendario` date NOT NULL,
   `exibir_home` char(1) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'N',
   `confirmado` char(1) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'N',
-  `ativo` char(1) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'S'
+  `ativo` char(1) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'S',
+  `vagas` int(11) DEFAULT '0',
+  `inscricoes_abertas` char(1) COLLATE utf8_unicode_ci DEFAULT 'S'
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos_iesb_inscricao`
+--
+
+CREATE TABLE `cursos_iesb_inscricao` (
+  `id` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `id_pagamento` int(11) NOT NULL,
+  `descricao_pagamento` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `nome` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `cpf` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `email` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `telefone` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `asaas_customer` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `asaas_payment` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `invoice_url` text COLLATE utf8_unicode_ci,
+  `status` enum('PENDENTE','AGUARDANDO','RECEBIDO','CONFIRMADO','CANCELADO','ESTORNADO') COLLATE utf8_unicode_ci DEFAULT 'PENDENTE',
+  `valor` decimal(10,2) DEFAULT NULL,
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `cursos_iesb_pagamento`
+--
+
+CREATE TABLE `cursos_iesb_pagamento` (
+  `id` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `descricao` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `tipo` enum('PIX','BOLETO','CARTAO') COLLATE utf8_unicode_ci DEFAULT NULL,
+  `parcelas` int(11) DEFAULT '1',
+  `valor` decimal(10,2) DEFAULT NULL,
+  `ativo` char(1) COLLATE utf8_unicode_ci DEFAULT 'S',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -613,6 +659,22 @@ ALTER TABLE `cursos_iesb`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `cursos_iesb_inscricao`
+--
+ALTER TABLE `cursos_iesb_inscricao`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_curso` (`id_curso`),
+  ADD KEY `id_pagamento` (`id_pagamento`),
+  ADD KEY `asaas_payment` (`asaas_payment`);
+
+--
+-- Índices de tabela `cursos_iesb_pagamento`
+--
+ALTER TABLE `cursos_iesb_pagamento`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_curso` (`id_curso`);
+
+--
 -- Índices de tabela `cursos_tipo`
 --
 ALTER TABLE `cursos_tipo`
@@ -829,6 +891,18 @@ ALTER TABLE `cursos_iesb`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `cursos_iesb_inscricao`
+--
+ALTER TABLE `cursos_iesb_inscricao`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `cursos_iesb_pagamento`
+--
+ALTER TABLE `cursos_iesb_pagamento`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `cursos_tipo`
 --
 ALTER TABLE `cursos_tipo`
@@ -975,6 +1049,19 @@ ALTER TABLE `carousel_item`
 --
 ALTER TABLE `curriculo`
   ADD CONSTRAINT `fk_curriculo_usuario` FOREIGN KEY (`id_fk`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `cursos_iesb_inscricao`
+--
+ALTER TABLE `cursos_iesb_inscricao`
+  ADD CONSTRAINT `cursos_iesb_inscricao_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`),
+  ADD CONSTRAINT `cursos_iesb_inscricao_ibfk_2` FOREIGN KEY (`id_pagamento`) REFERENCES `cursos_iesb_pagamento` (`id`);
+
+--
+-- Restrições para tabelas `cursos_iesb_pagamento`
+--
+ALTER TABLE `cursos_iesb_pagamento`
+  ADD CONSTRAINT `cursos_iesb_pagamento_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`);
 
 --
 -- Restrições para tabelas `matriculas`

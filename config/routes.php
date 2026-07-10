@@ -51,6 +51,8 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/upload', [CursoController::class, 'uploadImagem']);
     $router->get('/admin/cursos/detalhes', [CursoController::class, 'detalhes']);
     $router->post('/admin/cursos/detalhes/salvar', [CursoController::class, 'salvarDetalhe']);
+    $router->get('/admin/cursos/definir-valor', [CursoController::class, 'definirValor']);
+    $router->post('/admin/cursos/salvar-pagamento', [CursoController::class, 'salvarPagamento']);
 
     $router->get('/admin/professores', [ProfessorController::class, 'index']);
     $router->get('/admin/professores/novo', [ProfessorController::class, 'novo']);

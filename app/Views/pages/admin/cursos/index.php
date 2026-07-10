@@ -156,7 +156,7 @@
 
           <?php foreach ($coursesView as $course): ?>
             <tr>
-              <td><a class="text-decoration-none fw-medium" href="/admin/cursos/show?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-box-arrow-up-right me-1"></i><?= (int) ($course['id'] ?? 0) ?></a></td>
+              <td><a class="text-decoration-none fw-medium" href="/admin/cursos/show?id=<?= (int) ($course['id'] ?? 0) ?>">#<?= (int) ($course['id'] ?? 0) ?></a></td>
               <td class="text-center">
                 <?php $img = (string) ($course['imagem_card'] ?? ''); ?>
                 <a href="/admin/cursos/upload?id=<?= (int) ($course['id'] ?? 0) ?>" class="text-decoration-none" title="<?= $img !== '' ? 'Imagem cadastrada' : 'Sem imagem' ?>">
@@ -194,6 +194,9 @@
               <td>
                 <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/editar?id=<?= (int) ($course['id'] ?? 0) ?>">
                   <i class="bi bi-pencil-square me-1"></i>Editar
+                </a>
+                <a class="btn btn-outline-success btn-sm" href="/admin/cursos/definir-valor?id=<?= (int) ($course['id'] ?? 0) ?>" title="Definir valores">
+                  <i class="bi bi-currency-dollar"></i>
                 </a>
                 <?php $temDetalhe = in_array((int) ($course['id'] ?? 0), $idsComDetalhe, true); ?>
                 <br>

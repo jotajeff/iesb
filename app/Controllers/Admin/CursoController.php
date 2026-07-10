@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
+use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
 use App\Services\ConfigService;
 use App\Services\LogService;
@@ -15,12 +16,14 @@ final class CursoController extends Controller
     private CursoService $cursoService;
     private ConfigService $configService;
     private LogService $logService;
+    private CursoPagamentoService $pagamentoService;
 
     public function __construct()
     {
         $this->cursoService = new CursoService();
         $this->configService = new ConfigService();
         $this->logService = new LogService();
+        $this->pagamentoService = new CursoPagamentoService();
     }
 
     public function index(): void
@@ -194,6 +197,7 @@ final class CursoController extends Controller
             'currentRoute' => '/admin/cursos/show',
             'course' => $course,
             'detalhe' => $this->cursoService->findDetalheByCurso($id),
+            'pagamentos' => $this->pagamentoService->listarPorCurso($id),
         ], 'admin');
     }
 
@@ -338,6 +342,78 @@ final class CursoController extends Controller
         $this->logService->log('upload_imagem', 'curso', $id, "Imagem do card enviada: $filename");
         Session::setFlash('flash', 'Imagem do card atualizada com sucesso.');
         $this->redirect('/admin/cursos');
+    }
+
+    public function definirValor(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $idCurso = (int) ($_GET['id'] ?? 0);
+        $curso = $this->cursoService->findCurso($idCurso);
+
+        if (!$curso) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+        }
+
+        $pagamentos = $this->pagamentoService->listarPorCurso($idCurso);
+
+        $this->render('pages/admin/cursos/definir_valor', [
+            'title' => 'Pagamento — ' . ($curso['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos',
+            'curso' => $curso,
+            'pagamentos' => $pagamentos,
+        ], 'admin');
+    }
+
+    public function salvarPagamento(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $idCurso = (int) $this->input('id_curso', 0);
+        $curso = $this->cursoService->findCurso($idCurso);
+
+        if (!$curso) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+        }
+
+        $idPagamento = (int) $this->input('id', 0);
+        $descricao = trim((string) $this->input('descricao', ''));
+        $tipo = (string) $this->input('tipo', '');
+        $parcelas = max(1, (int) $this->input('parcelas', 1));
+        $valor = (float) str_replace(',', '.', (string) $this->input('valor', '0'));
+        $ativo = (string) $this->input('ativo', 'S');
+
+        if ($descricao === '') {
+            Session::setFlash('flash', 'Informe a descrição.');
+            $this->redirect('/admin/cursos/definir-valor?id=' . $idCurso);
+        }
+
+        $result = $this->pagamentoService->salvar([
+            'id' => $idPagamento,
+            'id_curso' => $idCurso,
+            'descricao' => $descricao,
+            'tipo' => $tipo,
+            'parcelas' => $parcelas,
+            'valor' => $valor,
+            'ativo' => $ativo,
+        ]);
+
+        if ($result <= 0) {
+            Session::setFlash('flash', 'Erro ao salvar forma de pagamento.');
+            $this->redirect('/admin/cursos/definir-valor?id=' . $idCurso);
+        }
+
+        $this->logService->log($idPagamento > 0 ? 'atualizar' : 'criar', 'cursos_iesb_pagamento', $result, ($idPagamento > 0 ? 'Pagamento atualizado' : 'Pagamento criado') . ' para o curso #' . $idCurso);
+        Session::setFlash('flash', 'Forma de pagamento salva com sucesso.');
+        $this->redirect('/admin/cursos/definir-valor?id=' . $idCurso);
     }
 
     private function normalizeAtivo(string $value): string

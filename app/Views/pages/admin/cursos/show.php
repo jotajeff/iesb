@@ -8,6 +8,12 @@
       </div>
     </div>
 
+    <nav class="nav nav-pills nav-fill gap-2 mb-4 p-2 bg-light rounded small">
+      <a class="nav-link" href="#dados-curso"><i class="bi bi-info-circle me-1"></i>Dados do curso</a>
+      <a class="nav-link" href="#detalhe-curso"><i class="bi bi-journal-text me-1"></i>Detalhes</a>
+      <a class="nav-link" href="#pagamento-curso"><i class="bi bi-currency-dollar me-1"></i>Plano de pagamento</a>
+    </nav>
+
     <?php
       $img = (string) ($course['imagem_card'] ?? '');
       $cursoCalendarioRaw = (string) ($course['curso_calendario'] ?? '');
@@ -48,7 +54,7 @@
       </div>
     <?php endif; ?>
 
-    <table class="table table-bordered">
+    <table class="table table-bordered" id="dados-curso">
       <tbody>
         <tr>
           <th class="bg-light" style="width: 180px;">ID</th>
@@ -142,7 +148,7 @@
 
     <hr class="my-4">
 
-    <div class="d-flex align-items-center justify-content-between mb-3">
+    <div class="d-flex align-items-center justify-content-between mb-3" id="detalhe-curso">
       <h5 class="mb-0"><i class="bi bi-journal-text me-2"></i>Detalhe do Curso</h5>
       <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/detalhes?id=<?= (int) ($course['id'] ?? 0) ?>">
         <i class="bi bi-pencil-square me-1"></i><?= $detalhe ? 'Editar' : 'Adicionar' ?>
@@ -154,6 +160,49 @@
       </div>
     <?php else: ?>
       <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>Nenhum detalhe cadastrado para este curso.</p>
+    <?php endif; ?>
+
+    <hr class="my-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-3" id="pagamento-curso">
+      <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Formas de pagamento</h5>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/definir-valor?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-pencil-square me-1"></i>Editar</a>
+    </div>
+    <?php $pagamentos = $pagamentos ?? []; ?>
+    <?php if (!empty($pagamentos)): ?>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Descrição</th>
+              <th>Tipo</th>
+              <th>Parcelas</th>
+              <th>Valor</th>
+              <th>Ativo</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($pagamentos as $p): ?>
+              <tr>
+                <td><?= htmlspecialchars((string) ($p['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><span class="badge bg-secondary"><?= htmlspecialchars((string) ($p['tipo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
+                <td><?= (int) ($p['parcelas'] ?? 1) ?>x</td>
+                <td>R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></td>
+                <td>
+                  <span class="badge <?= ((string) ($p['ativo'] ?? 'S') === 'S') ? 'bg-success' : 'bg-secondary' ?>">
+                    <?= ((string) ($p['ativo'] ?? 'S') === 'S') ? 'Sim' : 'Não' ?>
+                  </span>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php else: ?>
+      <div class="text-muted">
+        <i class="bi bi-info-circle me-1"></i>Sem plano de pagamento lançado.
+        <a class="btn btn-sm btn-outline-success ms-2" href="/admin/cursos/definir-valor?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-currency-dollar me-1"></i>Definir plano de pagamento</a>
+      </div>
     <?php endif; ?>
   </div>
 </section>
