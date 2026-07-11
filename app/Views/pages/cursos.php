@@ -119,13 +119,19 @@ $nivelCursoUrl = (string) ($nivelCursoUrl ?? '/cursos');
                 </div>
                 <div class="course-card-footer">
                   <?php if ($linkIngresso !== ''): ?>
-                    <a
-                      class="course-btn"
-                      href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>"
-                      target="_blank"
-                      rel="noopener noreferrer">
-                      Inscreva-se
-                    </a>
+                    <?php if (stripos($linkIngresso, 'saiba') !== false): ?>
+                      <a class="course-btn" href="/curso/<?= (int) ($course['id'] ?? 0) ?>">
+                        Saiba +
+                      </a>
+                    <?php else: ?>
+                      <a
+                        class="course-btn"
+                        href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>"
+                        target="_blank"
+                        rel="noopener noreferrer">
+                        Inscreva-se
+                      </a>
+                    <?php endif; ?>
                   <?php else: ?>
                     <span class="course-btn" style="pointer-events: none; opacity: 0.5;">Inscrições em breve</span>
                   <?php endif; ?>

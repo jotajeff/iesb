@@ -7,6 +7,7 @@ namespace App\Core;
 final class Router
 {
     private array $routes = [];
+    private array $paramRoutes = [];
 
     public function get(string $path, callable|array $handler): void
     {
@@ -20,13 +21,37 @@ final class Router
 
     private function addRoute(string $method, string $path, callable|array $handler): void
     {
-        $this->routes[$method][$this->normalizePath($path)] = $handler;
+        $normalized = $this->normalizePath($path);
+
+        if (str_contains($normalized, '{')) {
+            $regex = preg_replace('/\{(\w+)\}/', '(?P<$1>[^/]+)', $normalized);
+            $this->paramRoutes[$method][] = ['regex' => '#^' . $regex . '$#', 'handler' => $handler, 'path' => $normalized];
+        } else {
+            $this->routes[$method][$normalized] = $handler;
+        }
     }
 
     public function dispatch(string $method, string $uri): void
     {
         $path = $this->normalizePath(parse_url($uri, PHP_URL_PATH) ?? '/');
         $handler = $this->routes[$method][$path] ?? null;
+
+        if ($handler === null) {
+            $params = [];
+            $paramRoutes = $this->paramRoutes[$method] ?? [];
+
+            foreach ($paramRoutes as $pr) {
+                if (preg_match($pr['regex'], $path, $matches)) {
+                    $handler = $pr['handler'];
+                    foreach ($matches as $key => $value) {
+                        if (is_string($key)) {
+                            $_GET[$key] = $value;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
 
         if ($handler === null) {
             http_response_code(404);

@@ -5,7 +5,10 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Services\AsaasService;
 use App\Services\ConfigService;
+use App\Services\CursoInscricaoService;
+use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
 use App\Services\LogService;
 use App\Services\PreInscricaoService;
@@ -15,11 +18,15 @@ final class PageController extends Controller
 {
     private ConfigService $configService;
     private CursoService $cursoService;
+    private CursoPagamentoService $pagamentoService;
+    private CursoInscricaoService $inscricaoService;
 
     public function __construct()
     {
         $this->configService = new ConfigService();
         $this->cursoService = new CursoService();
+        $this->pagamentoService = new CursoPagamentoService();
+        $this->inscricaoService = new CursoInscricaoService();
     }
 
     public function sobre(): void
@@ -34,7 +41,7 @@ final class PageController extends Controller
             static fn (array $nivel): bool => (int) ($nivel['ativo'] ?? 0) === 1
         ));
 
-        $nivelSlugRequest = trim((string) ($_GET['nivel'] ?? ''));
+        $nivelSlugRequest = trim((string) ($_GET['nivel'] ?? ($_GET['slug'] ?? '')));
         $nivelIdRequest = (int) ($_GET['nivel_id'] ?? 0);
         $segmentoIdRequest = (int) ($_GET['segmento_id'] ?? 0);
         $nivelSelecionado = null;
@@ -115,6 +122,228 @@ final class PageController extends Controller
     public function parcerias(): void
     {
         $this->render('pages/parcerias', ['title' => 'Parcerias', 'currentRoute' => '/parcerias']);
+    }
+
+    public function cursoDetalhe(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+
+        if ($id <= 0) {
+            http_response_code(404);
+            $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
+            return;
+        }
+
+        $curso = $this->cursoService->findCurso($id);
+
+        if (!$curso) {
+            http_response_code(404);
+            $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
+            return;
+        }
+
+        $detalhe = $this->cursoService->findDetalheByCurso($id);
+        $pagamentos = $this->pagamentoService->listarPorCurso($id);
+
+        $dateText = '-';
+        $rawDate = (string) ($curso['data_curso'] ?? '');
+        $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
+        if ($dtDate instanceof \DateTime) {
+            $dateText = $dtDate->format('d/m/Y');
+        } elseif ($rawDate !== '') {
+            $dateText = $rawDate;
+        }
+
+        $isConfirmed = strtoupper(trim((string) ($curso['confirmado'] ?? 'N'))) === 'S';
+        $linkIngresso = trim((string) ($curso['link_ingresso'] ?? ''));
+        $isExternalLink = $linkIngresso !== '' && !str_contains(strtolower($linkIngresso), 'saiba');
+
+        $this->render('pages/curso', [
+            'title' => (string) ($curso['nome'] ?? 'Curso'),
+            'currentRoute' => '/curso',
+            'curso' => $curso,
+            'detalhe' => $detalhe,
+            'pagamentos' => $pagamentos,
+            'dateText' => $dateText,
+            'isConfirmed' => $isConfirmed,
+            'linkIngresso' => $linkIngresso,
+            'isExternalLink' => $isExternalLink,
+        ]);
+    }
+
+    public function inscricao(): void
+    {
+        $id = (int) ($_GET['id'] ?? 0);
+
+        if ($id <= 0) {
+            http_response_code(404);
+            $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
+            return;
+        }
+
+        $curso = $this->cursoService->findCurso($id);
+
+        if (!$curso) {
+            http_response_code(404);
+            $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
+            return;
+        }
+
+        $pagamentos = $this->pagamentoService->listarPorCurso($id);
+
+        $this->render('pages/inscricao', [
+            'title' => 'Inscrição — ' . ($curso['nome'] ?? ''),
+            'currentRoute' => '/inscricao',
+            'curso' => $curso,
+            'pagamentos' => $pagamentos,
+            'erro' => null,
+            'dados' => [],
+        ]);
+    }
+
+    public function salvarInscricao(): void
+    {
+        $idCurso = (int) $this->input('id_curso', 0);
+        $idPagamento = (int) $this->input('id_pagamento', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $cpf = trim((string) $this->input('cpf', ''));
+        $email = trim((string) $this->input('email', ''));
+        $telefone = trim((string) $this->input('telefone', ''));
+
+        $curso = $this->cursoService->findCurso($idCurso);
+        $pagamentos = $this->pagamentoService->listarPorCurso($idCurso);
+        $dados = compact('idCurso', 'idPagamento', 'nome', 'cpf', 'email', 'telefone');
+
+        if (!$curso) {
+            $this->render('pages/inscricao', [
+                'title' => 'Curso não encontrado',
+                'currentRoute' => '/inscricao',
+                'curso' => null,
+                'pagamentos' => [],
+                'erro' => 'Curso não encontrado.',
+                'dados' => $dados,
+            ]);
+            return;
+        }
+
+        if ($idPagamento <= 0 || $nome === '' || $cpf === '' || $email === '' || $telefone === '') {
+            $this->render('pages/inscricao', [
+                'title' => 'Inscrição — ' . ($curso['nome'] ?? ''),
+                'currentRoute' => '/inscricao',
+                'curso' => $curso,
+                'pagamentos' => $pagamentos,
+                'erro' => 'Preencha todos os campos obrigatórios.',
+                'dados' => $dados,
+            ]);
+            return;
+        }
+
+        $pagamento = null;
+        foreach ($pagamentos as $p) {
+            if ((int) ($p['id'] ?? 0) === $idPagamento) {
+                $pagamento = $p;
+                break;
+            }
+        }
+
+        if (!$pagamento) {
+            $this->render('pages/inscricao', [
+                'title' => 'Inscrição — ' . ($curso['nome'] ?? ''),
+                'currentRoute' => '/inscricao',
+                'curso' => $curso,
+                'pagamentos' => $pagamentos,
+                'erro' => 'Forma de pagamento inválida.',
+                'dados' => $dados,
+            ]);
+            return;
+        }
+
+        $result = $this->inscricaoService->criar([
+            'id_curso' => $idCurso,
+            'id_pagamento' => $idPagamento,
+            'descricao_pagamento' => (string) ($pagamento['descricao'] ?? ''),
+            'nome' => $nome,
+            'cpf' => $cpf,
+            'email' => $email,
+            'telefone' => $telefone,
+            'valor' => (float) ($pagamento['valor'] ?? 0),
+        ]);
+
+        if ($result <= 0) {
+            $this->render('pages/inscricao', [
+                'title' => 'Inscrição — ' . ($curso['nome'] ?? ''),
+                'currentRoute' => '/inscricao',
+                'curso' => $curso,
+                'pagamentos' => $pagamentos,
+                'erro' => 'Erro ao processar inscrição. Tente novamente.',
+                'dados' => $dados,
+            ]);
+            return;
+        }
+
+        $asaas = new AsaasService();
+        $cliente = $asaas->criarCliente([
+            'nome' => $nome,
+            'cpf' => $cpf,
+            'email' => $email,
+            'telefone' => $telefone,
+        ]);
+
+        $invoiceUrl = '';
+        $bankSlipUrl = '';
+        $pixQrCode = null;
+        $linhaDigitavel = null;
+        $cobranca = null;
+        $billingType = match ((string) ($pagamento['tipo'] ?? 'PIX')) {
+            'BOLETO' => 'BOLETO',
+            'CARTAO' => 'CREDIT_CARD',
+            default => 'PIX',
+        };
+
+        if ($cliente) {
+            $cobranca = $asaas->criarCobranca([
+                'customer_id' => $cliente['id'],
+                'billing_type' => $billingType,
+                'value' => (float) ($pagamento['valor'] ?? 0),
+                'description' => ($curso['nome'] ?? 'Curso') . ' - ' . ($pagamento['descricao'] ?? ''),
+                'external_reference' => (string) $result,
+            ]);
+
+            if ($cobranca) {
+                $invoiceUrl = $cobranca['invoiceUrl'] ?? '';
+                $bankSlipUrl = $cobranca['bankSlipUrl'] ?? '';
+
+                if ($billingType === 'PIX') {
+                    $pixQrCode = $asaas->obterPixQrCode((string) ($cobranca['id'] ?? ''));
+                } elseif ($billingType === 'BOLETO') {
+                    $linhaDigitavel = $asaas->obterLinhaDigitavel((string) ($cobranca['id'] ?? ''));
+                }
+            }
+        }
+
+        $this->inscricaoService->atualizarAsaasInfo($result, [
+            'asaas_customer' => $cliente['id'] ?? null,
+            'asaas_payment' => $cobranca['id'] ?? null,
+            'invoice_url' => $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl,
+            'status' => $cobranca['status'] ?? 'PENDENTE',
+        ]);
+
+        $this->render('pages/inscricao', [
+            'title' => 'Inscrição confirmada',
+            'currentRoute' => '/inscricao',
+            'curso' => $curso,
+            'pagamentos' => $pagamentos,
+            'erro' => null,
+            'dados' => [],
+            'sucesso' => true,
+            'inscricaoId' => $result,
+            'invoiceUrl' => $invoiceUrl,
+            'bankSlipUrl' => $bankSlipUrl,
+            'pixQrCode' => $pixQrCode,
+            'linhaDigitavel' => $linhaDigitavel,
+            'billingType' => $billingType,
+            'asaasError' => $asaas->getLastError(),
+        ]);
     }
 
     public function privacidade(): void

@@ -37,7 +37,7 @@
           </script>
         </div>
         <div class="text-center mt-3">
-          <a href="/" class="text-muted small"><i class="bi bi-arrow-left me-1"></i>Retornar ao site</a>
+          <a href="/" class="badge bg-secondary text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Retornar ao site</a>
         </div>
       </div>
     </div>

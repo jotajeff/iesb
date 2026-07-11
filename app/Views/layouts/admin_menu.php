@@ -43,9 +43,9 @@
           </li>
           <?php if ($userRole === 'admin'): ?>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-currency-dollar me-1"></i>Asaas</a>
+            <a class="nav-link dropdown-toggle <?= (strpos((string) ($currentRoute ?? ''), '/admin/asaas') === 0) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-currency-dollar me-1"></i>Asaas</a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item disabled" href="#"><i class="bi bi-hourglass-split me-1"></i>Em breve</a></li>
+              <li><a class="dropdown-item" href="/admin/asaas"><i class="bi bi-receipt me-1"></i>Cobranças</a></li>
             </ul>
           </li>
           <?php endif; ?>

@@ -12,6 +12,7 @@ use App\Controllers\Admin\ProfessorController;
 use App\Controllers\Admin\UsuarioController;
 use App\Controllers\Admin\VisitaController;
 use App\Controllers\Admin\NoticiaController;
+use App\Controllers\Admin\AsaasController;
 use App\Controllers\Admin\PreInscricaoController;
 use App\Controllers\Admin\SessaoController;
 use App\Controllers\AuthController;
@@ -25,6 +26,10 @@ return static function (Router $router): void {
     $router->get('/home', [HomeController::class, 'index']);
     $router->get('/sobre', [PageController::class, 'sobre']);
     $router->get('/cursos', [PageController::class, 'cursos']);
+    $router->get('/cursos/{slug}', [PageController::class, 'cursos']);
+    $router->get('/curso/{id}', [PageController::class, 'cursoDetalhe']);
+    $router->get('/curso/{id}/inscricao', [PageController::class, 'inscricao']);
+    $router->post('/inscricao/salvar', [PageController::class, 'salvarInscricao']);
     $router->get('/eventos', [PageController::class, 'eventos']);
     $router->get('/parcerias', [PageController::class, 'parcerias']);
     $router->get('/privacidade', [PageController::class, 'privacidade']);
@@ -38,6 +43,7 @@ return static function (Router $router): void {
     $router->get('/admin/dashboard', [DashboardController::class, 'index']);
     $router->get('/admin/logs', [DashboardController::class, 'logs']);
     $router->get('/admin/dbase', [DashboardController::class, 'dbase']);
+    $router->get('/admin/asaas', [AsaasController::class, 'index']);
 
     $router->get('/admin/cursos', [CursoController::class, 'index']);
     $router->get('/admin/cursos/novo', [CursoController::class, 'novo']);

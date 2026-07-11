@@ -1786,3 +1786,67 @@ footer .footer-links a:hover {
   aspect-ratio: 16 / 9;
   border: 0;
 }
+
+/* ============================================
+           CURSO DETALHE — SIDEBAR PAGAMENTO
+           ============================================ */
+.curso-pagamento-box {
+  background: var(--bg-card);
+  border: 2px solid var(--primary);
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 4px 20px rgba(var(--primary-rgb), 0.15);
+  margin-bottom: 1rem;
+}
+.curso-pagamento-titulo {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: var(--text-heading);
+}
+.curso-pagamento-item {
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: 0.4rem;
+  background: var(--bg-body-alt);
+  transition: background 0.2s ease;
+}
+.curso-pagamento-item:last-child {
+  margin-bottom: 0;
+}
+.curso-pagamento-item:hover {
+  background: var(--bg-card-hover);
+}
+
+/* ============================================
+           CURSO DETALHE — CONTEUDO E SIDEBAR
+           ============================================ */
+.curso-detalhe-content {
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+.curso-detalhe-content p {
+  margin-bottom: 1rem;
+}
+.curso-detalhe-content.collapsed {
+  max-height: 240px;
+  overflow: hidden;
+  position: relative;
+}
+.curso-detalhe-content.collapsed::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, var(--bg-card));
+  pointer-events: none;
+}
+@media (min-width: 992px) {
+  .curso-sidebar {
+    position: sticky;
+    top: 6rem;
+  }
+}

@@ -42,7 +42,7 @@
                 <?php $nivelId = (int) ($nivel['id'] ?? 0); ?>
                 <?php $nivelSlug = trim((string) ($nivel['slug'] ?? '')); ?>
                 <?php $nivelUrl = $nivelSlug !== ''
-                  ? '/cursos?nivel=' . rawurlencode($nivelSlug)
+                  ? '/cursos/' . rawurlencode($nivelSlug)
                   : '/cursos?nivel_id=' . $nivelId;
                 ?>
                 <li>
