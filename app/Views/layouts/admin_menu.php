@@ -25,7 +25,10 @@
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle <?= ((strpos(($currentRoute ?? ''), '/admin/cursos') === 0) || (strpos(($currentRoute ?? ''), '/admin/turmas') === 0) || (strpos(($currentRoute ?? ''), '/admin/alunos') === 0) || (strpos(($currentRoute ?? ''), '/admin/professores') === 0) || (strpos(($currentRoute ?? ''), '/admin/preinscricao') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-bookmark-fill me-1"></i>Cadastros</a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/admin/cursos"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
+              <li><a class="dropdown-item fw-bold disabled" href="#"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
+              <li><a class="dropdown-item" href="/admin/cursos" style="padding-left:2.2rem;"><i class="bi bi-list-ul me-1"></i>Listagem</a></li>
+              <li><a class="dropdown-item" href="/admin/cursos/cursos-turma" style="padding-left:2.2rem;"><i class="bi bi-diagram-3 me-1"></i>Cursos-turma</a></li>
+              <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="/admin/turmas"><i class="bi bi-people me-1"></i>Turmas</a></li>
               <li><a class="dropdown-item" href="/admin/alunos"><i class="bi bi-person-badge me-1"></i>Alunos</a></li>
               <li><a class="dropdown-item" href="/admin/professores"><i class="bi bi-person-workspace me-1"></i>Professores</a></li>

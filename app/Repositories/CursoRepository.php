@@ -198,6 +198,47 @@ final class CursoRepository
         }
     }
 
+    public function listIdsComTurma(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT DISTINCT id_curso FROM turmas';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+            return is_array($rows) ? array_map('intval', $rows) : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro em listIdsComTurma: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listarCursosTurmas(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT c.id AS curso_id, c.nome AS curso_nome,
+                           t.id AS turma_id, t.nome AS turma_nome,
+                           (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos
+                    FROM cursos_iesb c
+                    INNER JOIN turmas t ON t.id_curso = c.id
+                    ORDER BY c.nome ASC, t.nome ASC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro em listarCursosTurmas: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function findById(int $id): ?array
     {
         $pdo = Database::connection();

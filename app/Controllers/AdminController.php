@@ -117,6 +117,7 @@ final class AdminController extends Controller
             'niveis' => $this->configService->niveis(),
             'nivelSelecionado' => $nivelSelecionado,
             'idsComDetalhe' => $this->cursoService->idsCursosComDetalhe(),
+            'idsComTurma' => $this->cursoService->idsCursosComTurma(),
         ], 'admin');
     }
 

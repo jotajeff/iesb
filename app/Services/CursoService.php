@@ -100,6 +100,16 @@ final class CursoService
         return $this->repository->listIdsComDetalhe();
     }
 
+    public function idsCursosComTurma(): array
+    {
+        return $this->repository->listIdsComTurma();
+    }
+
+    public function listarCursosTurmas(): array
+    {
+        return $this->repository->listarCursosTurmas();
+    }
+
     public function findCurso(int $id): ?array
     {
         $course = $this->repository->findById($id);

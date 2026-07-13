@@ -56,6 +56,7 @@ final class CursoController extends Controller
             'niveis' => $this->configService->niveis(),
             'nivelSelecionado' => $nivelSelecionado,
             'idsComDetalhe' => $this->cursoService->idsCursosComDetalhe(),
+            'idsComTurma' => $this->cursoService->idsCursosComTurma(),
         ], 'admin');
     }
 
@@ -414,6 +415,22 @@ final class CursoController extends Controller
         $this->logService->log($idPagamento > 0 ? 'atualizar' : 'criar', 'cursos_iesb_pagamento', $result, ($idPagamento > 0 ? 'Pagamento atualizado' : 'Pagamento criado') . ' para o curso #' . $idCurso);
         Session::setFlash('flash', 'Forma de pagamento salva com sucesso.');
         $this->redirect('/admin/cursos/definir-valor?id=' . $idCurso);
+    }
+
+    public function cursosTurma(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursosTurmas = $this->cursoService->listarCursosTurmas();
+
+        $this->render('pages/admin/cursos/cursos_turma', [
+            'title' => 'Cursos-turma',
+            'currentRoute' => '/admin/cursos/cursos-turma',
+            'cursosTurmas' => $cursosTurmas,
+        ], 'admin');
     }
 
     private function normalizeAtivo(string $value): string

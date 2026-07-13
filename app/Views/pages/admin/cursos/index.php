@@ -11,6 +11,7 @@
   $niveisLista = array_filter(is_array($niveis ?? null) ? $niveis : [], static fn ($n) => is_array($n));
   $currentNivelId = (int) ($nivelSelecionado ?? ($_GET['nivel'] ?? 0));
   $idsComDetalhe = is_array($idsComDetalhe ?? null) ? $idsComDetalhe : [];
+  $idsComTurma = is_array($idsComTurma ?? null) ? $idsComTurma : [];
   if ($currentNivelId < 0) {
       $currentNivelId = 0;
   }
@@ -142,16 +143,15 @@
             <th><i class="bi bi-journal-text me-1"></i>Nome</th>
             <th><i class="bi bi-toggle-on me-1"></i>Ativo</th>
             <th><i class="bi bi-calendar-event me-1"></i>Data</th>
-            <th><i class="bi bi-diagram-3 me-1"></i>Segmento</th>
               <th>Modalidade</th>
              <th>Nível</th>
-             <th><i class="bi bi-award-fill me-1"></i>Confirmado</th>
+             <th><i class="bi bi-award-fill"></i></th>
              <th><i class="bi bi-gear me-1"></i>Acoes</th>
           </tr>
         </thead>
         <tbody>
           <?php if (empty($coursesView)): ?>
-            <tr><td colspan="10" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
+            <tr><td colspan="9" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum curso encontrado.</td></tr>
           <?php endif; ?>
 
           <?php foreach ($coursesView as $course): ?>
@@ -167,7 +167,7 @@
                   <?php endif; ?>
                 </a>
               </td>
-              <td><?= htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td class="<?= !in_array((int) ($course['id'] ?? 0), $idsComTurma ?? []) ? 'text-danger' : '' ?>"><?= htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <?php $ativoStatus = strtoupper(trim((string) ($course['ativo'] ?? 'N'))); ?>
               <td>
                 <?php if ($ativoStatus === 'S' || $ativoStatus === '1' || $ativoStatus === 'Y'): ?>
@@ -181,27 +181,25 @@
               <td<?= $needsAlert ? ' class="text-danger fw-semibold"' : '' ?>>
                 <?= htmlspecialchars((string) ($course['data_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
               </td>
-              <td><?= htmlspecialchars((string) ($course['segmento_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($course['modalidade_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($course['nivel_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                <td>
+                <td class="text-center">
                   <?php if (strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S'): ?>
-                    <span class="badge bg-success">Sim</span>
+                    <i class="bi bi-check-circle-fill text-success"></i>
                   <?php else: ?>
-                    <span class="badge bg-secondary">Não</span>
+                    <i class="bi bi-x-circle-fill text-muted"></i>
                   <?php endif; ?>
                 </td>
-              <td>
-                <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/editar?id=<?= (int) ($course['id'] ?? 0) ?>">
-                  <i class="bi bi-pencil-square me-1"></i>Editar
+              <td class="text-nowrap">
+                <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/editar?id=<?= (int) ($course['id'] ?? 0) ?>" title="Editar">
+                  <i class="bi bi-pencil-square"></i>
                 </a>
                 <a class="btn btn-outline-success btn-sm" href="/admin/cursos/definir-valor?id=<?= (int) ($course['id'] ?? 0) ?>" title="Definir valores">
                   <i class="bi bi-currency-dollar"></i>
                 </a>
                 <?php $temDetalhe = in_array((int) ($course['id'] ?? 0), $idsComDetalhe, true); ?>
-                <br>
-                <a class="btn btn-<?= $temDetalhe ? 'primary' : 'warning' ?> btn-sm mt-1" href="/admin/cursos/detalhes?id=<?= (int) ($course['id'] ?? 0) ?>" title="<?= $temDetalhe ? 'Editar detalhe do curso' : 'Adicionar detalhe do curso' ?>">
-                  <i class="bi bi-journal-text me-1"></i><?= $temDetalhe ? 'Detalhe' : 'Add Detalhe' ?>
+                <a class="btn btn-<?= $temDetalhe ? 'primary' : 'warning' ?> btn-sm" href="/admin/cursos/detalhes?id=<?= (int) ($course['id'] ?? 0) ?>" title="<?= $temDetalhe ? 'Editar detalhe do curso' : 'Adicionar detalhe do curso' ?>">
+                  <i class="bi bi-journal-text"></i>
                 </a>
               </td>
             </tr>
@@ -209,7 +207,7 @@
         </tbody>
         <tfoot>
           <tr>
-            <td colspan="10" class="text-end fw-semibold text-muted">
+            <td colspan="9" class="text-end fw-semibold text-muted">
               Total de registros: <?= count($coursesView) ?>
             </td>
           </tr>
