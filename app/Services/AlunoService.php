@@ -87,6 +87,11 @@ final class AlunoService
         return $this->turmaRepository->findMatriculaByAlunoAndTurma($idAluno, $idTurma) !== null;
     }
 
+    public function findMatriculaByAlunoAndTurma(int $idAluno, int $idTurma): ?array
+    {
+        return $this->turmaRepository->findMatriculaByAlunoAndTurma($idAluno, $idTurma);
+    }
+
     public function findMatriculaById(int $idMatricula): ?array
     {
         if ($idMatricula <= 0) {
@@ -124,6 +129,11 @@ final class AlunoService
     public function findByEmail(string $email): ?array
     {
         return $this->repository->findByEmail($email);
+    }
+
+    public function findByCpf(string $cpf): ?array
+    {
+        return $this->repository->findByCpf($cpf);
     }
 
     public function salvarResetToken(int $id, string $token, string $expires): void

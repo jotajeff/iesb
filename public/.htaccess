@@ -1,6 +1,9 @@
 <IfModule mod_rewrite.c>
     RewriteEngine On
 
+    # Permite acesso direto ao endpoint físico do webhook Asaas
+    RewriteRule ^asaas-webhook\.php$ - [L]
+
     # Mantém arquivos e diretórios reais (assets, uploads etc.)
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d

@@ -27,4 +27,14 @@ final class CursoInscricaoService
     {
         return $this->repository->updateAsaasInfo($id, $data);
     }
+
+    public function findByAsaasPayment(string $asaasPayment): ?array
+    {
+        return $this->repository->findByAsaasPayment($asaasPayment);
+    }
+
+    public function atualizarStatus(int $id, string $status, ?int $idAluno = null, ?int $idMatricula = null): bool
+    {
+        return $this->repository->updateStatus($id, $status, $idAluno, $idMatricula);
+    }
 }

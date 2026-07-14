@@ -85,6 +85,25 @@ final class AlunoRepository
         }
     }
 
+    public function findByCpf(string $cpf): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT id, nome, cpf, email, telefone, ativo FROM alunos WHERE cpf = :cpf LIMIT 1');
+            $stmt->bindValue(':cpf', $cpf);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[ALUNOS] Erro em findByCpf: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function findByResetToken(string $token): ?array
     {
         $pdo = Database::connection();

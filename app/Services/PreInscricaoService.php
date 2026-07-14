@@ -37,4 +37,14 @@ final class PreInscricaoService
     {
         return $this->repository->atualizarSituacao($id, $situacao);
     }
+
+    public function findByAsaasPayment(string $asaasPayment): ?array
+    {
+        return $this->repository->findByAsaasPayment($asaasPayment);
+    }
+
+    public function atualizarWebhook(int $id, array $data): bool
+    {
+        return $this->repository->atualizarWebhook($id, $data);
+    }
 }

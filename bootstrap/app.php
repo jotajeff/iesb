@@ -29,7 +29,9 @@ if (is_file($vendorAutoload)) {
     });
 }
 
-Session::start();
+if (!defined('APP_DISABLE_SESSION') || APP_DISABLE_SESSION !== true) {
+    Session::start();
+}
 Env::load(dirname(__DIR__) . '/.env');
 
 $router = new Router();

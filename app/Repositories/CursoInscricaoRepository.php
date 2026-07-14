@@ -109,4 +109,60 @@ final class CursoInscricaoRepository
             return null;
         }
     }
+
+    public function findByAsaasPayment(string $asaasPayment): ?array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return null;
+            }
+
+            $stmt = $pdo->prepare('SELECT * FROM cursos_iesb_inscricao WHERE asaas_payment = :asaas_payment LIMIT 1');
+            $stmt->bindValue(':asaas_payment', $asaasPayment);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[INSCRICAO] Erro em findByAsaasPayment: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function updateStatus(int $id, string $status, ?int $idAluno = null, ?int $idMatricula = null): bool
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return false;
+            }
+
+            $sql = 'UPDATE cursos_iesb_inscricao SET status = :status, updated_at = CURRENT_TIMESTAMP';
+            $params = [':status' => $status, ':id' => $id];
+
+            if ($idAluno !== null) {
+                $sql .= ', id_aluno = :id_aluno';
+                $params[':id_aluno'] = $idAluno;
+            }
+            if ($idMatricula !== null) {
+                $sql .= ', id_matricula = :id_matricula';
+                $params[':id_matricula'] = $idMatricula;
+            }
+
+            $sql .= ' WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':status', $status);
+            if ($idAluno !== null) {
+                $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+            }
+            if ($idMatricula !== null) {
+                $stmt->bindValue(':id_matricula', $idMatricula, PDO::PARAM_INT);
+            }
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[INSCRICAO] Erro em updateStatus: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

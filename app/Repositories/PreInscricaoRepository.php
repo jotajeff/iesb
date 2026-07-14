@@ -67,15 +67,21 @@ final class PreInscricaoRepository
         }
 
         try {
-            $sql = 'INSERT INTO pre_inscricao (nome, email, whatsapp, ip, curso_id, situacao)
-                    VALUES (:nome, :email, :whatsapp, :ip, :curso_id, :situacao)';
+            $sql = 'INSERT INTO pre_inscricao (nome, email, whatsapp, ip, curso_id, cpf, id_turma, id_forma_pagamento, asaas_customer, asaas_payment, invoice_url, status)
+                    VALUES (:nome, :email, :whatsapp, :ip, :curso_id, :cpf, :id_turma, :id_forma_pagamento, :asaas_customer, :asaas_payment, :invoice_url, :status)';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':nome', trim((string) ($data['nome'] ?? '')));
             $stmt->bindValue(':email', trim((string) ($data['email'] ?? '')));
             $stmt->bindValue(':whatsapp', trim((string) ($data['whatsapp'] ?? '')));
             $stmt->bindValue(':ip', trim((string) ($data['ip'] ?? '')));
             $stmt->bindValue(':curso_id', (int) ($data['curso_id'] ?? 0), PDO::PARAM_INT);
-            $stmt->bindValue(':situacao', 'recebido');
+            $stmt->bindValue(':cpf', trim((string) ($data['cpf'] ?? '')));
+            $stmt->bindValue(':id_turma', (int) ($data['id_turma'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':id_forma_pagamento', (int) ($data['id_forma_pagamento'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':asaas_customer', (string) ($data['asaas_customer'] ?? ''));
+            $stmt->bindValue(':asaas_payment', (string) ($data['asaas_payment'] ?? ''));
+            $stmt->bindValue(':invoice_url', (string) ($data['invoice_url'] ?? ''));
+            $stmt->bindValue(':status', (string) ($data['status'] ?? 'PENDENTE'));
             $stmt->execute();
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {
@@ -134,6 +140,63 @@ final class PreInscricaoRepository
             return $stmt->rowCount() > 0;
         } catch (\Throwable $e) {
             error_log('[PRE_INSCRICAO] Erro ao atualizar situação: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function findByAsaasPayment(string $asaasPayment): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT * FROM pre_inscricao WHERE asaas_payment = :asaas_payment LIMIT 1');
+            $stmt->bindValue(':asaas_payment', $asaasPayment);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[PRE_INSCRICAO] Erro em findByAsaasPayment: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function atualizarWebhook(int $id, array $data): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return false;
+        }
+
+        try {
+            $fields = [];
+            $params = [':id' => $id];
+
+            foreach (['status', 'id_aluno', 'id_matricula', 'processado_em', 'updated_at', 'invoice_url', 'asaas_customer', 'asaas_payment'] as $col) {
+                if (array_key_exists($col, $data)) {
+                    $fields[] = "`{$col}` = :{$col}";
+                    $params[":{$col}"] = $data[$col];
+                }
+            }
+
+            if (empty($fields)) {
+                return false;
+            }
+
+            $sql = 'UPDATE pre_inscricao SET ' . implode(', ', $fields) . ' WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+
+            foreach ($params as $key => $value) {
+                $type = is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR;
+                $stmt->bindValue($key, $value, $type);
+            }
+
+            $stmt->execute();
+            return $stmt->rowCount() > 0;
+        } catch (\Throwable $e) {
+            error_log('[PRE_INSCRICAO] Erro em atualizarWebhook: ' . $e->getMessage());
             return false;
         }
     }
