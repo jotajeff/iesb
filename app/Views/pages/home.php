@@ -4,16 +4,7 @@
                 $carouselId = 'hero-carousel-items';
                 ?>
                 <section class="hero-carousel" id="<?= $carouselId ?>">
-                  <div class="hero-carousel-bg"></div>
-                  <div class="hero-bubbles" aria-hidden="true">
-                    <span class="hero-bubble hero-bubble-1"></span>
-                    <span class="hero-bubble hero-bubble-2"></span>
-                    <span class="hero-bubble hero-bubble-3"></span>
-                    <span class="hero-bubble hero-bubble-4"></span>
-                  </div>
-
-                  <div class="hero-carousel-inner">
-                    <div class="hero-carousel-slider">
+                  <div class="hero-carousel-slider">
                       <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
                         <div class="carousel-indicators">
                           <?php foreach ($carouselItems as $idx => $item): ?>
@@ -58,7 +49,6 @@
                         </button>
                       </div>
                     </div>
-                  </div>
                 </section>
               <?php endif; ?>
 

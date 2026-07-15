@@ -417,6 +417,64 @@ a {
   padding-top: 20px;
   padding-bottom: 20px;
 }
+.session-hero--banner {
+  width: 100%;
+  line-height: 0;
+  overflow: hidden;
+  padding-top: 78px;
+  position: relative;
+}
+.session-hero-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: cover;
+  opacity: 0;
+  animation: imgReveal 1.6s ease 0.1s forwards;
+}
+
+/* ============================================
+   IMAGE REVEAL — MOSAIC BLOCKS FADING
+   ============================================ */
+
+.session-hero--banner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-color: var(--bg-body);
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0px, transparent 24px, rgba(0,0,0,0.05) 24px, rgba(0,0,0,0.05) 25px),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 24px, rgba(0,0,0,0.05) 24px, rgba(0,0,0,0.05) 25px);
+  background-size: 25px 25px;
+  animation: mosaicReveal 1.6s ease-out forwards;
+}
+
+.course-card-image::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background-color: var(--bg-body);
+  background-image:
+    repeating-linear-gradient(0deg, transparent 0px, transparent 29px, rgba(0,0,0,0.05) 29px, rgba(0,0,0,0.05) 30px),
+    repeating-linear-gradient(90deg, transparent 0px, transparent 29px, rgba(0,0,0,0.05) 29px, rgba(0,0,0,0.05) 30px);
+  background-size: 30px 30px;
+  animation: mosaicReveal 1.2s ease-out forwards;
+}
+
+@keyframes mosaicReveal {
+  0%   { opacity: 1; }
+  50%  { opacity: 0.4; }
+  100% { opacity: 0; }
+}
+
+@keyframes imgReveal {
+  0%   { opacity: 0; transform: scale(1.04); }
+  100% { opacity: 1; transform: scale(1); }
+}
 .hero-desc-box {
   background: rgba(0, 0, 0, 0.45);
   backdrop-filter: blur(4px);
@@ -439,86 +497,82 @@ a {
 }
 
 /* ============================================
-   HERO — CAROUSEL HOME
+   SOBRE — TEXTO BOX
    ============================================ */
+.sobre-texto-box {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-left: 6px solid var(--primary);
+  border-radius: 16px;
+  padding: 2.5rem 3rem;
+  box-shadow: var(--card-shadow);
+  color: var(--text-primary);
+  font-size: 1.05rem;
+  line-height: 1.85;
+  text-align: center;
+}
+
+.sobre-texto-box p {
+  margin-bottom: 1rem;
+  color: var(--text-primary);
+}
+
+.sobre-texto-box p:last-child {
+  margin-bottom: 0;
+}
+
+.sobre-texto-box h2,
+.sobre-texto-box h3,
+.sobre-texto-box h4 {
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-heading);
+}
+
+.sobre-texto-box a {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
 /* ============================================
-   HERO - CAROUSEL HOME
+   HERO — CAROUSEL HOME
    ============================================ */
 
 .hero-carousel {
   position: relative;
-
   width: 100%;
-
-  padding: 78px 0 12px;
-
+  padding: 78px 0 0;
   overflow: hidden;
-
-  background:
-    radial-gradient(
-      circle at 10% 20%,
-      rgba(var(--primary-rgb), 0.18),
-      transparent 26%
-    ),
-    radial-gradient(
-      circle at 86% 24%,
-      rgba(255, 227, 126, 0.12),
-      transparent 22%
-    ),
-    linear-gradient(
-      135deg,
-      rgba(38, 39, 38, 0.98),
-      rgba(77, 79, 78, 0.95),
-      rgba(64, 66, 64, 0.98)
-    );
-}
-
-.hero-carousel-bg {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
+  background: #1a1b1a;
 }
 
 .hero-carousel-inner {
-  position: relative;
-
-  z-index: 2;
-
-  display: flex;
-
-  justify-content: center;
+  width: 100%;
 }
 
 .hero-carousel-slider {
-  width: 70%;
-
-  max-width: 1200px;
-
+  width: 100%;
+  max-width: 100%;
   margin: 0 auto;
-
   overflow: hidden;
-
-  border-radius: 20px;
-
+  border-radius: 0;
   background: transparent;
-
-  box-shadow: 0 18px 45px rgba(0, 0, 0, 0.3);
+  box-shadow: none;
 }
 
 .hero-carousel-slider .carousel,
 .hero-carousel-slider .carousel-inner,
 .hero-carousel-slider .carousel-item {
   width: 100%;
-
   height: auto;
 }
 
 .hero-carousel-slider img {
   display: block;
-
   width: 100%;
-
   height: auto;
+    aspect-ratio: 1920 / 404;
+  object-fit: cover;
 }
 
 .hero-carousel-slider .carousel-item {
@@ -535,7 +589,7 @@ a {
 }
 
 .hero-carousel-slider .carousel-indicators {
-  bottom: 12px;
+  bottom: 16px;
 }
 /* ============================================
    HERO — CTA BUTTONS
@@ -957,6 +1011,7 @@ section {
   position: absolute;
   top: 14px;
   left: 14px;
+  z-index: 3;
   background: var(--primary);
   color: var(--dark);
   padding: 4px 14px;
@@ -1621,13 +1676,12 @@ footer .footer-links a:hover {
     margin-top: 1rem;
   }
   .hero-carousel {
-    padding: 70px 0 10px;
+    padding: 70px 0 0;
   }
 
   .hero-carousel-slider {
-    width: 94%;
-
-    border-radius: 16px;
+    width: 100%;
+    border-radius: 0;
   }
   .hero-image {
     display: none !important;

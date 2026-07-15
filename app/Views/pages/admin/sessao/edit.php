@@ -28,6 +28,9 @@ $midiaVal = match ((int) ($s['midia'] ?? -1)) {
             <option value="eventos"<?= ((string) ($s['slug'] ?? '') === 'eventos') ? ' selected' : '' ?>>eventos</option>
             <option value="parcerias"<?= ((string) ($s['slug'] ?? '') === 'parcerias') ? ' selected' : '' ?>>parcerias</option>
             <option value="sobre"<?= ((string) ($s['slug'] ?? '') === 'sobre') ? ' selected' : '' ?>>sobre</option>
+            <option value="graduacao"<?= ((string) ($s['slug'] ?? '') === 'graduacao') ? ' selected' : '' ?>>graduação</option>
+            <option value="pos-graduacao"<?= ((string) ($s['slug'] ?? '') === 'pos-graduacao') ? ' selected' : '' ?>>pós-graduação</option>
+            <option value="cursos-livres"<?= ((string) ($s['slug'] ?? '') === 'cursos-livres') ? ' selected' : '' ?>>cursos livres</option>
           </select>
         </div>
         <div class="col-md-3">

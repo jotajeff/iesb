@@ -23,6 +23,11 @@ final class SessaoService
         return $this->repository->findById($id);
     }
 
+    public function findBySlug(string $slug): ?array
+    {
+        return $this->repository->findBySlug($slug);
+    }
+
     public function save(array $data): int
     {
         if (trim((string) ($data['slug'] ?? '')) === '') {

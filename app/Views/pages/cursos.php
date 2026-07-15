@@ -10,8 +10,14 @@ $segmentosMenu = $segmentosMenu ?? [];
 $segmentoSelecionado = $segmentoSelecionado ?? null;
 $segmentoSelecionadoNome = trim((string) ($segmentoSelecionado['nome'] ?? ''));
 $nivelCursoUrl = (string) ($nivelCursoUrl ?? '/cursos');
+$sessaoBanner = $sessaoBanner ?? null;
 ?>
 
+<?php if ($sessaoBanner !== null): ?>
+  <div class="session-hero session-hero--banner">
+    <img src="/<?= htmlspecialchars($sessaoBanner, ENT_QUOTES, 'UTF-8') ?>" alt="" class="session-hero-img">
+  </div>
+<?php else: ?>
 <section class="hero-section hero-section--cursos" id="home">
   <div class="hero-content container">
     <div class="row justify-content-center">
@@ -25,6 +31,7 @@ $nivelCursoUrl = (string) ($nivelCursoUrl ?? '/cursos');
     </div>
   </div>
 </section>
+<?php endif; ?>
 
 <section class="py-2">
   <div class="container">

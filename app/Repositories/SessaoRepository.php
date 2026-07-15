@@ -26,6 +26,25 @@ final class SessaoRepository
         }
     }
 
+    public function findBySlug(string $slug): ?array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return null;
+            }
+
+            $stmt = $pdo->prepare('SELECT * FROM sessao WHERE slug = :slug LIMIT 1');
+            $stmt->bindValue(':slug', $slug, PDO::PARAM_STR);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[SESSAO] Erro ao buscar por slug: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function findById(int $id): ?array
     {
         try {

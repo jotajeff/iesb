@@ -1,18 +1,38 @@
-<section class="hero-section" id="sobre" style="min-height: 60vh;">
-  <div class="hero-bg"></div>
-  <div class="container hero-content" style="padding-top: 120px;">
-    <div class="row justify-content-center">
-      <div class="col-lg-10 text-center" data-aos="fade-up">
-        <div class="hero-badge"><i class="bi bi-info-circle-fill"></i> Página Institucional</div>
-        <h1 class="hero-title">Sobre a <span class="highlight">IESB Inteligência Educacional</span></h1>
-        <p class="hero-subtitle">
-          Formamos profissionais preparados para o mercado por meio de uma educação prática, atualizada e conectada
-          com as demandas reais de carreira e desenvolvimento.
-        </p>
+<?php if ($sessaoBanner !== null): ?>
+  <div class="session-hero session-hero--banner">
+    <img src="/<?= htmlspecialchars($sessaoBanner, ENT_QUOTES, 'UTF-8') ?>" alt="Sobre a IESB" class="session-hero-img">
+  </div>
+<?php else: ?>
+  <section class="hero-section" id="sobre" style="min-height: 60vh;">
+    <div class="hero-bg"></div>
+    <div class="container hero-content" style="padding-top: 120px;">
+      <div class="row justify-content-center">
+        <div class="col-lg-10 text-center" data-aos="fade-up">
+          <div class="hero-badge"><i class="bi bi-info-circle-fill"></i> Página Institucional</div>
+          <h1 class="hero-title">Sobre a <span class="highlight">IESB Inteligência Educacional</span></h1>
+          <p class="hero-subtitle">
+            Formamos profissionais preparados para o mercado por meio de uma educação prática, atualizada e conectada
+            com as demandas reais de carreira e desenvolvimento.
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-</section>
+  </section>
+<?php endif; ?>
+
+<?php if ($sessaoTexto !== ''): ?>
+  <section class="py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-lg-10" data-aos="fade-up">
+          <div class="sobre-texto-box">
+            <?= $sessaoTexto ?>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+<?php endif; ?>
 
 <section class="py-5">
   <div class="container">
@@ -139,7 +159,7 @@
       <div class="section-label justify-content-center">
         Equipe e Estrutura
       </div>
-      <h2 class="section-title">Fotos da Escola e Equipe</h2>
+      <h2 class="section-title">Fotos da Instituição e Equipe</h2>
       <p class="section-desc centered" style="color: var(--bs-secondary-color);">
         Conheça os ambientes e as pessoas que fazem parte da experiência IESB.
       </p>

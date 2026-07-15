@@ -14,7 +14,6 @@
 
     function queryString(array $extra = []): string {
       $params = array_merge($_GET, $extra);
-      unset($params['page']);
       return http_build_query($params);
     }
     ?>

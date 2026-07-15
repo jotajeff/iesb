@@ -18,6 +18,9 @@
             <option value="eventos">eventos</option>
             <option value="parcerias">parcerias</option>
             <option value="sobre">sobre</option>
+            <option value="graduacao">graduação</option>
+            <option value="pos-graduacao">pós-graduação</option>
+            <option value="cursos-livres">cursos livres</option>
           </select>
         </div>
         <div class="col-md-3">

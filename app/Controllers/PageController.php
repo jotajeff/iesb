@@ -12,6 +12,7 @@ use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
 use App\Services\LogService;
 use App\Services\PreInscricaoService;
+use App\Services\SessaoService;
 use App\Support\Session;
 
 final class PageController extends Controller
@@ -20,6 +21,7 @@ final class PageController extends Controller
     private CursoService $cursoService;
     private CursoPagamentoService $pagamentoService;
     private CursoInscricaoService $inscricaoService;
+    private SessaoService $sessaoService;
 
     public function __construct()
     {
@@ -27,11 +29,29 @@ final class PageController extends Controller
         $this->cursoService = new CursoService();
         $this->pagamentoService = new CursoPagamentoService();
         $this->inscricaoService = new CursoInscricaoService();
+        $this->sessaoService = new SessaoService();
     }
 
     public function sobre(): void
     {
-        $this->render('pages/sobre', ['title' => 'Sobre', 'currentRoute' => '/sobre']);
+        $sessao = $this->sessaoService->findBySlug('sobre');
+        $sessaoBanner = null;
+        $sessaoTexto = '';
+
+        if ($sessao !== null) {
+            $banner = trim((string) ($sessao['banner'] ?? ''));
+            if ($banner !== '') {
+                $sessaoBanner = $banner;
+            }
+            $sessaoTexto = (string) ($sessao['texto'] ?? '');
+        }
+
+        $this->render('pages/sobre', [
+            'title' => 'Sobre',
+            'currentRoute' => '/sobre',
+            'sessaoBanner' => $sessaoBanner,
+            'sessaoTexto' => $sessaoTexto,
+        ]);
     }
 
     public function cursos(): void
@@ -101,6 +121,17 @@ final class PageController extends Controller
 
         $nivelParam = $nivelCursoSlug !== '' ? 'nivel=' . rawurlencode($nivelCursoSlug) : 'nivel_id=' . $nivelCursoId;
 
+        $sessaoBanner = null;
+        if ($nivelSlugRequest !== '') {
+            $sessao = $this->sessaoService->findBySlug($nivelSlugRequest);
+            if ($sessao !== null) {
+                $banner = trim((string) ($sessao['banner'] ?? ''));
+                if ($banner !== '') {
+                    $sessaoBanner = $banner;
+                }
+            }
+        }
+
         $this->render('pages/cursos', [
             'title' => 'Cursos',
             'currentRoute' => '/cursos',
@@ -111,6 +142,7 @@ final class PageController extends Controller
             'segmentoSelecionadoId' => $segmentoIdRequest,
             'nivelCursoUrl' => '/cursos?' . $nivelParam,
             'niveisMenu' => $niveisAtivos,
+            'sessaoBanner' => $sessaoBanner,
         ]);
     }
 
