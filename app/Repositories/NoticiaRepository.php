@@ -31,6 +31,32 @@ final class NoticiaRepository
         }
     }
 
+    public function listPublicados(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT n.id, n.titulo, n.slug, n.resumo, n.conteudo, n.imagem_capa,
+                           n.legenda_imagem, n.autor, n.data_publicacao, n.destaque,
+                           n.id_categoria, cn.nome AS categoria_nome
+                    FROM noticia n
+                    LEFT JOIN categoria_noticia cn ON cn.id = n.id_categoria
+                    WHERE n.status = :status
+                    ORDER BY n.data_publicacao DESC';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':status', 'publicado');
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[NOTICIA] Erro ao listar notícias publicadas: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function findById(int $id): ?array
     {
         $pdo = Database::connection();
@@ -50,6 +76,33 @@ final class NoticiaRepository
             return $row ?: null;
         } catch (\Throwable $e) {
             error_log('[NOTICIA] Erro ao buscar notícia: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function findBySlug(string $slug): ?array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return null;
+            }
+
+            $sql = 'SELECT n.id, n.titulo, n.slug, n.resumo, n.conteudo, n.imagem_capa,
+                           n.legenda_imagem, n.autor, n.data_publicacao, n.destaque,
+                           n.id_categoria, cn.nome AS categoria_nome
+                    FROM noticia n
+                    LEFT JOIN categoria_noticia cn ON cn.id = n.id_categoria
+                    WHERE n.slug = :slug AND n.status = :status
+                    LIMIT 1';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':slug', $slug);
+            $stmt->bindValue(':status', 'publicado');
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[NOTICIA] Erro ao buscar notícia por slug: ' . $e->getMessage());
             return null;
         }
     }

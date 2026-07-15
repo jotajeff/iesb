@@ -273,11 +273,16 @@
         <div class="col-lg-4 col-md-6">
           <h5>Canais</h5>
           <ul class="footer-links">
-            <li><a href="/parcerias">Parcerias</a></li>
-            <li><a href="/aluno/login/">Área do Aluno</a></li>
-            <li><a href="mailto:atendimento@inteligenciaeducacionalsouzabrazil.com">atendimento@inteligenciaeducacionalsouzabrazil.com</a></li>
-            <li><a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer">WhatsApp: (51) 99297-5503</a></li>
-            <li><a href="/privacidade">Política de Privacidade</a></li>
+            <?php
+            $sessaoEventos = (new \App\Services\SessaoService())->findBySlug('eventos');
+            $tituloEventos = htmlspecialchars((string) ($sessaoEventos['titulo'] ?? 'Eventos'), ENT_QUOTES, 'UTF-8');
+            ?>
+            <li><a href="/eventos"><i class="bi bi-megaphone-fill me-1"></i><?= $tituloEventos ?></a></li>
+            <li><a href="/parcerias"><i class="bi bi-hand-thumbs-up"></i>Parcerias</a></li>
+            <li><a href="/aluno/login/"><i class="bi bi-person-circle me-1"></i>Área do Aluno</a></li>
+            <li><a href="mailto:atendimento@inteligenciaeducacionalsouzabrazil.com"><i class="bi bi-envelope me-1"></i>atendimento@inteligenciaeducacionalsouzabrazil.com</a></li>
+            <li><a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp me-1"></i>WhatsApp: (51) 99297-5503</a></li>
+            <li><a href="/privacidade"><i class="bi bi-shield-lock me-1"></i>Política de Privacidade</a></li>
           </ul>
         </div>
       </div>

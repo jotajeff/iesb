@@ -10,7 +10,9 @@ use App\Services\ConfigService;
 use App\Services\CursoInscricaoService;
 use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
+use App\Services\ImageService;
 use App\Services\LogService;
+use App\Services\NoticiaService;
 use App\Services\PreInscricaoService;
 use App\Services\SessaoService;
 use App\Support\Session;
@@ -21,6 +23,8 @@ final class PageController extends Controller
     private CursoService $cursoService;
     private CursoPagamentoService $pagamentoService;
     private CursoInscricaoService $inscricaoService;
+    private ImageService $imageService;
+    private NoticiaService $noticiaService;
     private SessaoService $sessaoService;
 
     public function __construct()
@@ -29,6 +33,8 @@ final class PageController extends Controller
         $this->cursoService = new CursoService();
         $this->pagamentoService = new CursoPagamentoService();
         $this->inscricaoService = new CursoInscricaoService();
+        $this->imageService = new ImageService();
+        $this->noticiaService = new NoticiaService();
         $this->sessaoService = new SessaoService();
     }
 
@@ -148,12 +154,91 @@ final class PageController extends Controller
 
     public function eventos(): void
     {
-        $this->render('pages/eventos', ['title' => 'Eventos', 'currentRoute' => '/eventos']);
+        $sessao = $this->sessaoService->findBySlug('eventos');
+        $sessaoBanner = null;
+        $sessaoTitulo = '';
+        $sessaoTexto = '';
+
+        if ($sessao !== null) {
+            $banner = trim((string) ($sessao['banner'] ?? ''));
+            if ($banner !== '') {
+                $sessaoBanner = $banner;
+            }
+            $sessaoTitulo = htmlspecialchars((string) ($sessao['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $sessaoTexto = (string) ($sessao['texto'] ?? '');
+        }
+
+        $this->render('pages/eventos', [
+            'title' => 'Eventos',
+            'currentRoute' => '/eventos',
+            'sessaoBanner' => $sessaoBanner,
+            'sessaoTitulo' => $sessaoTitulo,
+            'sessaoTexto' => $sessaoTexto,
+        ]);
     }
 
     public function parcerias(): void
     {
-        $this->render('pages/parcerias', ['title' => 'Parcerias', 'currentRoute' => '/parcerias']);
+        $sessao = $this->sessaoService->findBySlug('parcerias');
+        $sessaoBanner = null;
+        $sessaoTitulo = '';
+        $sessaoTexto = '';
+        $sessaoMidia = null;
+        $galeria = [];
+
+        if ($sessao !== null) {
+            $banner = trim((string) ($sessao['banner'] ?? ''));
+            if ($banner !== '') {
+                $sessaoBanner = $banner;
+            }
+            $sessaoTitulo = htmlspecialchars((string) ($sessao['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
+            $sessaoTexto = (string) ($sessao['texto'] ?? '');
+            $sessaoMidia = isset($sessao['midia']) ? (int) $sessao['midia'] : null;
+
+            $sessaoId = (int) ($sessao['id'] ?? 0);
+            $slugSessao = trim((string) ($sessao['slug'] ?? ''));
+            if ($sessaoId > 0 && $slugSessao !== '' && $sessaoMidia !== null) {
+                $galeria = $this->imageService->listarPorFk($slugSessao, $sessaoId);
+            }
+        }
+
+        $this->render('pages/parcerias', [
+            'title' => 'Parcerias',
+            'currentRoute' => '/parcerias',
+            'sessaoBanner' => $sessaoBanner,
+            'sessaoTitulo' => $sessaoTitulo,
+            'sessaoTexto' => $sessaoTexto,
+            'sessaoMidia' => $sessaoMidia,
+            'galeria' => $galeria,
+        ]);
+    }
+
+    public function noticias(): void
+    {
+        $slug = trim((string) ($_GET['slug'] ?? ''));
+        $todas = $this->noticiaService->listPublicados();
+        $destaque = null;
+        $historico = $todas;
+
+        if ($slug !== '') {
+            $noticia = $this->noticiaService->findBySlug($slug);
+            if ($noticia !== null) {
+                $destaque = $noticia;
+                $historico = array_values(array_filter($todas, static fn (array $n) => ((string) ($n['slug'] ?? '')) !== $slug));
+            }
+        }
+
+        if ($destaque === null && !empty($todas)) {
+            $destaque = $todas[0];
+            $historico = array_slice($todas, 1);
+        }
+
+        $this->render('pages/noticias', [
+            'title' => $destaque !== null ? ((string) ($destaque['titulo'] ?? 'Notícias')) : 'Notícias',
+            'currentRoute' => '/noticias',
+            'destaque' => $destaque,
+            'historico' => $historico,
+        ]);
     }
 
     public function cursoDetalhe(): void

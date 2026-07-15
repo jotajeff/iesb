@@ -241,6 +241,7 @@ final class ConfigController extends Controller
         $titulo = trim((string) $this->input('titulo', ''));
         $ordem = (int) $this->input('ordem', 0);
         $ativo = (string) $this->input('ativo', 'S');
+        $target = trim((string) $this->input('target', '_self'));
         $user = Session::get('user');
         $userId = (int) ($user['id'] ?? 1);
 
@@ -268,6 +269,7 @@ final class ConfigController extends Controller
             'id_carousel' => 1,
             'titulo' => $titulo,
             'link' => $link,
+            'target' => $target,
             'ordem' => $ordem,
             'ativo' => $ativo,
             'criado_por' => $userId,

@@ -18,9 +18,19 @@ final class NoticiaService
         return $this->repository->list();
     }
 
+    public function listPublicados(): array
+    {
+        return $this->repository->listPublicados();
+    }
+
     public function find(int $id): ?array
     {
         return $this->repository->findById($id);
+    }
+
+    public function findBySlug(string $slug): ?array
+    {
+        return $this->repository->findBySlug($slug);
     }
 
     public function categorias(): array

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 09/07/2026 às 21:40
+-- Tempo de geração: 15/07/2026 às 15:11
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -405,7 +405,8 @@ CREATE TABLE `noticia` (
   `meta_description` varchar(255) DEFAULT NULL,
   `criado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `atualizado_em` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  `id_categoria` int(10) UNSIGNED DEFAULT NULL
+  `id_categoria` int(10) UNSIGNED DEFAULT NULL,
+  `midia` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------

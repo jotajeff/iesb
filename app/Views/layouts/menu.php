@@ -15,13 +15,14 @@
         ];
 
         $menuItemsAfterCursos = [
+          '/noticias' => 'Notícias',
           '/eventos' => 'Eventos',
           '/parcerias' => 'Parcerias',
         ];
 
         $niveisMenuDisponiveis = array_values(array_filter(
           $niveisMenu ?? [],
-          static fn (array $nivel): bool => (int) ($nivel['ativo'] ?? 0) === 1
+          static fn(array $nivel): bool => (int) ($nivel['ativo'] ?? 0) === 1
         ));
         $nivelSelecionadoId = (int) (($nivelSelecionado['id'] ?? 0) ?: 0);
         ?>

@@ -571,7 +571,6 @@ a {
   display: block;
   width: 100%;
   height: auto;
-    aspect-ratio: 1920 / 404;
   object-fit: cover;
 }
 

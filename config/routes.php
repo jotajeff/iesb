@@ -32,6 +32,8 @@ return static function (Router $router): void {
     $router->post('/inscricao/salvar', [PageController::class, 'salvarInscricao']);
     $router->get('/eventos', [PageController::class, 'eventos']);
     $router->get('/parcerias', [PageController::class, 'parcerias']);
+    $router->get('/noticias', [PageController::class, 'noticias']);
+    $router->get('/noticias/{slug}', [PageController::class, 'noticias']);
     $router->get('/privacidade', [PageController::class, 'privacidade']);
     $router->get('/pre-inscricao', [PageController::class, 'preInscricao']);
     $router->post('/pre-inscricao', [PageController::class, 'enviarPreInscricao']);
