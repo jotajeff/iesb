@@ -1,3 +1,8 @@
+<?php
+
+use App\Support\SessaoMidia;
+
+?>
 <?php if ($sessaoBanner !== null): ?>
   <div class="session-hero session-hero--banner">
     <img src="/<?= htmlspecialchars($sessaoBanner, ENT_QUOTES, 'UTF-8') ?>" alt="Eventos" class="session-hero-img">
@@ -37,3 +42,5 @@
     </div>
   </section>
 <?php endif; ?>
+
+<?= SessaoMidia::html($sessaoMidia, $galeria, 'eventos') ?>

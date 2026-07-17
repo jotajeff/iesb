@@ -269,6 +269,27 @@ final class SessaoController extends Controller
         $this->json(['sucesso' => true]);
     }
 
+    public function deletarImagem(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['sucesso' => false, 'erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_POST['id'] ?? 0));
+        $idFk = (int) ($this->input('id_fk', 0) ?: ($_POST['id_fk'] ?? 0));
+        $tabelaFk = trim((string) ($this->input('tabela_fk', '') ?: ($_POST['tabela_fk'] ?? '')));
+
+        if ($id <= 0 || $idFk <= 0 || $tabelaFk === '') {
+            $this->json(['sucesso' => false, 'erro' => 'Parâmetros inválidos.']);
+            return;
+        }
+
+        $this->imageService->deletar($id);
+        $this->logService->log('deletar', 'imagem', $id, 'Imagem removida da sessão ' . $idFk);
+        $this->json(['sucesso' => true]);
+    }
+
     private function isStaff(): bool
     {
         return (new AuthService())->isStaff();

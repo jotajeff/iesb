@@ -123,4 +123,25 @@ final class VisitaRepository
         $rows = $stmt->fetchAll();
         return is_array($rows) ? $rows : [];
     }
+
+    public function pageTotalsBySlugPrefix(string $prefix): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $sql = 'SELECT p.nome AS pagina_nome, p.slug AS pagina_slug, COUNT(*) AS total
+                FROM visitas_paginas v
+                INNER JOIN paginas p ON p.id = v.pagina_id
+                WHERE p.slug LIKE :prefix
+                GROUP BY p.id, p.nome, p.slug
+                ORDER BY total DESC';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':prefix', $prefix . '%');
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
 }

@@ -116,6 +116,12 @@ final class CursoService
         return $course ? $this->normalizeCursoSlug($course) : null;
     }
 
+    public function findCursoBySlug(string $slug): ?array
+    {
+        $course = $this->repository->findBySlug($slug);
+        return $course ? $this->normalizeCursoSlug($course) : null;
+    }
+
     public function criarCurso(
         string $nome,
         string $dataCurso,
@@ -295,6 +301,7 @@ final class CursoService
         return [
             'id' => (int) ($course['id'] ?? 0),
             'nome' => trim((string) ($course['nome'] ?? '-')),
+            'slug' => trim((string) ($course['slug'] ?? '')),
             'imagem_card' => trim((string) ($course['imagem_card'] ?? '')),
             'local_curso' => trim((string) ($course['local_curso'] ?? '-')),
             'horario' => trim((string) ($course['horario'] ?? '-')),

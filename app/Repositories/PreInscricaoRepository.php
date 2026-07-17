@@ -67,21 +67,14 @@ final class PreInscricaoRepository
         }
 
         try {
-            $sql = 'INSERT INTO pre_inscricao (nome, email, whatsapp, ip, curso_id, cpf, id_turma, id_forma_pagamento, asaas_customer, asaas_payment, invoice_url, status)
-                    VALUES (:nome, :email, :whatsapp, :ip, :curso_id, :cpf, :id_turma, :id_forma_pagamento, :asaas_customer, :asaas_payment, :invoice_url, :status)';
+            $sql = 'INSERT INTO pre_inscricao (nome, email, whatsapp, ip, curso_id)
+                    VALUES (:nome, :email, :whatsapp, :ip, :curso_id)';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':nome', trim((string) ($data['nome'] ?? '')));
             $stmt->bindValue(':email', trim((string) ($data['email'] ?? '')));
             $stmt->bindValue(':whatsapp', trim((string) ($data['whatsapp'] ?? '')));
             $stmt->bindValue(':ip', trim((string) ($data['ip'] ?? '')));
             $stmt->bindValue(':curso_id', (int) ($data['curso_id'] ?? 0), PDO::PARAM_INT);
-            $stmt->bindValue(':cpf', trim((string) ($data['cpf'] ?? '')));
-            $stmt->bindValue(':id_turma', (int) ($data['id_turma'] ?? 0), PDO::PARAM_INT);
-            $stmt->bindValue(':id_forma_pagamento', (int) ($data['id_forma_pagamento'] ?? 0), PDO::PARAM_INT);
-            $stmt->bindValue(':asaas_customer', (string) ($data['asaas_customer'] ?? ''));
-            $stmt->bindValue(':asaas_payment', (string) ($data['asaas_payment'] ?? ''));
-            $stmt->bindValue(':invoice_url', (string) ($data['invoice_url'] ?? ''));
-            $stmt->bindValue(':status', (string) ($data['status'] ?? 'PENDENTE'));
             $stmt->execute();
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {

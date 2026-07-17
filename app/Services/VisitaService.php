@@ -130,6 +130,31 @@ final class VisitaService
         ];
     }
 
+    public function visitsByCoursePages(): array
+    {
+        $rows = $this->repository->pageTotalsBySlugPrefix('curso/');
+        $total = 0;
+        foreach ($rows as $row) {
+            $total += (int) ($row['total'] ?? 0);
+        }
+
+        $pages = [];
+        foreach ($rows as $row) {
+            $count = (int) ($row['total'] ?? 0);
+            $pages[] = [
+                'name' => (string) ($row['pagina_nome'] ?? '-'),
+                'slug' => (string) ($row['pagina_slug'] ?? '-'),
+                'total' => $count,
+                'percent' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
+            ];
+        }
+
+        return [
+            'total' => $total,
+            'pages' => $pages,
+        ];
+    }
+
     private function incrementBucket(array &$bucket, string $key): void
     {
         if (!isset($bucket[$key])) {

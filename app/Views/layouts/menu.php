@@ -62,11 +62,6 @@
         <?php endforeach; ?>
       </ul>
       <div class="d-flex align-items-center gap-2">
-        <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-          <div class="toggle-ball">
-            <i class="bi bi-sun-fill toggle-icon" id="toggleIcon"></i>
-          </div>
-        </button>
         <?php if (($authUser['role'] ?? null) === 'admin'): ?>
           <a class="btn btn-sm btn-warning" href="/admin">Admin</a>
         <?php endif; ?>

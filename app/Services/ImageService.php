@@ -25,6 +25,13 @@ final class ImageService
 
     public function deletar(int $id): void
     {
+        $img = $this->repository->findById($id);
+        if ($img) {
+            $filePath = dirname(__DIR__, 2) . '/public/' . ltrim((string) ($img['path'] ?? ''), '/');
+            if (is_file($filePath)) {
+                @unlink($filePath);
+            }
+        }
         $this->repository->delete($id);
     }
 }

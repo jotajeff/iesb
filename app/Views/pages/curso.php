@@ -108,6 +108,9 @@ $img = trim((string) ($curso['imagem_card'] ?? ''));
               <i class="bi bi-pencil-square me-1"></i>Garantir minha vaga
             </a>
           <?php endif; ?>
+          <a class="btn btn-outline-primary w-100 justify-content-center d-flex align-items-center gap-2 mt-2" href="/pre-inscricao?curso_id=<?= (int) ($curso['id'] ?? 0) ?>">
+            <i class="bi bi-info-circle"></i> Quero mais informações
+          </a>
         </div>
       </div>
   </div>

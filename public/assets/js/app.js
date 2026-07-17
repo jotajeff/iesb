@@ -1,31 +1,5 @@
   AOS.init({ duration: 700, easing: "ease-out-cubic", once: true, offset: 80 });
 
-  const themeToggle = document.getElementById("themeToggle");
-  const toggleIcon = document.getElementById("toggleIcon");
-  const htmlEl = document.documentElement;
-
-  function getInitialTheme() {
-    const saved = localStorage.getItem("IESB-theme");
-    if (saved) return saved;
-    return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
-  }
-
-  function applyTheme(theme) {
-    htmlEl.setAttribute("data-bs-theme", theme);
-    if (toggleIcon) {
-      toggleIcon.className = theme === "dark" ? "bi bi-moon-fill toggle-icon" : "bi bi-sun-fill toggle-icon";
-    }
-    localStorage.setItem("IESB-theme", theme);
-  }
-
-  applyTheme(getInitialTheme());
-  if (themeToggle) {
-    themeToggle.addEventListener("click", () => {
-      const current = htmlEl.getAttribute("data-bs-theme");
-      applyTheme(current === "dark" ? "light" : "dark");
-    });
-  }
-
   const scrollTopBtn = document.getElementById("scrollTop");
   window.addEventListener("scroll", () => {
     if (!scrollTopBtn) return;

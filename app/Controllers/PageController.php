@@ -158,6 +158,8 @@ final class PageController extends Controller
         $sessaoBanner = null;
         $sessaoTitulo = '';
         $sessaoTexto = '';
+        $sessaoMidia = null;
+        $galeria = [];
 
         if ($sessao !== null) {
             $banner = trim((string) ($sessao['banner'] ?? ''));
@@ -166,6 +168,13 @@ final class PageController extends Controller
             }
             $sessaoTitulo = htmlspecialchars((string) ($sessao['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
             $sessaoTexto = (string) ($sessao['texto'] ?? '');
+            $sessaoMidia = isset($sessao['midia']) ? (int) $sessao['midia'] : null;
+
+            $sessaoId = (int) ($sessao['id'] ?? 0);
+            $slugSessao = trim((string) ($sessao['slug'] ?? ''));
+            if ($sessaoId > 0 && $slugSessao !== '' && $sessaoMidia !== null) {
+                $galeria = $this->imageService->listarPorFk($slugSessao, $sessaoId);
+            }
         }
 
         $this->render('pages/eventos', [
@@ -174,6 +183,8 @@ final class PageController extends Controller
             'sessaoBanner' => $sessaoBanner,
             'sessaoTitulo' => $sessaoTitulo,
             'sessaoTexto' => $sessaoTexto,
+            'sessaoMidia' => $sessaoMidia,
+            'galeria' => $galeria,
         ]);
     }
 
@@ -243,21 +254,23 @@ final class PageController extends Controller
 
     public function cursoDetalhe(): void
     {
-        $id = (int) ($_GET['id'] ?? 0);
+        $slug = trim((string) ($_GET['slug'] ?? ''));
 
-        if ($id <= 0) {
+        if ($slug === '') {
             http_response_code(404);
             $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
             return;
         }
 
-        $curso = $this->cursoService->findCurso($id);
+        $curso = $this->cursoService->findCursoBySlug($slug);
 
         if (!$curso) {
             http_response_code(404);
             $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
             return;
         }
+
+        $id = (int) ($curso['id'] ?? 0);
 
         $detalhe = $this->cursoService->findDetalheByCurso($id);
         $pagamentos = $this->pagamentoService->listarPorCurso($id);

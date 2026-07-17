@@ -95,7 +95,12 @@
       </div>
       <div class="col-md-8">
         <label class="form-label">Link de ingresso</label>
-        <input class="form-control" type="text" name="link_ingresso" value="<?= htmlspecialchars((string) ($course['link_ingresso'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Link de ingresso">
+        <?php $linkIngresso = (string) ($course['link_ingresso'] ?? ''); ?>
+        <input class="form-control" list="linkIngressoList" name="link_ingresso" value="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>" placeholder="URL personalizada">
+        <datalist id="linkIngressoList">
+          <option value="">
+          <option value="Saiba +">
+        </datalist>
       </div>
       <div class="col-12">
         <button class="btn btn-success" type="submit"><i class="bi bi-check-lg me-1"></i>Atualizar Curso</button>

@@ -50,6 +50,25 @@ final class ImageRepository
         }
     }
 
+    public function findById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT id, path, legenda, tabela_fk, id_fk FROM imagem WHERE id = :id LIMIT 1');
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[IMAGE] Erro em findById: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function delete(int $id): void
     {
         $pdo = Database::connection();

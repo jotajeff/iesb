@@ -263,6 +263,30 @@ final class CursoRepository
         }
     }
 
+    public function findBySlug(string $slug): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome
+                     FROM cursos_iesb c
+                     LEFT JOIN segmento s ON s.id = c.segmento
+                     WHERE c.slug = :slug';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':slug', $slug);
+            $stmt->execute();
+
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[CURSOS] Erro em findBySlug: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function create(array $payload): int
     {
         $pdo = Database::connection();

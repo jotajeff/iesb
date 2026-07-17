@@ -31,6 +31,11 @@ $flashUpload = $flash ?? '';
               <div class="card-body p-2">
                 <small class="text-muted"><?= htmlspecialchars((string) ($img['legenda'] ?? '—'), ENT_QUOTES, 'UTF-8') ?></small>
               </div>
+              <div class="card-footer p-2 text-end">
+                <button type="button" class="btn btn-sm btn-outline-danger" onclick="deletarImagem(<?= (int) ($img['id'] ?? 0) ?>, <?= $idFk ?>, '<?= htmlspecialchars($tabelaFk, ENT_QUOTES, 'UTF-8') ?>')">
+                  <i class="bi bi-trash3"></i>
+                </button>
+              </div>
             </div>
           </div>
         <?php endforeach; ?>
@@ -61,3 +66,25 @@ $flashUpload = $flash ?? '';
     </form>
   </div>
 </section>
+
+<script>
+function deletarImagem(id, idFk, tabelaFk) {
+  if (!confirm('Tem certeza que deseja excluir esta imagem?')) return;
+
+  const formData = new FormData();
+  formData.append('id', id);
+  formData.append('id_fk', idFk);
+  formData.append('tabela_fk', tabelaFk);
+
+  fetch('/admin/sessao/deletar-imagem', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.sucesso) {
+        location.reload();
+      } else {
+        alert('Erro ao excluir: ' + (data.erro || 'Erro desconhecido'));
+      }
+    })
+    .catch(() => alert('Erro ao excluir imagem.'));
+}
+</script>

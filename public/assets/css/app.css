@@ -1112,6 +1112,64 @@ section {
   color: var(--dark);
 }
 
+.course-card-footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: center;
+}
+
+.course-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  border: none;
+  background: #1e4e9e;
+  color: #ffffff;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.course-btn-primary:hover {
+  background: #163d7a;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+.course-btn-primary:disabled,
+.course-btn-primary.disabled {
+  background: #a0a0a0;
+  color: #e0e0e0;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.course-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  background: #ffffff;
+  border: 1px solid #1e4e9e;
+  color: #1e4e9e;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+.course-btn-secondary:hover {
+  background: #1e4e9e;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
 /* ============================================
            NÍVEL / APRESENTAÇÃO
            ============================================ */

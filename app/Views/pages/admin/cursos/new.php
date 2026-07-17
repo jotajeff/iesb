@@ -81,7 +81,11 @@
       </div>
       <div class="col-md-8">
         <label class="form-label">Link de ingresso</label>
-        <input class="form-control" type="text" name="link_ingresso" placeholder="Link de ingresso">
+        <input class="form-control" list="linkIngressoList" name="link_ingresso" value="" placeholder="URL personalizada">
+        <datalist id="linkIngressoList">
+          <option value="">
+          <option value="Saiba +">
+        </datalist>
       </div>
       <div class="col-12">
         <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Salvar Curso</button>

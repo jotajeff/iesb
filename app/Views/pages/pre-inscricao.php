@@ -21,7 +21,7 @@ $cursoId = (int) ($cursoId ?? $_GET['curso_id'] ?? 0);
               <div class="mb-3" style="color: var(--success);">
                 <i class="bi bi-check-circle-fill" style="font-size: 3rem;"></i>
               </div>
-              <h3 class="mb-3">Pré-inscrição recebida!</h3>
+              <h3 class="mb-3">Formulário recebido!</h3>
               <p class="mb-0 text-muted">Recebemos seus dados. Entraremos em contato em breve.</p>
             </div>
           </div>
@@ -34,7 +34,7 @@ $cursoId = (int) ($cursoId ?? $_GET['curso_id'] ?? 0);
                 <div class="mb-2" style="color: var(--primary);">
                   <i class="bi bi-pencil-square" style="font-size: 2.2rem;"></i>
                 </div>
-                <h3 class="mb-1">Pré-inscrição</h3>
+                <h3 class="mb-1">Registrar interesse</h3>
                 <p class="text-muted mb-0">Preencha seus dados para receber mais informações.</p>
               </div>
 
@@ -51,7 +51,7 @@ $cursoId = (int) ($cursoId ?? $_GET['curso_id'] ?? 0);
 
               <form method="post" action="/pre-inscricao" class="d-grid gap-3" id="formPreInscricao">
                 <?php if ($cursoNome !== ''): ?>
-                <input type="hidden" name="curso_id" value="<?= (int) ($cursoId ?? 0) ?>">
+                  <input type="hidden" name="curso_id" value="<?= (int) ($cursoId ?? 0) ?>">
                 <?php endif; ?>
                 <div>
                   <label class="form-label fw-semibold small text-uppercase text-secondary" for="nome">

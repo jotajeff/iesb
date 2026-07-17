@@ -47,11 +47,6 @@
           </li>
         </ul>
         <div class="d-flex align-items-center gap-2">
-          <button class="theme-toggle" id="themeToggle" aria-label="Alternar tema">
-            <div class="toggle-ball">
-              <i class="bi bi-sun-fill toggle-icon" id="toggleIcon"></i>
-            </div>
-          </button>
 
           <form method="post" action="/logout" class="d-inline">
             <button type="submit" class="btn btn-sm btn-outline-danger">

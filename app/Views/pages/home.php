@@ -130,17 +130,22 @@
                                 </div>
                               </div>
                               <div class="course-card-footer">
-                                <?php if ($linkIngresso !== ''): ?>
-                                  <a
-                                    class="course-btn"
-                                    href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>"
-                                    target="_blank"
-                                    rel="noopener noreferrer">
-                                    Inscreva-se
+                                <?php if ($linkIngresso !== '' && stripos($linkIngresso, 'saiba') === false): ?>
+                                  <a class="course-btn-primary" href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">
+                                    <i class="bi bi-check-circle"></i> Inscrever-se
+                                  </a>
+                                <?php elseif ($linkIngresso !== ''): ?>
+                                  <a class="course-btn-primary" href="/curso/<?= htmlspecialchars((string) ($course['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                    <i class="bi bi-check-circle"></i> Inscrever-se
                                   </a>
                                 <?php else: ?>
-                                  <span class="course-btn" style="pointer-events: none; opacity: 0.5;">Inscrições em breve</span>
+                                  <span class="course-btn-primary disabled">
+                                    <i class="bi bi-check-circle"></i> Inscrições em breve
+                                  </span>
                                 <?php endif; ?>
+                                <a class="course-btn-secondary" href="/curso/<?= htmlspecialchars((string) ($course['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                                  <i class="bi bi-info-circle"></i> Detalhes
+                                </a>
                               </div>
                             </div>
                           </div>

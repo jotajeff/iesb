@@ -89,7 +89,7 @@ $sessaoBanner = $sessaoBanner ?? null;
           $delay = 100 + ($index % 3) * 100;
           $isConfirmed = (string) ($course['confirmado'] ?? 'N') === 'S';
           ?>
-          <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
+          <div class="col-lg-6 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
             <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">
               <div class="course-card-image">
                 <?php if ($courseImage !== ''): ?>
@@ -125,64 +125,28 @@ $sessaoBanner = $sessaoBanner ?? null;
                   </div>
                 </div>
                 <div class="course-card-footer">
-                  <?php if ($linkIngresso !== ''): ?>
-                    <?php if (stripos($linkIngresso, 'saiba') !== false): ?>
-                      <a class="course-btn" href="/curso/<?= (int) ($course['id'] ?? 0) ?>">
-                        Saiba +
-                      </a>
-                    <?php else: ?>
-                      <a
-                        class="course-btn"
-                        href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>"
-                        target="_blank"
-                        rel="noopener noreferrer">
-                        Inscreva-se
-                      </a>
-                    <?php endif; ?>
+                  <?php if ($linkIngresso !== '' && stripos($linkIngresso, 'saiba') === false): ?>
+                    <a class="course-btn-primary" href="<?= htmlspecialchars($linkIngresso, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer">
+                      <i class="bi bi-check-circle"></i> Inscrever-se
+                    </a>
+                  <?php elseif ($linkIngresso !== ''): ?>
+                    <a class="course-btn-primary" href="/curso/<?= htmlspecialchars((string) ($course['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                      <i class="bi bi-check-circle"></i> Inscrever-se
+                    </a>
                   <?php else: ?>
-                    <span class="course-btn" style="pointer-events: none; opacity: 0.5;">Inscrições em breve</span>
+                    <span class="course-btn-primary disabled">
+                      <i class="bi bi-check-circle"></i> Inscrições em breve
+                    </span>
                   <?php endif; ?>
+                  <a class="course-btn-secondary" href="/curso/<?= htmlspecialchars((string) ($course['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+                    <i class="bi bi-info-circle"></i> Detalhes
+                  </a>
                 </div>
               </div>
             </div>
           </div>
         <?php endforeach; ?>
       <?php endif; ?>
-    </div>
-  </div>
-</section>
-
-<section class="section-dark" id="inscricoes">
-  <div class="container">
-    <div class="section-header text-center mb-4" data-aos="fade-up">
-      <div class="section-label justify-content-center">
-        Inscrições
-      </div>
-      <h2 class="section-title">Garanta sua vaga agora</h2>
-      <p class="section-desc centered">
-        Acesse nossa plataforma de inscrições e garanta sua participação nos cursos disponíveis.
-      </p>
-    </div>
-
-    <div class="row justify-content-center">
-      <div class="col-lg-6 text-center" data-aos="fade-up" data-aos-delay="100">
-        <div class="card border-0 shadow-soft">
-          <div class="card-body p-5">
-            <div class="mb-3 text-primary"><i class="bi bi-pencil-square fs-3"></i></div>
-            <h3 class="h5 mb-3">Inscreva-se pela Sympla</h3>
-            <p class="mb-4" style="color: var(--bs-secondary-color);">
-              Todas as inscrições são realizadas de forma segura e prática através da plataforma Sympla.
-            </p>
-            <a
-              href="https://www.sympla.com.br/produtor/magdabrazilcursos"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="btn-primary-custom">
-              <i class="bi bi-box-arrow-up-right"></i> Acessar Página de Inscrições
-            </a>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </section>

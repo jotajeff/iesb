@@ -27,7 +27,7 @@ return static function (Router $router): void {
     $router->get('/sobre', [PageController::class, 'sobre']);
     $router->get('/cursos', [PageController::class, 'cursos']);
     $router->get('/cursos/{slug}', [PageController::class, 'cursos']);
-    $router->get('/curso/{id}', [PageController::class, 'cursoDetalhe']);
+    $router->get('/curso/{slug}', [PageController::class, 'cursoDetalhe']);
     $router->get('/curso/{id}/inscricao', [PageController::class, 'inscricao']);
     $router->post('/inscricao/salvar', [PageController::class, 'salvarInscricao']);
     $router->get('/eventos', [PageController::class, 'eventos']);
@@ -162,6 +162,7 @@ return static function (Router $router): void {
     $router->post('/admin/sessao/deletar', [SessaoController::class, 'deletar']);
     $router->get('/admin/sessao/imagem', [SessaoController::class, 'imagem']);
     $router->post('/admin/sessao/upload-imagem', [SessaoController::class, 'uploadImagem']);
+    $router->post('/admin/sessao/deletar-imagem', [SessaoController::class, 'deletarImagem']);
 
     $router->get('/admin/config/categoria', [ConfigController::class, 'categoria']);
     $router->get('/admin/config/categoria/edit', [ConfigController::class, 'editCategoria']);
@@ -175,6 +176,7 @@ return static function (Router $router): void {
     $router->get('/admin/visitas/mensal', [VisitaController::class, 'mensal']);
     $router->get('/admin/visitas/analytics', [VisitaController::class, 'analytics']);
     $router->get('/admin/visitas/paginas', [VisitaController::class, 'paginas']);
+    $router->get('/admin/visitas/cursos', [VisitaController::class, 'cursos']);
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);

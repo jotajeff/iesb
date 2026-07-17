@@ -82,6 +82,20 @@ final class VisitaController extends Controller
         ], 'admin');
     }
 
+    public function cursos(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/visitas/cursos', [
+            'title' => 'Ranking de Visitas — Cursos',
+            'currentRoute' => '/admin/visitas',
+            'coursesStats' => $this->visitaService->visitsByCoursePages(),
+        ], 'admin');
+    }
+
     private function isStaff(): bool
     {
         return (new \App\Services\AuthService())->isStaff();

@@ -84,7 +84,7 @@ $idCurso = (int) ($curso['id'] ?? 0);
               <p class="text-muted mb-4">A cobrança foi criada, mas ainda não foi possível recuperar os dados de pagamento. Se o problema persistir, verifique a chave sandbox e os logs do Asaas.</p>
             <?php endif; ?>
 
-            <a class="btn-primary-custom" href="/curso/<?= $idCurso ?>"><i class="bi bi-arrow-left me-1"></i>Voltar ao curso</a>
+            <a class="btn-primary-custom" href="/curso/<?= htmlspecialchars((string) ($curso['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-arrow-left me-1"></i>Voltar ao curso</a>
           </div>
         <?php else: ?>
 
