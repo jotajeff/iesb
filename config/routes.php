@@ -85,6 +85,10 @@ return static function (Router $router): void {
     $router->post('/admin/professores/deletar-video', [ProfessorController::class, 'deletarVideo']);
     $router->get('/admin/professores/drive', [ProfessorController::class, 'drive']);
     $router->post('/admin/professores/salvar-drive', [ProfessorController::class, 'salvarDrive']);
+    $router->get('/admin/professores/fotos', [ProfessorController::class, 'fotos']);
+    $router->post('/admin/professores/upload-foto', [ProfessorController::class, 'uploadFoto']);
+    $router->post('/admin/professores/deletar-foto', [ProfessorController::class, 'deletarFoto']);
+    $router->get('/admin/professores/detalhe', [ProfessorController::class, 'detalhe']);
 
     $router->get('/admin/usuarios', [UsuarioController::class, 'index']);
     $router->get('/admin/usuarios/novo', [UsuarioController::class, 'novo']);

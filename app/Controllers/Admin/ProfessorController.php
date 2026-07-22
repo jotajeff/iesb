@@ -9,6 +9,7 @@ use App\Core\Database;
 use App\Services\UsuarioService;
 use App\Services\LogService;
 use App\Services\TurmaService;
+use App\Services\ImageService;
 use App\Repositories\EnderecoRepository;
 use App\Support\Session;
 
@@ -18,6 +19,7 @@ final class ProfessorController extends Controller
     private LogService $logService;
     private TurmaService $turmaService;
     private EnderecoRepository $enderecoRepository;
+    private ImageService $imageService;
 
     public function __construct()
     {
@@ -25,6 +27,7 @@ final class ProfessorController extends Controller
         $this->logService = new LogService();
         $this->turmaService = new TurmaService();
         $this->enderecoRepository = new EnderecoRepository();
+        $this->imageService = new ImageService();
     }
 
     public function index(): void
@@ -61,12 +64,24 @@ final class ProfessorController extends Controller
             }
         }
 
+        $fotos = [];
+        foreach ($professores as $prof) {
+            $id = (int) ($prof['id'] ?? 0);
+            try {
+                $imgs = $this->imageService->listarPorFk('usuarios', $id);
+                $fotos[$id] = !empty($imgs) ? $imgs[0]['path'] : null;
+            } catch (\Throwable) {
+                $fotos[$id] = null;
+            }
+        }
+
         $this->render('pages/admin/professores/index', [
             'title' => 'Professores',
             'currentRoute' => '/admin/professores',
             'professores' => $professores,
             'enderecos' => $enderecos,
             'vinculoCounts' => $vinculoCounts,
+            'fotos' => $fotos,
         ], 'admin');
     }
 
@@ -602,18 +617,29 @@ final class ProfessorController extends Controller
 
     public function curriculo(): void
     {
-        $authUser = Session::get('user');
-        $userId = (int) ($authUser['id'] ?? 0);
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
 
-        if (!$this->isStaff() || $userId <= 0) {
+        $authUser = Session::get('user');
+        $authRole = (string) ($authUser['role'] ?? '');
+        $isSelf = ((string) ($authUser['tipo'] ?? $authUser['role'] ?? '')) === 'professor';
+
+        $userId = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        if ($userId <= 0 || ($isSelf && $authRole !== 'admin' && $authRole !== 'operador')) {
+            $userId = (int) ($authUser['id'] ?? 0);
+        }
+
+        if ($userId <= 0) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
 
         $usuario = $this->usuarioService->findUsuario($userId);
         if (!$usuario || ((string) ($usuario['tipo'] ?? '')) !== 'professor') {
-            Session::setFlash('flash', 'Acesso negado.');
-            $this->redirect('/admin');
+            Session::setFlash('flash', 'Professor não encontrado.');
+            $this->redirect('/admin/professores');
         }
 
         $curriculo = null;
@@ -632,20 +658,35 @@ final class ProfessorController extends Controller
             $curriculo = null;
         }
 
+        $backRoute = $authRole === 'admin' || $authRole === 'operador' ? '/admin/professores' : '/admin/professores/perfil';
+
         $this->render('pages/admin/professores/curriculo', [
-            'title' => 'Currículo',
+            'title' => 'Currículo — ' . ($usuario['nome'] ?? ''),
             'currentRoute' => '/admin/professores/curriculo',
             'curriculo' => $curriculo,
             'usuario' => $usuario,
+            'professorId' => $userId,
+            'backRoute' => $backRoute,
         ], 'admin');
     }
 
     public function salvarCurriculo(): void
     {
-        $authUser = Session::get('user');
-        $userId = (int) ($authUser['id'] ?? 0);
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
 
-        if (!$this->isStaff() || $userId <= 0) {
+        $authUser = Session::get('user');
+        $authRole = (string) ($authUser['role'] ?? '');
+        $isSelf = ((string) ($authUser['tipo'] ?? $authUser['role'] ?? '')) === 'professor';
+
+        $userId = (int) $this->input('id', 0);
+        if ($userId <= 0 || ($isSelf && $authRole !== 'admin' && $authRole !== 'operador')) {
+            $userId = (int) ($authUser['id'] ?? 0);
+        }
+
+        if ($userId <= 0) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
@@ -654,7 +695,7 @@ final class ProfessorController extends Controller
 
         if ($conteudo === '') {
             Session::setFlash('flash', 'O conteúdo do currículo não pode ficar vazio.');
-            $this->redirect('/admin/professores/curriculo');
+            $this->redirect('/admin/professores/curriculo?id=' . $userId);
             return;
         }
 
@@ -686,11 +727,12 @@ final class ProfessorController extends Controller
             }
 
             Session::setFlash('flash', 'Currículo salvo com sucesso.');
-            $this->redirect('/admin/professores/perfil');
+            $backRoute = $authRole === 'admin' || $authRole === 'operador' ? '/admin/professores' : '/admin/professores/perfil';
+            $this->redirect($backRoute);
         } catch (\Throwable $e) {
             error_log('[CURRICULO] Erro: ' . $e->getMessage());
             Session::setFlash('flash', 'Erro ao salvar currículo.');
-            $this->redirect('/admin/professores/curriculo');
+            $this->redirect('/admin/professores/curriculo?id=' . $userId);
         }
     }
 
@@ -912,6 +954,192 @@ final class ProfessorController extends Controller
         }
 
         $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
+    }
+
+    public function fotos(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $professor = $this->usuarioService->findUsuario($id);
+
+        if (!$professor || ((string) ($professor['tipo'] ?? '')) !== 'professor') {
+            Session::setFlash('flash', 'Professor não encontrado.');
+            $this->redirect('/admin/professores');
+            return;
+        }
+
+        $imagens = $this->imageService->listarPorFk('usuarios', $id);
+
+        $this->render('pages/admin/professores/fotos', [
+            'title' => 'Fotos — ' . ($professor['nome'] ?? ''),
+            'currentRoute' => '/admin/professores/fotos',
+            'professor' => $professor,
+            'idFk' => $id,
+            'tabelaFk' => 'usuarios',
+            'imagens' => $imagens,
+        ], 'admin');
+    }
+
+    public function uploadFoto(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $idFk = (int) $this->input('id_fk', 0);
+        $tabelaFk = trim((string) $this->input('tabela_fk', ''));
+        $legenda = trim((string) $this->input('legenda', ''));
+
+        if ($idFk <= 0 || $tabelaFk === '') {
+            Session::setFlash('flash', 'Parâmetros inválidos.');
+            $this->redirect('/admin/professores');
+        }
+
+        $path = '';
+        $file = $_FILES['imagem'] ?? null;
+
+        if ($file && $file['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (in_array($ext, $allowed, true)) {
+                $filename = 'professor-' . $idFk . '-' . time() . '-' . mt_rand(100, 999) . '.' . $ext;
+                $destDir = dirname(__DIR__, 3) . '/public/assets/img/professor';
+                if (!is_dir($destDir)) {
+                    mkdir($destDir, 0755, true);
+                }
+                $destPath = $destDir . '/' . $filename;
+                if (move_uploaded_file($file['tmp_name'], $destPath)) {
+                    $path = 'assets/img/professor/' . $filename;
+                }
+            }
+        }
+
+        if ($path === '') {
+            Session::setFlash('flash', 'Erro ao fazer upload da foto. Verifique o formato e tamanho.');
+            $this->redirect('/admin/professores/fotos?id=' . $idFk);
+            return;
+        }
+
+        $this->imageService->salvar($tabelaFk, $idFk, $path, $legenda ?: null);
+        $this->logService->log('criar', 'imagem', 0, 'Foto adicionada ao professor ID ' . $idFk);
+
+        Session::setFlash('flash', 'Foto salva com sucesso.');
+        $this->redirect('/admin/professores/fotos?id=' . $idFk);
+    }
+
+    public function deletarFoto(): void
+    {
+        if (!$this->isStaff()) {
+            http_response_code(403);
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_POST['id'] ?? 0));
+        $idFk = (int) ($this->input('id_fk', 0) ?: ($_POST['id_fk'] ?? 0));
+        $tabelaFk = trim((string) ($this->input('tabela_fk', '') ?: ($_POST['tabela_fk'] ?? '')));
+
+        if ($id <= 0 || $idFk <= 0 || $tabelaFk === '') {
+            http_response_code(400);
+            echo json_encode(['erro' => 'Parâmetros inválidos.']);
+            return;
+        }
+
+        $this->imageService->deletar($id);
+        $this->logService->log('deletar', 'imagem', $id, 'Foto removida do professor ID ' . $idFk);
+        echo json_encode(['sucesso' => true]);
+    }
+
+    public function detalhe(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $professor = $this->usuarioService->findUsuario($id);
+
+        if (!$professor || ((string) ($professor['tipo'] ?? '')) !== 'professor') {
+            Session::setFlash('flash', 'Professor não encontrado.');
+            $this->redirect('/admin/professores');
+            return;
+        }
+
+        try {
+            $endereco = $this->enderecoRepository->findByTipoAndFk('professor', $id);
+        } catch (\Throwable) {
+            $endereco = null;
+        }
+
+        $social = [];
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, rede, link_perfil FROM social WHERE tipo = :tipo AND id_fk = :id_fk ORDER BY rede ASC');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $id, \PDO::PARAM_INT);
+                $stmt->execute();
+                $social = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable) {
+            $social = [];
+        }
+
+        $curriculo = null;
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $row = $stmt->fetch();
+                $curriculo = $row ?: null;
+            }
+        } catch (\Throwable) {
+            $curriculo = null;
+        }
+
+        $imagens = $this->imageService->listarPorFk('usuarios', $id);
+
+        $turmas = [];
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare(
+                    'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativa, c.nome AS curso_nome'
+                    . ' FROM turma_professor tp'
+                    . ' JOIN turmas t ON tp.id_turma = t.id'
+                    . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
+                    . ' WHERE tp.id_usuario = :id AND tp.status = :status'
+                    . ' ORDER BY t.nome ASC'
+                );
+                $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
+                $stmt->execute();
+                $turmas = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable) {
+            $turmas = [];
+        }
+
+        $this->render('pages/admin/professores/detalhe', [
+            'title' => 'Detalhes do Professor — ' . ($professor['nome'] ?? ''),
+            'currentRoute' => '/admin/professores/detalhe',
+            'professor' => $professor,
+            'endereco' => $endereco,
+            'social' => $social,
+            'curriculo' => $curriculo,
+            'imagens' => $imagens,
+            'turmas' => $turmas,
+        ], 'admin');
     }
 
     public function buscarCep(): void

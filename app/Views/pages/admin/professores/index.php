@@ -35,8 +35,14 @@
             <?php $profId = (int) ($prof['id'] ?? 0); ?>
             <?php $temEndereco = isset($enderecos[$profId]) && $enderecos[$profId] !== null; ?>
             <tr>
-              <td><?= $profId ?></td>
-              <td><?= htmlspecialchars((string) ($prof['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td><a href="/admin/professores/detalhe?id=<?= $profId ?>" class="text-decoration-none fw-medium">#<?= $profId ?></a></td>
+              <td class="d-flex align-items-center gap-2">
+                <?php $fotoPath = $fotos[$profId] ?? null; ?>
+                <?php if ($fotoPath): ?>
+                  <img src="/<?= htmlspecialchars($fotoPath, ENT_QUOTES, 'UTF-8') ?>" alt="" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
+                <?php endif; ?>
+                <?= htmlspecialchars((string) ($prof['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+              </td>
               <td><?= htmlspecialchars((string) ($prof['telefone'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td>
                 <?php $ativo = (int) ($prof['ativo'] ?? 1); ?>
@@ -59,14 +65,20 @@
               </td>
               <td>
                 <div class="d-flex gap-1">
-                  <a class="btn btn-outline-secondary btn-sm" href="/admin/professores/editar?id=<?= $profId ?>">
+                  <a class="btn btn-outline-secondary btn-sm" href="/admin/professores/editar?id=<?= $profId ?>" title="Editar professor">
                     <i class="bi bi-pencil-square"></i>
                   </a>
                   <a class="btn btn-outline-info btn-sm" href="/admin/professores/vincular?id=<?= $profId ?>" title="Vincular a turmas">
                     <i class="bi bi-link-45deg"></i>
                   </a>
-                  <a class="btn btn-sm <?= $temEndereco ? 'btn-outline-success' : 'btn-outline-warning' ?>" href="/admin/professores/endereco?id=<?= $profId ?>">
+                  <a class="btn btn-sm <?= $temEndereco ? 'btn-outline-success' : 'btn-outline-warning' ?>" href="/admin/professores/endereco?id=<?= $profId ?>" title="<?= $temEndereco ? 'Ver endereço' : 'Cadastrar endereço' ?>">
                     <i class="bi bi-geo-alt"></i>
+                  </a>
+                  <a class="btn btn-outline-primary btn-sm" href="/admin/professores/fotos?id=<?= $profId ?>" title="Fotos do professor">
+                    <i class="bi bi-camera"></i>
+                  </a>
+                  <a class="btn btn-outline-dark btn-sm" href="/admin/professores/curriculo?id=<?= $profId ?>" title="Currículo do professor">
+                    <i class="bi bi-mortarboard"></i>
                   </a>
                 </div>
               </td>
@@ -74,6 +86,15 @@
           <?php endforeach; ?>
         </tbody>
       </table>
+    </div>
+
+    <div class="mt-3 pt-3 border-top text-muted small">
+      <strong>Legenda das ações:</strong>
+      <span class="ms-2"><i class="bi bi-pencil-square"></i> Editar</span>
+      <span class="ms-2"><i class="bi bi-link-45deg"></i> Vincular turmas</span>
+      <span class="ms-2"><i class="bi bi-geo-alt"></i> Endereço</span>
+      <span class="ms-2"><i class="bi bi-camera"></i> Fotos</span>
+      <span class="ms-2"><i class="bi bi-mortarboard"></i> Currículo</span>
     </div>
   </div>
 </section>

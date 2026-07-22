@@ -29,9 +29,9 @@
           <tr>
             <th>#</th>
             <th>Curso</th>
-            <th>Slug</th>
             <th>Visitas</th>
             <th>%</th>
+            <th style="width:40%">Progresso</th>
           </tr>
         </thead>
         <tbody>
@@ -39,9 +39,13 @@
             <tr>
               <td><?= $i + 1 ?></td>
               <td><?= htmlspecialchars((string) ($page['name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td><small class="text-muted">/<?= htmlspecialchars((string) ($page['slug'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></small></td>
               <td><span class="badge text-bg-primary"><?= (int) ($page['total'] ?? 0) ?></span></td>
               <td><?= number_format((float) ($page['percent'] ?? 0), 1, ',', '.') ?>%</td>
+              <td>
+                <div class="progress" role="progressbar" aria-valuenow="<?= (float) ($page['percent'] ?? 0) ?>" aria-valuemin="0" aria-valuemax="100">
+                  <div class="progress-bar progress-bar-striped progress-bar-animated" style="width:<?= (float) ($page['percent'] ?? 0) ?>%"><?= number_format((float) ($page['percent'] ?? 0), 1, ',', '.') ?>%</div>
+                </div>
+              </td>
             </tr>
           <?php endforeach; ?>
         </tbody>
