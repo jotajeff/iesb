@@ -10,6 +10,10 @@
         <input type="hidden" name="id" value="<?= (int) $professorId ?>">
       <?php endif; ?>
       <div class="col-12">
+        <label class="form-label">Resumo <small class="text-muted">(mini currículo)</small></label>
+        <textarea class="form-control" name="resumo" rows="4" placeholder="Breve resumo da formação e experiência"><?= htmlspecialchars((string) ($curriculo['resumo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+      </div>
+      <div class="col-12">
         <label class="form-label">Conteúdo do Currículo <span class="text-danger">*</span></label>
         <textarea class="form-control" name="conteudo" id="conteudo" rows="20"><?= htmlspecialchars((string) ($curriculo['conteudo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
       </div>

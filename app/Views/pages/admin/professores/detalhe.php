@@ -74,8 +74,16 @@
     <?php endif; ?>
 
     <hr>
+    <h5><i class="bi bi-file-earmark-text me-1"></i>Resumo</h5>
+    <?php if ($curriculo && trim((string) ($curriculo['resumo'] ?? '')) !== ''): ?>
+      <p><?= nl2br(htmlspecialchars((string) ($curriculo['resumo'] ?? ''), ENT_QUOTES, 'UTF-8')) ?></p>
+    <?php else: ?>
+      <p class="text-muted">Nenhum resumo cadastrado.</p>
+    <?php endif; ?>
+
+    <hr>
     <h5><i class="bi bi-file-earmark-text me-1"></i>Currículo</h5>
-    <?php if ($curriculo): ?>
+    <?php if ($curriculo && trim((string) ($curriculo['conteudo'] ?? '')) !== ''): ?>
       <div class="p-3 border rounded bg-light"><?= ($curriculo['conteudo'] ?? '') ?></div>
     <?php else: ?>
       <p class="text-muted">Nenhum currículo cadastrado.</p>

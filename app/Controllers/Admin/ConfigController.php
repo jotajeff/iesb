@@ -576,6 +576,61 @@ final class ConfigController extends Controller
         $this->redirect('/admin/config/cliente');
     }
 
+    public function funcoesDocente(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/config/funcoes-docente/index', [
+            'title' => 'Funções Docente',
+            'currentRoute' => '/admin/funcoes-docente',
+            'funcoes' => $this->configService->funcoesDocente(),
+        ], 'admin');
+    }
+
+    public function editFuncaoDocente(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($_GET['id'] ?? 0);
+        $funcao = $id > 0 ? $this->configService->findFuncaoDocente($id) : null;
+
+        $this->render('pages/admin/config/funcoes-docente/edit', [
+            'title' => $funcao ? 'Editar Função Docente' : 'Nova Função Docente',
+            'currentRoute' => '/admin/funcoes-docente/edit',
+            'funcao' => $funcao,
+        ], 'admin');
+    }
+
+    public function updateFuncaoDocente(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $descricao = trim((string) $this->input('descricao', ''));
+        $ativo = (string) $this->input('ativo', 'S');
+
+        if ($nome === '') {
+            Session::setFlash('flash', 'O nome da função é obrigatório.');
+            $this->redirect('/admin/funcoes-docente/edit' . ($id > 0 ? '?id=' . $id : ''));
+            return;
+        }
+
+        $this->configService->saveFuncaoDocente($id, $nome, $descricao, $ativo);
+        $this->logService->log($id > 0 ? 'atualizar' : 'criar', 'funcoes_docente', $id > 0 ? $id : 0, "Função docente " . ($id > 0 ? 'atualizada' : 'criada') . ": $nome");
+        Session::setFlash('flash', 'Função docente salva com sucesso.');
+        $this->redirect('/admin/funcoes-docente');
+    }
+
     private function canAccessConfig(): bool
     {
         $auth = new AuthService();

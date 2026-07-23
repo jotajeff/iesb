@@ -59,6 +59,11 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/upload', [CursoController::class, 'uploadImagem']);
     $router->get('/admin/cursos/detalhes', [CursoController::class, 'detalhes']);
     $router->post('/admin/cursos/detalhes/salvar', [CursoController::class, 'salvarDetalhe']);
+    $router->get('/admin/cursos/disciplinas', [CursoController::class, 'disciplinas']);
+    $router->post('/admin/cursos/salvar-disciplina', [CursoController::class, 'salvarDisciplina']);
+    $router->get('/admin/cursos/corpo-docente', [CursoController::class, 'corpoDocente']);
+    $router->post('/admin/cursos/salvar-corpo-docente', [CursoController::class, 'salvarCorpoDocente']);
+    $router->post('/admin/cursos/remover-corpo-docente', [CursoController::class, 'removerCorpoDocente']);
     $router->get('/admin/cursos/definir-valor', [CursoController::class, 'definirValor']);
     $router->post('/admin/cursos/salvar-pagamento', [CursoController::class, 'salvarPagamento']);
     $router->get('/admin/cursos/cursos-turma', [CursoController::class, 'cursosTurma']);
@@ -139,9 +144,13 @@ return static function (Router $router): void {
     $router->get('/admin/setor/edit', [ConfigController::class, 'editSetor']);
     $router->post('/admin/setor/update', [ConfigController::class, 'updateSetor']);
 
-    $router->get('/admin/nivel', [ConfigController::class, 'nivel']);
-    $router->get('/admin/nivel/edit', [ConfigController::class, 'editNivel']);
-    $router->post('/admin/nivel/update', [ConfigController::class, 'updateNivel']);
+    $router->get('/admin/nivel',            [ConfigController::class, 'nivel']);
+    $router->get('/admin/nivel/edit',        [ConfigController::class, 'editNivel']);
+    $router->post('/admin/nivel/update',      [ConfigController::class, 'updateNivel']);
+
+    $router->get('/admin/funcoes-docente',            [ConfigController::class, 'funcoesDocente']);
+    $router->get('/admin/funcoes-docente/edit',        [ConfigController::class, 'editFuncaoDocente']);
+    $router->post('/admin/funcoes-docente/update',      [ConfigController::class, 'updateFuncaoDocente']);
 
     $router->get('/admin/config/carousel', [ConfigController::class, 'carousel']);
     $router->get('/admin/config/carousel/editar', [ConfigController::class, 'editCarousel']);

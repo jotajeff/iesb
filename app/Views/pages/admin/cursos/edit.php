@@ -103,6 +103,10 @@
         </datalist>
       </div>
       <div class="col-12">
+        <label class="form-label">Público-alvo</label>
+        <textarea class="form-control" name="publico_alvo" rows="3" placeholder="Descreva o público-alvo do curso"><?= htmlspecialchars((string) ($course['publico_alvo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></textarea>
+      </div>
+      <div class="col-12">
         <button class="btn btn-success" type="submit"><i class="bi bi-check-lg me-1"></i>Atualizar Curso</button>
       </div>
     </form>

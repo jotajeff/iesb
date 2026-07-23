@@ -102,6 +102,28 @@ final class ConfigService
         ]);
     }
 
+    public function funcoesDocente(): array
+    {
+        return $this->repository->listFuncoesDocente();
+    }
+
+    public function findFuncaoDocente(int $id): ?array
+    {
+        return $this->repository->findFuncaoDocenteById($id);
+    }
+
+    public function saveFuncaoDocente(int $id, string $nome, string $descricao, string $ativo): int
+    {
+        $ativoSanitizado = strtoupper(trim($ativo)) === 'N' ? 'N' : 'S';
+
+        return $this->repository->saveFuncaoDocente([
+            'id' => $id,
+            'nome' => trim($nome),
+            'descricao' => trim($descricao),
+            'ativo' => $ativoSanitizado,
+        ]);
+    }
+
     public function instituicoes(): array
     {
         return $this->repository->listInstituicoes();

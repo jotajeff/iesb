@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 15/07/2026 às 15:11
+-- Tempo de geração: 22/07/2026 às 21:35
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -115,6 +115,21 @@ CREATE TABLE `comentarios` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `corpo_docente`
+--
+
+CREATE TABLE `corpo_docente` (
+  `id` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_funcao` int(11) NOT NULL,
+  `ativo` enum('S','N') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'S',
+  `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `curriculo`
 --
 
@@ -122,6 +137,7 @@ CREATE TABLE `curriculo` (
   `id` int(11) NOT NULL,
   `id_fk` int(11) NOT NULL,
   `tipo` varchar(20) COLLATE utf8_unicode_ci NOT NULL,
+  `resumo` text COLLATE utf8_unicode_ci NOT NULL,
   `conteudo` text COLLATE utf8_unicode_ci NOT NULL,
   `ativo` char(1) COLLATE utf8_unicode_ci DEFAULT 'S',
   `criado_em` datetime DEFAULT CURRENT_TIMESTAMP
@@ -167,6 +183,7 @@ CREATE TABLE `cursos_iesb` (
   `modalidade` int(1) DEFAULT NULL,
   `nivel` int(1) DEFAULT NULL,
   `segmento` int(3) NOT NULL,
+  `publico_alvo` text COLLATE utf8_unicode_ci NOT NULL,
   `carga_horaria` int(5) NOT NULL,
   `imagem_card` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `imagem_banner` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -249,6 +266,21 @@ CREATE TABLE `detalhes` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `disciplina`
+--
+
+CREATE TABLE `disciplina` (
+  `id` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `nome` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `carga_horaria` smallint(6) NOT NULL,
+  `ativo` enum('S','N') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'S',
+  `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `endereco`
 --
 
@@ -262,6 +294,20 @@ CREATE TABLE `endereco` (
   `cidade` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `uf` char(2) COLLATE utf8_unicode_ci NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `funcoes_docente`
+--
+
+CREATE TABLE `funcoes_docente` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `descricao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ativo` enum('S','N') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'S',
+  `criado_em` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -638,6 +684,15 @@ ALTER TABLE `comentarios`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `corpo_docente`
+--
+ALTER TABLE `corpo_docente`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_curso` (`id_curso`),
+  ADD KEY `idx_usuario` (`id_usuario`),
+  ADD KEY `idx_funcao` (`id_funcao`);
+
+--
 -- Índices de tabela `curriculo`
 --
 ALTER TABLE `curriculo`
@@ -688,10 +743,25 @@ ALTER TABLE `detalhes`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `disciplina`
+--
+ALTER TABLE `disciplina`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_id_curso` (`id_curso`);
+
+--
 -- Índices de tabela `endereco`
 --
 ALTER TABLE `endereco`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `funcoes_docente`
+--
+ALTER TABLE `funcoes_docente`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_nome` (`nome`),
+  ADD KEY `idx_ativo` (`ativo`);
 
 --
 -- Índices de tabela `imagem`
@@ -874,6 +944,12 @@ ALTER TABLE `comentarios`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `corpo_docente`
+--
+ALTER TABLE `corpo_docente`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `curriculo`
 --
 ALTER TABLE `curriculo`
@@ -916,9 +992,21 @@ ALTER TABLE `detalhes`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `disciplina`
+--
+ALTER TABLE `disciplina`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `endereco`
 --
 ALTER TABLE `endereco`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `funcoes_docente`
+--
+ALTER TABLE `funcoes_docente`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1046,6 +1134,14 @@ ALTER TABLE `carousel_item`
   ADD CONSTRAINT `fk_carousel_item_carousel` FOREIGN KEY (`id_carousel`) REFERENCES `carousel` (`id`) ON DELETE CASCADE;
 
 --
+-- Restrições para tabelas `corpo_docente`
+--
+ALTER TABLE `corpo_docente`
+  ADD CONSTRAINT `fk_corpo_docente_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_corpo_docente_funcao` FOREIGN KEY (`id_funcao`) REFERENCES `funcoes_docente` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_corpo_docente_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE;
+
+--
 -- Restrições para tabelas `curriculo`
 --
 ALTER TABLE `curriculo`
@@ -1063,6 +1159,12 @@ ALTER TABLE `cursos_iesb_inscricao`
 --
 ALTER TABLE `cursos_iesb_pagamento`
   ADD CONSTRAINT `cursos_iesb_pagamento_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`);
+
+--
+-- Restrições para tabelas `disciplina`
+--
+ALTER TABLE `disciplina`
+  ADD CONSTRAINT `fk_disciplinas_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`) ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `matriculas`

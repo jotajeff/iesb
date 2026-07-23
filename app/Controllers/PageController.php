@@ -288,6 +288,62 @@ final class PageController extends Controller
         $linkIngresso = trim((string) ($curso['link_ingresso'] ?? ''));
         $isExternalLink = $linkIngresso !== '' && !str_contains(strtolower($linkIngresso), 'saiba');
 
+        $nivelSlug = (string) ($curso['nivel_slug'] ?? '');
+        $disciplinas = [];
+        $coordenadores = [];
+        $professores = [];
+
+        if ($nivelSlug === 'pos-graduacao') {
+            try {
+                $pdo = \App\Core\Database::connection();
+                if ($pdo instanceof \PDO) {
+                    $stmt = $pdo->prepare('SELECT id, nome, carga_horaria FROM disciplina WHERE id_curso = :id_curso AND ativo = :ativo ORDER BY nome ASC');
+                    $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                    $stmt->execute();
+                    $disciplinas = $stmt->fetchAll() ?: [];
+
+                    $stmt = $pdo->prepare(
+                        'SELECT u.id, u.nome AS usuario_nome, i.path AS foto_path, cr.resumo AS curriculo_resumo'
+                        . ' FROM corpo_docente cd'
+                        . ' JOIN usuarios u ON cd.id_usuario = u.id'
+                        . ' LEFT JOIN imagem i ON i.id_fk = u.id AND i.tabela_fk = :tabela_fk AND i.ativa = :ativa_img'
+                        . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
+                        . ' WHERE cd.id_curso = :id_curso AND cd.id_funcao = :id_funcao AND cd.ativo = :ativo_cd'
+                        . ' ORDER BY u.nome ASC'
+                    );
+                    $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
+                    $stmt->bindValue(':id_funcao', 1, \PDO::PARAM_INT);
+                    $stmt->bindValue(':tabela_fk', 'usuarios', \PDO::PARAM_STR);
+                    $stmt->bindValue(':ativa_img', 1, \PDO::PARAM_INT);
+                    $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
+                    $stmt->bindValue(':ativo_curriculo', 'S', \PDO::PARAM_STR);
+                    $stmt->bindValue(':ativo_cd', 'S', \PDO::PARAM_STR);
+                    $stmt->execute();
+                    $coordenadores = $stmt->fetchAll() ?: [];
+                }
+                    $professores = [];
+                    $stmt = $pdo->prepare(
+                        'SELECT u.id, u.nome AS usuario_nome, i.path AS foto_path'
+                        . ' FROM corpo_docente cd'
+                        . ' JOIN usuarios u ON cd.id_usuario = u.id'
+                        . ' LEFT JOIN imagem i ON i.id_fk = u.id AND i.tabela_fk = :tabela_fk2 AND i.ativa = :ativa_img2'
+                        . ' WHERE cd.id_curso = :id_curso2 AND cd.ativo = :ativo_cd2'
+                        . ' ORDER BY u.nome ASC'
+                    );
+                    $stmt->bindValue(':id_curso2', $id, \PDO::PARAM_INT);
+                    $stmt->bindValue(':tabela_fk2', 'usuarios', \PDO::PARAM_STR);
+                    $stmt->bindValue(':ativa_img2', 1, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ativo_cd2', 'S', \PDO::PARAM_STR);
+                    $stmt->execute();
+                    $professores = $stmt->fetchAll() ?: [];
+                } catch (\Throwable) {
+                $disciplinas = [];
+                $coordenador = null;
+                $professores = [];
+            }
+        }
+
         $this->render('pages/curso', [
             'title' => (string) ($curso['nome'] ?? 'Curso'),
             'currentRoute' => '/curso',
@@ -298,6 +354,10 @@ final class PageController extends Controller
             'isConfirmed' => $isConfirmed,
             'linkIngresso' => $linkIngresso,
             'isExternalLink' => $isExternalLink,
+            'nivelSlug' => $nivelSlug,
+            'disciplinas' => $disciplinas,
+            'coordenadores' => $coordenadores,
+            'professores' => $professores,
         ]);
     }
 

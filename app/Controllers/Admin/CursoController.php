@@ -96,6 +96,7 @@ final class CursoController extends Controller
         $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
         $cargaHoraria = (int) $this->input('carga_horaria', 0);
+        $publicoAlvo = (string) $this->input('publico_alvo', '');
 
         if ($nome === '' || $localCurso === '') {
             Session::setFlash('flash', 'Preencha ao menos nome e local do curso.');
@@ -103,7 +104,7 @@ final class CursoController extends Controller
             return;
         }
 
-        $cursoId = $this->cursoService->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId, $cargaHoraria);
+        $cursoId = $this->cursoService->criarCurso($nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, '', $modalidadeId, $segmentoId, $nivelId, $cargaHoraria, $publicoAlvo);
         $this->logService->log('criar', 'curso', $cursoId, "Curso criado: $nome");
         Session::setFlash('flash', 'Curso criado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -156,6 +157,7 @@ final class CursoController extends Controller
         $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
         $cargaHoraria = (int) $this->input('carga_horaria', 0);
+        $publicoAlvo = (string) $this->input('publico_alvo', '');
 
         if ($nome === '' || $localCurso === '') {
             Session::setFlash('flash', 'Preencha ao menos nome e local do curso.');
@@ -171,7 +173,7 @@ final class CursoController extends Controller
         }
 
         $imagemCard = (string) ($existingCourse['imagem_card'] ?? '');
-        $this->cursoService->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId, $cargaHoraria);
+        $this->cursoService->atualizarCurso($id, $nome, $dataCurso, $horario, $localCurso, $linkIngresso, $cursoCalendario, $ativo, $exibirHome, $confirmado, $imagemCard, $modalidadeId, $segmentoId, $nivelId, $cargaHoraria, $publicoAlvo);
         $this->logService->log('atualizar', 'curso', $id, "Curso atualizado: $nome");
         Session::setFlash('flash', 'Curso atualizado com sucesso.');
         $this->redirect('/admin/cursos');
@@ -193,13 +195,266 @@ final class CursoController extends Controller
             return;
         }
 
+        $disciplinas = [];
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, nome, carga_horaria, ativo, criado_em FROM disciplina WHERE id_curso = :id_curso ORDER BY nome ASC');
+                $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
+                $stmt->execute();
+                $disciplinas = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable) {
+            $disciplinas = [];
+        }
+
+        $corpoDocente = [];
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare(
+                    'SELECT cd.id, cd.id_funcao, cd.ativo AS vinculo_ativo,'
+                    . ' u.id AS usuario_id, u.nome AS usuario_nome,'
+                    . ' f.nome AS funcao_nome'
+                    . ' FROM corpo_docente cd'
+                    . ' JOIN usuarios u ON cd.id_usuario = u.id'
+                    . ' JOIN funcoes_docente f ON cd.id_funcao = f.id'
+                    . ' WHERE cd.id_curso = :id_curso'
+                    . ' ORDER BY u.nome ASC'
+                );
+                $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
+                $stmt->execute();
+                $corpoDocente = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable) {
+            $corpoDocente = [];
+        }
+
         $this->render('pages/admin/cursos/show', [
             'title' => $course['nome'] ?? 'Curso',
             'currentRoute' => '/admin/cursos/show',
             'course' => $course,
             'detalhe' => $this->cursoService->findDetalheByCurso($id),
             'pagamentos' => $this->pagamentoService->listarPorCurso($id),
+            'disciplinas' => $disciplinas,
+            'corpoDocente' => $corpoDocente,
         ], 'admin');
+    }
+
+    public function disciplinas(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) ($_GET['id_curso'] ?? 0);
+        $disciplinaId = (int) ($_GET['id'] ?? 0);
+
+        $course = $this->cursoService->findCurso($cursoId);
+        if (!$course) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $disciplina = null;
+        if ($disciplinaId > 0) {
+            try {
+                $pdo = \App\Core\Database::connection();
+                if ($pdo instanceof \PDO) {
+                    $stmt = $pdo->prepare('SELECT id, nome, carga_horaria, ativo FROM disciplina WHERE id = :id AND id_curso = :id_curso LIMIT 1');
+                    $stmt->bindValue(':id', $disciplinaId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $disciplina = $stmt->fetch() ?: null;
+                }
+            } catch (\Throwable) {
+                $disciplina = null;
+            }
+        }
+
+        $this->render('pages/admin/cursos/disciplinas', [
+            'title' => 'Disciplinas — ' . ($course['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos/disciplinas',
+            'course' => $course,
+            'disciplina' => $disciplina,
+        ], 'admin');
+    }
+
+    public function salvarDisciplina(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) $this->input('id_curso', 0);
+        $disciplinaId = (int) $this->input('id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+        $cargaHoraria = (int) $this->input('carga_horaria', 0);
+        $ativo = (string) $this->input('ativo', 'S');
+
+        if ($cursoId <= 0 || $nome === '') {
+            Session::setFlash('flash', 'Preencha o nome da disciplina.');
+            $this->redirect('/admin/cursos/disciplinas?id_curso=' . $cursoId);
+            return;
+        }
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                if ($disciplinaId > 0) {
+                    $stmt = $pdo->prepare('UPDATE disciplina SET nome = :nome, carga_horaria = :carga_horaria, ativo = :ativo WHERE id = :id AND id_curso = :id_curso');
+                    $stmt->bindValue(':nome', $nome, \PDO::PARAM_STR);
+                    $stmt->bindValue(':carga_horaria', $cargaHoraria, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ativo', $ativo, \PDO::PARAM_STR);
+                    $stmt->bindValue(':id', $disciplinaId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $this->logService->log('atualizar', 'disciplina', $disciplinaId, "Disciplina atualizada: $nome");
+                } else {
+                    $stmt = $pdo->prepare('INSERT INTO disciplina (id_curso, nome, carga_horaria, ativo) VALUES (:id_curso, :nome, :carga_horaria, :ativo)');
+                    $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':nome', $nome, \PDO::PARAM_STR);
+                    $stmt->bindValue(':carga_horaria', $cargaHoraria, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ativo', $ativo, \PDO::PARAM_STR);
+                    $stmt->execute();
+                    $this->logService->log('criar', 'disciplina', (int) $pdo->lastInsertId(), "Disciplina criada: $nome");
+                }
+            }
+            Session::setFlash('flash', 'Disciplina salva com sucesso.');
+        } catch (\Throwable $e) {
+            error_log('[DISCIPLINA] Erro: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao salvar disciplina.');
+        }
+
+        $this->redirect('/admin/cursos/disciplinas?id_curso=' . $cursoId);
+    }
+
+    public function corpoDocente(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) ($_GET['id_curso'] ?? 0);
+        $course = $this->cursoService->findCurso($cursoId);
+        if (!$course) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $professores = [];
+        $funcoes = [];
+        $vinculados = [];
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, nome FROM usuarios WHERE tipo = :tipo ORDER BY nome ASC');
+                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt->execute();
+                $professores = $stmt->fetchAll() ?: [];
+
+                $stmt = $pdo->prepare('SELECT id, nome FROM funcoes_docente WHERE ativo = :ativo ORDER BY nome ASC');
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                $funcoes = $stmt->fetchAll() ?: [];
+
+                $stmt = $pdo->prepare('SELECT id_usuario FROM corpo_docente WHERE id_curso = :id_curso AND ativo = :ativo');
+                $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->execute();
+                foreach ($stmt->fetchAll() as $row) {
+                    $vinculados[(int) $row['id_usuario']] = true;
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        $this->render('pages/admin/cursos/corpo-docente', [
+            'title' => 'Corpo Docente — ' . ($course['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos/corpo-docente',
+            'course' => $course,
+            'professores' => $professores,
+            'funcoes' => $funcoes,
+            'vinculados' => $vinculados,
+        ], 'admin');
+    }
+
+    public function salvarCorpoDocente(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) $this->input('id_curso', 0);
+        $usuarios = (array) $this->input('usuarios', []);
+        $funcao = (int) $this->input('id_funcao', 0);
+
+        if ($cursoId <= 0 || empty($usuarios) || $funcao <= 0) {
+            Session::setFlash('flash', 'Selecione ao menos um professor e uma função.');
+            $this->redirect('/admin/cursos/corpo-docente?id_curso=' . $cursoId);
+            return;
+        }
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('INSERT INTO corpo_docente (id_curso, id_usuario, id_funcao) VALUES (:id_curso, :id_usuario, :id_funcao)');
+                foreach ($usuarios as $userId) {
+                    $userId = (int) $userId;
+                    if ($userId <= 0) continue;
+                    $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':id_usuario', $userId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':id_funcao', $funcao, \PDO::PARAM_INT);
+                    $stmt->execute();
+                }
+                $this->logService->log('criar', 'corpo_docente', $cursoId, count($usuarios) . ' docente(s) vinculado(s) ao curso ' . $cursoId);
+            }
+            Session::setFlash('flash', 'Docente(s) vinculado(s) com sucesso.');
+        } catch (\Throwable $e) {
+            error_log('[CORPO DOCENTE] Erro: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao vincular docente(s).');
+        }
+
+        $this->redirect('/admin/cursos/show?id=' . $cursoId);
+    }
+
+    public function removerCorpoDocente(): void
+    {
+        if (!$this->isStaff()) {
+            http_response_code(403);
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_POST['id'] ?? 0));
+
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'ID inválido.']);
+            return;
+        }
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('DELETE FROM corpo_docente WHERE id = :id');
+                $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+                $stmt->execute();
+                $this->logService->log('excluir', 'corpo_docente', $id, 'Vínculo docente removido');
+            }
+            echo json_encode(['sucesso' => true]);
+        } catch (\Throwable $e) {
+            error_log('[CORPO DOCENTE] Erro ao remover: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao remover vínculo.']);
+        }
     }
 
     public function detalhes(): void

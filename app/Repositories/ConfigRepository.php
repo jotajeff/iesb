@@ -397,6 +397,82 @@ final class ConfigRepository
         return (int) $pdo->lastInsertId();
     }
 
+    public function listFuncoesDocente(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT id, nome, descricao, ativo FROM funcoes_docente ORDER BY nome ASC';
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CONFIG] Erro ao carregar funcoes docente: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function findFuncaoDocenteById(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, descricao, ativo FROM funcoes_docente WHERE id = :id LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function saveFuncaoDocente(array $payload): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            $id = (int) ($payload['id'] ?? 0);
+            $nome = trim((string) ($payload['nome'] ?? ''));
+            $descricao = trim((string) ($payload['descricao'] ?? ''));
+            $ativo = strtoupper(trim((string) ($payload['ativo'] ?? 'S'))) === 'N' ? 'N' : 'S';
+
+            if ($nome === '') {
+                return 0;
+            }
+
+            if ($id > 0) {
+                $sql = 'UPDATE funcoes_docente SET nome = :nome, descricao = :descricao, ativo = :ativo WHERE id = :id';
+                $stmt = $pdo->prepare($sql);
+                $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+                $stmt->bindValue(':nome', $nome);
+                $stmt->bindValue(':descricao', $descricao);
+                $stmt->bindValue(':ativo', $ativo);
+                $stmt->execute();
+                return $id;
+            }
+
+            $sql = 'INSERT INTO funcoes_docente (nome, descricao, ativo) VALUES (:nome, :descricao, :ativo)';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':nome', $nome);
+            $stmt->bindValue(':descricao', $descricao);
+            $stmt->bindValue(':ativo', $ativo);
+            $stmt->execute();
+
+            return (int) $pdo->lastInsertId();
+        } catch (\Throwable $e) {
+            error_log('[CONFIG] Erro ao salvar funcao docente: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
     public function listSegmentosByNivel(int $nivelId): array
     {
         $pdo = Database::connection();

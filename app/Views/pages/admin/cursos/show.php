@@ -12,6 +12,9 @@
       <a class="nav-link" href="#dados-curso"><i class="bi bi-info-circle me-1"></i>Dados do curso</a>
       <a class="nav-link" href="#detalhe-curso"><i class="bi bi-journal-text me-1"></i>Detalhes</a>
       <a class="nav-link" href="#pagamento-curso"><i class="bi bi-currency-dollar me-1"></i>Plano de pagamento</a>
+      <a class="nav-link" href="#publico-alvo-curso"><i class="bi bi-people me-1"></i>Público-alvo</a>
+      <a class="nav-link" href="#disciplinas-curso"><i class="bi bi-book me-1"></i>Disciplinas</a>
+      <a class="nav-link" href="#corpo-docente-curso"><i class="bi bi-people me-1"></i>Corpo Docente</a>
     </nav>
 
     <?php
@@ -164,6 +167,21 @@
 
     <hr class="my-4">
 
+    <div class="d-flex align-items-center justify-content-between mb-3" id="publico-alvo-curso">
+      <h5 class="mb-0"><i class="bi bi-people me-2"></i>Público-alvo</h5>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/editar?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-pencil-square me-1"></i>Editar</a>
+    </div>
+    <?php $publicoAlvo = (string) ($course['publico_alvo'] ?? ''); ?>
+    <?php if (trim($publicoAlvo) !== ''): ?>
+      <div class="border rounded p-3 bg-light">
+        <?= nl2br(htmlspecialchars($publicoAlvo, ENT_QUOTES, 'UTF-8')) ?>
+      </div>
+    <?php else: ?>
+      <p class="text-muted mb-0"><i class="bi bi-info-circle me-1"></i>Nenhum público-alvo definido.</p>
+    <?php endif; ?>
+
+    <hr class="my-4">
+
     <div class="d-flex align-items-center justify-content-between mb-3" id="pagamento-curso">
       <h5 class="mb-0"><i class="bi bi-currency-dollar me-2"></i>Formas de pagamento</h5>
       <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/definir-valor?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-pencil-square me-1"></i>Editar</a>
@@ -204,5 +222,109 @@
         <a class="btn btn-sm btn-outline-success ms-2" href="/admin/cursos/definir-valor?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-currency-dollar me-1"></i>Definir plano de pagamento</a>
       </div>
     <?php endif; ?>
+
+    <hr class="my-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-3" id="disciplinas-curso">
+      <h5 class="mb-0"><i class="bi bi-book me-2"></i>Disciplinas do Curso</h5>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/disciplinas?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Adicionar disciplina</a>
+    </div>
+    <?php $disciplinas = $disciplinas ?? []; ?>
+    <?php if (!empty($disciplinas)): ?>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>#</th>
+              <th>Nome</th>
+              <th>Carga horária</th>
+              <th>Ativo</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($disciplinas as $d): ?>
+              <tr>
+                <td><?= (int) ($d['id'] ?? 0) ?></td>
+                <td><?= htmlspecialchars((string) ($d['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= (int) ($d['carga_horaria'] ?? 0) ?>h</td>
+                <td>
+                  <span class="badge <?= ((string) ($d['ativo'] ?? 'S') === 'S') ? 'bg-success' : 'bg-secondary' ?>">
+                    <?= ((string) ($d['ativo'] ?? 'S') === 'S') ? 'Sim' : 'Não' ?>
+                  </span>
+                </td>
+                <td>
+                  <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/disciplinas?id_curso=<?= (int) ($course['id'] ?? 0) ?>&id=<?= (int) ($d['id'] ?? 0) ?>" title="Editar disciplina">
+                    <i class="bi bi-pencil-square"></i>
+                  </a>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php else: ?>
+      <div class="text-muted">
+        <i class="bi bi-info-circle me-1"></i>Nenhuma disciplina cadastrada.
+        <a class="btn btn-sm btn-outline-success ms-2" href="/admin/cursos/disciplinas?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Adicionar disciplinas</a>
+      </div>
+    <?php endif; ?>
+
+    <hr class="my-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-3" id="corpo-docente-curso">
+      <h5 class="mb-0"><i class="bi bi-people me-2"></i>Corpo Docente</h5>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/corpo-docente?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Vincular docente</a>
+    </div>
+    <?php $corpoDocente = $corpoDocente ?? []; ?>
+    <?php if (!empty($corpoDocente)): ?>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Professor</th>
+              <th>Função</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($corpoDocente as $doc): ?>
+              <tr>
+                <td><?= htmlspecialchars((string) ($doc['usuario_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($doc['funcao_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td>
+                  <button type="button" class="btn btn-outline-danger btn-sm" onclick="removerDocente(<?= (int) ($doc['id'] ?? 0) ?>, <?= (int) ($course['id'] ?? 0) ?>)" title="Remover vínculo">
+                    <i class="bi bi-person-x"></i>
+                  </button>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php else: ?>
+      <div class="text-muted">
+        <i class="bi bi-info-circle me-1"></i>Nenhum docente vinculado.
+        <a class="btn btn-sm btn-outline-success ms-2" href="/admin/cursos/corpo-docente?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Vincular docente</a>
+      </div>
+    <?php endif; ?>
   </div>
 </section>
+
+<script>
+function removerDocente(id, cursoId) {
+  if (!confirm('Remover este vínculo docente?')) return;
+  const formData = new FormData();
+  formData.append('id', id);
+  fetch('/admin/cursos/remover-corpo-docente', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.sucesso) {
+        location.reload();
+      } else {
+        alert('Erro: ' + (data.erro || 'Erro desconhecido'));
+      }
+    })
+    .catch(() => alert('Erro ao remover vínculo.'));
+}
+</script>

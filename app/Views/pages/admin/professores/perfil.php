@@ -90,6 +90,12 @@
         <div id="curriculo" class="accordion-collapse collapse" data-bs-parent="#perfilAccordion">
           <div class="accordion-body">
             <?php if ($curriculo): ?>
+              <?php $resumoCurriculo = (string) ($curriculo['resumo'] ?? ''); ?>
+              <?php if ($resumoCurriculo !== ''): ?>
+                <div class="mb-3"><strong>Resumo:</strong>
+                  <p class="mb-1"><?= nl2br(htmlspecialchars($resumoCurriculo, ENT_QUOTES, 'UTF-8')) ?></p>
+                </div>
+              <?php endif; ?>
               <div class="mb-3 p-3 border rounded bg-light"><?= ($curriculo['conteudo'] ?? '') ?></div>
               <a class="btn btn-primary btn-sm" href="/admin/professores/curriculo"><i class="bi bi-pencil me-1"></i>Editar currículo</a>
             <?php else: ?>

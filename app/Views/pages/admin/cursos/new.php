@@ -88,6 +88,10 @@
         </datalist>
       </div>
       <div class="col-12">
+        <label class="form-label">Público-alvo</label>
+        <textarea class="form-control" name="publico_alvo" rows="3" placeholder="Descreva o público-alvo do curso"></textarea>
+      </div>
+      <div class="col-12">
         <button class="btn btn-primary" type="submit"><i class="bi bi-check-lg me-1"></i>Salvar Curso</button>
       </div>
     </form>

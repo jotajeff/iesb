@@ -423,7 +423,7 @@ final class ProfessorController extends Controller
         try {
             $pdo = Database::connection();
             if ($pdo instanceof \PDO) {
-                $stmt = $pdo->prepare('SELECT id, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                $stmt = $pdo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                 $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
                 $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
@@ -646,7 +646,7 @@ final class ProfessorController extends Controller
         try {
             $pdo = Database::connection();
             if ($pdo instanceof \PDO) {
-                $stmt = $pdo->prepare('SELECT id, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                $stmt = $pdo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                 $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
                 $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
@@ -692,6 +692,7 @@ final class ProfessorController extends Controller
         }
 
         $conteudo = (string) $this->input('conteudo', '');
+        $resumo = trim((string) $this->input('resumo', ''));
 
         if ($conteudo === '') {
             Session::setFlash('flash', 'O conteúdo do currículo não pode ficar vazio.');
@@ -710,15 +711,17 @@ final class ProfessorController extends Controller
                 $existing = $stmt->fetch();
 
                 if ($existing) {
-                    $upd = $pdo->prepare('UPDATE curriculo SET conteudo = :conteudo WHERE id = :id');
+                    $upd = $pdo->prepare('UPDATE curriculo SET resumo = :resumo, conteudo = :conteudo WHERE id = :id');
+                    $upd->bindValue(':resumo', $resumo, \PDO::PARAM_STR);
                     $upd->bindValue(':conteudo', $conteudo, \PDO::PARAM_STR);
                     $upd->bindValue(':id', (int) $existing['id'], \PDO::PARAM_INT);
                     $upd->execute();
                     $this->logService->log('atualizar', 'curriculo', (int) $existing['id'], 'Currículo atualizado');
                 } else {
-                    $ins = $pdo->prepare('INSERT INTO curriculo (id_fk, tipo, conteudo, ativo) VALUES (:id_fk, :tipo, :conteudo, :ativo)');
+                    $ins = $pdo->prepare('INSERT INTO curriculo (id_fk, tipo, resumo, conteudo, ativo) VALUES (:id_fk, :tipo, :resumo, :conteudo, :ativo)');
                     $ins->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
                     $ins->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                    $ins->bindValue(':resumo', $resumo, \PDO::PARAM_STR);
                     $ins->bindValue(':conteudo', $conteudo, \PDO::PARAM_STR);
                     $ins->bindValue(':ativo', 'S', \PDO::PARAM_STR);
                     $ins->execute();
@@ -1095,7 +1098,7 @@ final class ProfessorController extends Controller
         try {
             $pdo = Database::connection();
             if ($pdo instanceof \PDO) {
-                $stmt = $pdo->prepare('SELECT id, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                $stmt = $pdo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                 $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $id, \PDO::PARAM_INT);
                 $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);

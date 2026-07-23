@@ -136,7 +136,8 @@ final class CursoService
         int $modalidadeId = 0,
         int $segmentoId = 0,
         int $nivelId = 0,
-        int $cargaHoraria = 0
+        int $cargaHoraria = 0,
+        string $publicoAlvo = ''
     ): int {
         $slug = $this->generateUniqueSlug($nome);
 
@@ -156,6 +157,7 @@ final class CursoService
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
             'segmento_id' => $segmentoId > 0 ? $segmentoId : null,
             'nivel_id' => $nivelId > 0 ? $nivelId : null,
+            'publico_alvo' => trim($publicoAlvo),
         ]);
     }
 
@@ -174,7 +176,8 @@ final class CursoService
         int $modalidadeId = 0,
         int $segmentoId = 0,
         int $nivelId = 0,
-        int $cargaHoraria = 0
+        int $cargaHoraria = 0,
+        string $publicoAlvo = ''
     ): void {
         $slug = $this->generateUniqueSlug($nome, $id);
 
@@ -194,6 +197,7 @@ final class CursoService
             'modalidade_id' => $modalidadeId > 0 ? $modalidadeId : null,
             'segmento_id' => $segmentoId > 0 ? $segmentoId : null,
             'nivel_id' => $nivelId > 0 ? $nivelId : null,
+            'publico_alvo' => trim($publicoAlvo),
         ]);
     }
 
