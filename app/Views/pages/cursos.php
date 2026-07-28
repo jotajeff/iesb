@@ -85,6 +85,7 @@ $sessaoBanner = $sessaoBanner ?? null;
           $courseHorario = (string) ($course['horario'] ?? '-');
           $courseDate = (string) ($course['date_text'] ?? '-');
           $courseSegmento = trim((string) ($course['segmento_nome'] ?? ''));
+          $courseModalidade = trim((string) ($course['modalidade_nome'] ?? ''));
           $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
           $delay = 100 + ($index % 3) * 100;
           $isConfirmed = (int) ($course['confirmado'] ?? 0) == 1;
@@ -115,14 +116,23 @@ $sessaoBanner = $sessaoBanner ?? null;
               </div>
               <div class="course-card-body">
                 <h3 class="course-card-title"><?= htmlspecialchars($courseName, ENT_QUOTES, 'UTF-8') ?></h3>
-                <p class="course-card-desc"><?= htmlspecialchars($courseLocation, ENT_QUOTES, 'UTF-8') ?></p>
+                <p class="course-card-desc"><i class="bi bi-geo-alt me-1" style="color:var(--primary);"></i><?= htmlspecialchars($courseLocation, ENT_QUOTES, 'UTF-8') ?></p>
                 <div class="course-meta">
-                  <div class="course-meta-item">
-                    <i class="bi bi-calendar-event"></i> <?= htmlspecialchars($courseDate, ENT_QUOTES, 'UTF-8') ?>
-                  </div>
-                  <div class="course-meta-item">
-                    <i class="bi bi-clock"></i> <?= htmlspecialchars($courseHorario, ENT_QUOTES, 'UTF-8') ?>
-                  </div>
+                  <?php if ($courseDate !== '-'): ?>
+                    <div class="course-meta-item">
+                      <i class="bi bi-calendar-event"></i> <?= htmlspecialchars($courseDate, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                  <?php endif; ?>
+                  <?php if ($courseHorario !== '' && $courseHorario !== '-'): ?>
+                    <div class="course-meta-item">
+                      <i class="bi bi-clock"></i> <?= htmlspecialchars($courseHorario, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                  <?php endif; ?>
+                  <?php if ($courseModalidade !== ''): ?>
+                    <div class="course-meta-item">
+                      <i class="bi bi-layers"></i> <?= htmlspecialchars($courseModalidade, ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                  <?php endif; ?>
                 </div>
                 <div class="course-card-footer">
                   <?php if ($linkIngresso !== '' && stripos($linkIngresso, 'saiba') === false): ?>

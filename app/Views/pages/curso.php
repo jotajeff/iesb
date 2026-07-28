@@ -42,165 +42,163 @@ $isPos = $nivelSlug === 'pos-graduacao';
         <?php if ($isPos): ?>
 
           <div class="accordion" id="accordionCurso">
+
+            <?php $temSobre = $detalhe && trim((string) ($detalhe['detalhe'] ?? '')) !== ''; ?>
+            <?php $temPublico = trim((string) ($curso['publico_alvo'] ?? '')) !== ''; ?>
+            <?php $temInvestimento = !empty($pagamentos); ?>
+            <?php $temCoordenacao = !empty($coordenadores); ?>
+            <?php $temDisciplinas = !empty($disciplinas); ?>
+            <?php $temProfessores = !empty($professores); ?>
+            <?php $primeiro = true; ?>
+
+            <?php if ($temSobre): ?>
             <div class="accordion-item">
               <h2 class="accordion-header">
-                <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSobre" aria-expanded="true">
+                <button class="accordion-button <?= $primeiro ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapseSobre" aria-expanded="<?= $primeiro ? 'true' : 'false' ?>">
                   <i class="bi bi-journal-text me-2"></i>Sobre o curso
                 </button>
               </h2>
-              <div id="collapseSobre" class="accordion-collapse collapse show" data-bs-parent="#accordionCurso">
-                <div class="accordion-body">
-                  <?php if ($detalhe && trim((string) ($detalhe['detalhe'] ?? '')) !== ''): ?>
-                    <div><?= $detalhe['detalhe'] ?></div>
-                  <?php else: ?>
-                    <p class="text-muted mb-0">Nenhuma descrição disponível.</p>
-                  <?php endif; ?>
-                </div>
+              <div id="collapseSobre" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
+                <div class="accordion-body"><div><?= $detalhe['detalhe'] ?></div></div>
               </div>
             </div>
+            <?php $primeiro = false; ?>
+            <?php endif; ?>
 
+            <?php if ($temPublico): ?>
             <div class="accordion-item">
               <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePublico">
+                <button class="accordion-button <?= $primeiro ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapsePublico" aria-expanded="<?= $primeiro ? 'true' : 'false' ?>">
                   <i class="bi bi-people me-2"></i>Público-alvo
                 </button>
               </h2>
-              <div id="collapsePublico" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
-                <div class="accordion-body">
-                  <?php $publico = (string) ($curso['publico_alvo'] ?? ''); ?>
-                  <?php if (trim($publico) !== ''): ?>
-                    <?= nl2br(htmlspecialchars($publico, ENT_QUOTES, 'UTF-8')) ?>
-                  <?php else: ?>
-                    <p class="text-muted mb-0">Nenhuma informação disponível.</p>
-                  <?php endif; ?>
-                </div>
+              <div id="collapsePublico" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
+                <div class="accordion-body"><?= nl2br(htmlspecialchars((string) ($curso['publico_alvo'] ?? ''), ENT_QUOTES, 'UTF-8')) ?></div>
               </div>
             </div>
+            <?php $primeiro = false; ?>
+            <?php endif; ?>
 
+            <?php if ($temInvestimento): ?>
             <div class="accordion-item">
               <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInvestimento">
+                <button class="accordion-button <?= $primeiro ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapseInvestimento" aria-expanded="<?= $primeiro ? 'true' : 'false' ?>">
                   <i class="bi bi-currency-dollar me-2"></i>Investimento
                 </button>
               </h2>
-              <div id="collapseInvestimento" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
+              <div id="collapseInvestimento" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
                 <div class="accordion-body">
-                  <?php if (!empty($pagamentos)): ?>
-                    <?php foreach ($pagamentos as $p): ?>
-                      <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
-                        <div>
-                          <strong><?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
-                          <span class="badge bg-secondary ms-2" style="font-size:.65rem;"><?= htmlspecialchars((string) ($p['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
-                        </div>
-                        <div class="text-end">
-                          <small class="text-muted"><?= (int) ($p['parcelas'] ?? 1) ?>x</small>
-                          <span class="fw-bold ms-2">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
-                        </div>
+                  <?php foreach ($pagamentos as $p): ?>
+                    <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
+                      <div>
+                        <strong><?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
+                        <span class="badge bg-secondary ms-2" style="font-size:.65rem;"><?= htmlspecialchars((string) ($p['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                       </div>
-                    <?php endforeach; ?>
-                  <?php else: ?>
-                    <p class="text-muted mb-0">Entre em contato para saber mais sobre investimento.</p>
-                  <?php endif; ?>
+                      <div class="text-end">
+                        <small class="text-muted"><?= (int) ($p['parcelas'] ?? 1) ?>x</small>
+                        <span class="fw-bold ms-2">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
+                      </div>
+                    </div>
+                  <?php endforeach; ?>
                 </div>
               </div>
             </div>
+            <?php $primeiro = false; ?>
+            <?php endif; ?>
 
+            <?php if ($temCoordenacao): ?>
             <div class="accordion-item">
               <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoordenacao">
+                <button class="accordion-button <?= $primeiro ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapseCoordenacao" aria-expanded="<?= $primeiro ? 'true' : 'false' ?>">
                   <i class="bi bi-person-badge me-2"></i>Coordenação
                 </button>
               </h2>
-              <div id="collapseCoordenacao" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
+              <div id="collapseCoordenacao" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
                 <div class="accordion-body">
-                  <?php if (!empty($coordenadores)): ?>
-                    <div class="row g-3">
-                      <?php foreach ($coordenadores as $coord): ?>
-                        <div class="col-md-4">
-                          <div class="card border shadow-sm h-100 text-center p-3">
-                            <?php $fotoCoord = (string) ($coord['foto_path'] ?? ''); ?>
-                            <?php if ($fotoCoord !== ''): ?>
-                              <img src="/<?= htmlspecialchars($fotoCoord, ENT_QUOTES, 'UTF-8') ?>" alt="" class="rounded-circle border shadow-sm mx-auto mb-3" style="width:100px;height:100px;object-fit:cover;">
-                            <?php else: ?>
-                              <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle border mx-auto mb-3" style="width:100px;height:100px;">
-                                <i class="bi bi-person fs-1 text-muted"></i>
-                              </div>
-                            <?php endif; ?>
-                            <h6 class="card-title"><?= htmlspecialchars((string) ($coord['usuario_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></h6>
-                            <p class="text-muted small mb-2">Coordenador(a)</p>
-                            <?php $resumoCoord = (string) ($coord['curriculo_resumo'] ?? ''); ?>
-                            <?php if ($resumoCoord !== ''): ?>
-                              <p class="small text-start mb-0"><?= nl2br(htmlspecialchars($resumoCoord, ENT_QUOTES, 'UTF-8')) ?></p>
-                            <?php endif; ?>
-                          </div>
+                  <div class="row g-3">
+                    <?php foreach ($coordenadores as $coord): ?>
+                      <div class="col-md-4">
+                        <div class="card border shadow-sm h-100 text-center p-3">
+                          <?php $fotoCoord = (string) ($coord['foto_path'] ?? ''); ?>
+                          <?php if ($fotoCoord !== ''): ?>
+                            <img src="/<?= htmlspecialchars($fotoCoord, ENT_QUOTES, 'UTF-8') ?>" alt="" class="rounded-circle border shadow-sm mx-auto mb-3" style="width:100px;height:100px;object-fit:cover;">
+                          <?php else: ?>
+                            <div class="d-inline-flex align-items-center justify-content-center bg-light rounded-circle border mx-auto mb-3" style="width:100px;height:100px;">
+                              <i class="bi bi-person fs-1 text-muted"></i>
+                            </div>
+                          <?php endif; ?>
+                          <h6 class="card-title"><?= htmlspecialchars((string) ($coord['usuario_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></h6>
+                          <p class="text-muted small mb-2">Coordenador(a)</p>
+                          <?php $resumoCoord = (string) ($coord['curriculo_resumo'] ?? ''); ?>
+                          <?php if ($resumoCoord !== ''): ?>
+                            <p class="small text-start mb-0"><?= nl2br(htmlspecialchars($resumoCoord, ENT_QUOTES, 'UTF-8')) ?></p>
+                          <?php endif; ?>
                         </div>
-                      <?php endforeach; ?>
-                    </div>
-                  <?php else: ?>
-                    <p class="text-muted mb-0">Em breve.</p>
-                  <?php endif; ?>
+                      </div>
+                    <?php endforeach; ?>
+                  </div>
                 </div>
               </div>
             </div>
+            <?php $primeiro = false; ?>
+            <?php endif; ?>
 
+            <?php if ($temDisciplinas): ?>
             <div class="accordion-item">
               <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDisciplinas">
+                <button class="accordion-button <?= $primeiro ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDisciplinas" aria-expanded="<?= $primeiro ? 'true' : 'false' ?>">
                   <i class="bi bi-book me-2"></i>Disciplinas
                 </button>
               </h2>
-              <div id="collapseDisciplinas" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
+              <div id="collapseDisciplinas" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
                 <div class="accordion-body">
-                  <?php if (!empty($disciplinas)): ?>
-                    <ul class="list-group list-group-flush">
-                      <?php foreach ($disciplinas as $d): ?>
-                        <li class="list-group-item d-flex justify-content-between align-items-center">
-                          <?= htmlspecialchars((string) ($d['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
-                          <span class="badge bg-primary rounded-pill"><?= (int) ($d['carga_horaria'] ?? 0) ?>h</span>
-                        </li>
-                      <?php endforeach; ?>
-                    </ul>
-                  <?php else: ?>
-                    <p class="text-muted mb-0">Grade curricular em atualização.</p>
-                  <?php endif; ?>
+                  <ul class="list-group list-group-flush">
+                    <?php foreach ($disciplinas as $d): ?>
+                      <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <?= htmlspecialchars((string) ($d['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                        <span class="badge bg-primary rounded-pill"><?= (int) ($d['carga_horaria'] ?? 0) ?>h</span>
+                      </li>
+                    <?php endforeach; ?>
+                  </ul>
                 </div>
               </div>
             </div>
+            <?php $primeiro = false; ?>
+            <?php endif; ?>
 
+            <?php if ($temProfessores): ?>
             <div class="accordion-item">
               <h2 class="accordion-header">
-                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProfessores">
+                <button class="accordion-button <?= $primeiro ? '' : 'collapsed' ?>" type="button" data-bs-toggle="collapse" data-bs-target="#collapseProfessores" aria-expanded="<?= $primeiro ? 'true' : 'false' ?>">
                   <i class="bi bi-people me-2"></i>Professores
                 </button>
               </h2>
-              <div id="collapseProfessores" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
+              <div id="collapseProfessores" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
                 <div class="accordion-body">
-                  <?php if (!empty($professores)): ?>
-                    <div class="professores-scroll-wrapper">
-                      <div class="professores-scroll-track">
-                        <?php for ($r = 0; $r < 3; $r++): ?>
-                          <?php foreach ($professores as $prof): ?>
-                            <div class="professor-card">
-                              <?php $fotoProf = (string) ($prof['foto_path'] ?? ''); ?>
-                              <?php if ($fotoProf !== ''): ?>
-                                <img src="/<?= htmlspecialchars($fotoProf, ENT_QUOTES, 'UTF-8') ?>" alt="" class="professor-foto">
-                              <?php else: ?>
-                                <div class="professor-foto-placeholder">
-                                  <i class="bi bi-person"></i>
-                                </div>
-                              <?php endif; ?>
-                              <span class="professor-nome"><?= htmlspecialchars((string) ($prof['usuario_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
-                            </div>
-                          <?php endforeach; ?>
-                        <?php endfor; ?>
-                      </div>
+                  <div class="professores-scroll-wrapper">
+                    <div class="professores-scroll-track">
+                      <?php for ($r = 0; $r < 3; $r++): ?>
+                        <?php foreach ($professores as $prof): ?>
+                          <div class="professor-card">
+                            <?php $fotoProf = (string) ($prof['foto_path'] ?? ''); ?>
+                            <?php if ($fotoProf !== ''): ?>
+                              <img src="/<?= htmlspecialchars($fotoProf, ENT_QUOTES, 'UTF-8') ?>" alt="" class="professor-foto">
+                            <?php else: ?>
+                              <div class="professor-foto-placeholder">
+                                <i class="bi bi-person"></i>
+                              </div>
+                            <?php endif; ?>
+                            <span class="professor-nome"><?= htmlspecialchars((string) ($prof['usuario_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                          </div>
+                        <?php endforeach; ?>
+                      <?php endfor; ?>
                     </div>
-                  <?php else: ?>
-                    <p class="text-muted mb-0">Corpo docente em definição.</p>
-                  <?php endif; ?>
+                  </div>
                 </div>
               </div>
             </div>
+            <?php $primeiro = false; ?>
+            <?php endif; ?>
 
           </div>
 
@@ -223,22 +221,39 @@ $isPos = $nivelSlug === 'pos-graduacao';
         <div class="bg-white border rounded-4 p-3 shadow-sm mb-3">
           <h6 class="mb-2 small fw-bold text-uppercase text-muted"><i class="bi bi-info-circle me-1"></i>Informações</h6>
           <ul class="list-unstyled mb-0 small">
-            <li class="d-flex align-items-center gap-2 mb-1">
-              <i class="bi bi-calendar-event text-primary"></i>
-              <span><strong>Data:</strong> <?= htmlspecialchars($dateText, ENT_QUOTES, 'UTF-8') ?></span>
-            </li>
-            <li class="d-flex align-items-center gap-2 mb-1">
-              <i class="bi bi-clock text-primary"></i>
-              <span><strong>Horário:</strong> <?= htmlspecialchars((string) ($curso['horario'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
-            </li>
-            <li class="d-flex align-items-center gap-2 mb-1">
-              <i class="bi bi-geo-alt text-primary"></i>
-              <span><strong>Local:</strong> <?= htmlspecialchars((string) ($curso['local_curso'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
-            </li>
-            <li class="d-flex align-items-center gap-2 mb-1">
-              <i class="bi bi-clock-history text-primary"></i>
-              <span><strong>Carga horária:</strong> <?= (int) ($curso['carga_horaria'] ?? 0) ?>h</span>
-            </li>
+            <?php if (trim($dateText) !== '' && $dateText !== '-'): ?>
+              <li class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-calendar-event text-primary"></i>
+                <span><strong>Data:</strong> <?= htmlspecialchars($dateText, ENT_QUOTES, 'UTF-8') ?></span>
+              </li>
+            <?php endif; ?>
+            <?php $horario = trim((string) ($curso['horario'] ?? '')); ?>
+            <?php if ($horario !== ''): ?>
+              <li class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-clock text-primary"></i>
+                <span><strong>Horário:</strong> <?= htmlspecialchars($horario, ENT_QUOTES, 'UTF-8') ?></span>
+              </li>
+            <?php endif; ?>
+            <?php $local = trim((string) ($curso['local_curso'] ?? '')); ?>
+            <?php if ($local !== ''): ?>
+              <li class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-geo-alt text-primary"></i>
+                <span><strong>Local:</strong> <?= htmlspecialchars($local, ENT_QUOTES, 'UTF-8') ?></span>
+              </li>
+            <?php endif; ?>
+            <?php if ((int) ($curso['carga_horaria'] ?? 0) > 0): ?>
+              <li class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-clock-history text-primary"></i>
+                <span><strong>Carga horária:</strong> <?= (int) ($curso['carga_horaria'] ?? 0) ?>h</span>
+              </li>
+            <?php endif; ?>
+            <?php $modalidadeNome = (string) ($curso['modalidade_nome'] ?? ''); ?>
+            <?php if ($modalidadeNome !== ''): ?>
+              <li class="d-flex align-items-center gap-2 mb-1">
+                <i class="bi bi-layers text-primary"></i>
+                <span><strong>Modalidade:</strong> <?= htmlspecialchars($modalidadeNome, ENT_QUOTES, 'UTF-8') ?></span>
+              </li>
+            <?php endif; ?>
             <?php $segmentoNome = (string) ($curso['segmento_nome'] ?? ''); ?>
             <?php if ($segmentoNome !== ''): ?>
               <li class="d-flex align-items-center gap-2 mb-1">

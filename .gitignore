@@ -7,3 +7,4 @@
 !/storage/cache/.gitkeep
 /storage
 *.md
+*.sql

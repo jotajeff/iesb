@@ -314,6 +314,7 @@ final class CursoService
             'date_text' => $dateText,
             'segmento_id' => (int) ($course['segmento_id'] ?? 0),
             'segmento_nome' => trim((string) ($course['segmento_nome'] ?? '')),
+            'modalidade_nome' => trim((string) ($course['modalidade_nome'] ?? '')),
         ];
     }
 

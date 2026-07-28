@@ -113,8 +113,9 @@ final class CursoRepository
         }
 
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado,
-                       c.segmento AS segmento_id, s.nome AS segmento_nome
+                       c.modalidade AS modalidade_id, c.segmento AS segmento_id, m.nome AS modalidade_nome, s.nome AS segmento_nome
                 FROM cursos_iesb c
+                LEFT JOIN modalidade m ON m.id = c.modalidade
                 LEFT JOIN segmento s ON s.id = c.segmento
                 WHERE c.ativo = 1 AND c.nivel = :nivel_id AND c.curso_calendario >= CURDATE()';
 
@@ -271,8 +272,9 @@ final class CursoRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.publico_alvo, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome, n.slug AS nivel_slug, n.nome AS nivel_nome
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.publico_alvo, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, m.nome AS modalidade_nome, s.nome AS segmento_nome, n.slug AS nivel_slug, n.nome AS nivel_nome
                      FROM cursos_iesb c
+                     LEFT JOIN modalidade m ON m.id = c.modalidade
                      LEFT JOIN segmento s ON s.id = c.segmento
                      LEFT JOIN nivel n ON n.id = c.nivel
                      WHERE c.slug = :slug';
