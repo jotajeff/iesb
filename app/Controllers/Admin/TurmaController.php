@@ -144,7 +144,7 @@ final class TurmaController extends Controller
         $nome = trim((string) $this->input('nome', ''));
         $curso = (int) $this->input('curso', 0);
         $dataInicio = (string) $this->input('data_inicio', '');
-        $ativa = strtoupper(trim((string) $this->input('ativa', 'N')));
+        $ativo = intval($this->input('ativo', 0));
 
         if ($nome === '' || $curso <= 0) {
             Session::setFlash('flash', 'Informe o nome da turma e selecione o curso.');
@@ -152,9 +152,9 @@ final class TurmaController extends Controller
             return;
         }
 
-        $ativa = $ativa === 'S' ? 'S' : 'N';
+        $ativo = intval($ativo) ? 1 : 0;
 
-        $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativa);
+        $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativo);
 
         if ($turmaId > 0) {
             $this->logService->log('criar', 'turma', $turmaId, "Turma criada: $nome");
@@ -177,7 +177,7 @@ final class TurmaController extends Controller
         $nome = trim((string) $this->input('nome', ''));
         $curso = (int) $this->input('curso', 0);
         $dataInicio = (string) $this->input('data_inicio', '');
-        $ativa = strtoupper(trim((string) $this->input('ativa', 'N')));
+        $ativo = intval($this->input('ativo', 0));
 
         if ($id <= 0 || $nome === '' || $curso <= 0) {
             Session::setFlash('flash', 'Dados inválidos para atualização.');
@@ -185,9 +185,9 @@ final class TurmaController extends Controller
             return;
         }
 
-        $ativa = $ativa === 'S' ? 'S' : 'N';
+        $ativo = intval($ativo) ? 1 : 0;
 
-        $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativa);
+        $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativo);
 
         $this->logService->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
         Session::setFlash('flash', 'Turma atualizada com sucesso.');
@@ -249,12 +249,12 @@ final class TurmaController extends Controller
 
         try {
             $stmt = $pdo->prepare(
-                'SELECT id, titulo, link, tipo, id_fk, criado_em'
+                'SELECT id, titulo, link, tipo, id_fk, created_at'
                 . ' FROM material WHERE id = :id AND tipo = :tipo AND ativo = :ativo'
             );
             $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
             $stmt->bindValue(':tipo', $tipo, \PDO::PARAM_STR);
-            $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
             $stmt->execute();
             $row = $stmt->fetch();
             return $row ?: null;
@@ -272,13 +272,13 @@ final class TurmaController extends Controller
 
         try {
             $stmt = $pdo->prepare(
-                'SELECT id, tipo, titulo, link, criado_em'
+                'SELECT id, tipo, titulo, link, created_at'
                 . ' FROM material'
                 . ' WHERE id_fk = :id_turma AND ativo = :ativo'
                 . ' ORDER BY tipo ASC, titulo ASC'
             );
             $stmt->bindValue(':id_turma', $idTurma, \PDO::PARAM_INT);
-            $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];

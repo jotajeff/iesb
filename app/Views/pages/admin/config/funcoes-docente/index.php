@@ -37,8 +37,8 @@
                             <td><?= htmlspecialchars((string) ($funcao['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td><?= htmlspecialchars((string) ($funcao['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td>
-                                <?php $ativo = (string) ($funcao['ativo'] ?? 'S'); ?>
-                                <?php if ($ativo === 'S'): ?>
+                                <?php $ativo = (int) ($funcao['ativo'] ?? 1); ?>
+                                <?php if ($ativo == 1): ?>
                                     <span class="badge bg-success">Sim</span>
                                 <?php else: ?>
                                     <span class="badge bg-secondary">Não</span>

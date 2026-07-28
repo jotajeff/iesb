@@ -50,7 +50,7 @@
                   </span>
                 </td>
                 <td>
-                  <?php if (strtoupper(trim((string) ($aluno['ativo'] ?? 'N'))) === 'S'): ?>
+                  <?php if (intval($aluno['ativo'] ?? 0) === 1): ?>
                     <span class="badge bg-primary">Sim</span>
                   <?php else: ?>
                     <span class="badge bg-secondary">Não</span>

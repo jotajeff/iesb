@@ -17,7 +17,7 @@ final class ImageRepository
                 return [];
             }
 
-            $stmt = $pdo->prepare('SELECT id, path, legenda, ativa, criado_em FROM imagem WHERE tabela_fk = :tabela_fk AND id_fk = :id_fk ORDER BY criado_em DESC');
+            $stmt = $pdo->prepare('SELECT id, path, legenda, ativo, created_at FROM imagem WHERE tabela_fk = :tabela_fk AND id_fk = :id_fk ORDER BY created_at DESC');
             $stmt->bindValue(':tabela_fk', $tabelaFk);
             $stmt->bindValue(':id_fk', $idFk, PDO::PARAM_INT);
             $stmt->execute();

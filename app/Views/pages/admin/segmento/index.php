@@ -22,12 +22,12 @@
 
           <?php foreach (($segmentos ?? []) as $s): ?>
             <?php $id = (int) ($s['id'] ?? 0); ?>
-            <?php $ativo = strtoupper((string) ($s['ativo'] ?? 'N')); ?>
+            <?php $ativo = (int) ($s['ativo'] ?? 0); ?>
             <tr>
               <td><?= $id ?></td>
               <td><?= htmlspecialchars((string) ($s['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td>
-                <?php if ($ativo === 'S'): ?>
+                <?php if ($ativo == 1): ?>
                   <span class="badge bg-success">Sim</span>
                 <?php else: ?>
                   <span class="badge bg-secondary">Não</span>

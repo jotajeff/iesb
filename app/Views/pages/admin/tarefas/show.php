@@ -5,7 +5,7 @@ $situacaoClass = (string) ($tarefa['situacao_class'] ?? 'bg-secondary');
 $prioridadeLabel = (string) ($tarefa['prioridade_label'] ?? 'Baixa');
 $prioridadeClass = (string) ($tarefa['prioridade_class'] ?? 'bg-success');
 $comentariosTotal = (int) ($tarefa['comentarios_total'] ?? 0);
-$criadoEm = trim((string) ($tarefa['criado_em'] ?? ''));
+$criadoEm = trim((string) ($tarefa['created_at'] ?? ''));
 $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) : '-';
 ?>
 <section class="container py-4">
@@ -106,7 +106,7 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
                 <?php foreach ($comentarios as $comentario): ?>
                   <?php
                     $comentarioTexto = (string) ($comentario['comentario'] ?? '');
-                    $comentarioData = (string) ($comentario['criado_em'] ?? '');
+                    $comentarioData = (string) ($comentario['created_at'] ?? '');
                     $comentarioDataFormatada = $comentarioData !== '' ? date('d/m/Y H:i', strtotime($comentarioData)) : '-';
                   ?>
                   <div class="list-group-item px-0">

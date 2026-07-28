@@ -19,11 +19,11 @@ final class PreInscricaoRepository
         try {
             $sql = 'SELECT p.id, p.nome, p.email, p.whatsapp, p.ip, p.curso_id,
                            COALESCE(c.nome, \'-\') AS curso_nome,
-                           p.situacao, p.criado_em
+                           p.situacao, p.created_at
                     FROM pre_inscricao p
                     LEFT JOIN cursos_iesb c ON c.id = p.curso_id
                     WHERE p.situacao = :situacao
-                    ORDER BY p.criado_em DESC';
+                    ORDER BY p.created_at DESC';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':situacao', $situacao);
             $stmt->execute();
@@ -45,10 +45,10 @@ final class PreInscricaoRepository
         try {
             $sql = 'SELECT p.id, p.nome, p.email, p.whatsapp, p.ip, p.curso_id,
                            COALESCE(c.nome, \'-\') AS curso_nome,
-                           p.situacao, p.criado_em
+                           p.situacao, p.created_at
                     FROM pre_inscricao p
                     LEFT JOIN cursos_iesb c ON c.id = p.curso_id
-                    ORDER BY p.criado_em DESC';
+                    ORDER BY p.created_at DESC';
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
             $rows = $stmt->fetchAll();
@@ -97,7 +97,7 @@ final class PreInscricaoRepository
         try {
             $sql = 'SELECT p.id, p.nome, p.email, p.whatsapp, p.ip, p.curso_id,
                            COALESCE(c.nome, \'-\') AS curso_nome,
-                           p.situacao, p.criado_em
+                           p.situacao, p.created_at
                     FROM pre_inscricao p
                     LEFT JOIN cursos_iesb c ON c.id = p.curso_id
                     WHERE p.id = :id

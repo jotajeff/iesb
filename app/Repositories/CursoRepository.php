@@ -60,7 +60,7 @@ final class CursoRepository
 
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.exibir_home, c.confirmado
                 FROM cursos_iesb c
-                WHERE c.ativo = "S" AND c.exibir_home = "S" AND c.curso_calendario IS NOT NULL AND c.curso_calendario >= :maxDate
+                WHERE c.ativo = 1 AND c.exibir_home = "S" AND c.curso_calendario IS NOT NULL AND c.curso_calendario >= :maxDate
                 ORDER BY c.curso_calendario ASC, c.id DESC
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
@@ -84,7 +84,7 @@ final class CursoRepository
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.exibir_home, c.confirmado, c.segmento, s.nome AS segmento_nome
                 FROM cursos_iesb c
                 LEFT JOIN segmento s ON s.id = c.segmento
-                WHERE c.ativo = "S" AND c.exibir_home = "S" AND c.curso_calendario IS NOT NULL AND c.curso_calendario >= :maxDate
+                WHERE c.ativo = 1 AND c.exibir_home = "S" AND c.curso_calendario IS NOT NULL AND c.curso_calendario >= :maxDate
                 ORDER BY c.curso_calendario ASC, c.id DESC
                 LIMIT :limit';
         $stmt = $pdo->prepare($sql);
@@ -116,7 +116,7 @@ final class CursoRepository
                        c.segmento AS segmento_id, s.nome AS segmento_nome
                 FROM cursos_iesb c
                 LEFT JOIN segmento s ON s.id = c.segmento
-                WHERE c.ativo = "S" AND c.nivel = :nivel_id AND c.curso_calendario >= CURDATE()';
+                WHERE c.ativo = 1 AND c.nivel = :nivel_id AND c.curso_calendario >= CURDATE()';
 
         if ($segmentoId !== null && $segmentoId > 0) {
             $sql .= ' AND c.segmento = :segmento_id';
@@ -149,7 +149,7 @@ final class CursoRepository
                      LEFT JOIN modalidade m ON m.id = c.modalidade
                      LEFT JOIN segmento s ON s.id = c.segmento
                      LEFT JOIN nivel n ON n.id = c.nivel
-                     WHERE c.ativo = "S"
+                     WHERE c.ativo = 1
                      ORDER BY c.id DESC
                      LIMIT :limit';
             $stmt = $pdo->prepare($sql);
@@ -188,7 +188,7 @@ final class CursoRepository
         }
 
         try {
-            $sql = 'SELECT id_curso FROM detalhes WHERE ativo = "S"';
+            $sql = 'SELECT id_curso FROM detalhes WHERE ativo = 1';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll(\PDO::FETCH_COLUMN);
             return is_array($rows) ? array_map('intval', $rows) : [];
@@ -306,7 +306,7 @@ final class CursoRepository
         $stmt->bindValue(':local_curso', $payload['local_curso']);
         $stmt->bindValue(':imagem_card', $payload['imagem_card']);
         $stmt->bindValue(':link_ingresso', $payload['link_ingresso']);
-        $stmt->bindValue(':ativo', (string) $payload['ativo']);
+        $stmt->bindValue(':ativo', intval($payload['ativo'] ?? 0) ? 1 : 0, PDO::PARAM_INT);
         $stmt->bindValue(':exibir_home', (string) ($payload['exibir_home'] ?? 'N'));
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
         $stmt->bindValue(':carga_horaria', $payload['carga_horaria'] ?? 0, PDO::PARAM_INT);
@@ -342,7 +342,7 @@ final class CursoRepository
         $stmt->bindValue(':local_curso', $payload['local_curso']);
         $stmt->bindValue(':imagem_card', $payload['imagem_card']);
         $stmt->bindValue(':link_ingresso', $payload['link_ingresso']);
-        $stmt->bindValue(':ativo', (string) $payload['ativo']);
+        $stmt->bindValue(':ativo', intval($payload['ativo'] ?? 0) ? 1 : 0, PDO::PARAM_INT);
         $stmt->bindValue(':exibir_home', (string) ($payload['exibir_home'] ?? 'N'));
         $stmt->bindValue(':confirmado', (string) ($payload['confirmado'] ?? 'N'));
         $stmt->bindValue(':carga_horaria', $payload['carga_horaria'] ?? 0, PDO::PARAM_INT);
@@ -412,7 +412,7 @@ final class CursoRepository
         }
 
         try {
-            $sql = 'SELECT id, id_curso, detalhe, ativo, criado_em FROM detalhes WHERE id_curso = :id_curso LIMIT 1';
+            $sql = 'SELECT id, id_curso, detalhe, ativo, created_at FROM detalhes WHERE id_curso = :id_curso LIMIT 1';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
             $stmt->execute();
@@ -436,7 +436,7 @@ final class CursoRepository
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id_curso', $payload['id_curso'], PDO::PARAM_INT);
             $stmt->bindValue(':detalhe', $payload['detalhe'] ?? '', PDO::PARAM_STR);
-            $stmt->bindValue(':ativo', $payload['ativo'] ?? 'S', PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', intval($payload['ativo'] ?? 1) ? 1 : 0, PDO::PARAM_INT);
             $stmt->execute();
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {
@@ -456,7 +456,7 @@ final class CursoRepository
             $sql = 'UPDATE detalhes SET detalhe = :detalhe, ativo = :ativo WHERE id = :id';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':detalhe', $payload['detalhe'] ?? '', PDO::PARAM_STR);
-            $stmt->bindValue(':ativo', $payload['ativo'] ?? 'S', PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', intval($payload['ativo'] ?? 1) ? 1 : 0, PDO::PARAM_INT);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
         } catch (\Throwable $e) {

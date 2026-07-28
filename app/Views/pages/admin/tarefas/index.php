@@ -94,7 +94,7 @@ $isAdmin = (bool) ($isAdmin ?? ((string) ($authUser['role'] ?? $authUser['type']
                 $prioridadeLabel = (string) ($tarefa['prioridade_label'] ?? 'Baixa');
                 $prioridadeClass = (string) ($tarefa['prioridade_class'] ?? 'bg-success');
                 $comentariosTotal = (int) ($tarefa['comentarios_total'] ?? 0);
-                $criadoEm = trim((string) ($tarefa['criado_em'] ?? ''));
+                $criadoEm = trim((string) ($tarefa['created_at'] ?? ''));
                 $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) : '-';
               ?>
               <article class="card kanban-card shadow-sm border-0 mb-3">

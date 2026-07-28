@@ -53,7 +53,7 @@
                 </td>
                 <td><?= (int) ($item['ordem'] ?? 0) ?></td>
                 <td>
-                  <?php if (strtoupper(trim((string) ($item['ativo'] ?? 'N'))) === 'S'): ?>
+                  <?php if (intval($item['ativo'] ?? 0) === 1): ?>
                     <span class="badge bg-success">Sim</span>
                   <?php else: ?>
                     <span class="badge bg-secondary">Não</span>

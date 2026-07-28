@@ -65,7 +65,7 @@
                   <tr>
                     <th class="bg-light">Ativa</th>
                     <td>
-                      <?php if (strtoupper(trim((string) ($turmaSelecionada['ativa'] ?? 'N'))) === 'S'): ?>
+                      <?php if (intval($turmaSelecionada['ativo'] ?? 0) === 1): ?>
                         <span class="badge bg-primary">Sim</span>
                       <?php else: ?>
                         <span class="badge bg-secondary">Não</span>

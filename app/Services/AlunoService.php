@@ -29,7 +29,7 @@ final class AlunoService
         return $this->repository->findById($id);
     }
 
-    public function criarAluno(string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, string $ativo = 'S'): int
+    public function criarAluno(string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, int $ativo = 1): int
     {
         $prefix = explode('@', $email)[0] ?? '';
         $senha = $prefix . '#' . date('Y');
@@ -40,13 +40,13 @@ final class AlunoService
             'data_nascimento' => $dataNascimento,
             'telefone' => trim($telefone),
             'email' => trim($email),
-            'ativo' => strtoupper(trim($ativo)) === 'S' ? 'S' : 'N',
+            'ativo' => $ativo ? 1 : 0,
             'senha' => password_hash($senha, PASSWORD_DEFAULT),
         ];
         return $this->repository->save($payload);
     }
 
-    public function atualizarAluno(int $id, string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, string $ativo = 'S', ?string $senha = null): void
+    public function atualizarAluno(int $id, string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, int $ativo = 1, ?string $senha = null): void
     {
         $payload = [
             'id' => $id,
@@ -55,7 +55,7 @@ final class AlunoService
             'data_nascimento' => $dataNascimento,
             'telefone' => trim($telefone),
             'email' => trim($email),
-            'ativo' => strtoupper(trim($ativo)) === 'S' ? 'S' : 'N',
+            'ativo' => $ativo ? 1 : 0,
         ];
         if ($senha !== null && $senha !== '') {
             $payload['senha'] = password_hash($senha, PASSWORD_DEFAULT);

@@ -93,7 +93,7 @@ final class AuthController extends Controller
 
         $aluno = $this->alunoService->findByEmail($email);
 
-        if (!$aluno || strtoupper(trim((string) ($aluno['ativo'] ?? 'N'))) !== 'S') {
+        if (!$aluno || intval($aluno['ativo'] ?? 0) !== 1) {
             Session::setFlash('flash', 'E-mail não encontrado ou conta inativa.');
             $this->redirect('/aluno/solicitar-redefinicao');
         }

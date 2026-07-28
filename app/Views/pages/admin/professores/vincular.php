@@ -41,9 +41,9 @@
                   <td><?= htmlspecialchars((string) ($t['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                   <td><?= htmlspecialchars((string) ($t['data_inicio'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                   <td>
-                    <?php $ativa = (string) ($t['ativa'] ?? 'N'); ?>
-                    <span class="badge <?= $ativa === 'S' ? 'bg-success' : 'bg-secondary' ?>">
-                      <?= $ativa === 'S' ? 'Sim' : 'Não' ?>
+                    <?php $ativa = (int) ($t['ativo'] ?? 0); ?>
+                    <span class="badge <?= $ativa === 1 ? 'bg-success' : 'bg-secondary' ?>">
+                      <?= $ativa === 1 ? 'Sim' : 'Não' ?>
                     </span>
                   </td>
                 </tr>

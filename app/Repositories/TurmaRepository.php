@@ -17,7 +17,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT t.id, t.nome, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativa,'
+            $sql = 'SELECT t.id, t.nome, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
                  . ' (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
@@ -45,7 +45,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT t.id, t.nome, t.id_curso, t.data_inicio, t.ativa, '
+            $sql = 'SELECT t.id, t.nome, t.id_curso, t.data_inicio, t.ativo, '
                  . 'c.nome AS curso_nome, n.nome AS nivel_nome'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
@@ -74,18 +74,18 @@ final class TurmaRepository
 
         try {
             if (!empty($payload['id'])) {
-                $sql = 'UPDATE turmas SET nome = :nome, id_curso = :id_curso, data_inicio = :data_inicio, ativa = :ativa WHERE id = :id';
+                $sql = 'UPDATE turmas SET nome = :nome, id_curso = :id_curso, data_inicio = :data_inicio, ativo = :ativo WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $payload['id'], PDO::PARAM_INT);
             } else {
-                $sql = 'INSERT INTO turmas (nome, id_curso, data_inicio, ativa) VALUES (:nome, :id_curso, :data_inicio, :ativa)';
+                $sql = 'INSERT INTO turmas (nome, id_curso, data_inicio, ativo) VALUES (:nome, :id_curso, :data_inicio, :ativo)';
                 $stmt = $pdo->prepare($sql);
             }
 
             $stmt->bindValue(':nome', trim($payload['nome'] ?? ''), PDO::PARAM_STR);
             $stmt->bindValue(':id_curso', $payload['id_curso'], PDO::PARAM_INT);
             $stmt->bindValue(':data_inicio', $payload['data_inicio'], PDO::PARAM_STR);
-            $stmt->bindValue(':ativa', strtoupper(trim($payload['ativa'] ?? 'N')), PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', intval($payload['ativo'] ?? 0) ? 1 : 0, PDO::PARAM_INT);
             $stmt->execute();
 
             if (empty($payload['id'])) {
@@ -110,7 +110,7 @@ final class TurmaRepository
                  . ' FROM turmas t'
                  . ' INNER JOIN cursos_iesb c ON t.id_curso = c.id'
                  . ' LEFT JOIN nivel n ON c.nivel = n.id'
-                 . ' WHERE t.ativa = "S"'
+                 . ' WHERE t.ativo = 1'
                  . ' ORDER BY c.nome ASC, t.nome ASC'
                  . ' LIMIT :limit';
 
@@ -134,7 +134,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT id, nome, data_inicio, ativa FROM turmas WHERE id_curso = :id_curso AND ativa = "S" ORDER BY data_inicio DESC LIMIT 10';
+            $sql = 'SELECT id, nome, data_inicio, ativo FROM turmas WHERE id_curso = :id_curso AND ativo = 1 ORDER BY data_inicio DESC LIMIT 10';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
             $stmt->execute();
@@ -275,7 +275,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT tt.id, tt.id_aluno, tt.id_origem, tt.id_destino, tt.motivo, tt.criado_em,'
+            $sql = 'SELECT tt.id, tt.id_aluno, tt.id_origem, tt.id_destino, tt.motivo, tt.created_at,'
                  . ' a.nome AS aluno_nome,'
                  . ' to_nome.nome AS turma_origem_nome, co.nome AS curso_origem_nome,'
                  . ' td_nome.nome AS turma_destino_nome, cd.nome AS curso_destino_nome'

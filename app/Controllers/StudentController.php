@@ -167,13 +167,13 @@ final class StudentController extends Controller
 
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT id, titulo, link, tipo, criado_em'
+                    'SELECT id, titulo, link, tipo, created_at'
                     . ' FROM material'
                     . ' WHERE id_fk = :id_fk AND ativo = :ativo'
-                    . ' ORDER BY FIELD(tipo, \'video\', \'PDF\', \'Artigo\', \'Apostila\'), criado_em DESC'
+                    . ' ORDER BY FIELD(tipo, \'video\', \'PDF\', \'Artigo\', \'Apostila\'), created_at DESC'
                 );
                 $stmt->bindValue(':id_fk', $turmaId, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $materiais = $stmt->fetchAll() ?: [];
             } catch (\Throwable $e) {
@@ -206,11 +206,11 @@ final class StudentController extends Controller
         if ($pdo instanceof \PDO) {
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT id, titulo, link, tipo, criado_em'
+                    'SELECT id, titulo, link, tipo, created_at'
                     . ' FROM material WHERE id = :id AND ativo = :ativo'
                 );
                 $stmt->bindValue(':id', $materialId, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $material = $stmt->fetch() ?: null;
             } catch (\Throwable $e) {
@@ -248,11 +248,11 @@ final class StudentController extends Controller
         if ($pdo instanceof \PDO) {
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT id, titulo, link, tipo, criado_em'
+                    'SELECT id, titulo, link, tipo, created_at'
                     . ' FROM material WHERE id = :id AND ativo = :ativo'
                 );
                 $stmt->bindValue(':id', $materialId, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $material = $stmt->fetch() ?: null;
             } catch (\Throwable $e) {
@@ -369,7 +369,7 @@ final class StudentController extends Controller
         $email = trim((string) $this->input('email', ''));
         $senha = (string) $this->input('senha', '');
 
-        $this->alunoService->atualizarAluno($studentId, $nome, $cpf, $dataNascimento, $telefone, $email, 'S', $senha ?: null);
+        $this->alunoService->atualizarAluno($studentId, $nome, $cpf, $dataNascimento, $telefone, $email, 1, $senha ?: null);
         $this->logService->log('atualizar', 'aluno', $studentId, "Aluno atualizou o próprio perfil");
 
         Session::setFlash('flash', 'Perfil atualizado com sucesso.');

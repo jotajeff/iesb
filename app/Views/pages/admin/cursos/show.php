@@ -39,11 +39,11 @@
           $createdAtExibicao = $createdAtRaw;
         }
       }
-      $ativoLabel = strtoupper(trim((string) ($course['ativo'] ?? 'S')));
-      $ativoTexto = $ativoLabel === 'N' ? 'Não' : 'Sim';
-      $exibirHomeLabel = strtoupper(trim((string) ($course['exibir_home'] ?? 'N')));
-      $confirmadoLabel = strtoupper(trim((string) ($course['confirmado'] ?? 'N')));
-      $confirmadoTexto = $confirmadoLabel === 'S' ? 'Sim' : 'Não';
+      $ativoLabel = (int) ($course['ativo'] ?? 1);
+      $ativoTexto = $ativoLabel == 0 ? 'Não' : 'Sim';
+      $exibirHomeLabel = (int) ($course['exibir_home'] ?? 0);
+      $confirmadoLabel = (int) ($course['confirmado'] ?? 0);
+      $confirmadoTexto = $confirmadoLabel == 1 ? 'Sim' : 'Não';
     ?>
     <?php if ($img !== ''): ?>
       <div class="text-center mb-4">
@@ -115,7 +115,7 @@
         <tr>
           <th class="bg-light">Exibir na home</th>
           <td>
-            <?php if ($exibirHomeLabel === 'S'): ?>
+            <?php if ($exibirHomeLabel == 1): ?>
               <span class="badge bg-success">Sim</span>
             <?php else: ?>
               <span class="badge bg-danger">Não</span>
@@ -125,7 +125,7 @@
         <tr>
           <th class="bg-light">Confirmado</th>
           <td>
-            <?php if ($confirmadoLabel === 'S'): ?>
+            <?php if ($confirmadoLabel == 1): ?>
               <span class="badge bg-success">Confirmado</span>
             <?php else: ?>
               <span class="badge bg-secondary">Não confirmado</span>
@@ -207,8 +207,8 @@
                 <td><?= (int) ($p['parcelas'] ?? 1) ?>x</td>
                 <td>R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></td>
                 <td>
-                  <span class="badge <?= ((string) ($p['ativo'] ?? 'S') === 'S') ? 'bg-success' : 'bg-secondary' ?>">
-                    <?= ((string) ($p['ativo'] ?? 'S') === 'S') ? 'Sim' : 'Não' ?>
+                  <span class="badge <?= (int) ($p['ativo'] ?? 1) == 1 ? 'bg-success' : 'bg-secondary' ?>">
+                    <?= (int) ($p['ativo'] ?? 1) == 1 ? 'Sim' : 'Não' ?>
                   </span>
                 </td>
               </tr>
@@ -249,8 +249,8 @@
                 <td><?= htmlspecialchars((string) ($d['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= (int) ($d['carga_horaria'] ?? 0) ?>h</td>
                 <td>
-                  <span class="badge <?= ((string) ($d['ativo'] ?? 'S') === 'S') ? 'bg-success' : 'bg-secondary' ?>">
-                    <?= ((string) ($d['ativo'] ?? 'S') === 'S') ? 'Sim' : 'Não' ?>
+                  <span class="badge <?= (int) ($d['ativo'] ?? 1) == 1 ? 'bg-success' : 'bg-secondary' ?>">
+                    <?= (int) ($d['ativo'] ?? 1) == 1 ? 'Sim' : 'Não' ?>
                   </span>
                 </td>
                 <td>

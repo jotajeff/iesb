@@ -42,14 +42,12 @@ final class ConfigService
         return $this->repository->findSegmentoById($id);
     }
 
-    public function saveSegmento(int $id, string $nome, string $ativo): int
+    public function saveSegmento(int $id, string $nome, int $ativo): int
     {
-        $ativoSanitizado = strtoupper(trim($ativo)) === 'N' ? 'N' : 'S';
-
         return $this->repository->saveSegmento([
             'id' => $id,
             'nome' => trim($nome),
-            'ativo' => $ativoSanitizado,
+            'ativo' => $ativo ? 1 : 0,
         ]);
     }
 
@@ -112,15 +110,13 @@ final class ConfigService
         return $this->repository->findFuncaoDocenteById($id);
     }
 
-    public function saveFuncaoDocente(int $id, string $nome, string $descricao, string $ativo): int
+    public function saveFuncaoDocente(int $id, string $nome, string $descricao, int $ativo): int
     {
-        $ativoSanitizado = strtoupper(trim($ativo)) === 'N' ? 'N' : 'S';
-
         return $this->repository->saveFuncaoDocente([
             'id' => $id,
             'nome' => trim($nome),
             'descricao' => trim($descricao),
-            'ativo' => $ativoSanitizado,
+            'ativo' => $ativo ? 1 : 0,
         ]);
     }
 

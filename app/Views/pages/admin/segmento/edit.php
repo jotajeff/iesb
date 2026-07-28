@@ -18,10 +18,10 @@
 
       <div class="col-md-4">
         <label class="form-label">Ativo</label>
-        <?php $ativo = strtoupper((string) ($segmento['ativo'] ?? 'S')); ?>
+        <?php $ativo = (int) ($segmento['ativo'] ?? 1); ?>
         <select class="form-select" name="ativo">
-          <option value="S" <?= $ativo === 'S' ? 'selected' : '' ?>>Sim</option>
-          <option value="N" <?= $ativo === 'N' ? 'selected' : '' ?>>Não</option>
+          <option value="1" <?= $ativo == 1 ? 'selected' : '' ?>>Sim</option>
+          <option value="0" <?= $ativo == 0 ? 'selected' : '' ?>>Não</option>
         </select>
       </div>
 

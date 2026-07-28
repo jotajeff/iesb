@@ -112,7 +112,7 @@ final class VisitTrackerService
             return (int) $id;
         }
 
-        $insertStmt = $pdo->prepare('INSERT INTO paginas (slug, nome, ativa) VALUES (:slug, :nome, 1)');
+        $insertStmt = $pdo->prepare('INSERT INTO paginas (slug, nome, ativo) VALUES (:slug, :nome, 1)');
         $insertStmt->execute([
             'slug' => $slug,
             'nome' => $this->pageNameFromSlug($slug),

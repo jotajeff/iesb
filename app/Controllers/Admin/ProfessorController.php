@@ -84,7 +84,7 @@ final class ProfessorController extends Controller
                     $stmt = $pdoCurriculo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                     $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                     $stmt->bindValue(':id_fk', $id, \PDO::PARAM_INT);
-                    $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                    $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                     $stmt->execute();
                     $row = $stmt->fetch();
                     $curriculos[$id] = $row ?: null;
@@ -446,7 +446,7 @@ final class ProfessorController extends Controller
                 $stmt = $pdo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                 $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $row = $stmt->fetch();
                 $curriculo = $row ?: null;
@@ -480,7 +480,7 @@ final class ProfessorController extends Controller
         $turmas = [];
         if ($pdo instanceof \PDO) {
             try {
-                $sql = 'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativa,'
+                $sql = 'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativo,'
                      . ' c.nome AS curso_nome, n.nome AS nivel_nome,'
                      . ' (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos'
                      . ' FROM turma_professor tp'
@@ -669,7 +669,7 @@ final class ProfessorController extends Controller
                 $stmt = $pdo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                 $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $row = $stmt->fetch();
                 $curriculo = $row ?: null;
@@ -726,7 +726,7 @@ final class ProfessorController extends Controller
                 $stmt = $pdo->prepare('SELECT id FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                 $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $userId, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $existing = $stmt->fetch();
 
@@ -743,7 +743,7 @@ final class ProfessorController extends Controller
                     $ins->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                     $ins->bindValue(':resumo', $resumo, \PDO::PARAM_STR);
                     $ins->bindValue(':conteudo', $conteudo, \PDO::PARAM_STR);
-                    $ins->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                    $ins->bindValue(':ativo', 1, \PDO::PARAM_INT);
                     $ins->execute();
                     $this->logService->log('criar', 'curriculo', (int) $pdo->lastInsertId(), 'Currículo criado');
                 }
@@ -788,11 +788,11 @@ final class ProfessorController extends Controller
             }
 
             try {
-                $stmtMat = $pdo->prepare("SELECT m.id, m.titulo, m.link, m.criado_em, t.nome AS turma_nome"
+                $stmtMat = $pdo->prepare("SELECT m.id, m.titulo, m.link, m.created_at, t.nome AS turma_nome"
                     . " FROM material m"
                     . " JOIN turmas t ON m.id_fk = t.id"
                     . " WHERE m.tipo = ? AND m.id_fk = ?"
-                    . " ORDER BY m.criado_em DESC");
+                    . " ORDER BY m.created_at DESC");
                 $stmtMat->bindValue(1, 'video', \PDO::PARAM_STR);
                 $stmtMat->bindValue(2, $turmaId, \PDO::PARAM_INT);
                 $stmtMat->execute();
@@ -917,11 +917,11 @@ final class ProfessorController extends Controller
             }
 
             try {
-                $stmtMat = $pdo->prepare("SELECT m.id, m.titulo, m.link, m.criado_em, t.nome AS turma_nome"
+                $stmtMat = $pdo->prepare("SELECT m.id, m.titulo, m.link, m.created_at, t.nome AS turma_nome"
                     . " FROM material m"
                     . " JOIN turmas t ON m.id_fk = t.id"
                     . " WHERE m.tipo = ? AND m.id_fk = ?"
-                    . " ORDER BY m.criado_em DESC");
+                    . " ORDER BY m.created_at DESC");
                 $stmtMat->bindValue(1, 'drive', \PDO::PARAM_STR);
                 $stmtMat->bindValue(2, $turmaId, \PDO::PARAM_INT);
                 $stmtMat->execute();
@@ -1121,7 +1121,7 @@ final class ProfessorController extends Controller
                 $stmt = $pdo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
                 $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $id, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $row = $stmt->fetch();
                 $curriculo = $row ?: null;
@@ -1137,7 +1137,7 @@ final class ProfessorController extends Controller
             $pdo = Database::connection();
             if ($pdo instanceof \PDO) {
                 $stmt = $pdo->prepare(
-                    'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativa, c.nome AS curso_nome'
+                    'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativo, c.nome AS curso_nome'
                     . ' FROM turma_professor tp'
                     . ' JOIN turmas t ON tp.id_turma = t.id'
                     . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'

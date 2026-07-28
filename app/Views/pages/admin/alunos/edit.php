@@ -52,7 +52,7 @@
 
           <div class="col-md-3 d-flex align-items-end">
             <div class="form-check form-switch mb-2">
-              <input class="form-check-input" type="checkbox" id="ativo" name="ativo" value="S"<?= strtoupper(trim((string) ($alunoSelecionado['ativo'] ?? 'N'))) === 'S' ? ' checked' : '' ?>>
+              <input class="form-check-input" type="checkbox" id="ativo" name="ativo" value="1"<?= (int) ($alunoSelecionado['ativo'] ?? 0) === 1 ? ' checked' : '' ?>>
               <label class="form-check-label" for="ativo">Ativo</label>
             </div>
           </div>

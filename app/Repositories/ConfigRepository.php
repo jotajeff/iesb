@@ -117,7 +117,7 @@ final class ConfigRepository
         try {
             $id = (int) ($payload['id'] ?? 0);
             $nome = trim((string) ($payload['nome'] ?? ''));
-            $ativo = strtoupper(trim((string) ($payload['ativo'] ?? 'S'))) === 'N' ? 'N' : 'S';
+            $ativo = intval($payload['ativo'] ?? 1) ? 1 : 0;
 
             if ($id > 0) {
                 $sql = 'UPDATE segmento SET nome = :nome, ativo = :ativo WHERE id = :id';
@@ -238,7 +238,7 @@ final class ConfigRepository
                 return [];
             }
 
-            $sql = 'SELECT id, razao_social, nome_fantasia, dominio, documento, inscricao_estadual, telefone, email, responsavel_nome, tipo_cliente, status, criado_em, atualizado_em FROM instituicao ORDER BY razao_social ASC';
+            $sql = 'SELECT id, razao_social, nome_fantasia, dominio, documento, inscricao_estadual, telefone, email, responsavel_nome, tipo_cliente, status, created_at, updated_at FROM instituicao ORDER BY razao_social ASC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -255,7 +255,7 @@ final class ConfigRepository
             return null;
         }
 
-        $sql = 'SELECT id, razao_social, nome_fantasia, dominio, documento, inscricao_estadual, telefone, email, senha, responsavel_nome, tipo_cliente, status, criado_em, atualizado_em FROM instituicao WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, razao_social, nome_fantasia, dominio, documento, inscricao_estadual, telefone, email, senha, responsavel_nome, tipo_cliente, status, created_at, updated_at FROM instituicao WHERE id = :id LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -442,7 +442,7 @@ final class ConfigRepository
             $id = (int) ($payload['id'] ?? 0);
             $nome = trim((string) ($payload['nome'] ?? ''));
             $descricao = trim((string) ($payload['descricao'] ?? ''));
-            $ativo = strtoupper(trim((string) ($payload['ativo'] ?? 'S'))) === 'N' ? 'N' : 'S';
+            $ativo = intval($payload['ativo'] ?? 1) ? 1 : 0;
 
             if ($nome === '') {
                 return 0;
@@ -487,7 +487,7 @@ final class ConfigRepository
         $sql = 'SELECT DISTINCT s.id, s.nome, s.ativo
                 FROM cursos_iesb c
                 INNER JOIN segmento s ON s.id = c.segmento
-                WHERE c.ativo = "S" AND s.ativo = "S" AND c.nivel = :nivel_id
+                WHERE c.ativo = 1 AND s.ativo = 1 AND c.nivel = :nivel_id
                 ORDER BY s.nome ASC';
 
         $stmt = $pdo->prepare($sql);

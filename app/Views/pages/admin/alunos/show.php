@@ -73,7 +73,7 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                   <tr>
                     <th class="bg-light">Ativo</th>
                     <td>
-                      <?php if (strtoupper(trim((string) ($alunoData['ativo'] ?? 'N'))) === 'S'): ?>
+                      <?php if (intval($alunoData['ativo'] ?? 0) === 1): ?>
                         <span class="badge bg-primary">Sim</span>
                       <?php else: ?>
                         <span class="badge bg-secondary">Não</span>
@@ -93,7 +93,7 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                   <tr>
                     <th class="bg-light">Criado em</th>
                     <td><?php
-                        $rawCriado = (string) ($alunoData['criado_em'] ?? '');
+                        $rawCriado = (string) ($alunoData['created_at'] ?? '');
                         $dtCriado = $rawCriado !== '' ? \DateTime::createFromFormat('Y-m-d H:i:s', $rawCriado) : false;
                         echo htmlspecialchars($dtCriado ? $dtCriado->format('d/m/Y H:i') : ($rawCriado ?: '-'), ENT_QUOTES, 'UTF-8');
                         ?></td>
@@ -101,7 +101,7 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                   <tr>
                     <th class="bg-light">Atualizado em</th>
                     <td><?php
-                        $rawAtual = (string) ($alunoData['atualizado_em'] ?? '');
+                        $rawAtual = (string) ($alunoData['updated_at'] ?? '');
                         $dtAtual = $rawAtual !== '' ? \DateTime::createFromFormat('Y-m-d H:i:s', $rawAtual) : false;
                         echo htmlspecialchars($dtAtual ? $dtAtual->format('d/m/Y H:i') : ($rawAtual ?: '-'), ENT_QUOTES, 'UTF-8');
                         ?></td>

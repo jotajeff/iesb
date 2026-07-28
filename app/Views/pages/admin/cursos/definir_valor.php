@@ -33,12 +33,12 @@ $idCurso = (int) ($curso['id'] ?? 0);
                 <td><?= (int) ($p['parcelas'] ?? 1) ?>x</td>
                 <td>R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></td>
                 <td>
-                  <span class="badge <?= ((string) ($p['ativo'] ?? 'S') === 'S') ? 'bg-success' : 'bg-secondary' ?>">
-                    <?= ((string) ($p['ativo'] ?? 'S') === 'S') ? 'Sim' : 'Não' ?>
+                  <span class="badge <?= (int) ($p['ativo'] ?? 1) == 1 ? 'bg-success' : 'bg-secondary' ?>">
+                    <?= (int) ($p['ativo'] ?? 1) == 1 ? 'Sim' : 'Não' ?>
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary editar-pagamento" data-id="<?= (int) ($p['id'] ?? 0) ?>" data-descricao="<?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-tipo="<?= htmlspecialchars((string) ($p['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-parcelas="<?= (int) ($p['parcelas'] ?? 1) ?>" data-valor="<?= number_format((float) ($p['valor'] ?? 0), 2, '.', '') ?>" data-ativo="<?= htmlspecialchars((string) ($p['ativo'] ?? 'S'), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-outline-primary editar-pagamento" data-id="<?= (int) ($p['id'] ?? 0) ?>" data-descricao="<?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-tipo="<?= htmlspecialchars((string) ($p['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-parcelas="<?= (int) ($p['parcelas'] ?? 1) ?>" data-valor="<?= number_format((float) ($p['valor'] ?? 0), 2, '.', '') ?>" data-ativo="<?= htmlspecialchars((string) ($p['ativo'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-pencil"></i></button>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -80,8 +80,8 @@ $idCurso = (int) ($curso['id'] ?? 0);
         <div class="col-md-2">
           <label class="form-label">Ativo</label>
           <select name="ativo" id="inputAtivo" class="form-select">
-            <option value="S">Sim</option>
-            <option value="N">Não</option>
+            <option value="1">Sim</option>
+            <option value="0">Não</option>
           </select>
         </div>
       </div>
@@ -116,7 +116,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('inputTipo').value = '';
     document.getElementById('inputParcelas').value = '1';
     document.getElementById('inputValor').value = '';
-    document.getElementById('inputAtivo').value = 'S';
+    document.getElementById('inputAtivo').value = '1';
     document.getElementById('formTitulo').textContent = 'Nova forma de pagamento';
     btnCancelar.classList.add('d-none');
   });

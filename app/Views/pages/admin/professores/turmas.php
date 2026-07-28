@@ -35,8 +35,8 @@
                 <span class="badge bg-primary"><?= (int) ($t['total_inscritos'] ?? 0) ?></span>
               </td>
               <td>
-                <?php $ativa = (string) ($t['ativa'] ?? 'S'); ?>
-                <?php if ($ativa === 'S'): ?>
+                <?php $ativa = (int) ($t['ativo'] ?? 1); ?>
+                <?php if ($ativa === 1): ?>
                   <span class="badge bg-success">Sim</span>
                 <?php else: ?>
                   <span class="badge bg-secondary">Não</span>

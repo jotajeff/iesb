@@ -29,7 +29,7 @@
           <?php else: ?>
             <?php foreach ($preInscricoes as $p): ?>
               <?php
-              $criadoEm = (string) ($p['criado_em'] ?? '');
+              $criadoEm = (string) ($p['created_at'] ?? '');
               $dt = $criadoEm !== '' ? \DateTime::createFromFormat('Y-m-d H:i:s', $criadoEm) : false;
               $sit = (string) ($p['situacao'] ?? 'recebido');
               $sitClass = match ($sit) {

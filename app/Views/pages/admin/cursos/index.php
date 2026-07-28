@@ -2,8 +2,8 @@
   $currentOrder = strtolower((string) ($order ?? ($_GET['order'] ?? 'desc')));
   $currentOrder = $currentOrder === 'asc' ? 'asc' : 'desc';
 
-  $currentAtivo = strtoupper(trim((string) ($_GET['ativo'] ?? '')));
-  if ($currentAtivo !== 'S' && $currentAtivo !== 'N') {
+  $currentAtivo = trim((string) ($_GET['ativo'] ?? ''));
+  if ($currentAtivo !== '1' && $currentAtivo !== '0') {
       $currentAtivo = '';
   }
 
@@ -29,9 +29,9 @@
 
   if ($currentAtivo !== '') {
       $coursesView = array_values(array_filter($coursesView, static function ($course) use ($currentAtivo): bool {
-          $ativoStatus = strtoupper(trim((string) ($course['ativo'] ?? 'N')));
-          $isAtivo = ($ativoStatus === 'S' || $ativoStatus === '1' || $ativoStatus === 'Y');
-          return $currentAtivo === 'S' ? $isAtivo : !$isAtivo;
+          $ativoStatus = (int) ($course['ativo'] ?? 0);
+          $isAtivo = ($ativoStatus === 1);
+          return $currentAtivo === '1' ? $isAtivo : !$isAtivo;
       }));
   }
 
@@ -93,18 +93,18 @@
           <span class="text-muted small ms-2">Ativo</span>
           <div class="btn-group" role="group" aria-label="Filtrar cursos ativos">
             <a
-              class="btn btn-outline-secondary btn-sm<?= $currentAtivo === 'S' ? ' active' : '' ?>"
-              href="<?= htmlspecialchars($buildUrl(['ativo' => 'S']), ENT_QUOTES, 'UTF-8') ?>"
+              class="btn btn-outline-secondary btn-sm<?= $currentAtivo === '1' ? ' active' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['ativo' => '1']), ENT_QUOTES, 'UTF-8') ?>"
               title="Exibir somente cursos ativos"
             >
-              Ativo S
+              Ativo Sim
             </a>
             <a
-              class="btn btn-outline-secondary btn-sm<?= $currentAtivo === 'N' ? ' active' : '' ?>"
-              href="<?= htmlspecialchars($buildUrl(['ativo' => 'N']), ENT_QUOTES, 'UTF-8') ?>"
+              class="btn btn-outline-secondary btn-sm<?= $currentAtivo === '0' ? ' active' : '' ?>"
+              href="<?= htmlspecialchars($buildUrl(['ativo' => '0']), ENT_QUOTES, 'UTF-8') ?>"
               title="Exibir somente cursos inativos"
             >
-              Ativo N
+              Ativo Não
             </a>
           </div>
 
@@ -168,9 +168,9 @@
                 </a>
               </td>
               <td class="<?= !in_array((int) ($course['id'] ?? 0), $idsComTurma ?? []) ? 'text-danger' : '' ?>"><?= htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <?php $ativoStatus = strtoupper(trim((string) ($course['ativo'] ?? 'N'))); ?>
+              <?php $ativoStatus = (int) ($course['ativo'] ?? 0); ?>
               <td>
-                <?php if ($ativoStatus === 'S' || $ativoStatus === '1' || $ativoStatus === 'Y'): ?>
+                <?php if ($ativoStatus === 1): ?>
                   <span class="badge bg-primary">Sim</span>
                 <?php else: ?>
                   <span class="badge bg-secondary">Não</span>
@@ -184,7 +184,7 @@
                 <td><?= htmlspecialchars((string) ($course['modalidade_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($course['nivel_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td class="text-center">
-                  <?php if (strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S'): ?>
+                  <?php if ((int) ($course['confirmado'] ?? 0) == 1): ?>
                     <i class="bi bi-check-circle-fill text-success"></i>
                   <?php else: ?>
                     <i class="bi bi-x-circle-fill text-muted"></i>

@@ -47,7 +47,7 @@
                 </td>
                 <td><?= htmlspecialchars((string) ($t['motivo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?php
-                  $raw = (string) ($t['criado_em'] ?? '');
+                  $raw = (string) ($t['created_at'] ?? '');
                   $dt = $raw !== '' ? \DateTime::createFromFormat('Y-m-d H:i:s', $raw) : false;
                   echo htmlspecialchars($dt ? $dt->format('d/m/Y H:i') : ($raw ?: '-'), ENT_QUOTES, 'UTF-8');
                 ?></td>

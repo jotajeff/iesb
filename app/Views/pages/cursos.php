@@ -87,7 +87,7 @@ $sessaoBanner = $sessaoBanner ?? null;
           $courseSegmento = trim((string) ($course['segmento_nome'] ?? ''));
           $linkIngresso = trim((string) ($course['link_ingresso'] ?? ''));
           $delay = 100 + ($index % 3) * 100;
-          $isConfirmed = (string) ($course['confirmado'] ?? 'N') === 'S';
+          $isConfirmed = (int) ($course['confirmado'] ?? 0) == 1;
           ?>
           <div class="col-lg-6 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
             <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">

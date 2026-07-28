@@ -18,12 +18,12 @@ final class CarouselRepository
 
         try {
             $sql = 'SELECT ci.id, ci.id_carousel, ci.titulo, ci.subtitulo, ci.imagem, ci.link,
-                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.criado_em
+                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.created_at
                     FROM carousel_item ci
                     WHERE ci.ativo = :ativo
                     ORDER BY ci.ordem ASC, ci.id ASC';
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':ativo', 'S');
+            $stmt->bindValue(':ativo', 1, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -42,7 +42,7 @@ final class CarouselRepository
 
         try {
             $sql = 'SELECT ci.id, ci.id_carousel, ci.titulo, ci.subtitulo, ci.imagem, ci.link,
-                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.criado_em
+                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.created_at
                     FROM carousel_item ci
                     ORDER BY ci.ordem ASC, ci.id DESC';
             $stmt = $pdo->query($sql);
@@ -63,7 +63,7 @@ final class CarouselRepository
 
         try {
             $sql = 'SELECT ci.id, ci.id_carousel, ci.titulo, ci.subtitulo, ci.imagem, ci.link,
-                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.criado_em
+                           ci.target, ci.texto_botao, ci.ordem, ci.ativo, ci.created_at
                     FROM carousel_item ci
                     WHERE ci.id = :id
                     LIMIT 1';
@@ -86,9 +86,9 @@ final class CarouselRepository
         }
 
         try {
-            $sql = 'SELECT id, titulo, slug, ativo, criado_em, criado_por
+            $sql = 'SELECT id, titulo, slug, ativo, created_at, criado_por
                     FROM carousel
-                    ORDER BY criado_em DESC';
+                    ORDER BY created_at DESC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -106,12 +106,12 @@ final class CarouselRepository
         }
 
         try {
-            $sql = 'SELECT id, titulo, descricao, slug, link, ativo, criado_em, criado_por
+            $sql = 'SELECT id, titulo, descricao, slug, link, ativo, created_at, criado_por
                     FROM carousel
                     WHERE ativo = :ativo
-                    ORDER BY criado_em DESC';
+                    ORDER BY created_at DESC';
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':ativo', 'S');
+            $stmt->bindValue(':ativo', 1, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -129,7 +129,7 @@ final class CarouselRepository
         }
 
         try {
-            $sql = 'SELECT id, titulo, descricao, slug, link, ativo, criado_em, criado_por
+            $sql = 'SELECT id, titulo, descricao, slug, link, ativo, created_at, criado_por
                     FROM carousel WHERE id = :id LIMIT 1';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -151,7 +151,7 @@ final class CarouselRepository
 
         try {
             $sql = 'SELECT id, id_carousel, titulo, subtitulo, imagem, link, target,
-                           texto_botao, ordem, data_inicio, data_fim, ativo, criado_em
+                           texto_botao, ordem, data_inicio, data_fim, ativo, created_at
                     FROM carousel_item
                     WHERE id_carousel = :id_carousel
                     ORDER BY ordem ASC, id ASC';
@@ -179,7 +179,7 @@ final class CarouselRepository
             $descricao = trim((string) ($data['descricao'] ?? ''));
             $slug = trim((string) ($data['slug'] ?? ''));
             $link = trim((string) ($data['link'] ?? ''));
-            $ativo = strtoupper(trim((string) ($data['ativo'] ?? 'S'))) === 'S' ? 'S' : 'N';
+            $ativo = intval($data['ativo'] ?? 1) ? 1 : 0;
 
             if ($id > 0) {
                 $sql = 'UPDATE carousel SET titulo = :titulo, descricao = :descricao, slug = :slug, link = :link, ativo = :ativo WHERE id = :id';
@@ -230,7 +230,7 @@ final class CarouselRepository
             $ordem = (int) ($data['ordem'] ?? 0);
             $dataInicio = $data['data_inicio'] ?? null;
             $dataFim = $data['data_fim'] ?? null;
-            $ativo = strtoupper(trim((string) ($data['ativo'] ?? 'S'))) === 'S' ? 'S' : 'N';
+            $ativo = intval($data['ativo'] ?? 1) ? 1 : 0;
 
             if ($id > 0) {
                 $sql = 'UPDATE carousel_item SET titulo = :titulo, subtitulo = :subtitulo,

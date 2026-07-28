@@ -150,7 +150,7 @@ final class AlunoController extends Controller
         $dataNascimento = (string) $this->input('data_nascimento', '');
         $telefone = trim((string) $this->input('telefone', ''));
         $email = trim((string) $this->input('email', ''));
-        $ativo = strtoupper(trim((string) $this->input('ativo', 'N')));
+        $ativo = strtoupper(trim((string) $this->input('ativo', '0')));
 
         if ($nome === '') {
             Session::setFlash('flash', 'Informe o nome do aluno.');
@@ -183,7 +183,7 @@ final class AlunoController extends Controller
         $dataNascimento = (string) $this->input('data_nascimento', '');
         $telefone = trim((string) $this->input('telefone', ''));
         $email = trim((string) $this->input('email', ''));
-        $ativo = strtoupper(trim((string) $this->input('ativo', 'N')));
+        $ativo = strtoupper(trim((string) $this->input('ativo', '0')));
 
         if ($id <= 0 || $nome === '') {
             Session::setFlash('flash', 'Dados inválidos para atualização.');
@@ -320,7 +320,7 @@ final class AlunoController extends Controller
 
         $todas = $this->turmaService->turmas(500);
         $turmasAtivas = array_values(
-            array_filter($todas, static fn (array $t): bool => (($t['ativa'] ?? 'N') === 'S'))
+            array_filter($todas, static fn (array $t): bool => (intval($t['ativo'] ?? 0) === 1))
         );
 
         $this->render('pages/admin/alunos/troca', [

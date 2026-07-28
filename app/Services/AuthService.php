@@ -55,7 +55,7 @@ final class AuthService
             return false;
         }
 
-        if (strtoupper(trim((string) ($aluno['ativo'] ?? 'N'))) !== 'S') {
+        if (intval($aluno['ativo'] ?? 0) !== 1) {
             return false;
         }
 

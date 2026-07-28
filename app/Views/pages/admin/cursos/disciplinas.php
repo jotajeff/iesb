@@ -26,8 +26,8 @@
       <div class="col-md-3">
         <label class="form-label">Ativo</label>
         <select name="ativo" class="form-select">
-          <option value="S" <?= ((string) ($disciplina['ativo'] ?? 'S') === 'S') ? 'selected' : '' ?>>Sim</option>
-          <option value="N" <?= ((string) ($disciplina['ativo'] ?? 'S') === 'N') ? 'selected' : '' ?>>Não</option>
+          <option value="1" <?= (int) ($disciplina['ativo'] ?? 1) == 1 ? 'selected' : '' ?>>Sim</option>
+          <option value="0" <?= (int) ($disciplina['ativo'] ?? 1) == 0 ? 'selected' : '' ?>>Não</option>
         </select>
       </div>
 

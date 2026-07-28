@@ -157,7 +157,7 @@ final class MatriculaService
     private function selecionarTurma(array $turmas): array
     {
         foreach ($turmas as $turma) {
-            if (($turma['ativa'] ?? 'N') === 'S') {
+            if (intval($turma['ativo'] ?? 0) === 1) {
                 return $turma;
             }
         }

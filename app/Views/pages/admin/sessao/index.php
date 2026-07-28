@@ -38,7 +38,7 @@
                   echo $midiaMap[$midiaVal] ?? '—';
                 ?></td>
                 <td><?php
-                  $dt = \DateTime::createFromFormat('Y-m-d H:i:s', (string) ($s['criado_em'] ?? ''));
+                  $dt = \DateTime::createFromFormat('Y-m-d H:i:s', (string) ($s['created_at'] ?? ''));
                   echo $dt ? $dt->format('d/m/Y H:i') : '-';
                 ?></td>
                 <td>

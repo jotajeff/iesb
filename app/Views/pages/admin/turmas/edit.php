@@ -47,8 +47,8 @@
         </div>
 
         <div class="mb-3 form-check form-switch">
-          <input class="form-check-input" type="checkbox" id="ativa" name="ativa" value="S"<?= strtoupper(trim((string) ($turmaSelecionada['ativa'] ?? 'N'))) === 'S' ? ' checked' : '' ?>>
-          <label class="form-check-label" for="ativa">Turma Ativa</label>
+          <input class="form-check-input" type="checkbox" id="ativo" name="ativo" value="1"<?= (int) ($turmaSelecionada['ativo'] ?? 0) === 1 ? ' checked' : '' ?>>
+          <label class="form-check-label" for="ativo">Turma Ativa</label>
         </div>
 
         <button type="submit" class="btn btn-primary">Salvar alterações</button>

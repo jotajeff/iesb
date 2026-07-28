@@ -89,9 +89,9 @@ final class CursoController extends Controller
         $localCurso = (string) $this->input('local_curso', '');
         $linkIngresso = (string) $this->input('link_ingresso', '');
         $cursoCalendario = (string) $this->input('curso_calendario', '');
-        $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
-        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', 'N'));
-        $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
+        $ativo = $this->normalizeAtivo((string) $this->input('ativo', '1'));
+        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', '0'));
+        $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', '0'));
         $modalidadeId = (int) $this->input('modalidade_id', 0);
         $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
@@ -150,9 +150,9 @@ final class CursoController extends Controller
         $localCurso = (string) $this->input('local_curso', '');
         $linkIngresso = (string) $this->input('link_ingresso', '');
         $cursoCalendario = (string) $this->input('curso_calendario', '');
-        $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
-        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', 'N'));
-        $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
+        $ativo = $this->normalizeAtivo((string) $this->input('ativo', '1'));
+        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', '0'));
+        $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', '0'));
         $modalidadeId = (int) $this->input('modalidade_id', 0);
         $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
@@ -199,7 +199,7 @@ final class CursoController extends Controller
         try {
             $pdo = \App\Core\Database::connection();
             if ($pdo instanceof \PDO) {
-                $stmt = $pdo->prepare('SELECT id, nome, carga_horaria, ativo, criado_em FROM disciplina WHERE id_curso = :id_curso ORDER BY nome ASC');
+                $stmt = $pdo->prepare('SELECT id, nome, carga_horaria, ativo, created_at FROM disciplina WHERE id_curso = :id_curso ORDER BY nome ASC');
                 $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
                 $stmt->execute();
                 $disciplinas = $stmt->fetchAll() ?: [];
@@ -293,7 +293,7 @@ final class CursoController extends Controller
         $disciplinaId = (int) $this->input('id', 0);
         $nome = trim((string) $this->input('nome', ''));
         $cargaHoraria = (int) $this->input('carga_horaria', 0);
-        $ativo = (string) $this->input('ativo', 'S');
+        $ativo = (string) $this->input('ativo', '1');
 
         if ($cursoId <= 0 || $nome === '') {
             Session::setFlash('flash', 'Preencha o nome da disciplina.');
@@ -360,13 +360,13 @@ final class CursoController extends Controller
                 $professores = $stmt->fetchAll() ?: [];
 
                 $stmt = $pdo->prepare('SELECT id, nome FROM funcoes_docente WHERE ativo = :ativo ORDER BY nome ASC');
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $funcoes = $stmt->fetchAll() ?: [];
 
                 $stmt = $pdo->prepare('SELECT id_usuario FROM corpo_docente WHERE id_curso = :id_curso AND ativo = :ativo');
                 $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
-                $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 foreach ($stmt->fetchAll() as $row) {
                     $vinculados[(int) $row['id_usuario']] = true;
@@ -503,7 +503,7 @@ final class CursoController extends Controller
         $payload = [
             'id_curso' => $cursoId,
             'detalhe' => $detalheTexto,
-            'ativo' => 'S',
+            'ativo' => 1,
         ];
 
         if ($detalheId > 0) {
@@ -645,7 +645,7 @@ final class CursoController extends Controller
         $tipo = (string) $this->input('tipo', '');
         $parcelas = max(1, (int) $this->input('parcelas', 1));
         $valor = (float) str_replace(',', '.', (string) $this->input('valor', '0'));
-        $ativo = (string) $this->input('ativo', 'S');
+        $ativo = (string) $this->input('ativo', '1');
 
         if ($descricao === '') {
             Session::setFlash('flash', 'Informe a descrição.');
@@ -688,22 +688,22 @@ final class CursoController extends Controller
         ], 'admin');
     }
 
-    private function normalizeAtivo(string $value): string
+    private function normalizeAtivo(string $value): int
     {
         $normalized = strtoupper(trim($value));
-        return $normalized === 'N' ? 'N' : 'S';
+        return $normalized === 'N' || $normalized === '0' ? 0 : 1;
     }
 
-    private function normalizeConfirmado(string $value): string
+    private function normalizeConfirmado(string $value): int
     {
         $normalized = strtoupper(trim($value));
-        return $normalized === 'S' ? 'S' : 'N';
+        return $normalized === 'S' || $normalized === '1' ? 1 : 0;
     }
 
-    private function normalizeExibirHome(string $value): string
+    private function normalizeExibirHome(string $value): int
     {
         $normalized = strtoupper(trim($value));
-        return $normalized === 'S' ? 'S' : 'N';
+        return $normalized === 'S' || $normalized === '1' ? 1 : 0;
     }
 
     private function isStaff(): bool

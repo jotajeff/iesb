@@ -175,7 +175,7 @@
                           $dateText = $rawDate;
                         }
                         $delay = 100 + ($index % 3) * 100;
-                        $isConfirmed = strtoupper(trim((string) ($course['confirmado'] ?? 'N'))) === 'S';
+                        $isConfirmed = intval($course['confirmado'] ?? 0) === 1;
                         ?>
                         <div class="col-lg-4 col-md-6" data-aos="fade-up" data-aos-delay="<?= $delay ?>">
                           <div class="course-card<?= $isConfirmed ? ' course-card-confirmed' : '' ?>">

@@ -209,9 +209,9 @@ final class AdminController extends Controller
         $localCurso = (string) $this->input('local_curso', '');
         $linkIngresso = (string) $this->input('link_ingresso', '');
         $cursoCalendario = (string) $this->input('curso_calendario', '');
-        $ativo = $this->normalizeAtivo((string) $this->input('ativo', 'S'));
-        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', 'N'));
-        $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', 'N'));
+        $ativo = $this->normalizeAtivo((string) $this->input('ativo', '1'));
+        $exibirHome = $this->normalizeExibirHome((string) $this->input('exibir_home', '0'));
+        $confirmado = $this->normalizeConfirmado((string) $this->input('confirmado', '0'));
         $modalidadeId = (int) $this->input('modalidade_id', 0);
         $segmentoId = (int) $this->input('segmento_id', 0);
         $nivelId = (int) $this->input('nivel_id', 0);
@@ -306,23 +306,8 @@ final class AdminController extends Controller
         $payload = [
             'id_curso' => $cursoId,
             'detalhe' => $detalheTexto,
-            'ativo' => 'S',
+            'ativo' => 1,
         ];
-
-        if ($detalheId > 0) {
-            $this->cursoService->atualizarDetalhe($detalheId, $payload);
-            $this->logService->log('atualizar', 'detalhe', $detalheId, "Detalhe atualizado para o curso #$cursoId");
-            Session::setFlash('flash', 'Detalhe atualizado com sucesso.');
-        } else {
-            $novoId = $this->cursoService->salvarDetalhe($payload);
-            $this->logService->log('criar', 'detalhe', $novoId, "Detalhe criado para o curso #$cursoId");
-            Session::setFlash('flash', 'Detalhe criado com sucesso.');
-        }
-
-        $this->redirect('/admin/cursos');
-    }
-
-    public function uploadCursoForm(): void
     {
         if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
@@ -671,7 +656,7 @@ final class AdminController extends Controller
 
         $id = (int) $this->input('id', 0);
         $nome = trim((string) $this->input('nome', ''));
-        $ativo = strtoupper(trim((string) $this->input('ativo', 'S')));
+        $ativo = (int) $this->input('ativo', 1);
 
         if ($nome === '') {
             Session::setFlash('flash', 'Informe o nome do segmento.');
@@ -950,7 +935,7 @@ final class AdminController extends Controller
         $nome = trim((string) $this->input('nome', ''));
         $curso = (int) $this->input('curso', 0);
         $dataInicio = (string) $this->input('data_inicio', '');
-        $ativa = strtoupper(trim((string) $this->input('ativa', 'N')));
+        $ativo = intval($this->input('ativo', 0));
 
         if ($nome === '' || $curso <= 0) {
             Session::setFlash('flash', 'Informe o nome da turma e selecione o curso.');
@@ -958,9 +943,9 @@ final class AdminController extends Controller
             return;
         }
 
-        $ativa = $ativa === 'S' ? 'S' : 'N';
+        $ativo = intval($ativo) ? 1 : 0;
 
-        $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativa);
+        $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativo);
 
         if ($turmaId > 0) {
             $this->logService->log('criar', 'turma', $turmaId, "Turma criada: $nome");
@@ -983,7 +968,7 @@ final class AdminController extends Controller
         $nome = trim((string) $this->input('nome', ''));
         $curso = (int) $this->input('curso', 0);
         $dataInicio = (string) $this->input('data_inicio', '');
-        $ativa = strtoupper(trim((string) $this->input('ativa', 'N')));
+        $ativo = intval($this->input('ativo', 0));
 
         if ($id <= 0 || $nome === '' || $curso <= 0) {
             Session::setFlash('flash', 'Dados inválidos para atualização.');
@@ -991,9 +976,9 @@ final class AdminController extends Controller
             return;
         }
 
-        $ativa = $ativa === 'S' ? 'S' : 'N';
+        $ativo = intval($ativo) ? 1 : 0;
 
-        $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativa);
+        $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativo);
 
         $this->logService->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
         Session::setFlash('flash', 'Turma atualizada com sucesso.');
@@ -1091,15 +1076,7 @@ final class AdminController extends Controller
         $dataNascimento = (string) $this->input('data_nascimento', '');
         $telefone = trim((string) $this->input('telefone', ''));
         $email = trim((string) $this->input('email', ''));
-        $ativo = strtoupper(trim((string) $this->input('ativo', 'N')));
-
-        if ($nome === '') {
-            Session::setFlash('flash', 'Informe o nome do aluno.');
-            $this->redirect('/admin/alunos/novo');
-            return;
-        }
-
-        $alunoId = $this->alunoService->criarAluno($nome, $cpf, $dataNascimento, $telefone, $email, $ativo);
+        $ativo = strtoupper(trim((string) $this->input('ativo', '0')));
 
         if ($alunoId > 0) {
             $this->logService->log('criar', 'aluno', $alunoId, "Aluno criado: $nome");
@@ -1124,7 +1101,7 @@ final class AdminController extends Controller
         $dataNascimento = (string) $this->input('data_nascimento', '');
         $telefone = trim((string) $this->input('telefone', ''));
         $email = trim((string) $this->input('email', ''));
-        $ativo = strtoupper(trim((string) $this->input('ativo', 'N')));
+        $ativo = strtoupper(trim((string) $this->input('ativo', '0')));
 
         if ($id <= 0 || $nome === '') {
             Session::setFlash('flash', 'Dados inválidos para atualização.');
@@ -1588,22 +1565,22 @@ final class AdminController extends Controller
         ], 'admin');
     }
 
-    private function normalizeAtivo(string $value): string
+    private function normalizeAtivo(string $value): int
     {
         $normalized = strtoupper(trim($value));
-        return $normalized === 'N' ? 'N' : 'S';
+        return $normalized === 'N' || $normalized === '0' ? 0 : 1;
     }
 
-    private function normalizeConfirmado(string $value): string
+    private function normalizeConfirmado(string $value): int
     {
         $normalized = strtoupper(trim($value));
-        return $normalized === 'S' ? 'S' : 'N';
+        return $normalized === 'S' || $normalized === '1' ? 1 : 0;
     }
 
-    private function normalizeExibirHome(string $value): string
+    private function normalizeExibirHome(string $value): int
     {
         $normalized = strtoupper(trim($value));
-        return $normalized === 'S' ? 'S' : 'N';
+        return $normalized === 'S' || $normalized === '1' ? 1 : 0;
     }
 
     private function taskSituations(): array

@@ -17,7 +17,7 @@ final class SessaoRepository
                 return [];
             }
 
-            $stmt = $pdo->query('SELECT id, slug, badge, titulo, apresenta, banner, midia, criado_em FROM sessao ORDER BY criado_em DESC');
+            $stmt = $pdo->query('SELECT id, slug, badge, titulo, apresenta, banner, midia, created_at FROM sessao ORDER BY created_at DESC');
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
         } catch (\Throwable $e) {

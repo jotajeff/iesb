@@ -34,8 +34,8 @@ $id = $isEditing ? (int) ($item['id'] ?? 0) : 0;
         <div class="col-md-3">
           <label class="form-label">Ativo</label>
           <select name="ativo" class="form-select">
-            <option value="S" <?= (($item['ativo'] ?? 'S') === 'S') ? 'selected' : '' ?>>Sim</option>
-            <option value="N" <?= (($item['ativo'] ?? 'S') === 'N') ? 'selected' : '' ?>>Não</option>
+            <option value="1" <?= (int) ($item['ativo'] ?? 1) == 1 ? 'selected' : '' ?>>Sim</option>
+            <option value="0" <?= (int) ($item['ativo'] ?? 1) == 0 ? 'selected' : '' ?>>Não</option>
           </select>
         </div>
 

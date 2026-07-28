@@ -8,7 +8,7 @@
   $dataCurso = htmlspecialchars($curso['data_curso'] ?? '-', ENT_QUOTES, 'UTF-8');
   $linkIngresso = trim((string) ($curso['link_ingresso'] ?? ''));
   $imagem = trim((string) ($curso['imagem_card'] ?? ''));
-  $isConfirmed = strtoupper(trim((string) ($curso['confirmado'] ?? 'N'))) === 'S';
+  $isConfirmed = intval($curso['confirmado'] ?? 0) === 1;
 ?>
 
 <section class="py-4" id="detalhes" style="margin-top: 20px;">

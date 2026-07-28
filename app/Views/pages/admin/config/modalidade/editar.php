@@ -16,8 +16,8 @@
             <div class="mb-3">
                 <label for="ativo" class="form-label">Ativo (S/N)</label>
                 <select class="form-select" id="ativo" name="ativo">
-                    <option value="S" <?= ((string) ($modalidade['ativo'] ?? '')) === 'S' ? 'selected' : '' ?>>S - Sim</option>
-                    <option value="N" <?= ((string) ($modalidade['ativo'] ?? '')) === 'N' ? 'selected' : '' ?>>N - Não</option>
+                    <option value="1" <?= (int) ($modalidade['ativo'] ?? 0) == 1 ? 'selected' : '' ?>>1 - Sim</option>
+                    <option value="0" <?= (int) ($modalidade['ativo'] ?? 0) == 0 ? 'selected' : '' ?>>0 - Não</option>
                 </select>
             </div>
             <button type="submit" class="btn btn-primary"><i class="bi bi-check-circle me-1"></i>Salvar</button>

@@ -65,7 +65,7 @@
                             </td>
                             <td><?= htmlspecialchars((string) ($m['titulo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-break"><?= htmlspecialchars((string) ($m['link'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars((string) ($m['criado_em'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td><?= htmlspecialchars((string) ($m['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                             <td class="text-center">
                                 <button type="button" class="btn btn-sm btn-outline-danger"
                                         onclick="confirmarExclusaoVideo(<?= (int) ($m['id'] ?? 0) ?>)">

@@ -43,7 +43,7 @@ final class AlunoRepository
         }
 
         try {
-            $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, foto, ativo, criado_em, atualizado_em
+            $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, foto, ativo, created_at, updated_at
                      FROM alunos
                      WHERE id = :id
                      LIMIT 1';
@@ -169,7 +169,7 @@ final class AlunoRepository
                 $stmt->bindValue(':email', trim($payload['email']), PDO::PARAM_STR);
             }
             if (array_key_exists('ativo', $payload)) {
-                $stmt->bindValue(':ativo', strtoupper(trim($payload['ativo'])), PDO::PARAM_STR);
+                $stmt->bindValue(':ativo', intval($payload['ativo'] ?? 0) ? 1 : 0, PDO::PARAM_INT);
             }
             if (array_key_exists('senha', $payload)) {
                 $stmt->bindValue(':senha', $payload['senha'], PDO::PARAM_STR);

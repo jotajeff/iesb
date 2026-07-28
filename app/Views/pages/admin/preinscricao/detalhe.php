@@ -1,7 +1,7 @@
 <?php
 $preId = (int) ($pre['id'] ?? 0);
 $comentariosTotal = (int) ($comentariosTotal ?? 0);
-$criadoEm = trim((string) ($pre['criado_em'] ?? ''));
+$criadoEm = trim((string) ($pre['created_at'] ?? ''));
 $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) : '-';
 ?>
 <section class="container py-4">
@@ -90,7 +90,7 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
                 <?php foreach ($comentarios as $comentario): ?>
                   <?php
                     $comentarioTexto = (string) ($comentario['comentario'] ?? '');
-                    $comentarioData = (string) ($comentario['criado_em'] ?? '');
+                    $comentarioData = (string) ($comentario['created_at'] ?? '');
                     $comentarioDataFormatada = $comentarioData !== '' ? date('d/m/Y H:i', strtotime($comentarioData)) : '-';
                   ?>
                   <div class="list-group-item px-0">

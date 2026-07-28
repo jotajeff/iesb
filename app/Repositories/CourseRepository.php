@@ -57,7 +57,7 @@ final class CourseRepository extends JsonRepository
 
     private function normalizeCourse(array $course): array
     {
-        $course['exibir_home'] = strtoupper(trim((string) ($course['exibir_home'] ?? 'N'))) === 'S' ? 'S' : 'N';
+        $course['exibir_home'] = intval($course['exibir_home'] ?? 0) ? 1 : 0;
 
         return $course;
     }

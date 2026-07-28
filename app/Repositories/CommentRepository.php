@@ -38,7 +38,7 @@ final class CommentRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.tabela_fg, c.id_fg, c.comentario, c.criado_em
+            $sql = 'SELECT c.id, c.tabela_fg, c.id_fg, c.comentario, c.created_at
                     FROM comentarios c
                     WHERE c.tabela_fg = :tabela_fg AND c.id_fg = :id_fg
                     ORDER BY c.id ASC';

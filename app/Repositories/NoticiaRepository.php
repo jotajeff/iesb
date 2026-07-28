@@ -18,7 +18,7 @@ final class NoticiaRepository
             }
 
             $sql = 'SELECT n.id, n.titulo, n.slug, n.status, n.destaque, n.data_publicacao,
-                           n.criado_em, n.id_categoria, cn.nome AS categoria_nome
+                           n.created_at, n.id_categoria, cn.nome AS categoria_nome
                     FROM noticia n
                     LEFT JOIN categoria_noticia cn ON cn.id = n.id_categoria
                     ORDER BY n.data_publicacao DESC';
@@ -67,7 +67,7 @@ final class NoticiaRepository
         try {
             $sql = 'SELECT id, titulo, slug, resumo, conteudo, imagem_capa, legenda_imagem,
                            categoria, autor, data_publicacao, data_evento, destaque, status,
-                           visualizacoes, meta_title, meta_description, criado_em, atualizado_em, id_categoria
+                           visualizacoes, meta_title, meta_description, created_at, updated_at, id_categoria
                     FROM noticia WHERE id = :id LIMIT 1';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);

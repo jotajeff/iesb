@@ -43,7 +43,7 @@
                 ?></td>
                 <td class="text-center"><span class="badge bg-info"><?= (int) ($turma['total_inscritos'] ?? 0) ?></span></td>
                 <td>
-                  <?php if (strtoupper(trim((string) ($turma['ativa'] ?? 'N'))) === 'S'): ?>
+                  <?php if (intval($turma['ativo'] ?? 0) === 1): ?>
                     <span class="badge bg-primary">Sim</span>
                   <?php else: ?>
                     <span class="badge bg-secondary">Não</span>

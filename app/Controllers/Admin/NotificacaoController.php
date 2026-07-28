@@ -87,7 +87,7 @@ final class NotificacaoController extends Controller
 
             if ($podeCriar) {
                 try {
-                    $stmt = $pdo->query("SELECT id, nome FROM turmas WHERE ativa = 'S' ORDER BY nome");
+                    $stmt = $pdo->query("SELECT id, nome FROM turmas WHERE ativo = 1 ORDER BY nome");
                     $turmas = $stmt->fetchAll() ?: [];
                 } catch (\Throwable) {
                     $turmas = [];
@@ -325,7 +325,7 @@ final class NotificacaoController extends Controller
                 $idDestino = (int) ($notificacao['id_destino'] ?? 0);
 
                 try {
-                    $stmt = $pdo->query("SELECT id, nome FROM turmas WHERE ativa = 'S' ORDER BY nome");
+                    $stmt = $pdo->query("SELECT id, nome FROM turmas WHERE ativo = 1 ORDER BY nome");
                     $all = $stmt->fetchAll() ?: [];
                     if ($tipo === 'turma') {
                         foreach ($all as $t) {

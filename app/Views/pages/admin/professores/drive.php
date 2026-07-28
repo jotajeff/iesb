@@ -68,7 +68,7 @@
                                     <?= htmlspecialchars((string) ($m['link'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
                                 </a>
                             </td>
-                            <td><?= htmlspecialchars((string) ($m['criado_em'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td><?= htmlspecialchars((string) ($m['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                         </tr>
                     <?php endforeach; ?>
                 </tbody>

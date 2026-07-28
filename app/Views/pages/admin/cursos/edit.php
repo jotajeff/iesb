@@ -8,9 +8,9 @@
     <form method="post" action="/admin/cursos/atualizar" class="row g-3">
       <input type="hidden" name="id" value="<?= (int) ($course['id'] ?? 0) ?>">
       <?php $cursoCalendarioValue = (string) ($course['curso_calendario'] ?? ''); ?>
-      <?php $ativoAtual = strtoupper((string) ($course['ativo'] ?? 'S')); ?>
-      <?php $exibirHomeAtual = strtoupper((string) ($course['exibir_home'] ?? 'N')); ?>
-      <?php $confirmadoAtual = strtoupper((string) ($course['confirmado'] ?? 'N')); ?>
+      <?php $ativoAtual = (int) ($course['ativo'] ?? 1); ?>
+      <?php $exibirHomeAtual = (int) ($course['exibir_home'] ?? 0); ?>
+      <?php $confirmadoAtual = (int) ($course['confirmado'] ?? 0); ?>
       <div class="col-md-8">
         <label class="form-label">Nome</label>
         <input class="form-control" type="text" name="nome" value="<?= htmlspecialchars((string) ($course['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
@@ -63,22 +63,22 @@
       <div class="col-md-4">
         <label class="form-label">Ativo</label>
         <select class="form-select" name="ativo">
-          <option value="S" <?= $ativoAtual === 'S' ? 'selected' : '' ?>>Sim</option>
-          <option value="N" <?= $ativoAtual === 'N' ? 'selected' : '' ?>>Não</option>
+          <option value="1" <?= $ativoAtual == 1 ? 'selected' : '' ?>>Sim</option>
+          <option value="0" <?= $ativoAtual == 0 ? 'selected' : '' ?>>Não</option>
         </select>
       </div>
       <div class="col-md-4">
         <label class="form-label">Exibir na home</label>
         <select class="form-select" name="exibir_home">
-          <option value="S" <?= $exibirHomeAtual === 'S' ? 'selected' : '' ?>>Sim</option>
-          <option value="N" <?= $exibirHomeAtual === 'N' ? 'selected' : '' ?>>Não</option>
+          <option value="1" <?= $exibirHomeAtual == 1 ? 'selected' : '' ?>>Sim</option>
+          <option value="0" <?= $exibirHomeAtual == 0 ? 'selected' : '' ?>>Não</option>
         </select>
       </div>
       <div class="col-md-4">
         <label class="form-label">Confirmado</label>
         <select class="form-select" name="confirmado">
-          <option value="S" <?= $confirmadoAtual === 'S' ? 'selected' : '' ?>>Sim</option>
-          <option value="N" <?= $confirmadoAtual === 'N' ? 'selected' : '' ?>>Não</option>
+          <option value="1" <?= $confirmadoAtual == 1 ? 'selected' : '' ?>>Sim</option>
+          <option value="0" <?= $confirmadoAtual == 0 ? 'selected' : '' ?>>Não</option>
         </select>
       </div>
       <div class="col-md-4">
