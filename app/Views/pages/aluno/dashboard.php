@@ -11,7 +11,7 @@
 <section class="py-4" id="home" style="margin-top: 20px;">
   <div class="container">
     <div class="row g-3 mb-4">
-      <div class="col-md-4" data-aos="fade-up" data-aos-delay="0">
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="0">
         <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff;">
           <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 54px; height: 54px; background: rgba(255,255,255,0.2); font-size: 1.5rem;">
             <i class="bi bi-journal-bookmark-fill"></i>
@@ -22,7 +22,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4" data-aos="fade-up" data-aos-delay="100">
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
         <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #198754, #157347); color: #fff;">
           <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 54px; height: 54px; background: rgba(255,255,255,0.2); font-size: 1.5rem;">
             <i class="bi bi-check-circle-fill"></i>
@@ -33,7 +33,7 @@
           </div>
         </div>
       </div>
-      <div class="col-md-4" data-aos="fade-up" data-aos-delay="200">
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
         <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">
           <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 54px; height: 54px; background: rgba(0,0,0,0.1); font-size: 1.5rem;">
             <i class="bi bi-trophy-fill"></i>
@@ -43,6 +43,19 @@
             <div class="small opacity-75">Concluídos</div>
           </div>
         </div>
+      </div>
+      <div class="col-md-3" data-aos="fade-up" data-aos-delay="300">
+        <a href="/aluno/notificacoes" class="text-decoration-none">
+          <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #6f42c1, #5530a3); color: #fff;">
+            <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 54px; height: 54px; background: rgba(255,255,255,0.2); font-size: 1.5rem;">
+              <i class="bi bi-bell-fill"></i>
+            </div>
+            <div>
+              <div class="fs-3 fw-bold"><?= (int) ($notificacaoCount ?? 0) ?></div>
+              <div class="small opacity-75">Notificações</div>
+            </div>
+          </div>
+        </a>
       </div>
     </div>
 

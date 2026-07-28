@@ -12,6 +12,7 @@ use App\Controllers\Admin\ProfessorController;
 use App\Controllers\Admin\UsuarioController;
 use App\Controllers\Admin\VisitaController;
 use App\Controllers\Admin\NoticiaController;
+use App\Controllers\Admin\NotificacaoController;
 use App\Controllers\Admin\AsaasController;
 use App\Controllers\Admin\PreInscricaoController;
 use App\Controllers\Admin\SessaoController;
@@ -177,6 +178,12 @@ return static function (Router $router): void {
     $router->post('/admin/sessao/upload-imagem', [SessaoController::class, 'uploadImagem']);
     $router->post('/admin/sessao/deletar-imagem', [SessaoController::class, 'deletarImagem']);
 
+    $router->get('/admin/notificacoes', [NotificacaoController::class, 'index']);
+    $router->get('/admin/notificacoes/leitura', [NotificacaoController::class, 'leitura']);
+    $router->get('/admin/notificacoes/clone', [NotificacaoController::class, 'clone']);
+    $router->post('/admin/notificacoes/salvar', [NotificacaoController::class, 'salvar']);
+    $router->post('/admin/notificacoes/marcar-lida', [NotificacaoController::class, 'marcarLida']);
+
     $router->get('/admin/config/categoria', [ConfigController::class, 'categoria']);
     $router->get('/admin/config/categoria/edit', [ConfigController::class, 'editCategoria']);
     $router->post('/admin/config/categoria/update', [ConfigController::class, 'updateCategoria']);
@@ -209,6 +216,8 @@ return static function (Router $router): void {
     $router->post('/aluno/perfil/atualizar', [StudentController::class, 'atualizarPerfil']);
     $router->post('/aluno/foto', [StudentController::class, 'foto']);
     $router->post('/aluno/matricular', [StudentController::class, 'enroll']);
+    $router->get('/aluno/notificacoes', [StudentController::class, 'notificacoes']);
+    $router->post('/aluno/notificacoes/marcar-lida', [StudentController::class, 'marcarLida']);
 
     $router->get('/area-do-aluno', [StudentController::class, 'dashboard']);
     $router->post('/logout', [AuthController::class, 'logout']);

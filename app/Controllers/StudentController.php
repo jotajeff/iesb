@@ -56,11 +56,34 @@ final class StudentController extends Controller
             static fn (array $c): bool => !in_array((int) $c['id'], $idsMatriculados, true)
         ));
 
+        $notificacaoCount = 0;
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT COUNT(*) AS total FROM notificacao n'
+                    . ' WHERE (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id)'
+                    . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
+                    . '   SELECT m.id_turma FROM matriculas m WHERE m.id_aluno = :aluno_id2 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
+                    . ' ))'
+                    . ' AND n.id NOT IN (SELECT nl.id_notificacao FROM notificacao_leitura_aluno nl WHERE nl.id_aluno = :aluno_id3)'
+                );
+                $stmt->bindValue(':aluno_id', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':aluno_id2', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':aluno_id3', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $notificacaoCount = (int) ($stmt->fetch()['total'] ?? 0);
+            } catch (\Throwable) {
+                $notificacaoCount = 0;
+            }
+        }
+
         $this->render('pages/aluno/dashboard', [
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
             'cursosDisponiveis' => $cursosDisponiveis,
             'matriculasDB' => $this->alunoService->matriculasDoAluno($studentId),
+            'notificacaoCount' => $notificacaoCount,
         ], 'aluno');
     }
 
@@ -456,6 +479,89 @@ final class StudentController extends Controller
             'currentRoute' => '/aluno/logs',
             'entries' => $entries,
         ], 'aluno');
+    }
+
+    public function notificacoes(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $notificacoes = [];
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT n.*, u.nome AS origem_nome,'
+                    . ' t.nome AS destino_turma_nome,'
+                    . ' nl.id IS NOT NULL AS lida'
+                    . ' FROM notificacao n'
+                    . ' LEFT JOIN usuarios u ON n.id_usuario_origem = u.id'
+                    . ' LEFT JOIN turmas t ON n.tipo_destino = \'turma\' AND n.id_destino = t.id'
+                    . ' LEFT JOIN notificacao_leitura_aluno nl ON nl.id_notificacao = n.id AND nl.id_aluno = :aluno_id'
+                    . ' WHERE (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id2)'
+                    . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
+                    . '   SELECT m.id_turma FROM matriculas m WHERE m.id_aluno = :aluno_id3 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
+                    . ' ))'
+                    . ' ORDER BY n.created_at DESC'
+                    . ' LIMIT 200'
+                );
+                $stmt->bindValue(':aluno_id', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':aluno_id2', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':aluno_id3', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $notificacoes = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT NOTIFICACOES] Erro: ' . $e->getMessage());
+                $notificacoes = [];
+            }
+        }
+
+        $this->render('pages/aluno/notificacoes', [
+            'title' => 'Notificações',
+            'currentRoute' => '/aluno/notificacoes',
+            'notificacoes' => $notificacoes,
+        ], 'aluno');
+    }
+
+    public function marcarLida(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+        $notificacaoId = (int) $this->input('id', 0);
+
+        if ($notificacaoId <= 0) {
+            $this->json(['erro' => 'ID inválido.'], 400);
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            $this->json(['erro' => 'Erro de conexão.'], 500);
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'INSERT IGNORE INTO notificacao_leitura_aluno (id_notificacao, id_aluno) VALUES (:id_notificacao, :id_aluno)'
+            );
+            $stmt->bindValue(':id_notificacao', $notificacaoId, \PDO::PARAM_INT);
+            $stmt->bindValue(':id_aluno', $studentId, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            $this->logService->log('ler', 'notificacao', $notificacaoId, 'Notificação marcada como lida');
+
+            $this->json(['sucesso' => true]);
+        } catch (\Throwable $e) {
+            error_log('[STUDENT MARCAR LIDA] Erro: ' . $e->getMessage());
+            $this->json(['erro' => 'Erro ao marcar como lida.'], 500);
+        }
     }
 
     public function enroll(): void

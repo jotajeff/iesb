@@ -92,11 +92,15 @@
             <?php if ($curriculo): ?>
               <?php $resumoCurriculo = (string) ($curriculo['resumo'] ?? ''); ?>
               <?php if ($resumoCurriculo !== ''): ?>
-                <div class="mb-3"><strong>Resumo:</strong>
-                  <p class="mb-1"><?= nl2br(htmlspecialchars($resumoCurriculo, ENT_QUOTES, 'UTF-8')) ?></p>
+                <div class="mb-3">
+                  <strong>Resumo</strong>
+                  <div class="p-3 border rounded bg-light mt-1"><?= nl2br(htmlspecialchars($resumoCurriculo, ENT_QUOTES, 'UTF-8')) ?></div>
                 </div>
               <?php endif; ?>
-              <div class="mb-3 p-3 border rounded bg-light"><?= ($curriculo['conteudo'] ?? '') ?></div>
+              <div class="mb-3">
+                <strong>Currículo completo</strong>
+                <div class="p-3 border rounded bg-light mt-1"><?= ($curriculo['conteudo'] ?? '') ?></div>
+              </div>
               <a class="btn btn-primary btn-sm" href="/admin/professores/curriculo"><i class="bi bi-pencil me-1"></i>Editar currículo</a>
             <?php else: ?>
               <p class="text-muted mb-3"><i class="bi bi-exclamation-circle text-warning me-1"></i>Sem currículo vinculado.</p>

@@ -75,6 +75,25 @@ final class ProfessorController extends Controller
             }
         }
 
+        $curriculos = [];
+        $pdoCurriculo = Database::connection();
+        if ($pdoCurriculo instanceof \PDO) {
+            foreach ($professores as $prof) {
+                $id = (int) ($prof['id'] ?? 0);
+                try {
+                    $stmt = $pdoCurriculo->prepare('SELECT id, resumo, conteudo FROM curriculo WHERE tipo = :tipo AND id_fk = :id_fk AND ativo = :ativo LIMIT 1');
+                    $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                    $stmt->bindValue(':id_fk', $id, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ativo', 'S', \PDO::PARAM_STR);
+                    $stmt->execute();
+                    $row = $stmt->fetch();
+                    $curriculos[$id] = $row ?: null;
+                } catch (\Throwable) {
+                    $curriculos[$id] = null;
+                }
+            }
+        }
+
         $this->render('pages/admin/professores/index', [
             'title' => 'Professores',
             'currentRoute' => '/admin/professores',
@@ -82,6 +101,7 @@ final class ProfessorController extends Controller
             'enderecos' => $enderecos,
             'vinculoCounts' => $vinculoCounts,
             'fotos' => $fotos,
+            'curriculos' => $curriculos,
         ], 'admin');
     }
 

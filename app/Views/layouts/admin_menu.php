@@ -10,7 +10,15 @@
         <?php $userRole = (string) ($authUser['role'] ?? ''); ?>
         <?php if ($userRole === 'professor'): ?>
           <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin' ? 'active' : '' ?>" href="/admin"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
-          <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="/admin/tarefas"><i class="bi bi-kanban me-1"></i>Tarefas</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-folder2-open me-1"></i>Secretaria</a>
+            <ul class="dropdown-menu">
+              <li><span class="dropdown-item-text fw-bold"><i class="bi bi-kanban me-1"></i>Tarefas</span></li>
+              <li><a class="dropdown-item" href="/admin/tarefas" style="padding-left:2.2rem;"><i class="bi bi-kanban me-1"></i>Kanban</a></li>
+              <li><a class="dropdown-item" href="/admin/tarefas/lista" style="padding-left:2.2rem;"><i class="bi bi-list-ul me-1"></i>Lista</a></li>
+              <li><a class="dropdown-item" href="/admin/notificacoes"><i class="bi bi-bell me-1"></i>Notificações</a></li>
+            </ul>
+          </li>
           <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/professores/turmas') === 0 ? 'active' : '') ?>" href="/admin/professores/turmas"><i class="bi bi-people me-1"></i>Minhas Turmas</a></li>
           <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/professores/perfil') === 0 ? 'active' : '') ?>" href="/admin/professores/perfil"><i class="bi bi-person-circle me-1"></i>Perfil</a></li>
           <li class="nav-item dropdown">
@@ -52,7 +60,15 @@
             </ul>
           </li>
           <?php endif; ?>
-          <li class="nav-item"><a class="nav-link <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="/admin/tarefas"><i class="bi bi-kanban me-1"></i>Tarefas</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-folder2-open me-1"></i>Secretaria</a>
+            <ul class="dropdown-menu">
+              <li><span class="dropdown-item-text fw-bold"><i class="bi bi-kanban me-1"></i>Tarefas</span></li>
+              <li><a class="dropdown-item" href="/admin/tarefas" style="padding-left:2.2rem;"><i class="bi bi-kanban me-1"></i>Kanban</a></li>
+              <li><a class="dropdown-item" href="/admin/tarefas/lista" style="padding-left:2.2rem;"><i class="bi bi-list-ul me-1"></i>Lista</a></li>
+              <li><a class="dropdown-item" href="/admin/notificacoes"><i class="bi bi-bell me-1"></i>Notificações</a></li>
+            </ul>
+          </li>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/usuarios') === 0) || (($currentRoute ?? '') === '/admin/logs')) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-shield-lock me-1"></i>Acesso</a>
             <ul class="dropdown-menu">

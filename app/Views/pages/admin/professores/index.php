@@ -80,9 +80,27 @@
                   <a class="btn btn-outline-dark btn-sm" href="/admin/professores/curriculo?id=<?= $profId ?>" title="Currículo do professor">
                     <i class="bi bi-mortarboard"></i>
                   </a>
+                  <?php if (isset($curriculos[$profId]) && trim((string) ($curriculos[$profId]['resumo'] ?? '')) !== ''): ?>
+                    <button class="btn btn-outline-secondary btn-sm btn-toggle-resumo" data-target="curriculo-<?= $profId ?>" title="Ver resumo do currículo">
+                      <i class="bi bi-card-text"></i>
+                    </button>
+                  <?php endif; ?>
                 </div>
               </td>
             </tr>
+            <?php
+              $curriculoResumo = isset($curriculos[$profId]) ? trim((string) ($curriculos[$profId]['resumo'] ?? '')) : '';
+              if ($curriculoResumo !== ''):
+            ?>
+              <tr class="curriculo-resumo-row" id="curriculo-<?= $profId ?>" style="display:none;">
+                <td colspan="7" class="bg-light">
+                  <div class="p-3 border rounded">
+                    <strong><i class="bi bi-file-earmark-text me-1"></i>Resumo:</strong>
+                    <p class="mb-0 mt-1"><?= nl2br(htmlspecialchars($curriculoResumo, ENT_QUOTES, 'UTF-8')) ?></p>
+                  </div>
+                </td>
+              </tr>
+            <?php endif; ?>
           <?php endforeach; ?>
         </tbody>
       </table>
@@ -95,6 +113,20 @@
       <span class="ms-2"><i class="bi bi-geo-alt"></i> Endereço</span>
       <span class="ms-2"><i class="bi bi-camera"></i> Fotos</span>
       <span class="ms-2"><i class="bi bi-mortarboard"></i> Currículo</span>
+      <span class="ms-2"><i class="bi bi-card-text"></i> Resumo</span>
     </div>
   </div>
 </section>
+
+<script>
+document.querySelectorAll('.btn-toggle-resumo').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var targetId = this.getAttribute('data-target');
+    var row = document.getElementById(targetId);
+    if (row) {
+      var isVisible = row.style.display !== 'none';
+      row.style.display = isVisible ? 'none' : '';
+    }
+  });
+});
+</script>
