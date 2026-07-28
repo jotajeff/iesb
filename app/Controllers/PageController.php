@@ -344,6 +344,22 @@ final class PageController extends Controller
             }
         }
 
+        $appUrl = getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com';
+        $cursoImage = trim((string) ($curso['imagem_card'] ?? ''));
+        $cursoSchema = [
+            '@type' => 'Course',
+            'name' => (string) ($curso['nome'] ?? ''),
+            'description' => (string) ($detalhe['descricao_curta'] ?? $curso['nome'] ?? ''),
+            'url' => $appUrl . '/curso/' . rawurlencode((string) ($curso['slug'] ?? '')),
+            'provider' => [
+                '@type' => 'EducationalOrganization',
+                'name' => 'IESB - Inteligência Educacional Souza Brazil',
+            ],
+        ];
+        if ($cursoImage !== '') {
+            $cursoSchema['image'] = $appUrl . '/' . $cursoImage;
+        }
+
         $this->render('pages/curso', [
             'title' => (string) ($curso['nome'] ?? 'Curso'),
             'currentRoute' => '/curso',
@@ -358,6 +374,7 @@ final class PageController extends Controller
             'disciplinas' => $disciplinas,
             'coordenadores' => $coordenadores,
             'professores' => $professores,
+            'schema' => [$cursoSchema],
         ]);
     }
 
@@ -607,6 +624,64 @@ final class PageController extends Controller
             'cursoNome' => $cursoNome,
             'cursoId' => $cursoId,
         ]);
+    }
+
+    public function sitemap(): void
+    {
+        header('Content-Type: application/xml; charset=utf-8');
+        echo '<?xml version="1.0" encoding="UTF-8"?>' . "\n";
+        echo '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' . "\n";
+
+        $appUrl = getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com';
+
+        $staticPages = [
+            '/'       => ['daily', '1.0'],
+            '/sobre'  => ['monthly', '0.8'],
+            '/cursos' => ['daily', '0.9'],
+            '/eventos' => ['monthly', '0.7'],
+            '/parcerias' => ['monthly', '0.6'],
+            '/noticias' => ['daily', '0.8'],
+            '/privacidade' => ['yearly', '0.3'],
+            '/pre-inscricao' => ['monthly', '0.5'],
+        ];
+
+        foreach ($staticPages as $path => [$freq, $priority]) {
+            $this->sitemapUrl($appUrl . $path, date('Y-m-d'), $freq, $priority);
+        }
+
+        $cursos = $this->cursoService->cursos('desc', 5000);
+        foreach ($cursos as $curso) {
+            $slug = trim((string) ($curso['slug'] ?? ''));
+            if ($slug === '') {
+                continue;
+            }
+            $updated = substr((string) ($curso['created_at'] ?? ''), 0, 10);
+            $this->sitemapUrl($appUrl . '/curso/' . rawurlencode($slug), $updated ?: date('Y-m-d'), 'weekly', '0.7');
+        }
+
+        $noticias = $this->noticiaService->listPublicados();
+        foreach ($noticias as $noticia) {
+            $slug = trim((string) ($noticia['slug'] ?? ''));
+            if ($slug === '') {
+                continue;
+            }
+            $updated = substr((string) ($noticia['criado_em'] ?? ''), 0, 10);
+            $this->sitemapUrl($appUrl . '/noticias/' . rawurlencode($slug), $updated ?: date('Y-m-d'), 'weekly', '0.6');
+        }
+
+        echo '</urlset>';
+        exit;
+    }
+
+    private function sitemapUrl(string $loc, string $lastmod, string $changefreq, string $priority): void
+    {
+        printf(
+            "  <url>\n    <loc>%s</loc>\n    <lastmod>%s</lastmod>\n    <changefreq>%s</changefreq>\n    <priority>%s</priority>\n  </url>\n",
+            htmlspecialchars($loc, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($lastmod, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($changefreq, ENT_QUOTES, 'UTF-8'),
+            htmlspecialchars($priority, ENT_QUOTES, 'UTF-8')
+        );
     }
 
     private function getCursoNome(int $cursoId): string

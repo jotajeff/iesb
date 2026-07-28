@@ -36,6 +36,7 @@ return static function (Router $router): void {
     $router->get('/noticias', [PageController::class, 'noticias']);
     $router->get('/noticias/{slug}', [PageController::class, 'noticias']);
     $router->get('/privacidade', [PageController::class, 'privacidade']);
+    $router->get('/sitemap.xml', [PageController::class, 'sitemap']);
     $router->get('/pre-inscricao', [PageController::class, 'preInscricao']);
     $router->post('/pre-inscricao', [PageController::class, 'enviarPreInscricao']);
 

@@ -1,0 +1,7 @@
+User-agent: *
+Disallow: /admin
+Disallow: /aluno
+Disallow: /area-do-aluno
+Disallow: /asaas-webhook.php
+
+Sitemap: https://inteligenciaeducacionalsouzabrazil.com/sitemap.xml
