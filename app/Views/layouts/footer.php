@@ -298,6 +298,45 @@
     <i class="bi bi-whatsapp"></i>
   </a>
 
+  <div id="cookieConsent" class="cookie-consent">
+    <div class="cookie-consent-content">
+      <div class="cookie-consent-text">
+        <i class="bi bi-shield-check me-2"></i>
+        Utilizamos cookies e tecnologias semelhantes para melhorar sua experiência.
+        Ao continuar navegando, você concorda com nossa
+        <a href="/privacidade" target="_blank">Política de Privacidade</a>.
+      </div>
+      <div class="cookie-consent-buttons">
+        <button class="btn btn-sm btn-outline-secondary" onclick="recusarCookies()">Recusar</button>
+        <button class="btn btn-sm btn-primary" onclick="aceitarCookies()" style="background:var(--primary);border-color:var(--primary);color:#2a2b2a;font-weight:600;">Aceitar</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', function() {
+    if (localStorage.getItem('cookieConsent') !== null) {
+      return;
+    }
+    var banner = document.getElementById('cookieConsent');
+    if (banner) {
+      setTimeout(function() { banner.classList.add('show'); }, 600);
+    }
+  });
+
+  function aceitarCookies() {
+    localStorage.setItem('cookieConsent', 'accepted');
+    var banner = document.getElementById('cookieConsent');
+    if (banner) banner.classList.remove('show');
+  }
+
+  function recusarCookies() {
+    localStorage.setItem('cookieConsent', 'rejected');
+    var banner = document.getElementById('cookieConsent');
+    if (banner) banner.classList.remove('show');
+  }
+  </script>
+
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
   <script src="/assets/js/app.js"></script>
