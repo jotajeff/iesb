@@ -355,6 +355,14 @@ $isPos = $nivelSlug === 'pos-graduacao';
   0%, 100% { opacity: 0.5; }
   50% { opacity: 1; }
 }
+.accordion-body p {
+  transition: background-color 0.3s ease;
+  border-radius: 4px;
+  padding: 0.1rem 0.25rem;
+}
+.accordion-body p:hover {
+  background-color: rgba(var(--primary-rgb, 239, 192, 43), 0.12);
+}
 .accordion-button {
   font-weight: 700;
 }

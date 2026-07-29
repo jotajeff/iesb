@@ -20,6 +20,7 @@ use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
 use App\Controllers\StudentController;
+use App\Controllers\ApiController;
 use App\Core\Router;
 
 return static function (Router $router): void {
@@ -227,4 +228,9 @@ return static function (Router $router): void {
 
     $router->get('/area-do-aluno', [StudentController::class, 'dashboard']);
     $router->post('/logout', [AuthController::class, 'logout']);
+
+    /* =============================================
+       APIs externas
+       ============================================= */
+    $router->get('/api/cursos-home', [ApiController::class, 'cursosHome']);
 };

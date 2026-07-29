@@ -20,6 +20,15 @@ final class App
         $method = $_SERVER['REQUEST_METHOD'] ?? 'GET';
         $uri = $_SERVER['REQUEST_URI'] ?? '/';
 
+        if ($method === 'OPTIONS' && str_starts_with($uri, '/api/')) {
+            header('Access-Control-Allow-Origin: https://www.magdabrazilcursos.com.br');
+            header('Access-Control-Allow-Methods: GET, OPTIONS');
+            header('Access-Control-Allow-Headers: Content-Type');
+            header('Access-Control-Max-Age: 86400');
+            http_response_code(204);
+            return;
+        }
+
         $this->visitTracker->track($method, $uri);
         $this->router->dispatch($method, $uri);
     }
