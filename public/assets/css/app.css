@@ -140,6 +140,13 @@ a {
   padding: 0.8rem 0;
   transition: all 0.4s ease;
   z-index: 1050;
+  box-sizing: border-box;
+}
+.site-navbar.fixed-top,
+.site-navbar.navbar.fixed-top {
+  left: 0;
+  right: 0;
+  width: 100%;
 }
 
 .navbar-brand {
@@ -1756,45 +1763,46 @@ footer .footer-links a:hover {
 }
 
 @media (max-width: 991.98px) {
-  .navbar > .container,
-  .navbar > .container-fluid {
-    flex-wrap: nowrap;
-  }
-
-  .navbar .navbar-brand {
-    max-width: calc(100% - 56px);
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  .navbar .navbar-toggler {
-    margin-left: auto;
-  }
-
   .site-navbar {
+    left: 0;
+    right: 0;
+    width: 100%;
+    box-sizing: border-box;
     overflow-x: hidden;
   }
   .site-navbar .container {
+    max-width: 100%;
+    padding-left: 1rem;
+    padding-right: 1rem;
     align-items: center;
     flex-wrap: nowrap;
+    min-width: 0;
   }
 
   .site-navbar .navbar-brand {
-    max-width: 70%;
-    flex-shrink: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+    margin-right: 0.75rem;
+    padding-right: 0.5rem;
   }
 
   .site-navbar .navbar-brand .logo {
-    max-width: 100% !important;
+    max-width: 100%;
+    width: auto;
     height: auto;
   }
   .site-navbar .navbar-toggler {
     flex-shrink: 0;
     margin-left: auto;
+    display: block;
+    visibility: visible;
+    opacity: 1;
+    position: relative;
+    z-index: 10;
   }
 
   .site-navbar .navbar-collapse {
+    flex-basis: 100%;
     width: 100%;
     max-width: 100%;
     box-sizing: border-box;
