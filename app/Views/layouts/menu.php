@@ -1,7 +1,7 @@
 <nav class="navbar navbar-expand-lg fixed-top site-navbar">
   <div class="container">
     <a class="navbar-brand" href="/home">
-      <img src="/assets/img/logo-top.png" alt="IESB Logo" class="logo w-50">
+      <img src="/assets/img/logo-top.png" alt="IESB Logo" class="logo" style="max-width:180px;width:auto;height:auto;">
     </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent">
       <span class="navbar-toggler-icon"><span></span></span>

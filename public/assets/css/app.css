@@ -183,6 +183,7 @@ a {
 .navbar-toggler {
   border: none;
   padding: 4px 8px;
+  flex-shrink: 0;
 }
 .navbar-toggler:focus {
   box-shadow: none;
@@ -1755,22 +1756,48 @@ footer .footer-links a:hover {
 }
 
 @media (max-width: 991.98px) {
+  .navbar > .container,
+  .navbar > .container-fluid {
+    flex-wrap: nowrap;
+  }
+
+  .navbar .navbar-brand {
+    max-width: calc(100% - 56px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .navbar .navbar-toggler {
+    margin-left: auto;
+  }
+
+  .site-navbar {
+    overflow-x: hidden;
+  }
   .site-navbar .container {
     align-items: center;
+    flex-wrap: nowrap;
   }
 
   .site-navbar .navbar-brand {
     max-width: 70%;
+    flex-shrink: 0;
   }
 
   .site-navbar .navbar-brand .logo {
-    width: 170px !important;
-    max-width: 100%;
+    max-width: 100% !important;
     height: auto;
+  }
+  .site-navbar .navbar-toggler {
+    flex-shrink: 0;
+    margin-left: auto;
   }
 
   .site-navbar .navbar-collapse {
     width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
     margin-top: 0.85rem;
     padding: 0.9rem;
     border-radius: 12px;
@@ -1819,6 +1846,7 @@ footer .footer-links a:hover {
 
   .site-navbar .collapse > .d-flex .btn {
     flex: 1 1 calc(50% - 0.5rem);
+    min-width: 0;
   }
 }
 

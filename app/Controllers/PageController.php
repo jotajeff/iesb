@@ -288,21 +288,50 @@ final class PageController extends Controller
         $linkIngresso = trim((string) ($curso['link_ingresso'] ?? ''));
         $isExternalLink = $linkIngresso !== '' && !str_contains(strtolower($linkIngresso), 'saiba');
 
-        $nivelSlug = (string) ($curso['nivel_slug'] ?? '');
+        $nivelSlug = strtolower(trim((string) ($curso['nivel_slug'] ?? '')));
         $disciplinas = [];
         $coordenadores = [];
         $professores = [];
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare(
+                    'SELECT d.id, d.nome, d.carga_horaria, e.ementa AS ementa_conteudo'
+                    . ' FROM disciplina d'
+                    . ' LEFT JOIN ementa e ON e.id_disciplina = d.id AND e.ativo = :ativo_ementa'
+                    . ' WHERE d.id_curso = :id_curso AND d.ativo = :ativo'
+                    . ' ORDER BY d.nome ASC'
+                );
+                $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo_ementa', 1, \PDO::PARAM_INT);
+                $stmt->execute();
+                $disciplinas = $stmt->fetchAll() ?: [];
+
+                $stmt = $pdo->prepare(
+                    'SELECT u.id, u.nome AS usuario_nome, i.path AS foto_path'
+                    . ' FROM corpo_docente cd'
+                    . ' JOIN usuarios u ON cd.id_usuario = u.id'
+                    . ' LEFT JOIN imagem i ON i.id_fk = u.id AND i.tabela_fk = :tabela_fk AND i.ativo = :ativa_img'
+                    . ' WHERE cd.id_curso = :id_curso AND cd.ativo = :ativo_cd'
+                    . ' ORDER BY u.nome ASC'
+                );
+                $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':tabela_fk', 'usuarios', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativa_img', 1, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo_cd', 1, \PDO::PARAM_INT);
+                $stmt->execute();
+                $professores = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable $e) {
+            error_log('[CURSO DETALHE] Erro disciplinas/professores: ' . $e->getMessage());
+        }
 
         if ($nivelSlug === 'pos-graduacao') {
             try {
                 $pdo = \App\Core\Database::connection();
                 if ($pdo instanceof \PDO) {
-                    $stmt = $pdo->prepare('SELECT id, nome, carga_horaria FROM disciplina WHERE id_curso = :id_curso AND ativo = :ativo ORDER BY nome ASC');
-                    $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
-                    $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
-                    $stmt->execute();
-                    $disciplinas = $stmt->fetchAll() ?: [];
-
                     $stmt = $pdo->prepare(
                         'SELECT u.id, u.nome AS usuario_nome, i.path AS foto_path, cr.resumo AS curriculo_resumo'
                         . ' FROM corpo_docente cd'
@@ -322,25 +351,8 @@ final class PageController extends Controller
                     $stmt->execute();
                     $coordenadores = $stmt->fetchAll() ?: [];
                 }
-                    $professores = [];
-                    $stmt = $pdo->prepare(
-                        'SELECT u.id, u.nome AS usuario_nome, i.path AS foto_path'
-                        . ' FROM corpo_docente cd'
-                        . ' JOIN usuarios u ON cd.id_usuario = u.id'
-                        . ' LEFT JOIN imagem i ON i.id_fk = u.id AND i.tabela_fk = :tabela_fk2 AND i.ativo = :ativa_img2'
-                        . ' WHERE cd.id_curso = :id_curso2 AND cd.ativo = :ativo_cd2'
-                        . ' ORDER BY u.nome ASC'
-                    );
-                    $stmt->bindValue(':id_curso2', $id, \PDO::PARAM_INT);
-                    $stmt->bindValue(':tabela_fk2', 'usuarios', \PDO::PARAM_STR);
-                    $stmt->bindValue(':ativa_img2', 1, \PDO::PARAM_INT);
-                    $stmt->bindValue(':ativo_cd2', 1, \PDO::PARAM_INT);
-                    $stmt->execute();
-                    $professores = $stmt->fetchAll() ?: [];
-                } catch (\Throwable) {
-                $disciplinas = [];
-                $coordenador = null;
-                $professores = [];
+            } catch (\Throwable $e) {
+                error_log('[CURSO DETALHE] Erro coordenação: ' . $e->getMessage());
             }
         }
 
@@ -360,6 +372,8 @@ final class PageController extends Controller
             $cursoSchema['image'] = $appUrl . '/' . $cursoImage;
         }
 
+        $imagens = $this->imageService->listarPorFk('cursos_iesb', $id);
+
         $this->render('pages/curso', [
             'title' => (string) ($curso['nome'] ?? 'Curso'),
             'currentRoute' => '/curso',
@@ -374,6 +388,7 @@ final class PageController extends Controller
             'disciplinas' => $disciplinas,
             'coordenadores' => $coordenadores,
             'professores' => $professores,
+            'imagens' => $imagens,
             'schema' => [$cursoSchema],
         ]);
     }

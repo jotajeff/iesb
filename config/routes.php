@@ -63,9 +63,14 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/detalhes/salvar', [CursoController::class, 'salvarDetalhe']);
     $router->get('/admin/cursos/disciplinas', [CursoController::class, 'disciplinas']);
     $router->post('/admin/cursos/salvar-disciplina', [CursoController::class, 'salvarDisciplina']);
+    $router->get('/admin/cursos/ementa', [CursoController::class, 'ementa']);
+    $router->post('/admin/cursos/salvar-ementa', [CursoController::class, 'salvarEmenta']);
     $router->get('/admin/cursos/corpo-docente', [CursoController::class, 'corpoDocente']);
     $router->post('/admin/cursos/salvar-corpo-docente', [CursoController::class, 'salvarCorpoDocente']);
     $router->post('/admin/cursos/remover-corpo-docente', [CursoController::class, 'removerCorpoDocente']);
+    $router->get('/admin/cursos/galeria', [CursoController::class, 'galeria']);
+    $router->post('/admin/cursos/upload-galeria', [CursoController::class, 'uploadGaleria']);
+    $router->post('/admin/cursos/deletar-galeria', [CursoController::class, 'deletarGaleria']);
     $router->get('/admin/cursos/definir-valor', [CursoController::class, 'definirValor']);
     $router->post('/admin/cursos/salvar-pagamento', [CursoController::class, 'salvarPagamento']);
     $router->get('/admin/cursos/cursos-turma', [CursoController::class, 'cursosTurma']);

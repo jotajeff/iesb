@@ -11,6 +11,7 @@ $nivelSlug = $nivelSlug ?? '';
 $disciplinas = $disciplinas ?? [];
 $coordenadores = $coordenadores ?? [];
 $professores = $professores ?? [];
+$imagens = $imagens ?? [];
 $isPos = $nivelSlug === 'pos-graduacao';
 ?>
 <section class="hero-section" id="home" style="min-height:50vh;position:relative;overflow:hidden;">
@@ -151,15 +152,32 @@ $isPos = $nivelSlug === 'pos-graduacao';
                 </button>
               </h2>
               <div id="collapseDisciplinas" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
-                <div class="accordion-body">
-                  <ul class="list-group list-group-flush">
+                <div class="accordion-body p-0">
+                  <div class="list-group list-group-flush">
                     <?php foreach ($disciplinas as $d): ?>
-                      <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <?= htmlspecialchars((string) ($d['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
-                        <span class="badge bg-primary rounded-pill"><?= (int) ($d['carga_horaria'] ?? 0) ?>h</span>
-                      </li>
+                      <?php $temEmenta = trim((string) ($d['ementa_conteudo'] ?? '')) !== ''; ?>
+                      <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center gap-2">
+                          <div class="d-flex align-items-center gap-2 flex-grow-1">
+                            <?php if ($temEmenta): ?>
+                              <span class="ementa-toggle" onclick="toggleEmenta(this)">
+                                <i class="bi bi-chevron-right"></i>
+                              </span>
+                            <?php endif; ?>
+                            <span><?= htmlspecialchars((string) ($d['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                          </div>
+                          <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-pill"><?= (int) ($d['carga_horaria'] ?? 0) ?>h</span>
+                          </div>
+                        </div>
+                        <?php if ($temEmenta): ?>
+                          <div class="ementa-content" style="display:none;padding-left:1.8rem;padding-top:0.5rem;font-size:0.9rem;color:#495057;border-top:1px solid #f0f0f0;margin-top:0.5rem;">
+                            <?= nl2br(htmlspecialchars((string) ($d['ementa_conteudo'] ?? ''), ENT_QUOTES, 'UTF-8')) ?>
+                          </div>
+                        <?php endif; ?>
+                      </div>
                     <?php endforeach; ?>
-                  </ul>
+                  </div>
                 </div>
               </div>
             </div>
@@ -303,10 +321,40 @@ $isPos = $nivelSlug === 'pos-graduacao';
           </a>
         </div>
       </div>
+
   </div>
 </section>
 
+<?php if (!empty($imagens)): ?>
+<section class="pb-5">
+  <div class="container">
+    <div class="row g-4">
+      <?php foreach ($imagens as $idx => $img): ?>
+        <div class="col-12" data-aos="fade-up" data-aos-delay="<?= ($idx % 3) * 100 ?>">
+          <div class="border rounded-3 overflow-hidden shadow-sm">
+            <img src="/<?= htmlspecialchars((string) ($img['path'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars((string) ($img['legenda'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" class="w-100" style="display:block;">
+          </div>
+        </div>
+      <?php endforeach; ?>
+    </div>
+  </div>
+</section>
+<?php endif; ?>
+
 <style>
+.ementa-toggle {
+  cursor: pointer;
+  display: inline-flex;
+  transition: transform 0.2s;
+  animation: ementaPulse 2s ease-in-out infinite;
+}
+.ementa-toggle i {
+  transition: transform 0.2s;
+}
+@keyframes ementaPulse {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
 .accordion-button {
   font-weight: 700;
 }
@@ -422,6 +470,31 @@ $isPos = $nivelSlug === 'pos-graduacao';
   window.addEventListener('resize', function() { resize(); createParticles(); });
   draw();
 })();
+</script>
+<script>
+function toggleEmenta(el) {
+  var content = el.closest('.list-group-item').querySelector('.ementa-content');
+  var icon = el.querySelector('i');
+  if (!content) return;
+
+  var isOpen = content.style.display !== 'none' && content.style.display !== '';
+
+  document.querySelectorAll('.ementa-content').forEach(function(e) {
+    if (e !== content && e.style.display !== 'none') {
+      e.style.display = 'none';
+      var toggle = e.closest('.list-group-item').querySelector('.ementa-toggle i');
+      if (toggle) toggle.style.transform = 'rotate(0deg)';
+    }
+  });
+
+  if (isOpen) {
+    content.style.display = 'none';
+    icon.style.transform = 'rotate(0deg)';
+  } else {
+    content.style.display = 'block';
+    icon.style.transform = 'rotate(90deg)';
+  }
+}
 </script>
 <script>
 function toggleDetalhe() {

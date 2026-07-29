@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
 use App\Services\ConfigService;
+use App\Services\ImageService;
 use App\Services\LogService;
 use App\Support\Session;
 
@@ -17,6 +18,7 @@ final class CursoController extends Controller
     private ConfigService $configService;
     private LogService $logService;
     private CursoPagamentoService $pagamentoService;
+    private ImageService $imageService;
 
     public function __construct()
     {
@@ -24,6 +26,7 @@ final class CursoController extends Controller
         $this->configService = new ConfigService();
         $this->logService = new LogService();
         $this->pagamentoService = new CursoPagamentoService();
+        $this->imageService = new ImageService();
     }
 
     public function index(): void
@@ -199,7 +202,7 @@ final class CursoController extends Controller
         try {
             $pdo = \App\Core\Database::connection();
             if ($pdo instanceof \PDO) {
-                $stmt = $pdo->prepare('SELECT id, nome, carga_horaria, ativo, created_at FROM disciplina WHERE id_curso = :id_curso ORDER BY nome ASC');
+                $stmt = $pdo->prepare('SELECT d.id, d.nome, d.carga_horaria, d.ativo, d.created_at, (SELECT COUNT(*) FROM ementa e WHERE e.id_disciplina = d.id AND e.ativo = 1) AS tem_ementa FROM disciplina d WHERE d.id_curso = :id_curso ORDER BY d.nome ASC');
                 $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
                 $stmt->execute();
                 $disciplinas = $stmt->fetchAll() ?: [];
@@ -230,6 +233,8 @@ final class CursoController extends Controller
             $corpoDocente = [];
         }
 
+        $galeriaImagens = $this->imageService->listarPorFk('cursos_iesb', $id);
+
         $this->render('pages/admin/cursos/show', [
             'title' => $course['nome'] ?? 'Curso',
             'currentRoute' => '/admin/cursos/show',
@@ -238,6 +243,7 @@ final class CursoController extends Controller
             'pagamentos' => $this->pagamentoService->listarPorCurso($id),
             'disciplinas' => $disciplinas,
             'corpoDocente' => $corpoDocente,
+            'galeriaImagens' => $galeriaImagens,
         ], 'admin');
     }
 
@@ -455,6 +461,191 @@ final class CursoController extends Controller
             http_response_code(500);
             echo json_encode(['erro' => 'Erro ao remover vínculo.']);
         }
+    }
+
+    public function galeria(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) ($_GET['id'] ?? 0);
+        $course = $this->cursoService->findCurso($cursoId);
+
+        if (!$course) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $imagens = $this->imageService->listarPorFk('cursos_iesb', $cursoId);
+
+        $this->render('pages/admin/cursos/galeria', [
+            'title' => 'Galeria — ' . ($course['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos/galeria',
+            'course' => $course,
+            'imagens' => $imagens,
+        ], 'admin');
+    }
+
+    public function uploadGaleria(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) $this->input('id_curso', 0);
+        $legenda = trim((string) $this->input('legenda', ''));
+
+        if ($cursoId <= 0) {
+            Session::setFlash('flash', 'Parâmetros inválidos.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $path = '';
+        $file = $_FILES['imagem'] ?? null;
+
+        if ($file && $file['error'] === UPLOAD_ERR_OK) {
+            $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+            $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+            if (in_array($ext, $allowed, true)) {
+                $filename = 'curso-' . $cursoId . '-' . time() . '-' . mt_rand(100, 999) . '.' . $ext;
+                $destDir = dirname(__DIR__, 3) . '/public/assets/img/cursos';
+                if (!is_dir($destDir)) {
+                    mkdir($destDir, 0755, true);
+                }
+                $destPath = $destDir . '/' . $filename;
+                if (move_uploaded_file($file['tmp_name'], $destPath)) {
+                    $path = 'assets/img/cursos/' . $filename;
+                }
+            }
+        }
+
+        if ($path === '') {
+            Session::setFlash('flash', 'Erro ao fazer upload. Verifique o formato e tamanho.');
+            $this->redirect('/admin/cursos/galeria?id=' . $cursoId);
+            return;
+        }
+
+        $this->imageService->salvar('cursos_iesb', $cursoId, $path, $legenda ?: null);
+        $this->logService->log('criar', 'imagem', 0, 'Imagem adicionada à galeria do curso ' . $cursoId);
+
+        Session::setFlash('flash', 'Imagem salva com sucesso.');
+        $this->redirect('/admin/cursos/galeria?id=' . $cursoId);
+    }
+
+    public function deletarGaleria(): void
+    {
+        if (!$this->isStaff()) {
+            http_response_code(403);
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_POST['id'] ?? 0));
+
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'ID inválido.']);
+            return;
+        }
+
+        $this->imageService->deletar($id);
+        $this->logService->log('deletar', 'imagem', $id, 'Imagem removida da galeria de curso');
+        echo json_encode(['sucesso' => true]);
+    }
+
+    public function ementa(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $disciplinaId = (int) ($_GET['id_disciplina'] ?? 0);
+
+        $disciplina = null;
+        $ementa = null;
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT d.id, d.nome, d.id_curso FROM disciplina d WHERE d.id = :id LIMIT 1');
+                $stmt->bindValue(':id', $disciplinaId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $disciplina = $stmt->fetch() ?: null;
+
+                if ($disciplina) {
+                    $stmt = $pdo->prepare('SELECT id, ementa FROM ementa WHERE id_disciplina = :id_disciplina AND ativo = :ativo LIMIT 1');
+                    $stmt->bindValue(':id_disciplina', $disciplinaId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $ementa = $stmt->fetch() ?: null;
+                }
+            }
+        } catch (\Throwable $e) {
+            error_log('[EMENTA] Erro: ' . $e->getMessage());
+        }
+
+        if (!$disciplina) {
+            Session::setFlash('flash', 'Disciplina não encontrada.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $this->render('pages/admin/cursos/ementa', [
+            'title' => 'Ementa — ' . ($disciplina['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos/ementa',
+            'disciplina' => $disciplina,
+            'ementa' => $ementa,
+        ], 'admin');
+    }
+
+    public function salvarEmenta(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $disciplinaId = (int) $this->input('id_disciplina', 0);
+        $ementaId = (int) $this->input('id', 0);
+        $conteudo = (string) $this->input('ementa', '');
+
+        if ($disciplinaId <= 0) {
+            Session::setFlash('flash', 'Disciplina inválida.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                if ($ementaId > 0) {
+                    $stmt = $pdo->prepare('UPDATE ementa SET ementa = :ementa WHERE id = :id');
+                    $stmt->bindValue(':ementa', $conteudo, \PDO::PARAM_STR);
+                    $stmt->bindValue(':id', $ementaId, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $this->logService->log('atualizar', 'ementa', $ementaId, 'Ementa atualizada');
+                } else {
+                    $stmt = $pdo->prepare('INSERT INTO ementa (id_disciplina, ementa, created_at) VALUES (:id_disciplina, :ementa, :created_at)');
+                    $stmt->bindValue(':id_disciplina', $disciplinaId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ementa', $conteudo, \PDO::PARAM_STR);
+                    $stmt->bindValue(':created_at', time(), \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $this->logService->log('criar', 'ementa', (int) $pdo->lastInsertId(), 'Ementa criada');
+                }
+            }
+            Session::setFlash('flash', 'Ementa salva com sucesso.');
+        } catch (\Throwable $e) {
+            error_log('[EMENTA] Erro salvar: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao salvar ementa.');
+        }
+
+        $this->redirect('/admin/cursos/ementa?id_disciplina=' . $disciplinaId);
     }
 
     public function detalhes(): void

@@ -15,6 +15,7 @@
       <a class="nav-link" href="#publico-alvo-curso"><i class="bi bi-people me-1"></i>Público-alvo</a>
       <a class="nav-link" href="#disciplinas-curso"><i class="bi bi-book me-1"></i>Disciplinas</a>
       <a class="nav-link" href="#corpo-docente-curso"><i class="bi bi-people me-1"></i>Corpo Docente</a>
+      <a class="nav-link" href="#galeria-curso"><i class="bi bi-images me-1"></i>Galeria</a>
     </nav>
 
     <?php
@@ -257,6 +258,10 @@
                   <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/disciplinas?id_curso=<?= (int) ($course['id'] ?? 0) ?>&id=<?= (int) ($d['id'] ?? 0) ?>" title="Editar disciplina">
                     <i class="bi bi-pencil-square"></i>
                   </a>
+                  <?php $temEmenta = (int) ($d['tem_ementa'] ?? 0) > 0; ?>
+                  <a class="btn btn-sm <?= $temEmenta ? 'btn-outline-success' : 'btn-outline-warning' ?>" href="/admin/cursos/ementa?id_disciplina=<?= (int) ($d['id'] ?? 0) ?>" title="Ementa">
+                    <i class="bi bi-file-text"></i>
+                  </a>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -306,6 +311,28 @@
       <div class="text-muted">
         <i class="bi bi-info-circle me-1"></i>Nenhum docente vinculado.
         <a class="btn btn-sm btn-outline-success ms-2" href="/admin/cursos/corpo-docente?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Vincular docente</a>
+      </div>
+    <?php endif; ?>
+
+    <hr class="my-4">
+
+    <div class="d-flex align-items-center justify-content-between mb-3" id="galeria-curso">
+      <h5 class="mb-0"><i class="bi bi-images me-2"></i>Galeria de Imagens</h5>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/galeria?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Gerenciar imagens</a>
+    </div>
+    <?php $galeriaImagens = $galeriaImagens ?? []; ?>
+    <?php if (!empty($galeriaImagens)): ?>
+      <div class="row g-2">
+        <?php foreach ($galeriaImagens as $img): ?>
+          <div class="col-md-2">
+            <img src="/<?= htmlspecialchars((string) ($img['path'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" class="img-fluid rounded border" alt="<?= htmlspecialchars((string) ($img['legenda'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" style="height:100px;object-fit:cover;">
+          </div>
+        <?php endforeach; ?>
+      </div>
+    <?php else: ?>
+      <div class="text-muted">
+        <i class="bi bi-info-circle me-1"></i>Nenhuma imagem na galeria.
+        <a class="btn btn-sm btn-outline-success ms-2" href="/admin/cursos/galeria?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-cloud-arrow-up me-1"></i>Adicionar imagens</a>
       </div>
     <?php endif; ?>
   </div>
