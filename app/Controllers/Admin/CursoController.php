@@ -202,7 +202,7 @@ final class CursoController extends Controller
         try {
             $pdo = \App\Core\Database::connection();
             if ($pdo instanceof \PDO) {
-                $stmt = $pdo->prepare('SELECT d.id, d.nome, d.carga_horaria, d.ativo, d.created_at, (SELECT COUNT(*) FROM ementa e WHERE e.id_disciplina = d.id AND e.ativo = 1) AS tem_ementa FROM disciplina d WHERE d.id_curso = :id_curso ORDER BY d.nome ASC');
+                $stmt = $pdo->prepare('SELECT d.id, d.nome, d.carga_horaria, d.ordem, d.ativo, d.created_at, (SELECT COUNT(*) FROM ementa e WHERE e.id_disciplina = d.id AND e.ativo = 1) AS tem_ementa FROM disciplina d WHERE d.id_curso = :id_curso ORDER BY d.ordem ASC');
                 $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
                 $stmt->execute();
                 $disciplinas = $stmt->fetchAll() ?: [];
@@ -269,7 +269,7 @@ final class CursoController extends Controller
             try {
                 $pdo = \App\Core\Database::connection();
                 if ($pdo instanceof \PDO) {
-                    $stmt = $pdo->prepare('SELECT id, nome, carga_horaria, ativo FROM disciplina WHERE id = :id AND id_curso = :id_curso LIMIT 1');
+                    $stmt = $pdo->prepare('SELECT id, nome, carga_horaria, ordem, ativo FROM disciplina WHERE id = :id AND id_curso = :id_curso LIMIT 1');
                     $stmt->bindValue(':id', $disciplinaId, \PDO::PARAM_INT);
                     $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
                     $stmt->execute();
@@ -299,6 +299,7 @@ final class CursoController extends Controller
         $disciplinaId = (int) $this->input('id', 0);
         $nome = trim((string) $this->input('nome', ''));
         $cargaHoraria = (int) $this->input('carga_horaria', 0);
+        $ordem = (int) $this->input('ordem', 0);
         $ativo = (string) $this->input('ativo', '1');
 
         if ($cursoId <= 0 || $nome === '') {
@@ -310,20 +311,35 @@ final class CursoController extends Controller
         try {
             $pdo = \App\Core\Database::connection();
             if ($pdo instanceof \PDO) {
+                $check = $pdo->prepare('SELECT id FROM disciplina WHERE id_curso = :id_curso AND ordem = :ordem' . ($disciplinaId > 0 ? ' AND id != :id' : ''));
+                $check->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                $check->bindValue(':ordem', $ordem, \PDO::PARAM_INT);
                 if ($disciplinaId > 0) {
-                    $stmt = $pdo->prepare('UPDATE disciplina SET nome = :nome, carga_horaria = :carga_horaria, ativo = :ativo WHERE id = :id AND id_curso = :id_curso');
+                    $check->bindValue(':id', $disciplinaId, \PDO::PARAM_INT);
+                }
+                $check->execute();
+                if ($check->fetch()) {
+                    Session::setFlash('flash', 'Já existe uma disciplina com esta ordem neste curso.');
+                    $this->redirect('/admin/cursos/disciplinas?id_curso=' . $cursoId . ($disciplinaId > 0 ? '&id=' . $disciplinaId : ''));
+                    return;
+                }
+
+                if ($disciplinaId > 0) {
+                    $stmt = $pdo->prepare('UPDATE disciplina SET nome = :nome, carga_horaria = :carga_horaria, ordem = :ordem, ativo = :ativo WHERE id = :id AND id_curso = :id_curso');
                     $stmt->bindValue(':nome', $nome, \PDO::PARAM_STR);
                     $stmt->bindValue(':carga_horaria', $cargaHoraria, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ordem', $ordem, \PDO::PARAM_INT);
                     $stmt->bindValue(':ativo', $ativo, \PDO::PARAM_STR);
                     $stmt->bindValue(':id', $disciplinaId, \PDO::PARAM_INT);
                     $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
                     $stmt->execute();
                     $this->logService->log('atualizar', 'disciplina', $disciplinaId, "Disciplina atualizada: $nome");
                 } else {
-                    $stmt = $pdo->prepare('INSERT INTO disciplina (id_curso, nome, carga_horaria, ativo) VALUES (:id_curso, :nome, :carga_horaria, :ativo)');
+                    $stmt = $pdo->prepare('INSERT INTO disciplina (id_curso, nome, carga_horaria, ordem, ativo) VALUES (:id_curso, :nome, :carga_horaria, :ordem, :ativo)');
                     $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
                     $stmt->bindValue(':nome', $nome, \PDO::PARAM_STR);
                     $stmt->bindValue(':carga_horaria', $cargaHoraria, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ordem', $ordem, \PDO::PARAM_INT);
                     $stmt->bindValue(':ativo', $ativo, \PDO::PARAM_STR);
                     $stmt->execute();
                     $this->logService->log('criar', 'disciplina', (int) $pdo->lastInsertId(), "Disciplina criada: $nome");

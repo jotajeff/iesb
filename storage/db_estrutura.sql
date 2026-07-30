@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 29/07/2026 às 21:02
+-- Tempo de geração: 30/07/2026 às 16:34
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -146,28 +146,6 @@ CREATE TABLE `curriculo` (
 -- --------------------------------------------------------
 
 --
--- Estrutura para tabela `cursos`
---
-
-CREATE TABLE `cursos` (
-  `id` int(10) UNSIGNED NOT NULL,
-  `titulo` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `slug` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `categoria` varchar(120) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `carga_horaria` int(10) UNSIGNED DEFAULT '0',
-  `preco` decimal(10,2) NOT NULL DEFAULT '0.00',
-  `preco_promocional` decimal(10,2) DEFAULT NULL,
-  `descricao` text COLLATE utf8mb4_unicode_ci,
-  `conteudo` text COLLATE utf8mb4_unicode_ci,
-  `modulos` text COLLATE utf8mb4_unicode_ci,
-  `ativo` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- --------------------------------------------------------
-
---
 -- Estrutura para tabela `cursos_iesb`
 --
 
@@ -278,6 +256,7 @@ CREATE TABLE `disciplina` (
   `id_curso` int(11) NOT NULL,
   `nome` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
   `carga_horaria` smallint(6) NOT NULL,
+  `ordem` int(11) NOT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
@@ -670,6 +649,20 @@ CREATE TABLE `tarefas` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `tipo_curso`
+--
+
+CREATE TABLE `tipo_curso` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(80) COLLATE utf8_unicode_ci NOT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `turmas`
 --
 
@@ -840,15 +833,6 @@ ALTER TABLE `corpo_docente`
 ALTER TABLE `curriculo`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_curriculo_usuario` (`id_fk`);
-
---
--- Índices de tabela `cursos`
---
-ALTER TABLE `cursos`
-  ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `slug` (`slug`),
-  ADD KEY `idx_cursos_categoria` (`categoria`),
-  ADD KEY `idx_cursos_titulo` (`titulo`);
 
 --
 -- Índices de tabela `cursos_iesb`
@@ -1047,6 +1031,12 @@ ALTER TABLE `tarefas`
   ADD KEY `fk_tarefas_setor` (`setor`);
 
 --
+-- Índices de tabela `tipo_curso`
+--
+ALTER TABLE `tipo_curso`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `turmas`
 --
 ALTER TABLE `turmas`
@@ -1145,12 +1135,6 @@ ALTER TABLE `corpo_docente`
 --
 ALTER TABLE `curriculo`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `cursos`
---
-ALTER TABLE `cursos`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `cursos_iesb`
@@ -1318,6 +1302,12 @@ ALTER TABLE `social`
 -- AUTO_INCREMENT de tabela `tarefas`
 --
 ALTER TABLE `tarefas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `tipo_curso`
+--
+ALTER TABLE `tipo_curso`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --

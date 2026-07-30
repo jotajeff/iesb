@@ -18,9 +18,14 @@
         <input type="text" name="nome" class="form-control" value="<?= htmlspecialchars((string) ($disciplina['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required maxlength="150">
       </div>
 
-      <div class="col-md-3">
+      <div class="col-md-2">
         <label class="form-label">Carga horária (horas)</label>
         <input type="number" name="carga_horaria" class="form-control" value="<?= (int) ($disciplina['carga_horaria'] ?? 0) ?>" min="0">
+      </div>
+
+      <div class="col-md-2">
+        <label class="form-label">Ordem <span class="text-danger">*</span></label>
+        <input type="number" name="ordem" class="form-control" value="<?= (int) ($disciplina['ordem'] ?? 0) ?>" min="0" required>
       </div>
 
       <div class="col-md-3">

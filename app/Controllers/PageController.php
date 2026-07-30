@@ -301,7 +301,7 @@ final class PageController extends Controller
                     . ' FROM disciplina d'
                     . ' LEFT JOIN ementa e ON e.id_disciplina = d.id AND e.ativo = :ativo_ementa'
                     . ' WHERE d.id_curso = :id_curso AND d.ativo = :ativo'
-                    . ' ORDER BY d.nome ASC'
+                    . ' ORDER BY d.ordem ASC'
                 );
                 $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
                 $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);

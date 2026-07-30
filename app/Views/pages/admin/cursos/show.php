@@ -236,9 +236,10 @@
         <table class="table table-sm table-bordered align-middle">
           <thead class="table-light">
             <tr>
-              <th>#</th>
+              <th>ID</th>
               <th>Nome</th>
               <th>Carga horária</th>
+              <th>Ordem</th>
               <th>Ativo</th>
               <th>Ações</th>
             </tr>
@@ -249,6 +250,7 @@
                 <td><?= (int) ($d['id'] ?? 0) ?></td>
                 <td><?= htmlspecialchars((string) ($d['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= (int) ($d['carga_horaria'] ?? 0) ?>h</td>
+                <td><?= (int) ($d['ordem'] ?? 0) ?></td>
                 <td>
                   <span class="badge <?= (int) ($d['ativo'] ?? 1) == 1 ? 'bg-success' : 'bg-secondary' ?>">
                     <?= (int) ($d['ativo'] ?? 1) == 1 ? 'Sim' : 'Não' ?>
