@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 28/07/2026 às 20:29
+-- Tempo de geração: 29/07/2026 às 21:02
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -751,6 +751,25 @@ CREATE TABLE `usuarios_funcao` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `usuarios_funcao_permissao`
+--
+
+CREATE TABLE `usuarios_funcao_permissao` (
+  `id` int(11) NOT NULL,
+  `id_funcao` int(11) NOT NULL,
+  `id_modulo` int(11) NOT NULL,
+  `consultar` tinyint(1) DEFAULT '0',
+  `inserir` tinyint(1) DEFAULT '0',
+  `editar` tinyint(1) DEFAULT '0',
+  `excluir` tinyint(1) DEFAULT '0',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `visitas_paginas`
 --
 
@@ -1064,6 +1083,14 @@ ALTER TABLE `usuarios_funcao`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `usuarios_funcao_permissao`
+--
+ALTER TABLE `usuarios_funcao_permissao`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_funcao_modulo` (`id_funcao`,`id_modulo`),
+  ADD KEY `fk_fp_modulo` (`id_modulo`);
+
+--
 -- Índices de tabela `visitas_paginas`
 --
 ALTER TABLE `visitas_paginas`
@@ -1318,6 +1345,12 @@ ALTER TABLE `usuarios_funcao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `usuarios_funcao_permissao`
+--
+ALTER TABLE `usuarios_funcao_permissao`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `visitas_paginas`
 --
 ALTER TABLE `visitas_paginas`
@@ -1412,6 +1445,13 @@ ALTER TABLE `turma_troca`
   ADD CONSTRAINT `fk_troca_aluno` FOREIGN KEY (`id_aluno`) REFERENCES `alunos` (`id`),
   ADD CONSTRAINT `fk_troca_turma_destino` FOREIGN KEY (`id_destino`) REFERENCES `turmas` (`id`),
   ADD CONSTRAINT `fk_troca_turma_origem` FOREIGN KEY (`id_origem`) REFERENCES `turmas` (`id`);
+
+--
+-- Restrições para tabelas `usuarios_funcao_permissao`
+--
+ALTER TABLE `usuarios_funcao_permissao`
+  ADD CONSTRAINT `fk_fp_funcao` FOREIGN KEY (`id_funcao`) REFERENCES `usuarios_funcao` (`id`),
+  ADD CONSTRAINT `fk_fp_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulo` (`id`);
 
 --
 -- Restrições para tabelas `visitas_paginas`
