@@ -35,10 +35,16 @@ final class AlunoController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $filtroAtivo = (int) ($_GET['ativo'] ?? 1);
+        if ($filtroAtivo !== 0 && $filtroAtivo !== 1) {
+            $filtroAtivo = 1;
+        }
+
         $this->render('pages/admin/alunos/index', [
             'title' => 'Alunos',
             'currentRoute' => '/admin/alunos',
-            'alunos' => $this->alunoService->alunos(),
+            'alunos' => $this->alunoService->alunos(200, $filtroAtivo),
+            'filtroAtivo' => $filtroAtivo,
         ], 'admin');
     }
 

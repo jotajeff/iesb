@@ -15,9 +15,9 @@ final class AlunoService
     ) {
     }
 
-    public function alunos(int $limit = 200): array
+    public function alunos(int $limit = 200, ?int $ativo = null): array
     {
-        return $this->repository->list($limit);
+        return $this->repository->list($limit, $ativo);
     }
 
     public function findAluno(int $id): ?array

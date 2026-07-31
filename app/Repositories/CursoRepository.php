@@ -152,8 +152,9 @@ final class CursoRepository
                      LEFT JOIN segmento s ON s.id = c.segmento
                      LEFT JOIN nivel n ON n.id = c.nivel
                      WHERE c.ativo = 1
-                     ORDER BY c.id DESC
-                     LIMIT :limit';
+                       AND c.curso_calendario >= CURDATE()
+                      ORDER BY c.id DESC
+                      LIMIT :limit';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->execute();

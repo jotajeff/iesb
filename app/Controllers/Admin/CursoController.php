@@ -1024,6 +1024,36 @@ final class CursoController extends Controller
         $this->redirect('/admin/cursos');
     }
 
+    public function excluirImagemCard(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $curso = $this->cursoService->findCurso($id);
+        if (!$curso) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $imagem = (string) ($curso['imagem_card'] ?? '');
+        if ($imagem !== '') {
+            $caminho = dirname(__DIR__, 3) . '/public/' . ltrim($imagem, '/');
+            if (is_file($caminho)) {
+                @unlink($caminho);
+            }
+            $this->cursoService->atualizarImagem($id, '');
+            $this->logService->log('excluir_imagem', 'curso', $id, "Imagem do card excluída: $imagem");
+        }
+
+        Session::setFlash('flash', 'Imagem do card excluída com sucesso.');
+        $this->redirect('/admin/cursos/upload?id=' . $id);
+    }
+
     public function definirValor(): void
     {
         if (!$this->isStaff()) {

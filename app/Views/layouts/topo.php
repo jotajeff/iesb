@@ -2,7 +2,7 @@
 <html lang="pt-BR" data-bs-theme="light">
 
 <head>
-  <title><?= htmlspecialchars($title ?? 'IESB', ENT_QUOTES, 'UTF-8') ?></title>
+  <title><?= htmlspecialchars((($title ?? '') !== '' && $title !== 'IESB' ? $title . ' :: IESB' : 'IESB'), ENT_QUOTES, 'UTF-8') ?></title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="theme-color" content="#efc02b" />

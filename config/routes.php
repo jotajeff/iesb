@@ -60,6 +60,7 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/atualizar', [CursoController::class, 'atualizar']);
     $router->get('/admin/cursos/upload', [CursoController::class, 'uploadForm']);
     $router->post('/admin/cursos/upload', [CursoController::class, 'uploadImagem']);
+    $router->post('/admin/cursos/excluir-imagem', [CursoController::class, 'excluirImagemCard']);
     $router->get('/admin/cursos/detalhes', [CursoController::class, 'detalhes']);
     $router->post('/admin/cursos/detalhes/salvar', [CursoController::class, 'salvarDetalhe']);
     $router->get('/admin/cursos/disciplinas', [CursoController::class, 'disciplinas']);
@@ -223,10 +224,14 @@ return static function (Router $router): void {
     $router->get('/aluno/logs', [StudentController::class, 'logs']);
     $router->get('/aluno/perfil', [StudentController::class, 'perfil']);
     $router->post('/aluno/perfil/atualizar', [StudentController::class, 'atualizarPerfil']);
+    $router->get('/aluno/endereco', [StudentController::class, 'endereco']);
+    $router->post('/aluno/endereco/atualizar', [StudentController::class, 'atualizarEndereco']);
+    $router->get('/aluno/buscar-cep', [StudentController::class, 'buscarCep']);
     $router->post('/aluno/foto', [StudentController::class, 'foto']);
     $router->post('/aluno/matricular', [StudentController::class, 'enroll']);
     $router->get('/aluno/notificacoes', [StudentController::class, 'notificacoes']);
     $router->post('/aluno/notificacoes/marcar-lida', [StudentController::class, 'marcarLida']);
+    $router->get('/aluno/noticia', [StudentController::class, 'noticia']);
 
     $router->get('/area-do-aluno', [StudentController::class, 'dashboard']);
     $router->post('/logout', [AuthController::class, 'logout']);

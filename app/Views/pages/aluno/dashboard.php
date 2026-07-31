@@ -10,17 +10,29 @@
 
 <section class="py-4" id="home" style="margin-top: 20px;">
   <div class="container">
+    <?php if (empty($temEndereco)): ?>
+      <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill"></i>
+        <div>
+          Seus dados de endereço ainda não foram cadastrados.
+          <a href="/aluno/endereco" class="alert-link fw-semibold">Clique aqui para cadastrar seu endereço</a>.
+        </div>
+      </div>
+    <?php endif; ?>
+
     <div class="row g-3 mb-4">
       <div class="col-md-3" data-aos="fade-up" data-aos-delay="0">
-        <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff;">
-          <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 54px; height: 54px; background: rgba(255,255,255,0.2); font-size: 1.5rem;">
-            <i class="bi bi-journal-bookmark-fill"></i>
+        <a href="/aluno/cursos" class="text-decoration-none">
+          <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm h-100" style="background: linear-gradient(135deg, #0d6efd, #0a58ca); color: #fff;">
+            <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 54px; height: 54px; background: rgba(255,255,255,0.2); font-size: 1.5rem;">
+              <i class="bi bi-journal-bookmark-fill"></i>
+            </div>
+            <div>
+              <div class="fs-3 fw-bold"><?= $totalMatriculas ?></div>
+              <div class="small opacity-75">Cursos Matriculados</div>
+            </div>
           </div>
-          <div>
-            <div class="fs-3 fw-bold"><?= $totalMatriculas ?></div>
-            <div class="small opacity-75">Cursos Matriculados</div>
-          </div>
-        </div>
+        </a>
       </div>
       <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
         <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #198754, #157347); color: #fff;">
@@ -84,9 +96,9 @@
                   <?php foreach ($cursosDisponiveis as $curso): ?>
                     <tr>
                       <td>
-                        <a href="/aluno/detalhes?id=<?= (int) $curso['id'] ?>" class="btn btn-sm btn-outline-info" title="Detalhes">
-                          <i class="bi bi-eye"></i>
-                        </a>
+                         <a href="/curso/<?= rawurlencode((string) ($curso['slug'] ?? '')) ?>" class="btn btn-sm btn-outline-info" title="Detalhes" target="_blank" rel="noopener">
+                           <i class="bi bi-eye"></i>
+                         </a>
                       </td>
                       <td>
                         <strong><?= htmlspecialchars($curso['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></strong>
@@ -112,6 +124,64 @@
           <?php endif; ?>
         </div>
       </div>
+
+      <div class="row g-4 mt-1">
+        <div class="col-12" data-aos="fade-up">
+          <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--card-shadow);">
+            <h3 class="mb-3"><i class="bi bi-newspaper me-2"></i>Notícias</h3>
+            <?php $noticiasLista = $noticias ?? []; ?>
+            <?php if (empty($noticiasLista)): ?>
+              <div class="text-center text-muted py-4">
+                <i class="bi bi-newspaper" style="font-size: 2rem;"></i>
+                <p class="mt-2 mb-0">Nenhuma notícia disponível no momento.</p>
+              </div>
+            <?php else: ?>
+              <div class="row g-3">
+                <?php foreach (array_slice($noticiasLista, 0, 6) as $n): ?>
+                  <?php
+                  $nTitulo = htmlspecialchars((string) ($n['titulo'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                  $nSlug = htmlspecialchars((string) ($n['slug'] ?? ''), ENT_QUOTES, 'UTF-8');
+                  $nResumo = htmlspecialchars((string) ($n['resumo'] ?? ''), ENT_QUOTES, 'UTF-8');
+                  $nImagem = trim((string) ($n['imagem_capa'] ?? ''));
+                  $nCat = htmlspecialchars((string) ($n['categoria_nome'] ?? ''), ENT_QUOTES, 'UTF-8');
+                  $nDt = \DateTime::createFromFormat('Y-m-d H:i:s', (string) ($n['data_publicacao'] ?? ''));
+                  $nData = $nDt ? $nDt->format('d/m/Y') : '';
+                  ?>
+                  <div class="col-md-6 col-lg-4">
+                    <a href="/aluno/noticia?slug=<?= rawurlencode($nSlug) ?>" class="text-decoration-none">
+                      <div class="card noticia-card h-100 border-0 shadow-sm">
+                        <?php if ($nImagem !== ''): ?>
+                          <img src="/<?= htmlspecialchars($nImagem, ENT_QUOTES, 'UTF-8') ?>" class="card-img-top" alt="<?= $nTitulo ?>" style="height: 160px; object-fit: cover;">
+                        <?php endif; ?>
+                        <div class="card-body">
+                          <?php if ($nCat !== ''): ?>
+                            <span class="badge bg-warning text-dark mb-2"><?= $nCat ?></span>
+                          <?php endif; ?>
+                          <h6 class="card-title mb-1"><?= $nTitulo ?></h6>
+                          <?php if ($nResumo !== ''): ?>
+                            <p class="card-text small text-muted mb-2"><?= $nResumo ?></p>
+                          <?php endif; ?>
+                          <small class="text-muted"><?= $nData ?></small>
+                        </div>
+                      </div>
+                    </a>
+                  </div>
+                <?php endforeach; ?>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
+
+<style>
+  .noticia-card {
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .noticia-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
+  }
+</style>

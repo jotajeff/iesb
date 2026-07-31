@@ -9,7 +9,7 @@ use PDO;
 
 final class AlunoRepository
 {
-    public function list(int $limit = 200): array
+    public function list(int $limit = 200, ?int $ativo = null): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -19,9 +19,13 @@ final class AlunoRepository
         try {
             $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, ativo,
                      (SELECT COUNT(*) FROM matriculas WHERE id_aluno = alunos.id) AS total_matriculas
-                     FROM alunos
-                     ORDER BY nome ASC
-                     LIMIT :limit';
+                     FROM alunos';
+
+            if ($ativo !== null) {
+                $sql .= ' WHERE ativo = ' . ($ativo === 1 ? '1' : '0');
+            }
+
+            $sql .= ' ORDER BY nome ASC LIMIT :limit';
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);

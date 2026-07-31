@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 30/07/2026 às 16:34
+-- Tempo de geração: 31/07/2026 às 14:32
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -108,7 +108,7 @@ CREATE TABLE `comentarios` (
   `id` int(11) NOT NULL,
   `tabela_fg` varchar(25) COLLATE utf8_unicode_ci NOT NULL,
   `id_fg` int(5) NOT NULL,
-  `comentario` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `comentario` text COLLATE utf8_unicode_ci NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 

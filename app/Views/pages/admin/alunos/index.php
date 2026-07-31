@@ -7,6 +7,13 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-people me-2"></i>Alunos</h4>
         <div class="d-flex flex-wrap align-items-center gap-2">
+          <form method="get" action="/admin/alunos" class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small text-muted" for="filtroAtivo">Status</label>
+            <select class="form-select form-select-sm" name="ativo" id="filtroAtivo" onchange="this.form.submit()">
+              <option value="1" <?= ($filtroAtivo ?? 1) === 1 ? 'selected' : '' ?>>Ativos</option>
+              <option value="0" <?= ($filtroAtivo ?? 1) === 0 ? 'selected' : '' ?>>Inativos</option>
+            </select>
+          </form>
           <a class="btn btn-primary btn-sm" href="/admin/alunos/novo"><i class="bi bi-plus-circle me-1"></i>Novo aluno</a>
         </div>
       </div>

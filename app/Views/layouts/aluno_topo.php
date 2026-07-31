@@ -4,7 +4,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title><?= htmlspecialchars($title ?? 'Área do Aluno', ENT_QUOTES, 'UTF-8') ?></title>
+  <title><?= htmlspecialchars((($title ?? '') !== '' ? $title . ' :: IESB' : 'Área do Aluno :: IESB'), ENT_QUOTES, 'UTF-8') ?></title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet" />
   <link href="/assets/css/app.css" rel="stylesheet" />
@@ -36,18 +36,30 @@
             </a>
           </li>
           <li class="nav-item">
-            <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/logs' ? 'active' : '' ?>" href="/aluno/logs">
-              <i class="bi bi-clock-history me-1"></i>Logs
-            </a>
-          </li>
-          <li class="nav-item">
             <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/notificacoes' ? 'active' : '' ?>" href="/aluno/notificacoes">
               <i class="bi bi-bell me-1"></i>Notificações
             </a>
           </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle <?= in_array(($currentRoute ?? ''), ['/aluno/perfil', '/aluno/endereco'], true) ? 'active' : '' ?>" href="#" id="secretariaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              <i class="bi bi-person-badge me-1"></i>Secretaria
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="secretariaDropdown">
+              <li>
+                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/perfil' ? 'active' : '' ?>" href="/aluno/perfil">
+                  <i class="bi bi-person me-1"></i>Perfil
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/endereco' ? 'active' : '' ?>" href="/aluno/endereco">
+                  <i class="bi bi-geo-alt me-1"></i>Endereço
+                </a>
+              </li>
+            </ul>
+          </li>
           <li class="nav-item">
-            <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/perfil' ? 'active' : '' ?>" href="/aluno/perfil">
-              <i class="bi bi-person me-1"></i>Perfil
+            <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/logs' ? 'active' : '' ?>" href="/aluno/logs">
+              <i class="bi bi-clock-history me-1"></i>Logs
             </a>
           </li>
         </ul>

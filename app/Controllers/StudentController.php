@@ -14,6 +14,7 @@ use App\Services\AuthService;
 use App\Services\CourseService;
 use App\Services\EnrollmentService;
 use App\Services\IpLocationService;
+use App\Services\NoticiaService;
 use App\Support\Session;
 
 final class StudentController extends Controller
@@ -25,6 +26,7 @@ final class StudentController extends Controller
     private TurmaService $turmaService;
     private CourseService $courses;
     private EnrollmentService $enrollments;
+    private NoticiaService $noticiaService;
 
     public function __construct()
     {
@@ -35,6 +37,7 @@ final class StudentController extends Controller
         $this->turmaService = new TurmaService();
         $this->courses = new CourseService();
         $this->enrollments = new EnrollmentService();
+        $this->noticiaService = new NoticiaService();
     }
 
     public function dashboard(): void
@@ -78,12 +81,51 @@ final class StudentController extends Controller
             }
         }
 
+        $temEndereco = false;
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare('SELECT 1 FROM endereco WHERE tipo = :tipo AND id_fk = :id_fk LIMIT 1');
+                $stmt->bindValue(':tipo', 'aluno', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $temEndereco = (bool) $stmt->fetch();
+            } catch (\Throwable) {
+                $temEndereco = false;
+            }
+        }
+
         $this->render('pages/aluno/dashboard', [
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
             'cursosDisponiveis' => $cursosDisponiveis,
             'matriculasDB' => $this->alunoService->matriculasDoAluno($studentId),
             'notificacaoCount' => $notificacaoCount,
+            'temEndereco' => $temEndereco,
+            'noticias' => $this->noticiaService->listPublicados(),
+        ], 'aluno');
+    }
+
+    public function noticia(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno para acessar as notícias.');
+            $this->redirect('/aluno/login');
+        }
+
+        $slug = trim((string) ($_GET['slug'] ?? ''));
+        $noticia = $slug !== '' ? $this->noticiaService->findBySlug($slug) : null;
+
+        if ($noticia === null) {
+            Session::setFlash('flash', 'Notícia não encontrada.');
+            $this->redirect('/aluno');
+            return;
+        }
+
+        $this->render('pages/aluno/noticia', [
+            'title' => (string) ($noticia['titulo'] ?? 'Notícia'),
+            'currentRoute' => '/aluno/noticia',
+            'noticia' => $noticia,
+            'noticias' => $this->noticiaService->listPublicados(),
         ], 'aluno');
     }
 
@@ -374,6 +416,173 @@ final class StudentController extends Controller
 
         Session::setFlash('flash', 'Perfil atualizado com sucesso.');
         $this->redirect('/aluno/perfil');
+    }
+
+    public function endereco(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno para acessar o endereço.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $endereco = null;
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare('SELECT id, cep, logradouro, numero, cidade, uf FROM endereco WHERE tipo = :tipo AND id_fk = :id_fk LIMIT 1');
+                $stmt->bindValue(':tipo', 'aluno', \PDO::PARAM_STR);
+                $stmt->bindValue(':id_fk', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $endereco = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[STUDENT ENDERECO] Erro: ' . $e->getMessage());
+            }
+        }
+
+        $this->render('pages/aluno/endereco', [
+            'title' => 'Meu Endereço',
+            'currentRoute' => '/aluno/endereco',
+            'endereco' => $endereco,
+        ], 'aluno');
+    }
+
+    public function atualizarEndereco(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $cep = preg_replace('/\D/', '', (string) $this->input('cep', ''));
+        $logradouro = trim((string) $this->input('logradouro', ''));
+        $numero = trim((string) $this->input('numero', ''));
+        $cidade = trim((string) $this->input('cidade', ''));
+        $uf = strtoupper(substr(trim((string) $this->input('uf', '')), 0, 2));
+
+        if ($cep === '' || $logradouro === '' || $cidade === '' || $uf === '') {
+            Session::setFlash('flash', 'Preencha CEP, logradouro, cidade e UF.');
+            $this->redirect('/aluno/endereco');
+            return;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            Session::setFlash('flash', 'Erro de conexão com o banco de dados.');
+            $this->redirect('/aluno/endereco');
+            return;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT id FROM endereco WHERE tipo = :tipo AND id_fk = :id_fk LIMIT 1');
+            $stmt->bindValue(':tipo', 'aluno', \PDO::PARAM_STR);
+            $stmt->bindValue(':id_fk', $studentId, \PDO::PARAM_INT);
+            $stmt->execute();
+            $existente = $stmt->fetch();
+
+            if ($existente) {
+                $update = $pdo->prepare('UPDATE endereco SET cep = :cep, logradouro = :logradouro, numero = :numero, cidade = :cidade, uf = :uf WHERE id = :id');
+                $update->bindValue(':cep', $cep, \PDO::PARAM_STR);
+                $update->bindValue(':logradouro', $logradouro, \PDO::PARAM_STR);
+                $update->bindValue(':numero', $numero, \PDO::PARAM_STR);
+                $update->bindValue(':cidade', $cidade, \PDO::PARAM_STR);
+                $update->bindValue(':uf', $uf, \PDO::PARAM_STR);
+                $update->bindValue(':id', (int) $existente['id'], \PDO::PARAM_INT);
+                $update->execute();
+                $this->logService->log('atualizar', 'endereco', (int) $existente['id'], "Aluno atualizou o endereço");
+            } else {
+                $insert = $pdo->prepare('INSERT INTO endereco (tipo, id_fk, cep, logradouro, numero, cidade, uf) VALUES (:tipo, :id_fk, :cep, :logradouro, :numero, :cidade, :uf)');
+                $insert->bindValue(':tipo', 'aluno', \PDO::PARAM_STR);
+                $insert->bindValue(':id_fk', $studentId, \PDO::PARAM_INT);
+                $insert->bindValue(':cep', $cep, \PDO::PARAM_STR);
+                $insert->bindValue(':logradouro', $logradouro, \PDO::PARAM_STR);
+                $insert->bindValue(':numero', $numero, \PDO::PARAM_STR);
+                $insert->bindValue(':cidade', $cidade, \PDO::PARAM_STR);
+                $insert->bindValue(':uf', $uf, \PDO::PARAM_STR);
+                $insert->execute();
+                $this->logService->log('criar', 'endereco', (int) $pdo->lastInsertId(), "Aluno cadastrou o endereço");
+            }
+        } catch (\Throwable $e) {
+            error_log('[STUDENT ENDERECO] Erro ao salvar: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao salvar o endereço.');
+            $this->redirect('/aluno/endereco');
+            return;
+        }
+
+        Session::setFlash('flash', 'Endereço salvo com sucesso.');
+        $this->redirect('/aluno/endereco');
+    }
+
+    public function buscarCep(): void
+    {
+        ini_set('display_errors', '0');
+        error_reporting(0);
+
+        if (!$this->auth->checkRole('aluno')) {
+            http_response_code(403);
+            header('Content-Type: application/json');
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $cep = preg_replace('/[^0-9]/', '', (string) ($_GET['cep'] ?? ''));
+
+        if (strlen($cep) !== 8) {
+            http_response_code(400);
+            header('Content-Type: application/json');
+            echo json_encode(['erro' => 'CEP inválido']);
+            return;
+        }
+
+        $url = "https://viacep.com.br/ws/{$cep}/json/";
+
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 5,
+            CURLOPT_SSL_VERIFYPEER => false,
+            CURLOPT_SSL_VERIFYHOST => false,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTPHEADER => ['Accept: application/json'],
+            CURLOPT_USERAGENT => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        ]);
+
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false || $httpCode !== 200 || $response === '' || $response[0] !== '{') {
+            http_response_code(502);
+            header('Content-Type: application/json');
+            echo json_encode(['erro' => 'Falha ao consultar ViaCEP']);
+            return;
+        }
+
+        $data = json_decode($response, true);
+
+        if (!is_array($data) || isset($data['erro'])) {
+            http_response_code(404);
+            header('Content-Type: application/json');
+            echo json_encode(['erro' => 'CEP não encontrado']);
+            return;
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+        $this->logService->log('consultar_cep', 'endereco', $studentId, "Consulta de CEP: $cep");
+
+        header('Content-Type: application/json');
+        echo json_encode([
+            'logradouro' => $data['logradouro'] ?? '',
+            'bairro' => $data['bairro'] ?? '',
+            'cidade' => $data['localidade'] ?? '',
+            'uf' => $data['uf'] ?? '',
+        ]);
     }
 
     public function foto(): void

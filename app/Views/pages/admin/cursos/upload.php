@@ -13,6 +13,12 @@
     <?php if (!empty($course['imagem_card'])): ?>
       <div class="mb-4">
         <img class="border rounded shadow-sm" src="/<?= htmlspecialchars((string) $course['imagem_card'], ENT_QUOTES, 'UTF-8') ?>" alt="Card atual" style="max-height: 200px;">
+        <div class="mt-2">
+          <form method="post" action="/admin/cursos/excluir-imagem" onsubmit="return confirm('Deseja realmente excluir esta imagem? Ela será removida do curso e do servidor.');">
+            <input type="hidden" name="id" value="<?= (int) ($course['id'] ?? 0) ?>">
+            <button class="btn btn-outline-danger btn-sm" type="submit"><i class="bi bi-trash me-1"></i>Excluir imagem</button>
+          </form>
+        </div>
       </div>
     <?php endif; ?>
 
