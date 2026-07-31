@@ -33,18 +33,20 @@ $dashboardTypeLabel = match ($dashboardType) {
   <div class="row g-3 mb-4">
     <?php if ($dashboardType !== 'professor'): ?>
     <div class="col-md-3">
-      <div class="dashboard-task-card task-card-preinscricao h-100">
-        <div class="task-card-top">
-          <div>
-            <small class="task-card-label">Pré-inscrições</small>
-            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_pre_inscricoes'] ?? 0) ?></h2>
+      <a href="/admin/preinscricao" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-preinscricao h-100">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label">Pré-inscrições</small>
+              <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_pre_inscricoes'] ?? 0) ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-preinscricao">
+              <i class="bi bi-inbox-fill"></i>
+            </div>
           </div>
-          <div class="task-card-icon task-card-icon-preinscricao">
-            <i class="bi bi-inbox-fill"></i>
-          </div>
+          <div class="task-card-footer">Aguardando contato</div>
         </div>
-        <div class="task-card-footer">Aguardando contato</div>
-      </div>
+      </a>
     </div>
     <?php endif; ?>
     <div class="col-md-3">
