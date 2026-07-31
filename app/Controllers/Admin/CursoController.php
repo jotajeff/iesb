@@ -354,6 +354,223 @@ final class CursoController extends Controller
         $this->redirect('/admin/cursos/disciplinas?id_curso=' . $cursoId);
     }
 
+    public function importarDisciplinas(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) ($_GET['id_curso'] ?? 0);
+        $course = $this->cursoService->findCurso($cursoId);
+        if (!$course) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $this->render('pages/admin/cursos/importar', [
+            'title' => 'Importar disciplinas — ' . ($course['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos/disciplinas',
+            'course' => $course,
+        ], 'admin');
+    }
+
+    public function processarImportarDisciplinas(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $cursoId = (int) $this->input('id_curso', 0);
+        $course = $this->cursoService->findCurso($cursoId);
+        if (!$course) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        if (!isset($_FILES['planilha']) || ($_FILES['planilha']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            Session::setFlash('flash', 'Nenhum arquivo enviado ou erro no upload.');
+            $this->redirect('/admin/cursos/importar-disciplinas?id_curso=' . $cursoId);
+            return;
+        }
+
+        $tmp = (string) ($_FILES['planilha']['tmp_name'] ?? '');
+        $nomeArquivo = (string) ($_FILES['planilha']['name'] ?? '');
+        $ext = strtolower(pathinfo($nomeArquivo, PATHINFO_EXTENSION));
+
+        try {
+            if ($ext === 'csv') {
+                $linhas = $this->lerCsv($tmp);
+            } else {
+                $linhas = $this->lerXlsx($tmp);
+            }
+        } catch (\Throwable $e) {
+            error_log('[IMPORTAR DISCIPLINA] Erro ao ler planilha: ' . $e->getMessage());
+            Session::setFlash('flash', 'Não foi possível ler a planilha.');
+            $this->redirect('/admin/cursos/importar-disciplinas?id_curso=' . $cursoId);
+            return;
+        }
+
+        if (count($linhas) < 2) {
+            Session::setFlash('flash', 'A planilha está vazia ou contém apenas o cabeçalho.');
+            $this->redirect('/admin/cursos/importar-disciplinas?id_curso=' . $cursoId);
+            return;
+        }
+
+        $cabecalho = $linhas[0] ?? [];
+        $mapa = [];
+        foreach ($cabecalho as $letra => $nomeCol) {
+            $mapa[strtolower(trim((string) $nomeCol))] = $letra;
+        }
+
+        if (!isset($mapa['nome']) || !isset($mapa['ordem'])) {
+            Session::setFlash('flash', 'Cabeçalho inválido. Inclua ao menos as colunas "nome" e "ordem".');
+            $this->redirect('/admin/cursos/importar-disciplinas?id_curso=' . $cursoId);
+            return;
+        }
+
+        $pdo = \App\Core\Database::connection();
+        if (!$pdo instanceof \PDO) {
+            Session::setFlash('flash', 'Erro de conexão com o banco de dados.');
+            $this->redirect('/admin/cursos/importar-disciplinas?id_curso=' . $cursoId);
+            return;
+        }
+
+        $inseridos = 0;
+        $ignorados = 0;
+        $stmt = $pdo->prepare('INSERT INTO disciplina (id_curso, nome, carga_horaria, ordem, ativo, created_at, updated_at) VALUES (:id_curso, :nome, :carga_horaria, :ordem, :ativo, NOW(), NOW())');
+
+        try {
+            $pdo->beginTransaction();
+            for ($i = 1; $i < count($linhas); $i++) {
+                $linha = $linhas[$i];
+                $nome = trim((string) ($linha[$mapa['nome']] ?? ''));
+                if ($nome === '') {
+                    $ignorados++;
+                    continue;
+                }
+                $carga = (int) ($linha[$mapa['carga_horaria']] ?? 0);
+                $ordem = (int) ($linha[$mapa['ordem']] ?? 0);
+                $ativo = isset($mapa['ativo']) ? (int) ($linha[$mapa['ativo']] ?? 1) : 1;
+                if ($ativo !== 0 && $ativo !== 1) {
+                    $ativo = 1;
+                }
+                $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                $stmt->bindValue(':nome', $nome, \PDO::PARAM_STR);
+                $stmt->bindValue(':carga_horaria', $carga, \PDO::PARAM_INT);
+                $stmt->bindValue(':ordem', $ordem, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', $ativo, \PDO::PARAM_INT);
+                $stmt->execute();
+                $inseridos++;
+            }
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('[IMPORTAR DISCIPLINA] Erro: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao importar: ' . $e->getMessage());
+            $this->redirect('/admin/cursos/importar-disciplinas?id_curso=' . $cursoId);
+            return;
+        }
+
+        $this->logService->log('importar', 'disciplina', $cursoId, "Importação de disciplinas: $inseridos inserida(s), $ignorados linha(s) ignorada(s).");
+
+        Session::setFlash('flash', "Importação concluída: $inseridos disciplina(s) inserida(s), $ignorados linha(s) ignorada(s).");
+        $this->redirect('/admin/cursos/disciplinas?id_curso=' . $cursoId);
+    }
+
+    private function lerCsv(string $caminho): array
+    {
+        $linhas = [];
+        if (($h = fopen($caminho, 'r')) !== false) {
+            while (($data = fgetcsv($h, 0, ',')) !== false) {
+                $linha = [];
+                foreach ($data as $idx => $valor) {
+                    $linha[$this->letraColuna($idx)] = $valor;
+                }
+                $linhas[] = $linha;
+            }
+            fclose($h);
+        }
+        return $linhas;
+    }
+
+    private function letraColuna(int $indice): string
+    {
+        $letra = '';
+        $n = $indice;
+        while ($n >= 0) {
+            $letra = chr(65 + ($n % 26)) . $letra;
+            $n = intdiv($n, 26) - 1;
+        }
+        return $letra;
+    }
+
+    private function lerXlsx(string $caminho): array
+    {
+        $zip = new \ZipArchive();
+        if ($zip->open($caminho) !== true) {
+            throw new \RuntimeException('Arquivo xlsx inválido.');
+        }
+
+        $shared = [];
+        $sharedIdx = $zip->locateName('xl/sharedStrings.xml');
+        if ($sharedIdx !== false) {
+            $xml = simplexml_load_string($zip->getFromIndex($sharedIdx));
+            if ($xml !== false) {
+                foreach ($xml->si as $si) {
+                    $shared[] = trim((string) $si->t);
+                }
+            }
+        }
+
+        $sheetIdx = $zip->locateName('xl/worksheets/sheet1.xml');
+        if ($sheetIdx === false) {
+            for ($i = 0; $i < $zip->numFiles; $i++) {
+                $nome = $zip->getNameIndex($i);
+                if (str_starts_with($nome, 'xl/worksheets/sheet') && str_ends_with($nome, '.xml')) {
+                    $sheetIdx = $i;
+                    break;
+                }
+            }
+        }
+
+        $linhas = [];
+        if ($sheetIdx !== false) {
+            $xml = simplexml_load_string($zip->getFromIndex($sheetIdx));
+            if ($xml === false || !isset($xml->sheetData)) {
+                $zip->close();
+                throw new \RuntimeException('Não foi possível interpretar a planilha.');
+            }
+            foreach ($xml->sheetData->row as $row) {
+                $cells = [];
+                foreach ($row->c as $c) {
+                    $ref = (string) $c['r'];
+                    $col = preg_replace('/\d/', '', $ref);
+                    $tipo = (string) $c['t'];
+                    if ($tipo === 's') {
+                        $val = isset($c->v) ? ($shared[(int) $c->v] ?? '') : '';
+                    } elseif ($tipo === 'inlineStr') {
+                        $val = isset($c->is) ? trim((string) $c->is->t) : '';
+                    } else {
+                        $val = isset($c->v) ? (string) $c->v : '';
+                    }
+                    $cells[$col] = $val;
+                }
+                ksort($cells);
+                $linhas[] = $cells;
+            }
+        }
+
+        $zip->close();
+        return $linhas;
+    }
+
     public function corpoDocente(): void
     {
         if (!$this->isStaff()) {

@@ -46,8 +46,14 @@ $rotulos = [
                         <a href="#" class="badge bg-secondary text-white text-decoration-none editar-situacao-btn-kanban" style="font-size:.65rem;" data-id="<?= (int) ($p['id'] ?? 0) ?>" data-situacao="<?= (string) ($p['situacao'] ?? 'recebido') ?>" data-nome="<?= htmlspecialchars((string) ($p['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">#<?= (int) ($p['id'] ?? 0) ?></a>
                       </div>
                     </div>
+                    <?php $wa = preg_replace('/\D/', '', (string) ($p['whatsapp'] ?? '')); ?>
                     <div class="small text-muted mb-1">
-                      <i class="bi bi-whatsapp me-1"></i><?= htmlspecialchars((string) ($p['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                      <i class="bi bi-whatsapp me-1"></i>
+                      <?php if ($wa !== ''): ?>
+                        <a href="https://wa.me/<?= $wa ?>" target="_blank" class="text-decoration-none text-muted"><?= htmlspecialchars((string) ($p['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></a>
+                      <?php else: ?>
+                        <?= htmlspecialchars((string) ($p['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                      <?php endif; ?>
                     </div>
                     <div class="small text-muted text-truncate">
                       <i class="bi bi-bookmark me-1"></i><?= htmlspecialchars((string) ($p['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>

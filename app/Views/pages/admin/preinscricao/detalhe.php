@@ -35,7 +35,14 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
               <div class="col-md-6">
                 <div class="p-3 rounded-3 bg-light border">
                   <div class="text-muted small text-uppercase">WhatsApp</div>
-                  <div class="fw-semibold"><?= htmlspecialchars((string) ($pre['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></div>
+                  <div class="fw-semibold">
+                    <?php $wa = preg_replace('/\D/', '', (string) ($pre['whatsapp'] ?? '')); ?>
+                    <?php if ($wa !== ''): ?>
+                      <a href="https://wa.me/<?= $wa ?>" target="_blank" class="text-decoration-none"><i class="bi bi-whatsapp me-1"></i><?= htmlspecialchars((string) ($pre['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></a>
+                    <?php else: ?>
+                      <?= htmlspecialchars((string) ($pre['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    <?php endif; ?>
+                  </div>
                 </div>
               </div>
               <div class="col-md-6">

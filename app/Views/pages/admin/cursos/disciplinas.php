@@ -2,7 +2,10 @@
   <div class="bg-white border rounded-3 p-4 shadow-sm">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
       <h4 class="mb-0"><i class="bi bi-book me-2"></i><?= $disciplina ? 'Editar Disciplina' : 'Nova Disciplina' ?></h4>
-      <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/show?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+      <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos/show?id=<?= (int) ($course['id'] ?? 0) ?>#disciplinas-curso"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+        <a class="btn btn-outline-success btn-sm" href="/admin/cursos/importar-disciplinas?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-file-earmark-spreadsheet me-1"></i>Importar Excel</a>
+      </div>
     </div>
 
     <p class="text-muted mb-4">Curso: <strong><?= htmlspecialchars((string) ($course['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong></p>

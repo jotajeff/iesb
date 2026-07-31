@@ -64,6 +64,8 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/detalhes/salvar', [CursoController::class, 'salvarDetalhe']);
     $router->get('/admin/cursos/disciplinas', [CursoController::class, 'disciplinas']);
     $router->post('/admin/cursos/salvar-disciplina', [CursoController::class, 'salvarDisciplina']);
+    $router->get('/admin/cursos/importar-disciplinas', [CursoController::class, 'importarDisciplinas']);
+    $router->post('/admin/cursos/importar-disciplinas', [CursoController::class, 'processarImportarDisciplinas']);
     $router->get('/admin/cursos/ementa', [CursoController::class, 'ementa']);
     $router->post('/admin/cursos/salvar-ementa', [CursoController::class, 'salvarEmenta']);
     $router->get('/admin/cursos/corpo-docente', [CursoController::class, 'corpoDocente']);
