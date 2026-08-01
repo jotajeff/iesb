@@ -235,7 +235,7 @@ final class AlunoRepository
                      c.id AS curso_id, c.nome AS curso_nome
                      FROM matriculas m
                      INNER JOIN turmas t ON m.id_turma = t.id
-                     INNER JOIN cursos_iesb c ON t.id_curso = c.id
+                     INNER JOIN cursos c ON t.id_curso = c.id
                      WHERE m.id_aluno = :id_aluno
                      ORDER BY c.nome ASC';
 

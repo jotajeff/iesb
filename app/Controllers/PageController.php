@@ -372,7 +372,7 @@ final class PageController extends Controller
             $cursoSchema['image'] = $appUrl . '/' . $cursoImage;
         }
 
-        $imagens = $this->imageService->listarPorFk('cursos_iesb', $id);
+        $imagens = $this->imageService->listarPorFk('cursos', $id);
 
         $this->render('pages/curso', [
             'title' => (string) ($curso['nome'] ?? 'Curso'),

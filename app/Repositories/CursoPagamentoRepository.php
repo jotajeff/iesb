@@ -17,7 +17,7 @@ final class CursoPagamentoRepository
                 return [];
             }
 
-            $stmt = $pdo->prepare('SELECT id, id_curso, descricao, tipo, parcelas, valor, ativo FROM cursos_iesb_pagamento WHERE id_curso = :id_curso ORDER BY id ASC');
+            $stmt = $pdo->prepare('SELECT id, id_curso, descricao, tipo, parcelas, valor, ativo FROM cursos_pagamento WHERE id_curso = :id_curso ORDER BY id ASC');
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll();
@@ -36,7 +36,7 @@ final class CursoPagamentoRepository
                 return null;
             }
 
-            $stmt = $pdo->prepare('SELECT * FROM cursos_iesb_pagamento WHERE id = :id LIMIT 1');
+            $stmt = $pdo->prepare('SELECT * FROM cursos_pagamento WHERE id = :id LIMIT 1');
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $row = $stmt->fetch();
@@ -64,7 +64,7 @@ final class CursoPagamentoRepository
             $ativo = in_array((string) ($data['ativo'] ?? 'S'), ['S', 'N'], true) ? (string) $data['ativo'] : 'S';
 
             if ($id > 0) {
-                $sql = 'UPDATE cursos_iesb_pagamento SET descricao = :descricao, tipo = :tipo, parcelas = :parcelas, valor = :valor, ativo = :ativo WHERE id = :id';
+                $sql = 'UPDATE cursos_pagamento SET descricao = :descricao, tipo = :tipo, parcelas = :parcelas, valor = :valor, ativo = :ativo WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                 $stmt->bindValue(':descricao', $descricao);
@@ -76,7 +76,7 @@ final class CursoPagamentoRepository
                 return $id;
             }
 
-            $sql = 'INSERT INTO cursos_iesb_pagamento (id_curso, descricao, tipo, parcelas, valor, ativo) VALUES (:id_curso, :descricao, :tipo, :parcelas, :valor, :ativo)';
+            $sql = 'INSERT INTO cursos_pagamento (id_curso, descricao, tipo, parcelas, valor, ativo) VALUES (:id_curso, :descricao, :tipo, :parcelas, :valor, :ativo)';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
             $stmt->bindValue(':descricao', $descricao);
@@ -100,7 +100,7 @@ final class CursoPagamentoRepository
         }
 
         try {
-            $stmt = $pdo->prepare('DELETE FROM cursos_iesb_pagamento WHERE id = :id');
+            $stmt = $pdo->prepare('DELETE FROM cursos_pagamento WHERE id = :id');
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
         } catch (\Throwable $e) {

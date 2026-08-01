@@ -485,8 +485,8 @@ final class ProfessorController extends Controller
                      . ' (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos'
                      . ' FROM turma_professor tp'
                      . ' JOIN turmas t ON tp.id_turma = t.id'
-                     . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
-                     . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                     . ' LEFT JOIN cursos c ON t.id_curso = c.id'
+                     . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
                      . ' WHERE tp.id_usuario = :id_usuario AND tp.status = :status'
                      . ' ORDER BY t.nome ASC';
 
@@ -773,7 +773,7 @@ final class ProfessorController extends Controller
         $videos = [];
         if ($pdo instanceof \PDO) {
             try {
-                $stmt = $pdo->prepare('SELECT t.*, c.nome AS curso_nome FROM turmas t LEFT JOIN cursos_iesb c ON t.id_curso = c.id WHERE t.id = :id');
+                $stmt = $pdo->prepare('SELECT t.*, c.nome AS curso_nome FROM turmas t LEFT JOIN cursos c ON t.id_curso = c.id WHERE t.id = :id');
                 $stmt->bindValue(':id', $turmaId, \PDO::PARAM_INT);
                 $stmt->execute();
                 $turma = $stmt->fetch() ?: null;
@@ -902,7 +902,7 @@ final class ProfessorController extends Controller
         $arquivos = [];
         if ($pdo instanceof \PDO) {
             try {
-                $stmt = $pdo->prepare('SELECT t.*, c.nome AS curso_nome FROM turmas t LEFT JOIN cursos_iesb c ON t.id_curso = c.id WHERE t.id = :id');
+                $stmt = $pdo->prepare('SELECT t.*, c.nome AS curso_nome FROM turmas t LEFT JOIN cursos c ON t.id_curso = c.id WHERE t.id = :id');
                 $stmt->bindValue(':id', $turmaId, \PDO::PARAM_INT);
                 $stmt->execute();
                 $turma = $stmt->fetch() ?: null;
@@ -1140,7 +1140,7 @@ final class ProfessorController extends Controller
                     'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativo, c.nome AS curso_nome'
                     . ' FROM turma_professor tp'
                     . ' JOIN turmas t ON tp.id_turma = t.id'
-                    . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
+                    . ' LEFT JOIN cursos c ON t.id_curso = c.id'
                     . ' WHERE tp.id_usuario = :id AND tp.status = :status'
                     . ' ORDER BY t.nome ASC'
                 );

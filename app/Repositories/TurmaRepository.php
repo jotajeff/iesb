@@ -20,8 +20,8 @@ final class TurmaRepository
             $sql = 'SELECT t.id, t.nome, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
                  . ' (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos'
                  . ' FROM turmas t'
-                 . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
-                 . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                 . ' LEFT JOIN cursos c ON t.id_curso = c.id'
+                 . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
                  . ' ORDER BY t.id DESC'
                  . ' LIMIT :limit';
 
@@ -48,8 +48,8 @@ final class TurmaRepository
             $sql = 'SELECT t.id, t.nome, t.id_curso, t.data_inicio, t.ativo, '
                  . 'c.nome AS curso_nome, n.nome AS nivel_nome'
                  . ' FROM turmas t'
-                 . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
-                 . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                 . ' LEFT JOIN cursos c ON t.id_curso = c.id'
+                 . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
                  . ' WHERE t.id = :id'
                  . ' LIMIT 1';
 
@@ -108,8 +108,8 @@ final class TurmaRepository
         try {
             $sql = 'SELECT t.id, t.nome, t.id_curso, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio'
                  . ' FROM turmas t'
-                 . ' INNER JOIN cursos_iesb c ON t.id_curso = c.id'
-                 . ' LEFT JOIN nivel n ON c.nivel = n.id'
+                 . ' INNER JOIN cursos c ON t.id_curso = c.id'
+                 . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
                  . ' WHERE t.ativo = 1'
                  . ' ORDER BY c.nome ASC, t.nome ASC'
                  . ' LIMIT :limit';
@@ -232,7 +232,7 @@ final class TurmaRepository
                  . ' t.nome AS turma_nome, c.nome AS curso_nome'
                  . ' FROM matriculas m'
                  . ' INNER JOIN turmas t ON m.id_turma = t.id'
-                 . ' INNER JOIN cursos_iesb c ON t.id_curso = c.id'
+                 . ' INNER JOIN cursos c ON t.id_curso = c.id'
                  . ' WHERE m.id = :id'
                  . ' LIMIT 1';
 
@@ -282,9 +282,9 @@ final class TurmaRepository
                  . ' FROM turma_troca tt'
                  . ' INNER JOIN alunos a ON tt.id_aluno = a.id'
                  . ' INNER JOIN turmas to_nome ON tt.id_origem = to_nome.id'
-                 . ' INNER JOIN cursos_iesb co ON to_nome.id_curso = co.id'
+                 . ' INNER JOIN cursos co ON to_nome.id_curso = co.id'
                  . ' INNER JOIN turmas td_nome ON tt.id_destino = td_nome.id'
-                 . ' INNER JOIN cursos_iesb cd ON td_nome.id_curso = cd.id'
+                 . ' INNER JOIN cursos cd ON td_nome.id_curso = cd.id'
                  . ' ORDER BY tt.id DESC'
                  . ' LIMIT :limit';
 

@@ -21,15 +21,15 @@ final class CursoRepository
 
         try {
             $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso,
-                            c.ativo, c.exibir_home, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at,
+                            c.ativo, c.exibir_home, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.tipo_curso AS nivel_id, c.created_at,
                             m.nome AS modalidade_nome, s.nome AS segmento_nome, n.nome AS nivel_nome
-                     FROM cursos_iesb c
+                     FROM cursos c
                      LEFT JOIN modalidade m ON m.id = c.modalidade
                      LEFT JOIN segmento s ON s.id = c.segmento
-                     LEFT JOIN nivel n ON n.id = c.nivel';
+                     LEFT JOIN tipo_curso n ON n.id = c.tipo_curso';
 
             if ($nivelFilter !== null) {
-                $sql .= ' WHERE c.nivel = :nivel_id';
+                $sql .= ' WHERE c.tipo_curso = :nivel_id';
             }
 
             $sql .= ' ORDER BY c.id ' . $direction . ' LIMIT :limit';
@@ -59,7 +59,7 @@ final class CursoRepository
         $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
 
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.exibir_home, c.confirmado
-                FROM cursos_iesb c
+                FROM cursos c
                 WHERE c.ativo = 1 AND c.exibir_home = "S" AND c.curso_calendario IS NOT NULL AND c.curso_calendario >= :maxDate
                 ORDER BY c.curso_calendario ASC, c.id DESC
                 LIMIT :limit';
@@ -82,7 +82,7 @@ final class CursoRepository
         $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
 
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.carga_horaria, c.exibir_home, c.confirmado, c.segmento, c.modalidade, s.nome AS segmento_nome, m.nome AS modalidade_nome
-                FROM cursos_iesb c
+                FROM cursos c
                 LEFT JOIN segmento s ON s.id = c.segmento
                 LEFT JOIN modalidade m ON m.id = c.modalidade
                 WHERE c.ativo = 1 AND c.exibir_home = "S" AND c.curso_calendario IS NOT NULL AND c.curso_calendario >= :maxDate
@@ -115,10 +115,10 @@ final class CursoRepository
 
         $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado,
                        c.modalidade AS modalidade_id, c.segmento AS segmento_id, m.nome AS modalidade_nome, s.nome AS segmento_nome
-                FROM cursos_iesb c
+                FROM cursos c
                 LEFT JOIN modalidade m ON m.id = c.modalidade
                 LEFT JOIN segmento s ON s.id = c.segmento
-                WHERE c.ativo = 1 AND c.nivel = :nivel_id AND c.curso_calendario >= CURDATE()';
+                WHERE c.ativo = 1 AND c.tipo_curso = :nivel_id AND c.curso_calendario >= CURDATE()';
 
         if ($segmentoId !== null && $segmentoId > 0) {
             $sql .= ' AND c.segmento = :segmento_id';
@@ -146,11 +146,11 @@ final class CursoRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, m.nome AS modalidade_nome, s.nome AS segmento_nome, n.nome AS nivel_nome
-                     FROM cursos_iesb c
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.confirmado, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.tipo_curso AS nivel_id, m.nome AS modalidade_nome, s.nome AS segmento_nome, n.nome AS nivel_nome
+                     FROM cursos c
                      LEFT JOIN modalidade m ON m.id = c.modalidade
                      LEFT JOIN segmento s ON s.id = c.segmento
-                     LEFT JOIN nivel n ON n.id = c.nivel
+                     LEFT JOIN tipo_curso n ON n.id = c.tipo_curso
                      WHERE c.ativo = 1
                        AND c.curso_calendario >= CURDATE()
                       ORDER BY c.id DESC
@@ -175,7 +175,7 @@ final class CursoRepository
         }
 
         $sql = 'SELECT id, nome, slug
-                FROM cursos_iesb
+                FROM cursos
                 WHERE slug IS NULL OR slug = ""
                 ORDER BY id ASC';
         $stmt = $pdo->query($sql);
@@ -230,7 +230,7 @@ final class CursoRepository
             $sql = 'SELECT c.id AS curso_id, c.nome AS curso_nome,
                            t.id AS turma_id, t.nome AS turma_nome,
                            (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos
-                    FROM cursos_iesb c
+                    FROM cursos c
                     INNER JOIN turmas t ON t.id_curso = c.id
                     ORDER BY c.nome ASC, t.nome ASC';
             $stmt = $pdo->query($sql);
@@ -250,8 +250,8 @@ final class CursoRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.publico_alvo, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, s.nome AS segmento_nome
-                     FROM cursos_iesb c
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.publico_alvo, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.tipo_curso AS nivel_id, c.created_at, s.nome AS segmento_nome
+                     FROM cursos c
                      LEFT JOIN segmento s ON s.id = c.segmento
                      WHERE c.id = :id';
             $stmt = $pdo->prepare($sql);
@@ -274,11 +274,11 @@ final class CursoRepository
         }
 
         try {
-            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.publico_alvo, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.nivel AS nivel_id, c.created_at, m.nome AS modalidade_nome, s.nome AS segmento_nome, n.slug AS nivel_slug, n.nome AS nivel_nome
-                     FROM cursos_iesb c
+            $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.imagem_card, c.link_ingresso, c.ativo, c.exibir_home, c.confirmado, c.carga_horaria, c.publico_alvo, c.modalidade AS modalidade_id, c.segmento AS segmento_id, c.tipo_curso AS nivel_id, c.created_at, m.nome AS modalidade_nome, s.nome AS segmento_nome, n.slug AS nivel_slug, n.nome AS nivel_nome
+                     FROM cursos c
                      LEFT JOIN modalidade m ON m.id = c.modalidade
                      LEFT JOIN segmento s ON s.id = c.segmento
-                     LEFT JOIN nivel n ON n.id = c.nivel
+                     LEFT JOIN tipo_curso n ON n.id = c.tipo_curso
                      WHERE c.slug = :slug';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':slug', $slug);
@@ -299,7 +299,7 @@ final class CursoRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO cursos_iesb (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, exibir_home, confirmado, carga_horaria, modalidade, segmento, nivel, publico_alvo)
+        $sql = 'INSERT INTO cursos (nome, slug, data_curso, curso_calendario, horario, local_curso, imagem_card, link_ingresso, ativo, exibir_home, confirmado, carga_horaria, modalidade, segmento, tipo_curso, publico_alvo)
                 VALUES (:nome, :slug, :data_curso, :curso_calendario, :horario, :local_curso, :imagem_card, :link_ingresso, :ativo, :exibir_home, :confirmado, :carga_horaria, :modalidade_id, :segmento_id, :nivel_id, :publico_alvo)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
@@ -330,10 +330,10 @@ final class CursoRepository
             return;
         }
 
-        $sql = 'UPDATE cursos_iesb
+        $sql = 'UPDATE cursos
                 SET nome = :nome, slug = :slug, data_curso = :data_curso, curso_calendario = :curso_calendario, horario = :horario, local_curso = :local_curso,
                     imagem_card = :imagem_card, link_ingresso = :link_ingresso, ativo = :ativo, exibir_home = :exibir_home, confirmado = :confirmado,
-                    carga_horaria = :carga_horaria, modalidade = :modalidade_id, segmento = :segmento_id, nivel = :nivel_id,
+                    carga_horaria = :carga_horaria, modalidade = :modalidade_id, segmento = :segmento_id, tipo_curso = :nivel_id,
                     publico_alvo = :publico_alvo
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
@@ -364,7 +364,7 @@ final class CursoRepository
             return;
         }
 
-        $sql = 'UPDATE cursos_iesb SET imagem_card = :imagem_card WHERE id = :id';
+        $sql = 'UPDATE cursos SET imagem_card = :imagem_card WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':imagem_card', $imagemPath);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
@@ -378,7 +378,7 @@ final class CursoRepository
             return;
         }
 
-        $sql = 'UPDATE cursos_iesb SET slug = :slug WHERE id = :id';
+        $sql = 'UPDATE cursos SET slug = :slug WHERE id = :id';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->bindValue(':slug', $slug);
@@ -392,7 +392,7 @@ final class CursoRepository
             return false;
         }
 
-        $sql = 'SELECT id FROM cursos_iesb WHERE slug = :slug';
+        $sql = 'SELECT id FROM cursos WHERE slug = :slug';
         if ($ignoreId !== null && $ignoreId > 0) {
             $sql .= ' AND id <> :ignore_id';
         }

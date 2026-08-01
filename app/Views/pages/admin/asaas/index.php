@@ -171,7 +171,7 @@ function asaasQuery(array $params): string
                     </td>
                     <td>
                       <?php if ($inscricaoId > 0): ?>
-                        <a href="/admin/dbase?table=cursos_iesb_inscricao&view=detail&id=<?= $inscricaoId ?>" class="text-decoration-none">#<?= $inscricaoId ?></a>
+                        <a href="/admin/dbase?table=cursos_inscricao&view=detail&id=<?= $inscricaoId ?>" class="text-decoration-none">#<?= $inscricaoId ?></a>
                         <?php if ($inscricaoNome !== ''): ?>
                           <div class="text-muted small"><?= htmlspecialchars($inscricaoNome, ENT_QUOTES, 'UTF-8') ?></div>
                         <?php endif; ?>

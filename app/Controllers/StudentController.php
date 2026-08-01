@@ -172,7 +172,7 @@ final class StudentController extends Controller
                     . ' c.id AS curso_id, c.nome AS curso_nome, c.local_curso, c.horario, c.imagem_card'
                     . ' FROM matriculas m'
                     . ' JOIN turmas t ON m.id_turma = t.id'
-                    . ' LEFT JOIN cursos_iesb c ON t.id_curso = c.id'
+                    . ' LEFT JOIN cursos c ON t.id_curso = c.id'
                     . ' WHERE m.id = :id AND m.id_aluno = :id_aluno'
                 );
                 $stmt->bindValue(':id', $matriculaId, \PDO::PARAM_INT);

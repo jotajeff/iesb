@@ -150,7 +150,7 @@ final class ConfigRepository
                 return [];
             }
 
-            $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM nivel ORDER BY nome ASC';
+            $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM tipo_curso ORDER BY nome ASC';
             $stmt = $pdo->query($sql);
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -167,7 +167,7 @@ final class ConfigRepository
             return null;
         }
 
-        $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM nivel WHERE id = :id LIMIT 1';
+        $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM tipo_curso WHERE id = :id LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
@@ -188,7 +188,7 @@ final class ConfigRepository
             return null;
         }
 
-        $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM nivel WHERE slug = :slug LIMIT 1';
+        $sql = 'SELECT id, slug, nome, ativo, apresentacao FROM tipo_curso WHERE slug = :slug LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':slug', $slug);
         $stmt->execute();
@@ -210,7 +210,7 @@ final class ConfigRepository
         $apresentacao = (string) ($payload['apresentacao'] ?? '');
 
         if ($id > 0) {
-            $sql = 'UPDATE nivel SET nome = :nome, ativo = :ativo, apresentacao = :apresentacao WHERE id = :id';
+            $sql = 'UPDATE tipo_curso SET nome = :nome, ativo = :ativo, apresentacao = :apresentacao WHERE id = :id';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->bindValue(':nome', $nome);
@@ -220,7 +220,7 @@ final class ConfigRepository
             return $id;
         }
 
-        $sql = 'INSERT INTO nivel (nome, ativo, apresentacao) VALUES (:nome, :ativo, :apresentacao)';
+        $sql = 'INSERT INTO tipo_curso (nome, ativo, apresentacao) VALUES (:nome, :ativo, :apresentacao)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $nome);
         $stmt->bindValue(':ativo', $ativo, PDO::PARAM_INT);
@@ -485,9 +485,9 @@ final class ConfigRepository
         }
 
         $sql = 'SELECT DISTINCT s.id, s.nome, s.ativo
-                FROM cursos_iesb c
+                FROM cursos c
                 INNER JOIN segmento s ON s.id = c.segmento
-                WHERE c.ativo = 1 AND s.ativo = 1 AND c.nivel = :nivel_id
+                WHERE c.ativo = 1 AND s.ativo = 1 AND c.tipo_curso = :nivel_id
                 ORDER BY s.nome ASC';
 
         $stmt = $pdo->prepare($sql);

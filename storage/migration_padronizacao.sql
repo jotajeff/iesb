@@ -41,14 +41,14 @@ ALTER TABLE `corpo_docente`
 ALTER TABLE `curriculo`
   CHANGE COLUMN `criado_em` `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP;
 
--- cursos_iesb
+-- cursos
 -- created_at já existe, adicionar updated_at
-ALTER TABLE `cursos_iesb`
+ALTER TABLE `cursos`
   ADD COLUMN `updated_at` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
 
--- cursos_iesb_pagamento
+-- cursos_pagamento
 -- created_at já existe, adicionar updated_at
-ALTER TABLE `cursos_iesb_pagamento`
+ALTER TABLE `cursos_pagamento`
   ADD COLUMN `updated_at` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
 
 -- detalhes
@@ -91,8 +91,8 @@ ALTER TABLE `modalidade`
   ADD COLUMN `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   ADD COLUMN `updated_at` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
 
--- nivel
-ALTER TABLE `nivel`
+-- tipo_curso
+ALTER TABLE `tipo_curso`
   ADD COLUMN `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
   ADD COLUMN `updated_at` DATETIME DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
 
@@ -192,16 +192,16 @@ UPDATE `curriculo` SET `ativo` = '0' WHERE `ativo` = 'N';
 ALTER TABLE `curriculo`
   CHANGE COLUMN `ativo` `ativo` TINYINT(1) NOT NULL DEFAULT 1;
 
--- cursos_iesb: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
-UPDATE `cursos_iesb` SET `ativo` = '1' WHERE `ativo` = 'S';
-UPDATE `cursos_iesb` SET `ativo` = '0' WHERE `ativo` = 'N';
-ALTER TABLE `cursos_iesb`
+-- cursos: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
+UPDATE `cursos` SET `ativo` = '1' WHERE `ativo` = 'S';
+UPDATE `cursos` SET `ativo` = '0' WHERE `ativo` = 'N';
+ALTER TABLE `cursos`
   CHANGE COLUMN `ativo` `ativo` TINYINT(1) NOT NULL DEFAULT 1;
 
--- cursos_iesb_pagamento: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
-UPDATE `cursos_iesb_pagamento` SET `ativo` = '1' WHERE `ativo` = 'S';
-UPDATE `cursos_iesb_pagamento` SET `ativo` = '0' WHERE `ativo` = 'N';
-ALTER TABLE `cursos_iesb_pagamento`
+-- cursos_pagamento: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
+UPDATE `cursos_pagamento` SET `ativo` = '1' WHERE `ativo` = 'S';
+UPDATE `cursos_pagamento` SET `ativo` = '0' WHERE `ativo` = 'N';
+ALTER TABLE `cursos_pagamento`
   CHANGE COLUMN `ativo` `ativo` TINYINT(1) NOT NULL DEFAULT 1;
 
 -- detalhes: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
@@ -242,10 +242,10 @@ UPDATE `modalidade` SET `ativo` = '0' WHERE `ativo` = 'N' OR `ativo` = 'n';
 ALTER TABLE `modalidade`
   CHANGE COLUMN `ativo` `ativo` TINYINT(1) NOT NULL DEFAULT 1;
 
--- nivel: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
-UPDATE `nivel` SET `ativo` = '1' WHERE `ativo` = 'S' OR `ativo` = 's';
-UPDATE `nivel` SET `ativo` = '0' WHERE `ativo` = 'N' OR `ativo` = 'n';
-ALTER TABLE `nivel`
+-- tipo_curso: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
+UPDATE `tipo_curso` SET `ativo` = '1' WHERE `ativo` = 'S' OR `ativo` = 's';
+UPDATE `tipo_curso` SET `ativo` = '0' WHERE `ativo` = 'N' OR `ativo` = 'n';
+ALTER TABLE `tipo_curso`
   CHANGE COLUMN `ativo` `ativo` TINYINT(1) NOT NULL DEFAULT 1;
 
 -- segmento: ativo CHAR(1) 'S'/'N' → TINYINT(1) DEFAULT 1
@@ -293,8 +293,8 @@ ALTER TABLE `matriculas`
 ALTER TABLE `notificacao`
   ADD COLUMN `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP AFTER `created_at`;
 
--- cursos_iesb_inscricao: adicionar ativo
-ALTER TABLE `cursos_iesb_inscricao`
+-- cursos_inscricao: adicionar ativo
+ALTER TABLE `cursos_inscricao`
   ADD COLUMN `ativo` TINYINT(1) NOT NULL DEFAULT 1 AFTER `valor`;
 
 -- ============================================================

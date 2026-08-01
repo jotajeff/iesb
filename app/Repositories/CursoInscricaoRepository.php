@@ -17,7 +17,7 @@ final class CursoInscricaoRepository
         }
 
         try {
-            $stmt = $pdo->prepare('INSERT INTO cursos_iesb_inscricao (id_curso, id_pagamento, descricao_pagamento, nome, cpf, email, telefone, valor, status) VALUES (:id_curso, :id_pagamento, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :status)');
+            $stmt = $pdo->prepare('INSERT INTO cursos_inscricao (id_curso, id_pagamento, descricao_pagamento, nome, cpf, email, telefone, valor, status) VALUES (:id_curso, :id_pagamento, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :status)');
             $stmt->bindValue(':id_curso', (int) ($data['id_curso'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_pagamento', (int) ($data['id_pagamento'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':descricao_pagamento', (string) ($data['descricao_pagamento'] ?? ''));
@@ -72,7 +72,7 @@ final class CursoInscricaoRepository
 
             $fields[] = 'updated_at = CURRENT_TIMESTAMP';
 
-            $sql = 'UPDATE cursos_iesb_inscricao SET ' . implode(', ', $fields) . ' WHERE id = :id';
+            $sql = 'UPDATE cursos_inscricao SET ' . implode(', ', $fields) . ' WHERE id = :id';
             $stmt = $pdo->prepare($sql);
 
             foreach ($params as $key => $value) {
@@ -99,7 +99,7 @@ final class CursoInscricaoRepository
                 return null;
             }
 
-            $stmt = $pdo->prepare('SELECT * FROM cursos_iesb_inscricao WHERE id = :id LIMIT 1');
+            $stmt = $pdo->prepare('SELECT * FROM cursos_inscricao WHERE id = :id LIMIT 1');
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $row = $stmt->fetch();
@@ -118,7 +118,7 @@ final class CursoInscricaoRepository
                 return null;
             }
 
-            $stmt = $pdo->prepare('SELECT * FROM cursos_iesb_inscricao WHERE asaas_payment = :asaas_payment LIMIT 1');
+            $stmt = $pdo->prepare('SELECT * FROM cursos_inscricao WHERE asaas_payment = :asaas_payment LIMIT 1');
             $stmt->bindValue(':asaas_payment', $asaasPayment);
             $stmt->execute();
             $row = $stmt->fetch();
@@ -137,7 +137,7 @@ final class CursoInscricaoRepository
                 return false;
             }
 
-            $sql = 'UPDATE cursos_iesb_inscricao SET status = :status, updated_at = CURRENT_TIMESTAMP';
+            $sql = 'UPDATE cursos_inscricao SET status = :status, updated_at = CURRENT_TIMESTAMP';
             $params = [':status' => $status, ':id' => $id];
 
             if ($idAluno !== null) {

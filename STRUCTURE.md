@@ -210,7 +210,7 @@ public function destroy(int $id): void
 
 ### Tabelas Principais (MySQL)
 - `alunos` - Alunos matriculados
-- `cursos_iesb` - Cursos oferecidos
+- `cursos` - Cursos oferecidos
 - `turmas` - Turmas dos cursos
 - `matriculas` - Relação aluno-turma
 - `usuarios` - Usuários do sistema (admin, professor, operador)

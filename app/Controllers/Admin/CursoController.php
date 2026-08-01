@@ -233,7 +233,7 @@ final class CursoController extends Controller
             $corpoDocente = [];
         }
 
-        $galeriaImagens = $this->imageService->listarPorFk('cursos_iesb', $id);
+        $galeriaImagens = $this->imageService->listarPorFk('cursos', $id);
 
         $this->render('pages/admin/cursos/show', [
             'title' => $course['nome'] ?? 'Curso',
@@ -712,7 +712,7 @@ final class CursoController extends Controller
             return;
         }
 
-        $imagens = $this->imageService->listarPorFk('cursos_iesb', $cursoId);
+        $imagens = $this->imageService->listarPorFk('cursos', $cursoId);
 
         $this->render('pages/admin/cursos/galeria', [
             'title' => 'Galeria — ' . ($course['nome'] ?? ''),
@@ -763,7 +763,7 @@ final class CursoController extends Controller
             return;
         }
 
-        $this->imageService->salvar('cursos_iesb', $cursoId, $path, $legenda ?: null);
+        $this->imageService->salvar('cursos', $cursoId, $path, $legenda ?: null);
         $this->logService->log('criar', 'imagem', 0, 'Imagem adicionada à galeria do curso ' . $cursoId);
 
         Session::setFlash('flash', 'Imagem salva com sucesso.');
@@ -1121,7 +1121,7 @@ final class CursoController extends Controller
             $this->redirect('/admin/cursos/definir-valor?id=' . $idCurso);
         }
 
-        $this->logService->log($idPagamento > 0 ? 'atualizar' : 'criar', 'cursos_iesb_pagamento', $result, ($idPagamento > 0 ? 'Pagamento atualizado' : 'Pagamento criado') . ' para o curso #' . $idCurso);
+        $this->logService->log($idPagamento > 0 ? 'atualizar' : 'criar', 'cursos_pagamento', $result, ($idPagamento > 0 ? 'Pagamento atualizado' : 'Pagamento criado') . ' para o curso #' . $idCurso);
         Session::setFlash('flash', 'Forma de pagamento salva com sucesso.');
         $this->redirect('/admin/cursos/definir-valor?id=' . $idCurso);
     }

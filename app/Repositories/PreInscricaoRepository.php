@@ -21,7 +21,7 @@ final class PreInscricaoRepository
                            COALESCE(c.nome, \'-\') AS curso_nome,
                            p.situacao, p.created_at
                     FROM pre_inscricao p
-                    LEFT JOIN cursos_iesb c ON c.id = p.curso_id
+                    LEFT JOIN cursos c ON c.id = p.curso_id
                     WHERE p.situacao = :situacao
                     ORDER BY p.created_at DESC';
             $stmt = $pdo->prepare($sql);
@@ -47,7 +47,7 @@ final class PreInscricaoRepository
                            COALESCE(c.nome, \'-\') AS curso_nome,
                            p.situacao, p.created_at
                     FROM pre_inscricao p
-                    LEFT JOIN cursos_iesb c ON c.id = p.curso_id
+                    LEFT JOIN cursos c ON c.id = p.curso_id
                     ORDER BY p.created_at DESC';
             $stmt = $pdo->prepare($sql);
             $stmt->execute();
@@ -99,7 +99,7 @@ final class PreInscricaoRepository
                            COALESCE(c.nome, \'-\') AS curso_nome,
                            p.situacao, p.created_at
                     FROM pre_inscricao p
-                    LEFT JOIN cursos_iesb c ON c.id = p.curso_id
+                    LEFT JOIN cursos c ON c.id = p.curso_id
                     WHERE p.id = :id
                     LIMIT 1';
             $stmt = $pdo->prepare($sql);

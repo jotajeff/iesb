@@ -121,7 +121,7 @@ final class AsaasController extends Controller
         }
 
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
-        $sql = 'SELECT id, nome FROM cursos_iesb_inscricao WHERE id IN (' . $placeholders . ')';
+        $sql = 'SELECT id, nome FROM cursos_inscricao WHERE id IN (' . $placeholders . ')';
         $stmt = $pdo->prepare($sql);
 
         foreach ($ids as $index => $id) {

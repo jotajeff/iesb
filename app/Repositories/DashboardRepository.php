@@ -24,13 +24,13 @@ final class DashboardRepository
         if ($isAdmin || !$userId) {
             return [
                 'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos'),
-                'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos_iesb'),
+                'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos'),
                 'total_matriculas' => $this->count($pdo, 'SELECT COUNT(*) FROM matriculas'),
                 'total_pre_inscricoes' => $this->count($pdo, "SELECT COUNT(*) FROM pre_inscricao WHERE situacao = 'recebido'"),
             ];
         }
 
-        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT c.id) FROM cursos_iesb c JOIN turmas t ON t.id_curso = c.id JOIN turma_professor tp ON tp.id_turma = t.id WHERE tp.id_usuario = :userId');
+        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT c.id) FROM cursos c JOIN turmas t ON t.id_curso = c.id JOIN turma_professor tp ON tp.id_turma = t.id WHERE tp.id_usuario = :userId');
         $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
         $stmt->execute();
         $totalCursos = (int) $stmt->fetchColumn();

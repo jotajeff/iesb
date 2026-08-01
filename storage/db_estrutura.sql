@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 31/07/2026 às 14:32
+-- Tempo de geração: 31/07/2026 às 21:29
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -146,10 +146,10 @@ CREATE TABLE `curriculo` (
 -- --------------------------------------------------------
 
 --
--- Estrutura para tabela `cursos_iesb`
+-- Estrutura para tabela `cursos`
 --
 
-CREATE TABLE `cursos_iesb` (
+CREATE TABLE `cursos` (
   `id` int(11) NOT NULL,
   `nome` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
   `descricao` text COLLATE utf8_unicode_ci,
@@ -159,7 +159,7 @@ CREATE TABLE `cursos_iesb` (
   `horario` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `local_curso` varchar(255) COLLATE utf8_unicode_ci DEFAULT NULL,
   `modalidade` int(1) DEFAULT NULL,
-  `nivel` int(1) DEFAULT NULL,
+  `tipo_curso` int(1) DEFAULT NULL,
   `segmento` int(3) NOT NULL,
   `publico_alvo` text COLLATE utf8_unicode_ci NOT NULL,
   `carga_horaria` int(5) NOT NULL,
@@ -179,10 +179,10 @@ CREATE TABLE `cursos_iesb` (
 -- --------------------------------------------------------
 
 --
--- Estrutura para tabela `cursos_iesb_inscricao`
+-- Estrutura para tabela `cursos_inscricao`
 --
 
-CREATE TABLE `cursos_iesb_inscricao` (
+CREATE TABLE `cursos_inscricao` (
   `id` int(11) NOT NULL,
   `id_curso` int(11) NOT NULL,
   `id_pagamento` int(11) NOT NULL,
@@ -204,10 +204,10 @@ CREATE TABLE `cursos_iesb_inscricao` (
 -- --------------------------------------------------------
 
 --
--- Estrutura para tabela `cursos_iesb_pagamento`
+-- Estrutura para tabela `cursos_pagamento`
 --
 
-CREATE TABLE `cursos_iesb_pagamento` (
+CREATE TABLE `cursos_pagamento` (
   `id` int(11) NOT NULL,
   `id_curso` int(11) NOT NULL,
   `descricao` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -439,10 +439,10 @@ CREATE TABLE `modulo` (
 -- --------------------------------------------------------
 
 --
--- Estrutura para tabela `nivel`
+-- Estrutura para tabela `tipo_curso`
 --
 
-CREATE TABLE `nivel` (
+CREATE TABLE `tipo_curso` (
   `id` int(11) NOT NULL,
   `nome` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `slug` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
@@ -648,18 +648,6 @@ CREATE TABLE `tarefas` (
 
 -- --------------------------------------------------------
 
---
--- Estrutura para tabela `tipo_curso`
---
-
-CREATE TABLE `tipo_curso` (
-  `id` int(11) NOT NULL,
-  `nome` varchar(80) COLLATE utf8_unicode_ci NOT NULL,
-  `ativo` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
 -- --------------------------------------------------------
 
 --
@@ -835,24 +823,24 @@ ALTER TABLE `curriculo`
   ADD KEY `fk_curriculo_usuario` (`id_fk`);
 
 --
--- Índices de tabela `cursos_iesb`
+-- Índices de tabela `cursos`
 --
-ALTER TABLE `cursos_iesb`
+ALTER TABLE `cursos`
   ADD PRIMARY KEY (`id`);
 
 --
--- Índices de tabela `cursos_iesb_inscricao`
+-- Índices de tabela `cursos_inscricao`
 --
-ALTER TABLE `cursos_iesb_inscricao`
+ALTER TABLE `cursos_inscricao`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_curso` (`id_curso`),
   ADD KEY `id_pagamento` (`id_pagamento`),
   ADD KEY `asaas_payment` (`asaas_payment`);
 
 --
--- Índices de tabela `cursos_iesb_pagamento`
+-- Índices de tabela `cursos_pagamento`
 --
-ALTER TABLE `cursos_iesb_pagamento`
+ALTER TABLE `cursos_pagamento`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_curso` (`id_curso`);
 
@@ -945,9 +933,9 @@ ALTER TABLE `modulo`
   ADD PRIMARY KEY (`id`);
 
 --
--- Índices de tabela `nivel`
+-- Índices de tabela `tipo_curso`
 --
-ALTER TABLE `nivel`
+ALTER TABLE `tipo_curso`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -1029,12 +1017,6 @@ ALTER TABLE `social`
 ALTER TABLE `tarefas`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_tarefas_setor` (`setor`);
-
---
--- Índices de tabela `tipo_curso`
---
-ALTER TABLE `tipo_curso`
-  ADD PRIMARY KEY (`id`);
 
 --
 -- Índices de tabela `turmas`
@@ -1137,21 +1119,21 @@ ALTER TABLE `curriculo`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de tabela `cursos_iesb`
+-- AUTO_INCREMENT de tabela `cursos`
 --
-ALTER TABLE `cursos_iesb`
+ALTER TABLE `cursos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de tabela `cursos_iesb_inscricao`
+-- AUTO_INCREMENT de tabela `cursos_inscricao`
 --
-ALTER TABLE `cursos_iesb_inscricao`
+ALTER TABLE `cursos_inscricao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de tabela `cursos_iesb_pagamento`
+-- AUTO_INCREMENT de tabela `cursos_pagamento`
 --
-ALTER TABLE `cursos_iesb_pagamento`
+ALTER TABLE `cursos_pagamento`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1233,9 +1215,9 @@ ALTER TABLE `modulo`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de tabela `nivel`
+-- AUTO_INCREMENT de tabela `tipo_curso`
 --
-ALTER TABLE `nivel`
+ALTER TABLE `tipo_curso`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1305,12 +1287,6 @@ ALTER TABLE `tarefas`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de tabela `tipo_curso`
---
-ALTER TABLE `tipo_curso`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
@@ -1360,7 +1336,7 @@ ALTER TABLE `carousel_item`
 -- Restrições para tabelas `corpo_docente`
 --
 ALTER TABLE `corpo_docente`
-  ADD CONSTRAINT `fk_corpo_docente_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_corpo_docente_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_corpo_docente_funcao` FOREIGN KEY (`id_funcao`) REFERENCES `funcoes_docente` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_corpo_docente_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE;
 
@@ -1371,23 +1347,23 @@ ALTER TABLE `curriculo`
   ADD CONSTRAINT `fk_curriculo_usuario` FOREIGN KEY (`id_fk`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE;
 
 --
--- Restrições para tabelas `cursos_iesb_inscricao`
+-- Restrições para tabelas `cursos_inscricao`
 --
-ALTER TABLE `cursos_iesb_inscricao`
-  ADD CONSTRAINT `cursos_iesb_inscricao_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`),
-  ADD CONSTRAINT `cursos_iesb_inscricao_ibfk_2` FOREIGN KEY (`id_pagamento`) REFERENCES `cursos_iesb_pagamento` (`id`);
+ALTER TABLE `cursos_inscricao`
+  ADD CONSTRAINT `cursos_inscricao_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`),
+  ADD CONSTRAINT `cursos_inscricao_ibfk_2` FOREIGN KEY (`id_pagamento`) REFERENCES `cursos_pagamento` (`id`);
 
 --
--- Restrições para tabelas `cursos_iesb_pagamento`
+-- Restrições para tabelas `cursos_pagamento`
 --
-ALTER TABLE `cursos_iesb_pagamento`
-  ADD CONSTRAINT `cursos_iesb_pagamento_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`);
+ALTER TABLE `cursos_pagamento`
+  ADD CONSTRAINT `cursos_pagamento_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`);
 
 --
 -- Restrições para tabelas `disciplina`
 --
 ALTER TABLE `disciplina`
-  ADD CONSTRAINT `fk_disciplinas_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`) ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_disciplinas_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`) ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `matriculas`
@@ -1419,7 +1395,7 @@ ALTER TABLE `notificacao_leitura`
 -- Restrições para tabelas `turmas`
 --
 ALTER TABLE `turmas`
-  ADD CONSTRAINT `turmas_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos_iesb` (`id`);
+  ADD CONSTRAINT `turmas_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`);
 
 --
 -- Restrições para tabelas `turma_professor`
