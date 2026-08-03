@@ -47,6 +47,9 @@ final class ApiController extends Controller
             'carga_horaria' => (int) ($curso['carga_horaria'] ?? 0),
             'segmento_nome' => trim((string) ($curso['segmento_nome'] ?? '')),
             'modalidade_nome' => trim((string) ($curso['modalidade_nome'] ?? '')),
+            'tipo_curso' => (int) ($curso['tipo_curso'] ?? 0),
+            'tipo_curso_nome' => trim((string) ($curso['tipo_curso_nome'] ?? '')),
+            'tipo_curso_slug' => trim((string) ($curso['tipo_curso_slug'] ?? '')),
             'link_ingresso' => trim((string) ($curso['link_ingresso'] ?? '')),
         ], $cursos);
 
@@ -66,10 +69,11 @@ final class ApiController extends Controller
         if ($pdo instanceof \PDO) {
             try {
                 $stmt = $pdo->query(
-                    'SELECT c.id, c.nome, c.slug, c.data_curso, c.horario, c.local_curso, c.imagem_card, c.carga_horaria, c.link_ingresso, s.nome AS segmento_nome, m.nome AS modalidade_nome'
+                    'SELECT c.id, c.nome, c.slug, c.data_curso, c.horario, c.local_curso, c.imagem_card, c.carga_horaria, c.tipo_curso, c.link_ingresso, s.nome AS segmento_nome, m.nome AS modalidade_nome, tc.nome AS tipo_curso_nome, tc.slug AS tipo_curso_slug'
                     . ' FROM cursos c'
                     . ' LEFT JOIN segmento s ON s.id = c.segmento'
                     . ' LEFT JOIN modalidade m ON m.id = c.modalidade'
+                    . ' LEFT JOIN tipo_curso tc ON tc.id = c.tipo_curso'
                     . ' WHERE c.ativo = 1'
                     . ' ORDER BY c.nome ASC'
                 );
@@ -90,6 +94,9 @@ final class ApiController extends Controller
             'carga_horaria' => (int) ($curso['carga_horaria'] ?? 0),
             'segmento_nome' => trim((string) ($curso['segmento_nome'] ?? '')),
             'modalidade_nome' => trim((string) ($curso['modalidade_nome'] ?? '')),
+            'tipo_curso' => (int) ($curso['tipo_curso'] ?? 0),
+            'tipo_curso_nome' => trim((string) ($curso['tipo_curso_nome'] ?? '')),
+            'tipo_curso_slug' => trim((string) ($curso['tipo_curso_slug'] ?? '')),
             'link_ingresso' => trim((string) ($curso['link_ingresso'] ?? '')),
         ], $cursos);
 

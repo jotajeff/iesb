@@ -81,10 +81,11 @@ final class CursoRepository
 
         $referenceDate = $referenceDate !== '' ? $referenceDate : (new \DateTime())->format('Y-m-d');
 
-        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.carga_horaria, c.exibir_home, c.confirmado, c.segmento, c.modalidade, s.nome AS segmento_nome, m.nome AS modalidade_nome
+        $sql = 'SELECT c.id, c.nome, c.slug, c.data_curso, c.curso_calendario, c.horario, c.local_curso, c.link_ingresso, c.imagem_card, c.carga_horaria, c.exibir_home, c.confirmado, c.segmento, c.modalidade, c.tipo_curso, s.nome AS segmento_nome, m.nome AS modalidade_nome, tc.nome AS tipo_curso_nome, tc.slug AS tipo_curso_slug
                 FROM cursos c
                 LEFT JOIN segmento s ON s.id = c.segmento
                 LEFT JOIN modalidade m ON m.id = c.modalidade
+                LEFT JOIN tipo_curso tc ON tc.id = c.tipo_curso
                 WHERE c.ativo = 1 AND c.exibir_home = "S" AND c.curso_calendario IS NOT NULL AND c.curso_calendario >= :maxDate
                 ORDER BY c.curso_calendario ASC, c.id DESC
                 LIMIT :limit';
