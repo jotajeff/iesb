@@ -247,4 +247,5 @@ return static function (Router $router): void {
        APIs externas
        ============================================= */
     $router->get('/api/cursos-home', [ApiController::class, 'cursosHome']);
+    $router->get('/api/cursos-ativos', [ApiController::class, 'cursosAtivos']);
 };
