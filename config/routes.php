@@ -16,6 +16,7 @@ use App\Controllers\Admin\NotificacaoController;
 use App\Controllers\Admin\AsaasController;
 use App\Controllers\Admin\PreInscricaoController;
 use App\Controllers\Admin\SessaoController;
+use App\Controllers\Admin\TipoDocumentoController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -158,6 +159,12 @@ return static function (Router $router): void {
     $router->get('/admin/nivel',            [ConfigController::class, 'nivel']);
     $router->get('/admin/nivel/edit',        [ConfigController::class, 'editNivel']);
     $router->post('/admin/nivel/update',      [ConfigController::class, 'updateNivel']);
+    $router->get('/admin/tipos-documentos', [TipoDocumentoController::class, 'index']);
+    $router->get('/admin/tipos-documentos/novo', [TipoDocumentoController::class, 'novo']);
+    $router->post('/admin/tipos-documentos/salvar', [TipoDocumentoController::class, 'salvar']);
+    $router->get('/admin/tipos-documentos/editar', [TipoDocumentoController::class, 'editar']);
+    $router->post('/admin/tipos-documentos/atualizar', [TipoDocumentoController::class, 'atualizar']);
+    $router->get('/admin/tipos-documentos/excluir', [TipoDocumentoController::class, 'excluir']);
 
     $router->get('/admin/funcoes-docente',            [ConfigController::class, 'funcoesDocente']);
     $router->get('/admin/funcoes-docente/edit',        [ConfigController::class, 'editFuncaoDocente']);

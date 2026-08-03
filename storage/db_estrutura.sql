@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 31/07/2026 às 21:29
+-- Tempo de geração: 03/08/2026 às 11:36
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -265,6 +265,59 @@ CREATE TABLE `disciplina` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `documento`
+--
+
+CREATE TABLE `documento` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `id_grupo` int(10) UNSIGNED NOT NULL,
+  `id_registro` int(10) UNSIGNED NOT NULL,
+  `id_tipo` int(10) UNSIGNED NOT NULL,
+  `nome_original` varchar(255) NOT NULL,
+  `nome_drive` varchar(255) NOT NULL,
+  `mime_type` varchar(120) DEFAULT NULL,
+  `tamanho` bigint(20) DEFAULT NULL,
+  `file_id` varchar(120) NOT NULL,
+  `versao` int(11) NOT NULL DEFAULT '1',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `documento_grupo`
+--
+
+CREATE TABLE `documento_grupo` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `descricao` varchar(100) NOT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `documento_tipo`
+--
+
+CREATE TABLE `documento_tipo` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `id_grupo` int(10) UNSIGNED NOT NULL,
+  `descricao` varchar(120) NOT NULL,
+  `obrigatorio` tinyint(1) NOT NULL DEFAULT '0',
+  `ordem` int(11) NOT NULL DEFAULT '0',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `ementa`
 --
 
@@ -434,22 +487,6 @@ CREATE TABLE `modulo` (
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
--- --------------------------------------------------------
-
---
--- Estrutura para tabela `tipo_curso`
---
-
-CREATE TABLE `tipo_curso` (
-  `id` int(11) NOT NULL,
-  `nome` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
-  `slug` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
-  `apresentacao` text COLLATE utf8_unicode_ci NOT NULL,
-  `ativo` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -629,6 +666,24 @@ CREATE TABLE `social` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `storage_drive`
+--
+
+CREATE TABLE `storage_drive` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `id_grupo` int(10) UNSIGNED NOT NULL,
+  `id_registro` int(10) UNSIGNED NOT NULL,
+  `folder_id` varchar(120) NOT NULL,
+  `folder_name` varchar(255) NOT NULL,
+  `folder_link` varchar(512) DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `tarefas`
 --
 
@@ -647,6 +702,20 @@ CREATE TABLE `tarefas` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `tipo_curso`
+--
+
+CREATE TABLE `tipo_curso` (
+  `id` int(11) NOT NULL,
+  `nome` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `slug` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `apresentacao` text COLLATE utf8_unicode_ci NOT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -864,6 +933,28 @@ ALTER TABLE `disciplina`
   ADD KEY `idx_id_curso` (`id_curso`);
 
 --
+-- Índices de tabela `documento`
+--
+ALTER TABLE `documento`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_documento_tipo` (`id_tipo`),
+  ADD KEY `idx_documento_grupo` (`id_grupo`,`id_registro`),
+  ADD KEY `idx_documento_fileid` (`file_id`);
+
+--
+-- Índices de tabela `documento_grupo`
+--
+ALTER TABLE `documento_grupo`
+  ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `documento_tipo`
+--
+ALTER TABLE `documento_tipo`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `fk_documento_tipo_grupo` (`id_grupo`);
+
+--
 -- Índices de tabela `ementa`
 --
 ALTER TABLE `ementa`
@@ -930,12 +1021,6 @@ ALTER TABLE `modalidade`
 -- Índices de tabela `modulo`
 --
 ALTER TABLE `modulo`
-  ADD PRIMARY KEY (`id`);
-
---
--- Índices de tabela `tipo_curso`
---
-ALTER TABLE `tipo_curso`
   ADD PRIMARY KEY (`id`);
 
 --
@@ -1012,11 +1097,24 @@ ALTER TABLE `social`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `storage_drive`
+--
+ALTER TABLE `storage_drive`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_google_drive` (`id_grupo`,`id_registro`);
+
+--
 -- Índices de tabela `tarefas`
 --
 ALTER TABLE `tarefas`
   ADD PRIMARY KEY (`id`),
   ADD KEY `fk_tarefas_setor` (`setor`);
+
+--
+-- Índices de tabela `tipo_curso`
+--
+ALTER TABLE `tipo_curso`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Índices de tabela `turmas`
@@ -1155,6 +1253,24 @@ ALTER TABLE `disciplina`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `documento`
+--
+ALTER TABLE `documento`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `documento_grupo`
+--
+ALTER TABLE `documento_grupo`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `documento_tipo`
+--
+ALTER TABLE `documento_tipo`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `ementa`
 --
 ALTER TABLE `ementa`
@@ -1212,12 +1328,6 @@ ALTER TABLE `modalidade`
 -- AUTO_INCREMENT de tabela `modulo`
 --
 ALTER TABLE `modulo`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
--- AUTO_INCREMENT de tabela `tipo_curso`
---
-ALTER TABLE `tipo_curso`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1281,9 +1391,21 @@ ALTER TABLE `social`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `storage_drive`
+--
+ALTER TABLE `storage_drive`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `tarefas`
 --
 ALTER TABLE `tarefas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `tipo_curso`
+--
+ALTER TABLE `tipo_curso`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1366,6 +1488,19 @@ ALTER TABLE `disciplina`
   ADD CONSTRAINT `fk_disciplinas_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`) ON UPDATE CASCADE;
 
 --
+-- Restrições para tabelas `documento`
+--
+ALTER TABLE `documento`
+  ADD CONSTRAINT `fk_documento_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `documento_grupo` (`id`),
+  ADD CONSTRAINT `fk_documento_tipo` FOREIGN KEY (`id_tipo`) REFERENCES `documento_tipo` (`id`);
+
+--
+-- Restrições para tabelas `documento_tipo`
+--
+ALTER TABLE `documento_tipo`
+  ADD CONSTRAINT `fk_documento_tipo_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `documento_grupo` (`id`);
+
+--
 -- Restrições para tabelas `matriculas`
 --
 ALTER TABLE `matriculas`
@@ -1390,6 +1525,12 @@ ALTER TABLE `notificacao`
 ALTER TABLE `notificacao_leitura`
   ADD CONSTRAINT `notificacao_leitura_ibfk_1` FOREIGN KEY (`id_notificacao`) REFERENCES `notificacao` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   ADD CONSTRAINT `notificacao_leitura_ibfk_2` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `storage_drive`
+--
+ALTER TABLE `storage_drive`
+  ADD CONSTRAINT `fk_google_drive_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `documento_grupo` (`id`);
 
 --
 -- Restrições para tabelas `turmas`

@@ -93,6 +93,7 @@
               <li><a class="dropdown-item" href="/admin/segmento"><i class="bi bi-diagram-3 me-1"></i>Segmento</a></li>
               <li><a class="dropdown-item" href="/admin/setor"><i class="bi bi-building me-1"></i>Setor</a></li>
               <li><a class="dropdown-item" href="/admin/nivel"><i class="bi bi-bar-chart-steps me-1"></i>Nível</a></li>
+              <li><a class="dropdown-item" href="/admin/tipos-documentos"><i class="bi bi-file-earmark-text me-1"></i>Tipos documentos</a></li>
               <li><a class="dropdown-item" href="/admin/config/categoria"><i class="bi bi-newspaper me-1"></i>Categoria</a></li>
               <li><a class="dropdown-item" href="/admin/funcoes-docente"><i class="bi bi-person-workspace me-1"></i>Funções Docente</a></li>
               <?php if (in_array((int) ($authUser['id'] ?? 0), [1, 6, 7], true)): ?>
