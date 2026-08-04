@@ -155,6 +155,84 @@ final class VisitaService
         ];
     }
 
+    public function refererStats(?int $month = null, ?int $year = null): array
+    {
+        $month = $this->sanitizeMonth($month);
+        $year = $this->sanitizeYear($year);
+
+        $rows = $this->repository->refererStats($month, $year);
+        $total = 0;
+        foreach ($rows as $row) {
+            $total += (int) ($row['total'] ?? 0);
+        }
+
+        $referers = [];
+        foreach ($rows as $row) {
+            $count = (int) ($row['total'] ?? 0);
+            $referer = (string) ($row['referer'] ?? '-');
+            $referers[] = [
+                'referer' => $referer,
+                'domain' => $this->extractDomain($referer),
+                'total' => $count,
+                'percent' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
+            ];
+        }
+
+        return [
+            'month' => $month,
+            'year' => $year,
+            'month_label' => $this->monthNamePtBr($month),
+            'total' => $total,
+            'referers' => $referers,
+        ];
+    }
+
+    public function utmStats(?int $month = null, ?int $year = null): array
+    {
+        $month = $this->sanitizeMonth($month);
+        $year = $this->sanitizeYear($year);
+
+        $rows = $this->repository->utmStats($month, $year);
+        $total = 0;
+        foreach ($rows as $row) {
+            $total += (int) ($row['total'] ?? 0);
+        }
+
+        $utms = [];
+        foreach ($rows as $row) {
+            $count = (int) ($row['total'] ?? 0);
+            $utms[] = [
+                'source' => (string) ($row['utm_source'] ?? '-'),
+                'medium' => (string) ($row['utm_medium'] ?? '-'),
+                'campaign' => (string) ($row['utm_campaign'] ?? '-'),
+                'total' => $count,
+                'percent' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
+            ];
+        }
+
+        return [
+            'month' => $month,
+            'year' => $year,
+            'month_label' => $this->monthNamePtBr($month),
+            'total' => $total,
+            'utms' => $utms,
+        ];
+    }
+
+    private function extractDomain(string $url): string
+    {
+        if ($url === '' || $url === '-') {
+            return '-';
+        }
+
+        $parsed = parse_url($url);
+        if (!isset($parsed['host'])) {
+            return '-';
+        }
+
+        return $parsed['host'];
+    }
+
     private function incrementBucket(array &$bucket, string $key): void
     {
         if (!isset($bucket[$key])) {

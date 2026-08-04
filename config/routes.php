@@ -214,6 +214,7 @@ return static function (Router $router): void {
     $router->get('/admin/visitas/analytics', [VisitaController::class, 'analytics']);
     $router->get('/admin/visitas/paginas', [VisitaController::class, 'paginas']);
     $router->get('/admin/visitas/cursos', [VisitaController::class, 'cursos']);
+    $router->get('/admin/visitas/referer', [VisitaController::class, 'referer']);
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);

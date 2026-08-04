@@ -96,6 +96,24 @@ final class VisitaController extends Controller
         ], 'admin');
     }
 
+    public function referer(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as visitas.');
+            $this->redirect('/admin/login');
+        }
+
+        $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
+        $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+
+        $this->render('pages/admin/visitas/referer', [
+            'title' => 'Referer & UTM',
+            'currentRoute' => '/admin/visitas/referer',
+            'refererStats' => $this->visitaService->refererStats($month, $year),
+            'utmStats' => $this->visitaService->utmStats($month, $year),
+        ], 'admin');
+    }
+
     private function isStaff(): bool
     {
         return (new \App\Services\AuthService())->isStaff();

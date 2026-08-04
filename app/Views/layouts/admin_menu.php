@@ -77,13 +77,14 @@
             </ul>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= ($currentRoute ?? '') === '/admin/visitas' ? 'active' : '' ?>" href="/admin/visitas" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-eye me-1"></i>Visitas</a>
+            <a class="nav-link dropdown-toggle <?= (strpos((string) ($currentRoute ?? ''), '/admin/visitas') === 0) ? 'active' : '' ?>" href="/admin/visitas" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-eye me-1"></i>Visitas</a>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="/admin/visitas"><i class="bi bi-list-ul me-1"></i>Lista</a></li>
               <li><a class="dropdown-item" href="/admin/visitas/mensal"><i class="bi bi-calendar-month me-1"></i>Por mes</a></li>
               <li><a class="dropdown-item" href="/admin/visitas/analytics"><i class="bi bi-graph-up me-1"></i>Analytics</a></li>
               <li><a class="dropdown-item" href="/admin/visitas/paginas"><i class="bi bi-file-earmark-text me-1"></i>Por pagina</a></li>
               <li><a class="dropdown-item" href="/admin/visitas/cursos"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
+              <li><a class="dropdown-item" href="/admin/visitas/referer"><i class="bi bi-link-45deg me-1"></i>Referer & UTM</a></li>
             </ul>
           </li>
           <li class="nav-item dropdown">

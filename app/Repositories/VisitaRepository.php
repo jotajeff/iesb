@@ -16,7 +16,8 @@ final class VisitaRepository
             return [];
         }
 
-        $sql = 'SELECT v.id, v.ip, v.user_agent, v.endereco_pagina, v.data_visita, v.hora_visita, v.created_at,
+        $sql = 'SELECT v.id, v.ip, v.user_agent, v.referer, v.utm_source, v.utm_medium, v.utm_campaign,
+                       v.endereco_pagina, v.data_visita, v.hora_visita, v.created_at,
                        p.nome AS pagina_nome, p.slug AS pagina_slug
                 FROM visitas_paginas v
                 INNER JOIN paginas p ON p.id = v.pagina_id
@@ -39,7 +40,8 @@ final class VisitaRepository
             return [];
         }
 
-        $sql = 'SELECT v.id, v.ip, v.user_agent, v.endereco_pagina, v.data_visita, v.hora_visita, v.created_at,
+        $sql = 'SELECT v.id, v.ip, v.user_agent, v.referer, v.utm_source, v.utm_medium, v.utm_campaign,
+                       v.endereco_pagina, v.data_visita, v.hora_visita, v.created_at,
                        p.nome AS pagina_nome, p.slug AS pagina_slug
                 FROM visitas_paginas v
                 INNER JOIN paginas p ON p.id = v.pagina_id
@@ -139,6 +141,56 @@ final class VisitaRepository
                 ORDER BY total DESC';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':prefix', $prefix . '%');
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function refererStats(?int $month = null, ?int $year = null): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $month = $month ?? (int) date('m');
+        $year = $year ?? (int) date('Y');
+        $monthStr = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+        $period = sprintf('%04d-%s', $year, $monthStr);
+
+        $sql = 'SELECT referer, COUNT(*) AS total
+                FROM visitas_paginas
+                WHERE data_visita LIKE :period AND referer != \'\'
+                GROUP BY referer
+                ORDER BY total DESC';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':period', $period . '%');
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
+
+    public function utmStats(?int $month = null, ?int $year = null): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $month = $month ?? (int) date('m');
+        $year = $year ?? (int) date('Y');
+        $monthStr = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+        $period = sprintf('%04d-%s', $year, $monthStr);
+
+        $sql = 'SELECT utm_source, utm_medium, utm_campaign, COUNT(*) AS total
+                FROM visitas_paginas
+                WHERE data_visita LIKE :period AND utm_source != \'\'
+                GROUP BY utm_source, utm_medium, utm_campaign
+                ORDER BY total DESC';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':period', $period . '%');
         $stmt->execute();
 
         $rows = $stmt->fetchAll();

@@ -42,15 +42,28 @@ final class VisitTrackerService
                 return;
             }
 
+            $referer = substr((string) ($_SERVER['HTTP_REFERER'] ?? ''), 0, 500);
+            $utmSource = substr((string) ($_GET['utm_source'] ?? ''), 0, 100);
+            $utmMedium = substr((string) ($_GET['utm_medium'] ?? ''), 0, 100);
+            $utmCampaign = substr((string) ($_GET['utm_campaign'] ?? ''), 0, 150);
+            $utmTerm = substr((string) ($_GET['utm_term'] ?? ''), 0, 150);
+            $utmContent = substr((string) ($_GET['utm_content'] ?? ''), 0, 150);
+
             $sql = 'INSERT INTO visitas_paginas
-                    (pagina_id, ip, user_agent, endereco_pagina, data_visita, hora_visita)
-                    VALUES (:pagina_id, :ip, :user_agent, :endereco_pagina, :data_visita, :hora_visita)';
+                    (pagina_id, ip, user_agent, referer, utm_source, utm_medium, utm_campaign, utm_term, utm_content, endereco_pagina, data_visita, hora_visita)
+                    VALUES (:pagina_id, :ip, :user_agent, :referer, :utm_source, :utm_medium, :utm_campaign, :utm_term, :utm_content, :endereco_pagina, :data_visita, :hora_visita)';
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 'pagina_id' => $paginaId,
                 'ip' => $ip,
                 'user_agent' => substr((string) ($_SERVER['HTTP_USER_AGENT'] ?? ''), 0, 256),
+                'referer' => $referer,
+                'utm_source' => $utmSource,
+                'utm_medium' => $utmMedium,
+                'utm_campaign' => $utmCampaign,
+                'utm_term' => $utmTerm,
+                'utm_content' => $utmContent,
                 'endereco_pagina' => $this->fullUrl($requestUri),
                 'data_visita' => $today,
                 'hora_visita' => date('H:i:s'),
