@@ -31,7 +31,16 @@ final class StorageService
     public function isConnected(): bool
     {
         $config = $this->integracaoRepository->findActive();
-        return (bool) ($config['conectado'] ?? false);
+        if ($config === null) {
+            return false;
+        }
+
+        $refreshToken = (string) ($config['refresh_token'] ?? '');
+        if ($refreshToken === '') {
+            return false;
+        }
+
+        return true;
     }
 
     public function connectionInfo(): ?array
@@ -104,7 +113,7 @@ final class StorageService
         return $this->provider->createFolder($folderName, $parentId);
     }
 
-    public function upload(array $file, int $idGrupo, int $idRegistro, int $idTipo, ?string $folderId = null): array
+    public function upload(array $file, int $idGrupo, int $idRegistro, int $idTipo, ?string $folderId = null, ?string $nomeDrive = null, string $status = 'enviado'): array
     {
         $localPath = (string) ($file['tmp_name'] ?? '');
         $originalName = (string) ($file['name'] ?? '');
@@ -121,7 +130,9 @@ final class StorageService
             $folderId = $this->defaultFolderForGroup($idGrupo);
         }
 
-        $nameDrive = $this->driveName($idRegistro, $idTipo, $originalName);
+        $nameDrive = $nomeDrive !== null && $nomeDrive !== ''
+            ? $nomeDrive
+            : $this->driveName($idRegistro, $idTipo, $originalName);
         $mimeType = (string) ($file['type'] ?? '');
         $size = (int) ($file['size'] ?? 0);
 
@@ -139,6 +150,7 @@ final class StorageService
             'mime_type' => $result['mime_type'],
             'tamanho' => $result['size'] > 0 ? $result['size'] : $size,
             'file_id' => $result['file_id'],
+            'status' => $status,
         ]);
 
         if (is_file($localPath)) {
@@ -152,6 +164,7 @@ final class StorageService
             'nome_drive' => $nameDrive,
             'mime_type' => $result['mime_type'],
             'tamanho' => $result['size'],
+            'status' => $status,
         ];
     }
 
@@ -249,7 +262,7 @@ final class StorageService
         return true;
     }
 
-    public function viewLink(int $documentoId): string
+    public function generateViewLink(int $documentoId): string
     {
         $documento = $this->documentoRepository->findById($documentoId);
         if ($documento === null) {
@@ -259,7 +272,17 @@ final class StorageService
         return $this->provider->generateViewLink((string) $documento['file_id']);
     }
 
-    public function downloadLink(int $documentoId): string
+    public function generateViewLinkByFileId(string $fileId): string
+    {
+        return $this->provider->generateViewLink($fileId);
+    }
+
+    public function generateDownloadLinkByFileId(string $fileId): string
+    {
+        return $this->provider->generateDownloadLink($fileId);
+    }
+
+    public function generateDownloadLink(int $documentoId): string
     {
         $documento = $this->documentoRepository->findById($documentoId);
         if ($documento === null) {

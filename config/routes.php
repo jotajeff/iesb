@@ -245,6 +245,11 @@ return static function (Router $router): void {
     $router->post('/aluno/matricular', [StudentController::class, 'enroll']);
     $router->get('/aluno/notificacoes', [StudentController::class, 'notificacoes']);
     $router->post('/aluno/notificacoes/marcar-lida', [StudentController::class, 'marcarLida']);
+    $router->get('/aluno/documentos', [StudentController::class, 'documentos']);
+    $router->post('/aluno/documentos/enviar', [StudentController::class, 'uploadDocumento']);
+    $router->get('/aluno/documentos/visualizar', [StudentController::class, 'visualizarDocumento']);
+    $router->get('/aluno/documentos/baixar', [StudentController::class, 'baixarDocumento']);
+    $router->post('/aluno/documentos/excluir', [StudentController::class, 'excluirDocumento']);
     $router->get('/aluno/noticia', [StudentController::class, 'noticia']);
 
     $router->get('/area-do-aluno', [StudentController::class, 'dashboard']);

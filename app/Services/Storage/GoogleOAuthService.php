@@ -86,17 +86,15 @@ final class GoogleOAuthService
     public function accessToken(): ?string
     {
         try {
-            $client = $this->client();
+            $config = $this->repository->findActive();
+            $refreshToken = (string) ($config['refresh_token'] ?? '');
 
-            if (!$client->isAccessTokenExpired()) {
-                return (string) $client->getAccessToken()['access_token'];
-            }
-
-            $refreshToken = (string) $client->getRefreshToken();
             if ($refreshToken === '') {
                 $this->markDisconnected();
                 return null;
             }
+
+            $client = $this->client();
 
             $token = $client->fetchAccessTokenWithRefreshToken($refreshToken);
             if (isset($token['error'])) {

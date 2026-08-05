@@ -17,8 +17,8 @@ final class DocumentoRepository
         }
 
         $sql = 'INSERT INTO documento
-                (id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao)
-                VALUES (:id_grupo, :id_registro, :id_tipo, :nome_original, :nome_drive, :folder_id, :mime_type, :tamanho, :file_id, :versao)';
+                (id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, status)
+                VALUES (:id_grupo, :id_registro, :id_tipo, :nome_original, :nome_drive, :folder_id, :mime_type, :tamanho, :file_id, :versao, :status)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':id_grupo', (int) ($data['id_grupo'] ?? 0), PDO::PARAM_INT);
         $stmt->bindValue(':id_registro', (int) ($data['id_registro'] ?? 0), PDO::PARAM_INT);
@@ -30,6 +30,7 @@ final class DocumentoRepository
         $stmt->bindValue(':tamanho', isset($data['tamanho']) ? (int) $data['tamanho'] : null, PDO::PARAM_INT);
         $stmt->bindValue(':file_id', $data['file_id'] ?? '');
         $stmt->bindValue(':versao', (int) ($data['versao'] ?? 1), PDO::PARAM_INT);
+        $stmt->bindValue(':status', $data['status'] ?? 'enviado');
         $stmt->execute();
 
         return (int) $pdo->lastInsertId();
@@ -42,7 +43,7 @@ final class DocumentoRepository
             return null;
         }
 
-        $sql = 'SELECT id, id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, ativo
+        $sql = 'SELECT id, id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, status, observacao, ativo
                 FROM documento
                 WHERE file_id = :file_id AND ativo = 1
                 ORDER BY id DESC
@@ -62,7 +63,7 @@ final class DocumentoRepository
             return null;
         }
 
-        $sql = 'SELECT id, id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, ativo
+        $sql = 'SELECT id, id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, status, observacao, ativo
                 FROM documento
                 WHERE id = :id AND ativo = 1
                 LIMIT 1';
@@ -74,6 +75,53 @@ final class DocumentoRepository
         return $row ?: null;
     }
 
+    public function findLatestByTipoAndRegistro(int $idGrupo, int $idRegistro, int $idTipo): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, status, observacao, ativo
+                FROM documento
+                WHERE id_grupo = :id_grupo AND id_registro = :id_registro AND id_tipo = :id_tipo AND ativo = 1
+                ORDER BY versao DESC, id DESC
+                LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id_grupo', $idGrupo, PDO::PARAM_INT);
+        $stmt->bindValue(':id_registro', $idRegistro, PDO::PARAM_INT);
+        $stmt->bindValue(':id_tipo', $idTipo, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function updateStatus(int $id, string $status, ?string $observacao = null): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        if ($observacao !== null) {
+            $sql = 'UPDATE documento SET status = :status, observacao = :observacao WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':observacao', $observacao);
+        } else {
+            $sql = 'UPDATE documento SET status = :status WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+        }
+        $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function markSubstituido(int $id): void
+    {
+        $this->updateStatus($id, 'substituido');
+    }
+
     public function listByRegistro(int $idGrupo, int $idRegistro, ?int $idTipo = null): array
     {
         $pdo = Database::connection();
@@ -81,7 +129,7 @@ final class DocumentoRepository
             return [];
         }
 
-        $sql = 'SELECT id, id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, ativo, created_at
+        $sql = 'SELECT id, id_grupo, id_registro, id_tipo, nome_original, nome_drive, folder_id, mime_type, tamanho, file_id, versao, status, observacao, ativo, created_at
                 FROM documento
                 WHERE id_grupo = :id_grupo AND id_registro = :id_registro AND ativo = 1';
         $params = [
@@ -125,7 +173,7 @@ final class DocumentoRepository
             return;
         }
 
-        $allowed = ['nome_original', 'nome_drive', 'folder_id', 'mime_type', 'tamanho', 'file_id', 'versao'];
+        $allowed = ['nome_original', 'nome_drive', 'folder_id', 'mime_type', 'tamanho', 'file_id', 'versao', 'status', 'observacao'];
         $sets = [];
         $params = [];
 
