@@ -29,7 +29,7 @@ use Google\Service\Drive\DriveFile;
 // Credenciais reais vivem em ../material/client_secret_*.json (gitignored).
 // Nunca commit este arquivo com segredos. Os placeholders abaixo servem
 // apenas de fallback caso o JSON nao esteja presente.
-const CLIENT_SECRET_FILE = __DIR__ . '/../material/client_secret_391011534445-kd0a0qg9vcpmptjeeg8ph8rr1kdpqm87.apps.googleusercontent.com.json';
+const CLIENT_SECRET_FILE = __DIR__ . '/../material/client_secret_391011534445-48g5hv89491lftbijh5lliud59880evi.apps.googleusercontent.com.json';
 const CLIENT_ID_FALLBACK     = '';
 const CLIENT_SECRET_FALLBACK = '';
 
