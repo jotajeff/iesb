@@ -986,32 +986,93 @@ final class ProfessorController extends Controller
         }
 
         $idTurma = (int) $this->input('id_fk', 0);
-        $tipo = trim((string) $this->input('tipo', ''));
-        $link = trim((string) $this->input('link', ''));
-        $titulo = trim((string) $this->input('titulo', ''));
+        if ($idTurma <= 0) {
+            $idTurma = (int) ($_GET['turma_id'] ?? 0);
+        }
 
-        if ($idTurma <= 0 || $tipo === '' || $link === '' || $titulo === '') {
-            Session::setFlash('flash', 'Preencha todos os campos.');
+        $titulo = trim((string) $this->input('titulo', ''));
+        $file = $_FILES['arquivo'] ?? null;
+
+        if ($idTurma <= 0) {
+            Session::setFlash('flash', 'Turma inválida.');
+            $this->redirect('/admin/professores/turmas');
+            return;
+        }
+
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            Session::setFlash('flash', 'Selecione um arquivo PDF para enviar.');
             $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
             return;
         }
 
+        $originalName = (string) ($file['name'] ?? '');
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+
+        if ($extension !== 'pdf') {
+            Session::setFlash('flash', 'Apenas arquivos PDF são permitidos.');
+            $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
+            return;
+        }
+
+        if ((int) ($file['size'] ?? 0) > 20 * 1024 * 1024) {
+            Session::setFlash('flash', 'O arquivo deve ter no máximo 20MB.');
+            $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
+            return;
+        }
+
+        if ($titulo === '') {
+            $titulo = pathinfo($originalName, PATHINFO_FILENAME);
+        }
+
+        $authUser = Session::get('user');
+        $professorId = (int) ($authUser['id'] ?? 0);
+
         try {
+            $storage = new StorageService();
+            if (!$storage->isConnected()) {
+                Session::setFlash('flash', 'Storage não conectado. Conecte em /admin/storage.');
+                $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
+                return;
+            }
+
+            $storageDriveRepo = new StorageDriveRepository();
+            $pastaDrive = $storageDriveRepo->findByRegistro(StorageService::GROUP_PROFESSORES, $professorId);
+
+            $folderId = $pastaDrive['folder_id'] ?? '';
+            if ($folderId === '') {
+                $folderId = $storage->ensureRegistroFolder(
+                    StorageService::GROUP_PROFESSORES,
+                    (string) $professorId,
+                    (string) ($authUser['name'] ?? '')
+                );
+            }
+
+            if ($folderId === '') {
+                Session::setFlash('flash', 'Pasta do professor no Drive não encontrada.');
+                $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
+                return;
+            }
+
+            $timestamp = date('YmdHis');
+            $nomeDrive = sprintf('MAT_%s_%s_%s.pdf', $idTurma, $professorId, $timestamp);
+            $resultado = $storage->uploadFile($file, $folderId, $nomeDrive);
+
             $pdo = Database::connection();
             if ($pdo instanceof \PDO) {
                 $stmt = $pdo->prepare('INSERT INTO material (tipo, link, id_fk, titulo) VALUES (:tipo, :link, :id_fk, :titulo)');
-                $stmt->bindValue(':tipo', $tipo, \PDO::PARAM_STR);
-                $stmt->bindValue(':link', $link, \PDO::PARAM_STR);
+                $stmt->bindValue(':tipo', 'drive', \PDO::PARAM_STR);
+                $stmt->bindValue(':link', $resultado['link'], \PDO::PARAM_STR);
                 $stmt->bindValue(':id_fk', $idTurma, \PDO::PARAM_INT);
                 $stmt->bindValue(':titulo', $titulo, \PDO::PARAM_STR);
                 $stmt->execute();
 
-                $this->logService->log('criar', 'drive', (int) $pdo->lastInsertId(), "Arquivo do Drive adicionado à turma $idTurma");
+                $this->logService->log('criar', 'drive', (int) $pdo->lastInsertId(), "Material enviado à turma $idTurma: $titulo");
             }
-            Session::setFlash('flash', 'Arquivo adicionado com sucesso.');
+
+            Session::setFlash('flash', 'Material enviado com sucesso.');
         } catch (\Throwable $e) {
             error_log('[DRIVE] Erro ao salvar: ' . $e->getMessage());
-            Session::setFlash('flash', 'Erro ao salvar arquivo.');
+            Session::setFlash('flash', 'Erro ao salvar material.');
         }
 
         $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);

@@ -188,6 +188,41 @@ final class StorageService
         });
     }
 
+    /**
+     * Envia um arquivo para uma pasta do Drive sem registrar na tabela documento.
+     * Retorna file_id e link de visualizacao.
+     */
+    public function uploadFile(array $file, string $folderId, ?string $nomeDrive = null): array
+    {
+        $localPath = (string) ($file['tmp_name'] ?? '');
+        $originalName = (string) ($file['name'] ?? '');
+
+        if ($localPath === '' || !is_file($localPath)) {
+            throw new StorageException('Arquivo temporário inválido.');
+        }
+
+        if ($originalName === '') {
+            $originalName = 'arquivo.pdf';
+        }
+
+        $nameDrive = $nomeDrive !== null && $nomeDrive !== '' ? $nomeDrive : $originalName;
+        $mimeType = (string) ($file['type'] ?? '');
+
+        $result = $this->run('upload', $originalName, function () use ($localPath, $nameDrive, $folderId, $mimeType): array {
+            return $this->provider->upload($localPath, $nameDrive, $folderId, $mimeType);
+        });
+
+        if (is_file($localPath)) {
+            @unlink($localPath);
+        }
+
+        return [
+            'file_id' => $result['file_id'],
+            'name' => $result['name'],
+            'link' => $this->provider->generateViewLink($result['file_id']),
+        ];
+    }
+
     public function delete(int $documentoId): bool
     {
         $documento = $this->documentoRepository->findById($documentoId);
