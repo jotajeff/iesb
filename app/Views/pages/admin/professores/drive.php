@@ -95,24 +95,56 @@ document.querySelectorAll('[data-bs-target="#verDriveModal"]').forEach(function(
         var titulo = this.getAttribute('data-titulo');
         var link = this.getAttribute('data-link');
 
-        var embedSrc = link;
-
+        var fileId = null;
         var fileMatch = link.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
         if (fileMatch) {
-            embedSrc = 'https://drive.google.com/file/d/' + fileMatch[1] + '/preview';
+            fileId = fileMatch[1];
         } else {
             var docMatch = link.match(/\/document\/d\/([a-zA-Z0-9_-]+)/);
             if (docMatch) {
-                embedSrc = 'https://docs.google.com/document/d/' + docMatch[1] + '/preview';
+                fileId = docMatch[1];
             }
         }
 
+        var embedSrc = link;
+        if (fileId) {
+            embedSrc = 'https://drive.google.com/file/d/' + fileId + '/preview';
+        }
+
         document.getElementById('driveTitulo').textContent = titulo;
-        document.getElementById('driveIframe').src = embedSrc;
+
+        var frame = document.getElementById('driveIframe');
+        var fallback = document.getElementById('driveFallback');
+        var download = document.getElementById('driveDownload');
+
+        if (fileId) {
+            download.href = 'https://drive.google.com/uc?export=download&id=' + fileId;
+            download.classList.remove('d-none');
+        } else {
+            download.href = link;
+            download.classList.remove('d-none');
+        }
+
+        frame.src = embedSrc;
+        frame.classList.remove('d-none');
+        fallback.classList.add('d-none');
+
+        frame.onload = function() {
+            try {
+                if (frame.contentDocument && frame.contentDocument.body && !frame.contentDocument.body.innerHTML.trim()) {
+                    fallback.classList.remove('d-none');
+                }
+            } catch (err) {
+                // Cross-origin: iframe carregou. Mantem o preview.
+                frame.classList.remove('d-none');
+            }
+        };
     });
 });
 
 document.getElementById('verDriveModal').addEventListener('hidden.bs.modal', function() {
     document.getElementById('driveIframe').src = '';
+    document.getElementById('driveIframe').classList.add('d-none');
+    document.getElementById('driveFallback').classList.add('d-none');
 });
 </script>

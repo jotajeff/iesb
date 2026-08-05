@@ -9,6 +9,16 @@
         <div class="ratio ratio-4x3">
           <iframe id="driveIframe" src="" allowfullscreen></iframe>
         </div>
+        <div id="driveFallback" class="d-none py-4">
+          <i class="bi bi-file-earmark-pdf fs-1 text-muted"></i>
+          <p class="mt-2 mb-0">Não foi possível incorporar a visualização.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="driveDownload" href="#" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Baixar PDF
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
       </div>
     </div>
   </div>
