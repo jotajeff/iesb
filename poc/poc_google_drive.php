@@ -33,11 +33,19 @@ const CLIENT_SECRET_FILE = __DIR__ . '/../material/client_secret_391011534445-kd
 const CLIENT_ID_FALLBACK     = '';
 const CLIENT_SECRET_FALLBACK = '';
 
-// REDIRECT_URI dinamico: aponta de volta para este mesmo script,
-// funcionando com qualquer porta do `php -S`.
-$REDIRECT_URI = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http')
-    . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
-    . strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?');
+// REDIRECT_URI:
+// - Preencha REDIRECT_URI_OVERRIDE com a URL EXATA registrada no Google
+//   Cloud Console (ex.: 'https://www.seudominio.com.br/poc/poc_google_drive.php').
+// - Se deixado vazio, o POC calcula automaticamente a partir da request,
+//   mas essa URI DINAMICA precisa estar registrada no Console, caso contrario
+//   ocorre o erro 400 redirect_uri_mismatch.
+const REDIRECT_URI_OVERRIDE = '';
+
+$REDIRECT_URI = REDIRECT_URI_OVERRIDE !== ''
+    ? REDIRECT_URI_OVERRIDE
+    : (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http')
+        . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
+        . strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?');
 
 const SCOPES = [Drive::DRIVE_FILE];
 const ROOT_FOLDER_NAME = 'ERP TESTE';
@@ -312,13 +320,47 @@ function findFolderByName(Drive $service, string $name): ?string
 
 function renderConnectButton(string $authUrl): void
 {
+    $redirect = $GLOBALS['REDIRECT_URI'];
+    $registered = loadRegisteredRedirectUris();
+    $isLocalhost = str_contains($redirect, '://localhost') || str_contains($redirect, '://127.0.0.1');
+    $registeredOk = in_array($redirect, $registered, true) || ($isLocalhost && in_array('http://localhost', $registered, true));
+
     $html = '<!doctype html><html lang="pt-BR"><head><meta charset="utf-8">';
     $html .= '<title>POC - Google Drive</title></head><body>';
     $html .= '<h1>POC - Google Drive API</h1>';
     $html .= '<p>Validação de integração PHP x Google Drive via OAuth 2.0.</p>';
+    $html .= '<p>Redirect URI em uso: <code>' . htmlspecialchars($redirect, ENT_QUOTES, 'UTF-8') . '</code></p>';
+
+    if (!$registeredOk) {
+        $html .= '<div style="border:1px solid #dc3545;padding:10px;margin:10px 0;color:#dc3545;">';
+        $html .= '<strong>Atenção:</strong> esta Redirect URI não está registrada no Google Cloud Console '
+            . '(registradas: <code>' . htmlspecialchars(implode(', ', $registered), ENT_QUOTES, 'UTF-8') . '</code>). '
+            . 'Acesse o Console > API e Serviços > Credenciais > seu client OAuth e adicione exatamente:<br>'
+            . '<code>' . htmlspecialchars($redirect, ENT_QUOTES, 'UTF-8') . '</code>';
+        $html .= '</div>';
+    }
+
     $html .= '<p><a href="' . htmlspecialchars($authUrl, ENT_QUOTES, 'UTF-8') . '">Conectar Google</a></p>';
     $html .= '</body></html>';
     echo $html;
+}
+
+function loadRegisteredRedirectUris(): array
+{
+    if (!is_file(CLIENT_SECRET_FILE)) {
+        return [];
+    }
+
+    $data = json_decode((string) file_get_contents(CLIENT_SECRET_FILE), true);
+    $app = $data['installed'] ?? $data['web'] ?? [];
+
+    return array_values(array_filter(
+        array_map(
+            static fn ($uri) => (string) $uri,
+            $app['redirect_uris'] ?? []
+        ),
+        static fn (string $uri) => $uri !== ''
+    ));
 }
 
 function renderGoogleError(string $title, Google\Service\Exception $e): void
