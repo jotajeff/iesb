@@ -56,8 +56,16 @@ final class GoogleDriveService
             'fields' => 'id,name,mimeType,size',
         ]);
 
+        $fileId = (string) $uploaded->getId();
+
+        try {
+            $this->sharePublic($fileId);
+        } catch (Throwable $e) {
+            error_log('[STORAGE] Falha ao tornar arquivo público (' . $fileId . '): ' . $e->getMessage());
+        }
+
         return [
-            'file_id' => (string) $uploaded->getId(),
+            'file_id' => $fileId,
             'name' => (string) $uploaded->getName(),
             'mime_type' => (string) $uploaded->getMimeType(),
             'size' => (int) $uploaded->getSize(),
@@ -157,6 +165,10 @@ final class GoogleDriveService
     {
         $service = $this->service();
 
+        if ($this->isPublic($service, $fileId)) {
+            return true;
+        }
+
         $permission = new Permission([
             'type' => 'anyone',
             'role' => 'reader',
@@ -164,6 +176,22 @@ final class GoogleDriveService
         $service->permissions->create($fileId, $permission, ['fields' => 'id']);
 
         return true;
+    }
+
+    private function isPublic(Drive $service, string $fileId): bool
+    {
+        try {
+            $permissions = $service->permissions->listPermissions($fileId, ['fields' => 'permissions(type,role)']);
+            foreach ($permissions->getPermissions() as $permission) {
+                if ($permission->getType() === 'anyone') {
+                    return true;
+                }
+            }
+        } catch (Throwable) {
+            return false;
+        }
+
+        return false;
     }
 
     private function service(): Drive

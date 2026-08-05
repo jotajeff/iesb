@@ -182,6 +182,12 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
           </h2>
           <div id="documentosAluno" class="accordion-collapse collapse" data-bs-parent="#alunoAccordion">
             <div class="accordion-body p-0">
+              <div class="d-flex justify-content-end p-3 pb-0">
+                <form method="post" action="/admin/alunos/liberar-documentos" onsubmit="return confirm('Liberar TODOS os documentos deste aluno para download público?');">
+                  <input type="hidden" name="aluno_id" value="<?= (int) ($alunoData['id'] ?? 0) ?>">
+                  <button type="submit" class="btn btn-outline-primary btn-sm"><i class="bi bi-unlock me-1"></i>Liberar todos para download público</button>
+                </form>
+              </div>
               <?php $documentos = is_array($documentos ?? null) ? $documentos : []; ?>
               <?php if (empty($documentos)): ?>
                 <div class="alert alert-light border text-muted m-3">

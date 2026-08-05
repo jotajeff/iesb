@@ -127,6 +127,7 @@ return static function (Router $router): void {
     $router->post('/admin/alunos/trocar', [AlunoController::class, 'trocar']);
     $router->post('/admin/alunos/restaurar-senha', [AlunoController::class, 'restaurarSenha']);
     $router->post('/admin/alunos/compartilhar-documento', [AlunoController::class, 'compartilharDocumento']);
+    $router->post('/admin/alunos/liberar-documentos', [AlunoController::class, 'liberarDocumentosPublicos']);
 
     $router->get('/admin/tarefas', [TarefaController::class, 'index']);
     $router->get('/admin/tarefas/lista', [TarefaController::class, 'lista']);

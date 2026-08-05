@@ -459,6 +459,63 @@ final class AlunoController extends Controller
         echo json_encode(['sucesso' => true, 'senha' => $senha]);
     }
 
+    public function liberarDocumentosPublicos(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $alunoId = (int) $this->input('aluno_id', 0);
+        if ($alunoId <= 0) {
+            Session::setFlash('flash', 'Parâmetros inválidos.');
+            $this->redirect('/admin/alunos');
+            return;
+        }
+
+        $pdo = Database::connection();
+        $documentos = [];
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare('SELECT id, file_id, nome_original FROM documento WHERE id_registro = :id_registro AND ativo = 1 ORDER BY id DESC');
+                $stmt->bindValue(':id_registro', $alunoId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+                $documentos = is_array($rows) ? $rows : [];
+            } catch (\Throwable $e) {
+                error_log('[ALUNO LIBERAR DOCS] Erro: ' . $e->getMessage());
+            }
+        }
+
+        $storage = new \App\Services\Storage\StorageService();
+        $liberados = 0;
+        $erros = 0;
+
+        foreach ($documentos as $documento) {
+            $fileId = (string) ($documento['file_id'] ?? '');
+            if ($fileId === '') {
+                continue;
+            }
+            try {
+                $storage->sharePublicByFileId($fileId);
+                $liberados++;
+            } catch (\Throwable $e) {
+                $erros++;
+                error_log('[ALUNO LIBERAR DOCS] Storage: ' . $e->getMessage());
+            }
+        }
+
+        $this->logService->log('compartilhar', 'documento', $alunoId, "Documentos do aluno liberados publicamente ({$liberados} ok, {$erros} erro)");
+
+        if ($liberados > 0 || $erros > 0) {
+            Session::setFlash('flash', "Documentos liberados: {$liberados} ok, {$erros} com erro.");
+        } else {
+            Session::setFlash('flash', 'Nenhum documento encontrado para liberar.');
+        }
+
+        $this->redirect('/admin/alunos/show?id=' . $alunoId);
+    }
+
     public function compartilharDocumento(): void
     {
         if (!$this->isStaff()) {
