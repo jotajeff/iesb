@@ -65,6 +65,7 @@ final class AlunoController extends Controller
         }
 
         $logs = [];
+        $documentos = [];
         $pdo = Database::connection();
         if ($pdo instanceof \PDO) {
             try {
@@ -92,6 +93,30 @@ final class AlunoController extends Controller
             } catch (\Throwable $e) {
                 error_log('[ALUNO LOGS] Erro: ' . $e->getMessage());
             }
+
+            try {
+                $grupoAlunos = \App\Services\Storage\StorageService::GROUP_ALUNOS;
+                $stmt = $pdo->prepare(
+                    'SELECT t.id AS tipo_id, t.descricao AS tipo_descricao, t.obrigatorio, t.ordem,'
+                    . ' d.id AS documento_id, d.nome_original, d.nome_drive, d.mime_type, d.tamanho, d.versao, d.created_at, d.file_id, d.status, d.observacao'
+                    . ' FROM documento_tipo t'
+                    . ' LEFT JOIN documento d ON d.id = ('
+                    . '   SELECT d2.id FROM documento d2'
+                    . '   WHERE d2.id_tipo = t.id AND d2.id_registro = :id_registro AND d2.ativo = 1'
+                    . '   ORDER BY d2.versao DESC, d2.id DESC LIMIT 1'
+                    . ' )'
+                    . ' WHERE t.id_grupo = :id_grupo AND t.ativo = 1'
+                    . ' ORDER BY t.ordem ASC, t.descricao ASC'
+                );
+                $stmt->bindValue(':id_registro', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_grupo', $grupoAlunos, \PDO::PARAM_INT);
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+                $documentos = is_array($rows) ? $rows : [];
+            } catch (\Throwable $e) {
+                error_log('[ALUNO DOCUMENTOS] Erro: ' . $e->getMessage());
+                $documentos = [];
+            }
         }
 
         $this->render('pages/admin/alunos/show', [
@@ -100,6 +125,7 @@ final class AlunoController extends Controller
             'aluno' => $aluno,
             'cursos' => $this->alunoService->cursosDoAluno($id),
             'logsAluno' => $logs,
+            'documentos' => $documentos,
         ], 'admin');
     }
 
@@ -431,6 +457,54 @@ final class AlunoController extends Controller
         $this->logService->log('atualizar', 'aluno', $id, "Senha do aluno restaurada");
 
         echo json_encode(['sucesso' => true, 'senha' => $senha]);
+    }
+
+    public function compartilharDocumento(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $documentoId = (int) $this->input('id', 0);
+        $alunoId = (int) $this->input('aluno_id', 0);
+
+        if ($documentoId <= 0 || $alunoId <= 0) {
+            Session::setFlash('flash', 'Parâmetros inválidos.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        $documento = null;
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare('SELECT id, id_registro, file_id, nome_original FROM documento WHERE id = :id AND ativo = 1 LIMIT 1');
+                $stmt->bindValue(':id', $documentoId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $documento = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[ALUNO COMPARTILHAR DOC] Erro: ' . $e->getMessage());
+            }
+        }
+
+        if ($documento === null || (int) ($documento['id_registro'] ?? 0) !== $alunoId) {
+            Session::setFlash('flash', 'Documento não encontrado para este aluno.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        try {
+            $storage = new \App\Services\Storage\StorageService();
+            $storage->sharePublic($documentoId);
+            $this->logService->log('compartilhar', 'documento', $documentoId, "Documento liberado publicamente: {$documento['nome_original']}");
+            Session::setFlash('flash', 'Documento liberado para download público. Qualquer pessoa com o link pode baixar.');
+        } catch (\Throwable $e) {
+            error_log('[ALUNO COMPARTILHAR DOC] Storage: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao liberar o documento para download público.');
+        }
+
+        $this->redirect('/admin/alunos/show?id=' . $alunoId);
     }
 
     private function isStaff(): bool

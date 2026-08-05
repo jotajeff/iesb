@@ -8,6 +8,7 @@ use Google\Client;
 use Google\Exception as GoogleException;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
+use Google\Service\Drive\Permission;
 use Throwable;
 
 final class GoogleDriveService
@@ -146,6 +147,23 @@ final class GoogleDriveService
     public function generateDownloadLink(string $fileId): string
     {
         return 'https://drive.google.com/uc?export=download&id=' . $fileId;
+    }
+
+    /**
+     * Torna o arquivo publico: qualquer pessoa com o link pode visualizar/baixar,
+     * sem precisar estar logado em conta do Google.
+     */
+    public function sharePublic(string $fileId): bool
+    {
+        $service = $this->service();
+
+        $permission = new Permission([
+            'type' => 'anyone',
+            'role' => 'reader',
+        ]);
+        $service->permissions->create($fileId, $permission, ['fields' => 'id']);
+
+        return true;
     }
 
     private function service(): Drive

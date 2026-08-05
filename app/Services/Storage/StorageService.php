@@ -282,6 +282,30 @@ final class StorageService
         return $this->provider->generateDownloadLink($fileId);
     }
 
+    /**
+     * Torna o documento publico no Drive (qualquer pessoa com o link pode
+     * visualizar/baixar, sem estar logado no Google).
+     */
+    public function sharePublic(int $documentoId): bool
+    {
+        $documento = $this->documentoRepository->findById($documentoId);
+        if ($documento === null) {
+            throw new StorageException('Documento não encontrado.');
+        }
+
+        $fileId = (string) $documento['file_id'];
+        return $this->run('compartilhar', (string) $documento['nome_original'], function () use ($fileId): bool {
+            return $this->provider->sharePublic($fileId);
+        });
+    }
+
+    public function sharePublicByFileId(string $fileId): bool
+    {
+        return $this->run('compartilhar', $fileId, function () use ($fileId): bool {
+            return $this->provider->sharePublic($fileId);
+        });
+    }
+
     public function generateDownloadLink(int $documentoId): string
     {
         $documento = $this->documentoRepository->findById($documentoId);

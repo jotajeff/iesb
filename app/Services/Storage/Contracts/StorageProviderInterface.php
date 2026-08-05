@@ -25,4 +25,6 @@ interface StorageProviderInterface
     public function generateViewLink(string $fileId): string;
 
     public function generateDownloadLink(string $fileId): string;
+
+    public function sharePublic(string $fileId): bool;
 }

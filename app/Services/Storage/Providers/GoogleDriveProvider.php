@@ -63,4 +63,9 @@ final class GoogleDriveProvider implements StorageProviderInterface
     {
         return $this->drive->generateDownloadLink($fileId);
     }
+
+    public function sharePublic(string $fileId): bool
+    {
+        return $this->drive->sharePublic($fileId);
+    }
 }
