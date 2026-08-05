@@ -33,7 +33,7 @@ final class GoogleOAuthService
         $refreshToken = $config['refresh_token'] ?? '';
 
         if (is_string($refreshToken) && $refreshToken !== '') {
-            $client->setRefreshToken($refreshToken);
+            $client->getOAuth2Service()->setRefreshToken($refreshToken);
         }
 
         return $client;
