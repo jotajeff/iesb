@@ -39,7 +39,7 @@ const CLIENT_SECRET_FALLBACK = '';
 // - Se deixado vazio, o POC calcula automaticamente a partir da request,
 //   mas essa URI DINAMICA precisa estar registrada no Console, caso contrario
 //   ocorre o erro 400 redirect_uri_mismatch.
-const REDIRECT_URI_OVERRIDE = '';
+const REDIRECT_URI_OVERRIDE = 'https://inteligenciaeducacionalsouzabrazil.com/poc/poc_google_drive.php';
 
 $REDIRECT_URI = REDIRECT_URI_OVERRIDE !== ''
     ? REDIRECT_URI_OVERRIDE
