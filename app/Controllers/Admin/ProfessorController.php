@@ -903,6 +903,10 @@ final class ProfessorController extends Controller
         $pdo = Database::connection();
         $turma = null;
         $arquivos = [];
+        $driveArquivos = [];
+        $storageConectado = false;
+        $pastaDrive = null;
+
         if ($pdo instanceof \PDO) {
             try {
                 $stmt = $pdo->prepare('SELECT t.*, c.nome AS curso_nome FROM turmas t LEFT JOIN cursos c ON t.id_curso = c.id WHERE t.id = :id');
@@ -935,11 +939,42 @@ final class ProfessorController extends Controller
             }
         }
 
+        $authUser = Session::get('user');
+        $professorId = (int) ($authUser['id'] ?? 0);
+        $storage = new StorageService();
+        $storageConectado = $storage->isConnected();
+
+        if ($storageConectado) {
+            try {
+                $storageDriveRepo = new StorageDriveRepository();
+                $pastaDrive = $storageDriveRepo->findByRegistro(StorageService::GROUP_PROFESSORES, $professorId);
+
+                $folderId = $pastaDrive['folder_id'] ?? '';
+                if ($folderId === '') {
+                    $folderId = $storage->ensureRegistroFolder(
+                        StorageService::GROUP_PROFESSORES,
+                        (string) $professorId,
+                        (string) ($authUser['name'] ?? '')
+                    );
+                }
+
+                if ($folderId !== '') {
+                    $driveArquivos = $storage->listFolder($folderId);
+                }
+            } catch (\Throwable $e) {
+                error_log('[DRIVE] Erro ao listar Google Drive: ' . $e->getMessage());
+                $driveArquivos = [];
+            }
+        }
+
         $this->render('pages/admin/professores/drive', [
             'title' => 'Google Drive - ' . ($turma['nome'] ?? 'Turma'),
             'currentRoute' => '/admin/professores/drive',
             'turma' => $turma,
             'materiais' => $arquivos,
+            'driveArquivos' => $driveArquivos,
+            'storageConectado' => $storageConectado,
+            'pastaDrive' => $pastaDrive,
         ], 'admin');
     }
 
