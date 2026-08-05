@@ -8,6 +8,9 @@
     # Permite acesso direto ao endpoint físico do webhook Asaas
     RewriteRule ^asaas-webhook\.php$ public/asaas-webhook.php [L]
 
+    # Permite acesso direto ao diretório POC (fora do roteador)
+    RewriteRule ^poc(/.*)?$ - [L]
+
     # Se já estiver em /public, não reescreve novamente
     RewriteCond %{REQUEST_URI} !^/public/
     RewriteRule ^(.*)$ public/$1 [L]

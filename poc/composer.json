@@ -1,0 +1,9 @@
+{
+    "name": "iesb/poc-google-drive",
+    "description": "POC independente de integracao PHP x Google Drive via OAuth 2.0",
+    "type": "project",
+    "require": {
+        "php": ">=8.0",
+        "google/apiclient": "^2.15"
+    }
+}

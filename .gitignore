@@ -1,5 +1,7 @@
 /material
 /vendor/
+/poc/vendor/
+/poc/downloads/
 /.env
 /public/assets/upload/*
 !/public/assets/upload/.gitkeep
