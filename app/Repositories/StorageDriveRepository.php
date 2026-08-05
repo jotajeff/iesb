@@ -75,4 +75,18 @@ final class StorageDriveRepository
 
         return (int) $pdo->lastInsertId();
     }
+
+    public function updateFolderId(int $id, string $folderId): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE storage_drive SET folder_id = :folder_id WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':folder_id', $folderId);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
 }

@@ -1036,14 +1036,13 @@ final class ProfessorController extends Controller
             }
 
             $storageDriveRepo = new StorageDriveRepository();
-            $pastaMateriais = $storageDriveRepo->findByGrupo(StorageService::GROUP_MATERIAIS);
 
-            $folderId = $pastaMateriais['folder_id'] ?? '';
-            if ($folderId === '') {
-                $estrutura = $storage->ensureStructure();
-                $folderId = (string) ($estrutura['materiais'] ?? '');
+            $estrutura = $storage->ensureStructure();
+            $folderId = (string) ($estrutura['materiais'] ?? '');
 
-                if ($folderId !== '') {
+            if ($folderId !== '') {
+                $pastaMateriais = $storageDriveRepo->findByGrupo(StorageService::GROUP_MATERIAIS);
+                if ($pastaMateriais === null) {
                     $storageDriveRepo->create([
                         'id_grupo' => StorageService::GROUP_MATERIAIS,
                         'id_registro' => 0,
@@ -1053,6 +1052,8 @@ final class ProfessorController extends Controller
                         'tipo' => 'grupo',
                         'nivel' => 1,
                     ]);
+                } elseif ((string) ($pastaMateriais['folder_id'] ?? '') !== $folderId) {
+                    $storageDriveRepo->updateFolderId((int) $pastaMateriais['id'], $folderId);
                 }
             }
 
@@ -1081,7 +1082,7 @@ final class ProfessorController extends Controller
             Session::setFlash('flash', 'Material enviado com sucesso.');
         } catch (\Throwable $e) {
             error_log('[DRIVE] Erro ao salvar material (turma ' . $idTurma . '): ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
-            Session::setFlash('flash', 'Erro ao salvar material.');
+            Session::setFlash('flash', 'Erro ao salvar material: ' . $e->getMessage());
         }
 
         $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
