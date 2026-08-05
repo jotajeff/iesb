@@ -22,7 +22,7 @@
             </div>
         <?php endif; ?>
 
-        <form method="post" action="/admin/professores/salvar-drive" enctype="multipart/form-data">
+        <form method="post" action="/admin/professores/salvar-drive" enctype="multipart/form-data" id="uploadMaterialForm">
             <input type="hidden" name="id_fk" value="<?= (int) ($turma['id'] ?? 0) ?>">
             <input type="hidden" name="tipo" value="drive">
 
@@ -38,10 +38,15 @@
                     <input class="form-control" type="file" name="arquivo" id="arquivo" accept="application/pdf,.pdf" required <?= $storageConectado ? '' : 'disabled' ?>>
                 </div>
                 <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-primary w-100" type="submit" <?= $storageConectado ? '' : 'disabled' ?>>
+                    <button class="btn btn-primary w-100" type="submit" id="btnEnviarMaterial" <?= $storageConectado ? '' : 'disabled' ?>>
                         <i class="bi bi-upload me-1"></i>Enviar
                     </button>
                 </div>
+            </div>
+
+            <div class="alert alert-info border d-none mt-3 mb-0" id="uploadMaterialFeedback">
+                <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Enviando material para o Google Drive, aguarde...
             </div>
         </form>
 
@@ -89,6 +94,21 @@
 <?php require __DIR__ . '/ver_drive.php'; ?>
 
 <script>
+<?php if ($storageConectado): ?>
+document.getElementById('uploadMaterialForm').addEventListener('submit', function() {
+    var arquivo = document.getElementById('arquivo');
+    if (arquivo && arquivo.files.length === 0) {
+        return;
+    }
+    var btn = document.getElementById('btnEnviarMaterial');
+    var feedback = document.getElementById('uploadMaterialFeedback');
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Enviando...';
+    feedback.classList.remove('d-none');
+});
+<?php endif; ?>
+
 document.querySelectorAll('[data-bs-target="#verDriveModal"]').forEach(function(el) {
     el.addEventListener('click', function(e) {
         e.preventDefault();
