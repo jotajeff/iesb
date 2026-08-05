@@ -2,6 +2,7 @@
 /vendor/
 /poc/vendor/
 /poc/downloads/
+/poc/error_log
 /.env
 /public/assets/upload/*
 !/public/assets/upload/.gitkeep

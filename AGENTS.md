@@ -2,13 +2,13 @@
 
 ## Stack
 
-PHP 8.0+, MySQL, Bootstrap 5, vanilla JS, PHPMailer. Framework MVC custom (`app/Core/`), monolítico (sem npm, sem build step).
+PHP 8.0+, MySQL, Bootstrap 5, vanilla JS, PHPMailer, google/apiclient. Framework MVC custom (`app/Core/`), monolítico (sem npm, sem build step).
 
 ## Comandos
 
 ```bash
 php -S localhost:8000 -t public   # servidor de dev
-composer install                   # instalar dependências (PHPMailer)
+composer install                   # instalar dependências (PHPMailer, google/apiclient)
 ```
 
 Não há testes, linting, typecheck ou CI.
@@ -21,12 +21,13 @@ Não há testes, linting, typecheck ou CI.
 | `bootstrap/app.php` | Autoload (PSR-4 + fallback), `.env`, sessão, rotas |
 | `config/` | `app.php` (config), `routes.php` (rotas) |
 | `app/Core/` | Framework: App, Router, Controller, Database, Env, View |
-| `app/Controllers/Admin/` | 15 controllers do painel staff |
+| `app/Controllers/Admin/` | 16 controllers do painel staff |
 | `app/Services/` | Regras de negócio |
+| `app/Services/Storage/` | Módulo Storage (Google Drive): fachada `StorageService`, provider, OAuth |
 | `app/Repositories/` | Acesso a dados (PDO MySQL) |
 | `app/Views/` | Templates PHP, layouts em `layouts/` |
 | `storage/` | Schema SQL, migrações, JSON legados, logs |
-| `vendor/` | PHPMailer (única dep Composer) |
+| `vendor/` | PHPMailer + google/apiclient (deps Composer) |
 
 ## Convenções
 
@@ -69,12 +70,21 @@ Não há testes, linting, typecheck ou CI.
 - Webhook: `public/asaas-webhook.php` (físico, fora do roteador, `APP_DISABLE_SESSION`).
 - Controllers: `AsaasController` (admin), `WebhookController` (callbacks).
 
+## Storage (Google Drive)
+
+- `.env`: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REDIRECT_URI`.
+- Arquitetura: `StorageService` (fachada única) → `StorageProviderInterface` → `GoogleDriveProvider` → `GoogleDriveService` (API) + `GoogleOAuthService` (auth).
+- Admin: `/admin/storage` (conectar, desconectar, criar estrutura de pastas). Callback OAuth: `GOOGLE_REDIRECT_URI`.
+- Banco: `integracao_google` (refresh_token, root_folder_id, email_workspace — nunca access_token), `documento` (file_id, nome_drive).
+- Erros de auth (invalid_grant/401/403) marcam `integracao_google.conectado = 0` automaticamente.
+- POC independente em `poc/` (com seu próprio composer/vendor).
+
 ## Peculiaridades
 
 - `App::run()` chama `VisitTrackerService::track()` em **toda requisição**.
 - `.htaccess` reescreve tudo para `public/`, exceto `asaas-webhook.php`.
 - Rota `/area-do-aluno` alias para `StudentController::dashboard`.
-- `isStaff()` está duplicado como método privado em cada Admin controller (15 cópias). Não está no Controller base.
+- `isStaff()` está duplicado como método privado em cada Admin controller (16 cópias). Não está no Controller base.
 - `.gitignore` ignora `*.md` e `*.sql` — arquivos markdown e SQL não são versionados.
 - CORS: `App::run()` retorna 204 para `OPTIONS /api/*` com header fixo para `magdabrazilcursos.com.br`.
 

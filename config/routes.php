@@ -17,6 +17,7 @@ use App\Controllers\Admin\AsaasController;
 use App\Controllers\Admin\PreInscricaoController;
 use App\Controllers\Admin\SessaoController;
 use App\Controllers\Admin\TipoDocumentoController;
+use App\Controllers\Admin\StorageController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -215,6 +216,11 @@ return static function (Router $router): void {
     $router->get('/admin/visitas/paginas', [VisitaController::class, 'paginas']);
     $router->get('/admin/visitas/cursos', [VisitaController::class, 'cursos']);
     $router->get('/admin/visitas/referer', [VisitaController::class, 'referer']);
+
+    $router->get('/admin/storage', [StorageController::class, 'index']);
+    $router->get('/admin/storage/callback', [StorageController::class, 'callback']);
+    $router->post('/admin/storage/disconnect', [StorageController::class, 'disconnect']);
+    $router->post('/admin/storage/estrutura', [StorageController::class, 'estrutura']);
 
     $router->get('/aluno/login', [AuthController::class, 'alunoLoginForm']);
     $router->post('/aluno/login', [AuthController::class, 'alunoLogin']);
