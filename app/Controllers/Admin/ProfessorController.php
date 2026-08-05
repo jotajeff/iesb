@@ -1036,7 +1036,7 @@ final class ProfessorController extends Controller
             }
 
             $storageDriveRepo = new StorageDriveRepository();
-            $pastaMateriais = $storageDriveRepo->findByRegistro(StorageService::GROUP_MATERIAIS, 0);
+            $pastaMateriais = $storageDriveRepo->findByGrupo(StorageService::GROUP_MATERIAIS);
 
             $folderId = $pastaMateriais['folder_id'] ?? '';
             if ($folderId === '') {
@@ -1080,7 +1080,7 @@ final class ProfessorController extends Controller
 
             Session::setFlash('flash', 'Material enviado com sucesso.');
         } catch (\Throwable $e) {
-            error_log('[DRIVE] Erro ao salvar: ' . $e->getMessage());
+            error_log('[DRIVE] Erro ao salvar material (turma ' . $idTurma . '): ' . $e->getMessage() . ' @ ' . $e->getFile() . ':' . $e->getLine());
             Session::setFlash('flash', 'Erro ao salvar material.');
         }
 

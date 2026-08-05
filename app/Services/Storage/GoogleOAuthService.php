@@ -24,7 +24,7 @@ final class GoogleOAuthService
         $client->setClientId((string) getenv('GOOGLE_CLIENT_ID'));
         $client->setClientSecret((string) getenv('GOOGLE_CLIENT_SECRET'));
         $client->setRedirectUri((string) getenv('GOOGLE_REDIRECT_URI'));
-        $client->setScopes([Drive::DRIVE_FILE, Oauth2::OPENID, Oauth2::USERINFO_EMAIL]);
+        $client->setScopes([Drive::DRIVE, Oauth2::OPENID, Oauth2::USERINFO_EMAIL]);
         $client->setAccessType('offline');
         $client->setApprovalPrompt('force');
         $client->setPrompt('consent');

@@ -31,6 +31,27 @@ final class StorageDriveRepository
         return $row ?: null;
     }
 
+    public function findByGrupo(int $idGrupo): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, id_grupo, id_registro, folder_id, folder_name, folder_link, parent_folder_id, nivel, tipo, ativo
+                FROM storage_drive
+                WHERE id_grupo = :id_grupo AND tipo = :tipo AND ativo = 1
+                ORDER BY id DESC
+                LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id_grupo', $idGrupo, PDO::PARAM_INT);
+        $stmt->bindValue(':tipo', 'grupo');
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
     public function create(array $data): int
     {
         $pdo = Database::connection();
