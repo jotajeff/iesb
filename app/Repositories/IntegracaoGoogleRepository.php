@@ -124,4 +124,17 @@ final class IntegracaoGoogleRepository
     {
         $this->setConectado($id, false);
     }
+
+    public function clearTokens(int $id): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE integracao_google SET refresh_token = NULL, email_workspace = NULL, conectado = 0 WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
 }

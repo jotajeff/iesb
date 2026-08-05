@@ -40,7 +40,7 @@ final class StorageService
             return false;
         }
 
-        return true;
+        return (bool) ($config['conectado'] ?? false);
     }
 
     public function connectionInfo(): ?array

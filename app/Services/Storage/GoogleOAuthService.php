@@ -132,7 +132,7 @@ final class GoogleOAuthService
         $config = $this->repository->findActive();
         $configId = (int) ($config['id'] ?? 0);
         if ($configId > 0) {
-            $this->repository->setDesconectado($configId);
+            $this->repository->clearTokens($configId);
         }
     }
 
