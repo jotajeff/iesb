@@ -50,9 +50,6 @@
                   <a class="btn btn-outline-danger btn-sm" href="/admin/professores/videos?turma_id=<?= $tid ?>" title="Gerenciar vídeos">
                     <i class="bi bi-camera-reels"></i>
                   </a>
-                  <a class="btn btn-outline-success btn-sm" href="/admin/professores/pdf?turma_id=<?= $tid ?>" title="Enviar apostila PDF">
-                    <i class="bi bi-filetype-pdf"></i>
-                  </a>
                   <a class="btn btn-outline-primary btn-sm" href="/admin/professores/drive?turma_id=<?= $tid ?>" title="Google Drive">
                     <i class="bi bi-google"></i>
                   </a>
