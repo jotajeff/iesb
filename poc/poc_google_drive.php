@@ -21,6 +21,7 @@ require __DIR__ . '/vendor/autoload.php';
 use Google\Client;
 use Google\Service\Drive;
 use Google\Service\Drive\DriveFile;
+use Google\Service\Oauth2;
 
 /* ============================================================
    CONFIGURACAO - centralizar tudo aqui
@@ -47,7 +48,7 @@ $REDIRECT_URI = REDIRECT_URI_OVERRIDE !== ''
         . '://' . ($_SERVER['HTTP_HOST'] ?? 'localhost')
         . strtok((string) ($_SERVER['REQUEST_URI'] ?? '/'), '?');
 
-const SCOPES = [Drive::DRIVE_FILE];
+const SCOPES = [Drive::DRIVE_FILE, Oauth2::OPENID, Oauth2::USERINFO_EMAIL];
 const ROOT_FOLDER_NAME = 'ERP TESTE';
 
 const TEST_FILE      = __DIR__ . '/teste.pdf';
@@ -419,7 +420,8 @@ if ($accessToken === null) {
 $service = driveService($client);
 
 /* Exibicao dos tokens APENAS durante os testes (nunca em arquivo). */
-$accountInfo = $client->getOAuth2Service()->userinfo->get();
+$oauth2 = new Oauth2($client);
+$accountInfo = $oauth2->userinfo->get();
 $accountEmail = (string) $accountInfo->getEmail();
 $refreshToken = (string) $client->getRefreshToken();
 
