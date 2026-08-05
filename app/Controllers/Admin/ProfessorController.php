@@ -1036,19 +1036,28 @@ final class ProfessorController extends Controller
             }
 
             $storageDriveRepo = new StorageDriveRepository();
-            $pastaDrive = $storageDriveRepo->findByRegistro(StorageService::GROUP_PROFESSORES, $professorId);
+            $pastaMateriais = $storageDriveRepo->findByRegistro(StorageService::GROUP_MATERIAIS, 0);
 
-            $folderId = $pastaDrive['folder_id'] ?? '';
+            $folderId = $pastaMateriais['folder_id'] ?? '';
             if ($folderId === '') {
-                $folderId = $storage->ensureRegistroFolder(
-                    StorageService::GROUP_PROFESSORES,
-                    (string) $professorId,
-                    (string) ($authUser['name'] ?? '')
-                );
+                $estrutura = $storage->ensureStructure();
+                $folderId = (string) ($estrutura['materiais'] ?? '');
+
+                if ($folderId !== '') {
+                    $storageDriveRepo->create([
+                        'id_grupo' => StorageService::GROUP_MATERIAIS,
+                        'id_registro' => 0,
+                        'folder_id' => $folderId,
+                        'folder_name' => 'Materiais',
+                        'folder_link' => $storage->generateViewLinkByFileId($folderId),
+                        'tipo' => 'grupo',
+                        'nivel' => 1,
+                    ]);
+                }
             }
 
             if ($folderId === '') {
-                Session::setFlash('flash', 'Pasta do professor no Drive não encontrada.');
+                Session::setFlash('flash', 'Pasta de Materiais no Drive não encontrada.');
                 $this->redirect('/admin/professores/drive?turma_id=' . $idTurma);
                 return;
             }
