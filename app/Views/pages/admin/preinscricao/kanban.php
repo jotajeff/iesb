@@ -16,10 +16,10 @@ $rotulos = [
     <a class="btn btn-outline-secondary btn-sm" href="/admin/preinscricao"><i class="bi bi-list-ul me-1"></i>Visão em lista</a>
   </div>
 
-  <div class="row g-3 flex-nowrap overflow-auto pb-2" style="min-height:70vh;">
+  <div class="row g-3">
     <?php foreach (['recebido', 'atendimento', 'finalizado'] as $chave): ?>
       <?php $items = $colunas[$chave] ?? []; ?>
-      <div class="col-lg-4 col-12 d-flex flex-column" style="min-width:300px;">
+      <div class="col-lg-4 col-12 d-flex flex-column">
         <div class="card border-0 shadow-sm flex-grow-1 d-flex flex-column">
           <div class="card-header border-0 <?= $rotulos[$chave]['class'] ?> fw-semibold py-2">
             <div class="d-flex justify-content-between align-items-center">
@@ -27,7 +27,7 @@ $rotulos = [
               <span class="badge bg-light text-dark"><?= count($items) ?></span>
             </div>
           </div>
-          <div class="card-body p-2 overflow-auto" style="max-height:calc(100vh - 240px);">
+          <div class="card-body p-2">
             <?php if (empty($items)): ?>
               <div class="text-muted small text-center py-4">Nenhum item</div>
             <?php else: ?>
