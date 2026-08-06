@@ -77,5 +77,62 @@
         </tbody>
       </table>
     </div>
+
+    <?php
+    $chartDays = [];
+    $chartValues = [];
+    foreach (($days ?? []) as $day) {
+      $chartDays[] = (int) ($day['day'] ?? 0);
+      $chartValues[] = (int) ($day['total'] ?? 0);
+    }
+    $chartLabels = array_reverse($chartDays);
+    $chartData = array_reverse($chartValues);
+    ?>
+
+    <div class="mt-4 p-3 rounded-3 border" style="background:#f8f9fa;">
+      <h6 class="mb-1"><i class="bi bi-graph-up me-1"></i>Evolução de visitas — <?= htmlspecialchars((string) $m['month_label'], ENT_QUOTES, 'UTF-8') ?>/<?= (int) $m['year'] ?></h6>
+      <p class="text-muted small mb-3">Visitas por dia, <?= $pais === 'todos' ? 'todos os países' : 'apenas Brasil' ?>.</p>
+      <?php if (empty($chartData)): ?>
+        <p class="text-muted mb-0">Sem dados para exibir o gráfico.</p>
+      <?php else: ?>
+        <canvas id="graficoVisitasMes" height="100"></canvas>
+      <?php endif; ?>
+    </div>
   </div>
 </section>
+
+<?php if (!empty($chartData)): ?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  var canvas = document.getElementById('graficoVisitasMes');
+  if (!canvas || typeof Chart === 'undefined') return;
+
+  new Chart(canvas, {
+    type: 'line',
+    data: {
+      labels: <?= json_encode($chartLabels, JSON_UNESCAPED_UNICODE) ?>,
+      datasets: [{
+        label: 'Visitas',
+        data: <?= json_encode($chartData) ?>,
+        borderColor: '#0d6efd',
+        backgroundColor: 'rgba(13,110,253,0.15)',
+        fill: true,
+        tension: 0.3,
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false }
+      },
+      scales: {
+        x: { title: { display: true, text: 'Dia do mês' } },
+        y: { beginAtZero: true, title: { display: true, text: 'Visitas' } }
+      }
+    }
+  });
+});
+</script>
+<?php endif; ?>
