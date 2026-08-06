@@ -47,6 +47,12 @@
     </div>
 
     <?php
+    $paisUrl = '/admin/visitas/analytics';
+    $paisHidden = ['month' => (int) $a['month'], 'year' => (int) $a['year']];
+    require __DIR__ . '/_filtro_pais.php';
+    ?>
+
+    <?php
     $blocks = [
       ['title' => 'Paises', 'items' => $a['countries'] ?? [], 'icon' => 'bi-globe-americas'],
       ['title' => 'Cidades', 'items' => $a['cities'] ?? [], 'icon' => 'bi-geo-alt-fill'],

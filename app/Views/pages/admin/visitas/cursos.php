@@ -19,6 +19,12 @@
       Total de visitas em páginas de curso: <strong><?= (int) $s['total'] ?></strong>
     </div>
 
+    <?php
+    $paisUrl = '/admin/visitas/cursos';
+    $paisHidden = [];
+    require __DIR__ . '/_filtro_pais.php';
+    ?>
+
     <?php if (empty($s['pages'])): ?>
       <p class="text-muted">Nenhuma visita registrada em páginas de curso.</p>
     <?php endif; ?>

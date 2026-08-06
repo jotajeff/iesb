@@ -36,6 +36,12 @@ $currentYear = (int) ($referer['year'] ?? (int) date('Y'));
       </div>
     </div>
 
+    <?php
+    $paisUrl = '/admin/visitas/referer';
+    $paisHidden = ['month' => $currentMonth, 'year' => $currentYear];
+    require __DIR__ . '/_filtro_pais.php';
+    ?>
+
     <div class="card mb-4" id="referer">
       <div class="card-header d-flex justify-content-between align-items-center">
         <h5 class="mb-0"><i class="bi bi-link-45deg me-1"></i>Referer</h5>

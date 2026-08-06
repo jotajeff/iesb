@@ -9,6 +9,7 @@
         <a class="btn btn-outline-secondary btn-sm" href="/admin/visitas/paginas">Por pagina</a>
       </div>
     </div>
+    <?php require __DIR__ . '/_filtro_pais.php'; ?>
     <div class="table-responsive">
       <table class="table table-striped table-sm align-middle">
         <thead>

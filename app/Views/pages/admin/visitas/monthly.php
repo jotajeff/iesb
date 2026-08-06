@@ -50,6 +50,12 @@
       <span class="ms-2">Total no mes: <strong><?= (int) $m['total_month'] ?></strong> visitas</span>
     </div>
 
+    <?php
+    $paisUrl = '/admin/visitas/mensal';
+    $paisHidden = ['month' => (int) $m['month'], 'year' => (int) $m['year']];
+    require __DIR__ . '/_filtro_pais.php';
+    ?>
+
     <div class="table-responsive">
       <table class="table table-sm align-middle">
         <thead>

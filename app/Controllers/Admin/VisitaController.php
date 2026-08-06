@@ -17,6 +17,12 @@ final class VisitaController extends Controller
         $this->visitaService = new VisitaService();
     }
 
+    private function paisFiltro(): string
+    {
+        $pais = trim((string) ($_GET['pais'] ?? 'br'));
+        return $pais === 'todos' ? 'todos' : 'br';
+    }
+
     public function index(): void
     {
         if (!$this->isStaff()) {
@@ -24,10 +30,12 @@ final class VisitaController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $pais = $this->paisFiltro();
         $this->render('pages/admin/visitas/index', [
             'title' => 'Visitas de Páginas',
             'currentRoute' => '/admin/visitas',
-            'visits' => $this->visitaService->visits(),
+            'visits' => $this->visitaService->visits(100, $pais),
+            'pais' => $pais,
         ], 'admin');
     }
 
@@ -40,11 +48,13 @@ final class VisitaController extends Controller
 
         $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
         $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+        $pais = $this->paisFiltro();
 
         $this->render('pages/admin/visitas/monthly', [
             'title' => 'Visitas por Mês',
             'currentRoute' => '/admin/visitas',
-            'monthly' => $this->visitaService->visitsByMonthDaily($month, $year),
+            'monthly' => $this->visitaService->visitsByMonthDaily($month, $year, $pais),
+            'pais' => $pais,
         ], 'admin');
     }
 
@@ -57,11 +67,13 @@ final class VisitaController extends Controller
 
         $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
         $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+        $pais = $this->paisFiltro();
 
         $this->render('pages/admin/visitas/analytics', [
             'title' => 'Analytics de Visitas',
             'currentRoute' => '/admin/visitas',
-            'analytics' => $this->visitaService->visitsAnalytics($month, $year),
+            'analytics' => $this->visitaService->visitsAnalytics($month, $year, $pais),
+            'pais' => $pais,
         ], 'admin');
     }
 
@@ -74,11 +86,13 @@ final class VisitaController extends Controller
 
         $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
         $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+        $pais = $this->paisFiltro();
 
         $this->render('pages/admin/visitas/pages', [
             'title' => 'Visitas por Página',
             'currentRoute' => '/admin/visitas',
-            'pagesStats' => $this->visitaService->visitsByPage($month, $year),
+            'pagesStats' => $this->visitaService->visitsByPage($month, $year, $pais),
+            'pais' => $pais,
         ], 'admin');
     }
 
@@ -89,10 +103,12 @@ final class VisitaController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $pais = $this->paisFiltro();
         $this->render('pages/admin/visitas/cursos', [
             'title' => 'Ranking de Visitas — Cursos',
             'currentRoute' => '/admin/visitas',
-            'coursesStats' => $this->visitaService->visitsByCoursePages(),
+            'coursesStats' => $this->visitaService->visitsByCoursePages($pais),
+            'pais' => $pais,
         ], 'admin');
     }
 
@@ -105,12 +121,14 @@ final class VisitaController extends Controller
 
         $month = isset($_GET['month']) ? (int) $_GET['month'] : null;
         $year = isset($_GET['year']) ? (int) $_GET['year'] : null;
+        $pais = $this->paisFiltro();
 
         $this->render('pages/admin/visitas/referer', [
             'title' => 'Referer & UTM',
             'currentRoute' => '/admin/visitas/referer',
-            'refererStats' => $this->visitaService->refererStats($month, $year),
-            'utmStats' => $this->visitaService->utmStats($month, $year),
+            'refererStats' => $this->visitaService->refererStats($month, $year, $pais),
+            'utmStats' => $this->visitaService->utmStats($month, $year, $pais),
+            'pais' => $pais,
         ], 'admin');
     }
 

@@ -196,4 +196,47 @@ final class VisitaRepository
         $rows = $stmt->fetchAll();
         return is_array($rows) ? $rows : [];
     }
+
+    /**
+     * Retorna as linhas de visitas de um periodo (ou todas) com IP e campos
+     * usados nos relatorios, permitindo filtro por pais em memoria.
+     */
+    public function rowsInPeriod(?int $month = null, ?int $year = null, ?string $slugPrefix = null): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        $sql = 'SELECT v.id, v.ip, v.user_agent, v.referer, v.utm_source, v.utm_medium, v.utm_campaign,
+                       v.data_visita, p.nome AS pagina_nome, p.slug AS pagina_slug
+                FROM visitas_paginas v
+                INNER JOIN paginas p ON p.id = v.pagina_id';
+        $params = [];
+
+        if ($month !== null && $year !== null) {
+            $monthStr = str_pad((string) $month, 2, '0', STR_PAD_LEFT);
+            $period = sprintf('%04d-%s', $year, $monthStr);
+            $sql .= ' WHERE v.data_visita LIKE :period';
+            $params[':period'] = $period . '%';
+
+            if ($slugPrefix !== null && $slugPrefix !== '') {
+                $sql .= ' AND p.slug LIKE :prefix';
+                $params[':prefix'] = $slugPrefix . '%';
+            }
+        } elseif ($slugPrefix !== null && $slugPrefix !== '') {
+            $sql .= ' WHERE p.slug LIKE :prefix';
+            $params[':prefix'] = $slugPrefix . '%';
+        }
+
+        $sql .= ' ORDER BY v.id DESC';
+        $stmt = $pdo->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue($key, $value);
+        }
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return is_array($rows) ? $rows : [];
+    }
 }

@@ -46,6 +46,12 @@
       <span class="ms-2">Total de visitas nas paginas: <strong><?= (int) $s['total'] ?></strong></span>
     </div>
 
+    <?php
+    $paisUrl = '/admin/visitas/paginas';
+    $paisHidden = ['month' => (int) $s['month'], 'year' => (int) $s['year']];
+    require __DIR__ . '/_filtro_pais.php';
+    ?>
+
     <?php if (empty($s['pages'])): ?>
       <p class="text-muted">Sem visitas de paginas para o periodo.</p>
     <?php endif; ?>
