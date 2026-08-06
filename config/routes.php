@@ -45,6 +45,10 @@ return static function (Router $router): void {
 
     $router->get('/admin/login', [AuthController::class, 'adminLoginForm']);
     $router->post('/admin/login', [AuthController::class, 'adminLogin']);
+    $router->get('/admin/solicitar-redefinicao', [AuthController::class, 'mostrarSolicitarRedefinicaoStaff']);
+    $router->post('/admin/solicitar-redefinicao', [AuthController::class, 'solicitarRedefinicaoStaff']);
+    $router->get('/admin/redefinir-senha', [AuthController::class, 'mostrarRedefinirSenhaStaff']);
+    $router->post('/admin/redefinir-senha', [AuthController::class, 'redefinirSenhaStaff']);
 
     $router->get('/admin', [DashboardController::class, 'index']);
     $router->get('/admin/dashboard', [DashboardController::class, 'index']);

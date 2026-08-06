@@ -140,4 +140,91 @@ final class UsuarioRepository
         }
         $stmt->execute();
     }
+
+    public function findByEmailStaff(string $email): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, email, senha, tipo, ativo, reset_token, reset_token_expires
+                FROM usuarios
+                WHERE email = :email
+                LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['email' => $email]);
+        $row = $stmt->fetch();
+
+        return is_array($row) ? $row : null;
+    }
+
+    public function saveResetToken(int $id, string $token, string $expires): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE usuarios SET reset_token = :token, reset_token_expires = :expires WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':token', $token);
+        $stmt->bindValue(':expires', $expires);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function findByResetToken(string $token): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, nome, email, tipo, ativo, reset_token, reset_token_expires
+                FROM usuarios
+                WHERE reset_token = :token
+                LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->execute(['token' => $token]);
+        $row = $stmt->fetch();
+
+        if (!is_array($row)) {
+            return null;
+        }
+
+        $expires = (string) ($row['reset_token_expires'] ?? '');
+        if ($expires === '' || strtotime($expires) < time()) {
+            return null;
+        }
+
+        return $row;
+    }
+
+    public function updateSenha(int $id, string $senhaHash): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE usuarios SET senha = :senha, reset_token = NULL, reset_token_expires = NULL WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':senha', $senhaHash);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
+
+    public function clearResetToken(int $id): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE usuarios SET reset_token = NULL, reset_token_expires = NULL WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
+    }
 }

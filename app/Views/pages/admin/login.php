@@ -22,6 +22,11 @@
             </div>
             <button class="btn-primary-custom justify-content-center" type="submit">Entrar no Painel</button>
           </form>
+          <div class="text-center mt-3">
+            <a href="/admin/solicitar-redefinicao" style="color: var(--accent); text-decoration: none; font-size: 14px;">
+              <i class="bi bi-question-circle me-1"></i>Esqueceu a senha?
+            </a>
+          </div>
           <script>
           function alternarSenha() {
             var input = document.getElementById('senhaInput');

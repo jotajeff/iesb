@@ -194,4 +194,129 @@ final class AuthController extends Controller
         Session::setFlash('flash', 'Sessão encerrada com sucesso.');
         $this->redirect('/home');
     }
+
+    public function mostrarSolicitarRedefinicaoStaff(): void
+    {
+        $this->render('pages/admin/solicitar_redefinicao', [
+            'title' => 'Redefinir Senha',
+            'currentRoute' => '/admin/login',
+        ], 'admin');
+    }
+
+    public function solicitarRedefinicaoStaff(): void
+    {
+        $email = strtolower(trim((string) $this->input('email', '')));
+
+        if ($email === '') {
+            Session::setFlash('flash', 'Informe seu e-mail.');
+            $this->redirect('/admin/solicitar-redefinicao');
+            return;
+        }
+
+        $repo = new \App\Repositories\UsuarioRepository();
+        $usuario = $repo->findByEmailStaff($email);
+
+        $staffRoles = ['admin', 'operador', 'professor'];
+        if ($usuario === null || !in_array((string) ($usuario['tipo'] ?? ''), $staffRoles, true) || intval($usuario['ativo'] ?? 0) !== 1) {
+            Session::setFlash('flash', 'E-mail não encontrado ou conta inativa.');
+            $this->redirect('/admin/solicitar-redefinicao');
+            return;
+        }
+
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+
+        $repo->saveResetToken((int) $usuario['id'], $token, $expires);
+
+        $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
+        $link = "{$scheme}://{$host}/admin/redefinir-senha?token={$token}";
+
+        $emailService = new EmailService();
+        $enviado = $emailService->enviarRedefinicaoSenha($email, (string) ($usuario['nome'] ?? ''), $link);
+
+        if ($enviado) {
+            Session::setFlash('flash', 'Enviamos um link de redefinição para seu e-mail.');
+        } else {
+            $erro = $emailService->getLastError();
+            $configInfo = $emailService->getDebugInfo();
+            $msg = 'Erro ao enviar o e-mail.';
+            if ($configInfo !== '') {
+                $msg .= ' Config: ' . $configInfo . '.';
+            }
+            if ($erro !== '') {
+                $msg .= ' Erro: ' . $erro;
+            }
+            Session::setFlash('flash', $msg);
+        }
+
+        $this->redirect('/admin/solicitar-redefinicao');
+    }
+
+    public function mostrarRedefinirSenhaStaff(): void
+    {
+        $token = (string) ($_GET['token'] ?? '');
+
+        if ($token === '') {
+            Session::setFlash('flash', 'Link inválido.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $repo = new \App\Repositories\UsuarioRepository();
+        $usuario = $repo->findByResetToken($token);
+
+        if ($usuario === null) {
+            Session::setFlash('flash', 'Link inválido ou expirado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $this->render('pages/admin/redefinir_senha', [
+            'title' => 'Nova Senha',
+            'currentRoute' => '/admin/login',
+            'token' => $token,
+        ], 'admin');
+    }
+
+    public function redefinirSenhaStaff(): void
+    {
+        $token = (string) $this->input('token', '');
+        $senha = (string) $this->input('senha', '');
+        $senhaConfirmar = (string) $this->input('senha_confirmar', '');
+
+        if ($token === '' || $senha === '' || $senhaConfirmar === '') {
+            Session::setFlash('flash', 'Preencha todos os campos.');
+            $this->redirect('/admin/redefinir-senha?token=' . urlencode($token));
+            return;
+        }
+
+        if (strlen($senha) < 6) {
+            Session::setFlash('flash', 'A senha deve ter no mínimo 6 caracteres.');
+            $this->redirect('/admin/redefinir-senha?token=' . urlencode($token));
+            return;
+        }
+
+        if ($senha !== $senhaConfirmar) {
+            Session::setFlash('flash', 'As senhas não conferem.');
+            $this->redirect('/admin/redefinir-senha?token=' . urlencode($token));
+            return;
+        }
+
+        $repo = new \App\Repositories\UsuarioRepository();
+        $usuario = $repo->findByResetToken($token);
+
+        if ($usuario === null) {
+            Session::setFlash('flash', 'Link inválido ou expirado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $repo->updateSenha((int) $usuario['id'], password_hash($senha, PASSWORD_DEFAULT));
+
+        $this->logService->log('redefinir_senha', 'usuario', (int) $usuario['id'], "Senha redefinida via email: {$usuario['email']}");
+
+        Session::setFlash('flash', 'Senha redefinida com sucesso! Faça login com sua nova senha.');
+        $this->redirect('/admin/login');
+    }
 }

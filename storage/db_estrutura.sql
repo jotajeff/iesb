@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 03/08/2026 às 11:36
+-- Tempo de geração: 05/08/2026 às 21:04
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.3.31
 
@@ -275,10 +275,13 @@ CREATE TABLE `documento` (
   `id_tipo` int(10) UNSIGNED NOT NULL,
   `nome_original` varchar(255) NOT NULL,
   `nome_drive` varchar(255) NOT NULL,
+  `folder_id` varchar(120) DEFAULT NULL,
   `mime_type` varchar(120) DEFAULT NULL,
   `tamanho` bigint(20) DEFAULT NULL,
   `file_id` varchar(120) NOT NULL,
   `versao` int(11) NOT NULL DEFAULT '1',
+  `status` enum('nao_enviado','enviado','em_analise','aprovado','rejeitado','substituido') NOT NULL DEFAULT 'nao_enviado',
+  `observacao` text,
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -400,6 +403,28 @@ CREATE TABLE `instituicao` (
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `integracao_google`
+--
+
+CREATE TABLE `integracao_google` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `nome` varchar(100) NOT NULL,
+  `client_id` varchar(255) NOT NULL,
+  `client_secret` varchar(255) NOT NULL,
+  `refresh_token` text,
+  `root_folder_id` varchar(255) DEFAULT NULL,
+  `root_folder_nome` varchar(255) DEFAULT NULL,
+  `email_workspace` varchar(255) DEFAULT NULL,
+  `conectado` tinyint(1) NOT NULL DEFAULT '0',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `provedor` enum('google_drive') NOT NULL DEFAULT 'google_drive',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- --------------------------------------------------------
 
@@ -676,6 +701,9 @@ CREATE TABLE `storage_drive` (
   `folder_id` varchar(120) NOT NULL,
   `folder_name` varchar(255) NOT NULL,
   `folder_link` varchar(512) DEFAULT NULL,
+  `parent_folder_id` varchar(120) DEFAULT NULL,
+  `nivel` tinyint(1) NOT NULL DEFAULT '1',
+  `tipo` enum('root','grupo','registro','','','') NOT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -778,6 +806,8 @@ CREATE TABLE `usuarios` (
   `tipo` enum('admin','aluno','operador','professor') COLLATE utf8mb4_unicode_ci NOT NULL,
   `telefone` varchar(20) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `foto` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reset_token` varchar(64) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `reset_token_expires` datetime DEFAULT NULL,
   `ativo` tinyint(1) DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -828,6 +858,12 @@ CREATE TABLE `visitas_paginas` (
   `pagina_id` bigint(20) UNSIGNED NOT NULL,
   `ip` varchar(45) COLLATE utf8mb4_unicode_ci NOT NULL,
   `user_agent` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT '',
+  `referer` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `utm_source` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `utm_medium` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `utm_campaign` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `utm_term` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `utm_content` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
   `endereco_pagina` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
   `data_visita` date NOT NULL,
   `hora_visita` time NOT NULL,
@@ -987,6 +1023,12 @@ ALTER TABLE `instituicao`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uc_instituicao_documento` (`documento`),
   ADD UNIQUE KEY `uc_instituicao_email` (`email`);
+
+--
+-- Índices de tabela `integracao_google`
+--
+ALTER TABLE `integracao_google`
+  ADD PRIMARY KEY (`id`);
 
 --
 -- Índices de tabela `logs_auditoria`
@@ -1299,6 +1341,12 @@ ALTER TABLE `imagem`
 --
 ALTER TABLE `instituicao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `integracao_google`
+--
+ALTER TABLE `integracao_google`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `logs_auditoria`
