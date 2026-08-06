@@ -5,6 +5,16 @@
       <a class="btn btn-outline-secondary btn-sm" href="/admin/professores"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
     </div>
 
+    <nav class="nav nav-pills flex-wrap gap-1 mb-4 p-2 rounded-3" style="background:#f8f9fa;border:1px solid #dee2e6;">
+      <a class="btn btn-sm btn-outline-primary" href="#secao-endereco"><i class="bi bi-geo-alt me-1"></i>Endereço</a>
+      <a class="btn btn-sm btn-outline-primary" href="#secao-redes"><i class="bi bi-share me-1"></i>Redes Sociais</a>
+      <a class="btn btn-sm btn-outline-primary" href="#secao-resumo"><i class="bi bi-card-text me-1"></i>Resumo</a>
+      <a class="btn btn-sm btn-outline-primary" href="#secao-curriculo"><i class="bi bi-file-earmark-text me-1"></i>Currículo</a>
+      <a class="btn btn-sm btn-outline-primary" href="#secao-fotos"><i class="bi bi-camera me-1"></i>Fotos</a>
+      <a class="btn btn-sm btn-outline-primary" href="#secao-documentos"><i class="bi bi-folder2-open me-1"></i>Documentos</a>
+      <a class="btn btn-sm btn-outline-primary" href="#secao-turmas"><i class="bi bi-link-45deg me-1"></i>Turmas</a>
+    </nav>
+
     <div class="row">
       <div class="col-md-3 order-md-last mb-3 mb-md-0 text-center">
         <?php $foto = $imagens[0]['path'] ?? null; ?>
@@ -43,7 +53,7 @@
     </div>
 
     <hr class="mt-3">
-    <h5><i class="bi bi-geo-alt me-1"></i>Endereço</h5>
+    <h5 id="secao-endereco" style="scroll-margin-top:80px;"><i class="bi bi-geo-alt me-1"></i>Endereço</h5>
     <?php if ($endereco): ?>
       <dl class="row">
         <dt class="col-sm-2 text-muted">Logradouro</dt>
@@ -62,7 +72,7 @@
     <?php endif; ?>
 
     <hr>
-    <h5><i class="bi bi-share me-1"></i>Redes Sociais</h5>
+    <h5 id="secao-redes" style="scroll-margin-top:80px;"><i class="bi bi-share me-1"></i>Redes Sociais</h5>
     <?php if (!empty($social)): ?>
       <ul>
         <?php foreach ($social as $rede): ?>
@@ -74,7 +84,7 @@
     <?php endif; ?>
 
     <hr>
-    <h5><i class="bi bi-file-earmark-text me-1"></i>Resumo</h5>
+    <h5 id="secao-resumo" style="scroll-margin-top:80px;"><i class="bi bi-file-earmark-text me-1"></i>Resumo</h5>
     <?php if ($curriculo && trim((string) ($curriculo['resumo'] ?? '')) !== ''): ?>
       <p><?= nl2br(htmlspecialchars((string) ($curriculo['resumo'] ?? ''), ENT_QUOTES, 'UTF-8')) ?></p>
     <?php else: ?>
@@ -82,7 +92,7 @@
     <?php endif; ?>
 
     <hr>
-    <h5><i class="bi bi-file-earmark-text me-1"></i>Currículo</h5>
+    <h5 id="secao-curriculo" style="scroll-margin-top:80px;"><i class="bi bi-file-earmark-text me-1"></i>Currículo</h5>
     <?php if ($curriculo && trim((string) ($curriculo['conteudo'] ?? '')) !== ''): ?>
       <div class="p-3 border rounded bg-light"><?= ($curriculo['conteudo'] ?? '') ?></div>
     <?php else: ?>
@@ -90,7 +100,7 @@
     <?php endif; ?>
 
     <hr>
-    <h5><i class="bi bi-camera me-1"></i>Fotos</h5>
+    <h5 id="secao-fotos" style="scroll-margin-top:80px;"><i class="bi bi-camera me-1"></i>Fotos</h5>
     <?php if (!empty($imagens)): ?>
       <div class="row g-2">
         <?php foreach ($imagens as $img): ?>
@@ -104,7 +114,7 @@
     <?php endif; ?>
 
     <hr>
-    <h5><i class="bi bi-folder2-open me-1"></i>Documentos</h5>
+    <h5 id="secao-documentos" style="scroll-margin-top:80px;"><i class="bi bi-folder2-open me-1"></i>Documentos</h5>
     <?php $documentos = is_array($documentos ?? null) ? $documentos : []; ?>
     <?php if (empty($documentos)): ?>
       <p class="text-muted">Nenhum documento definido para o grupo Professores.</p>
@@ -195,7 +205,7 @@
     <?php endif; ?>
 
     <hr>
-    <h5><i class="bi bi-link-45deg me-1"></i>Turmas Vinculadas</h5>
+    <h5 id="secao-turmas" style="scroll-margin-top:80px;"><i class="bi bi-link-45deg me-1"></i>Turmas Vinculadas</h5>
     <?php if (!empty($turmas)): ?>
       <div class="table-responsive">
         <table class="table table-sm table-striped align-middle">
