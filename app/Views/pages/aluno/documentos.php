@@ -153,7 +153,7 @@ $statusBadges = [
   <div class="modal fade" id="uploadModal<?= $tipoIdModal ?>" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered">
       <div class="modal-content">
-        <form method="post" action="/aluno/documentos/enviar" enctype="multipart/form-data">
+        <form method="post" action="/aluno/documentos/enviar" enctype="multipart/form-data" class="form-upload-documento">
           <input type="hidden" name="id_tipo" value="<?= $tipoIdModal ?>">
           <div class="modal-header">
             <h5 class="modal-title">
@@ -171,13 +171,41 @@ $statusBadges = [
               <label class="form-label">Arquivo (PDF, PNG, JPG ou JPEG - máx. 20MB)</label>
               <input type="file" class="form-control" name="arquivo" accept=".pdf,.png,.jpg,.jpeg" required>
             </div>
+            <div class="alert alert-info border d-none mb-0 upload-documento-feedback">
+              <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+              Enviando documento para o Google Drive, aguarde...
+            </div>
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="submit" class="btn btn-primary"><i class="bi bi-upload me-1"></i>Enviar</button>
+            <button type="submit" class="btn btn-primary btn-enviar-documento"><i class="bi bi-upload me-1"></i>Enviar</button>
           </div>
         </form>
       </div>
     </div>
   </div>
 <?php endforeach; ?>
+
+<?php if ($storageConectado): ?>
+<script>
+document.querySelectorAll('.form-upload-documento').forEach(function(form) {
+  form.addEventListener('submit', function() {
+    var arquivoInput = form.querySelector('input[type="file"]');
+    if (arquivoInput && arquivoInput.files.length === 0) {
+      return;
+    }
+
+    var btn = form.querySelector('.btn-enviar-documento');
+    var feedback = form.querySelector('.upload-documento-feedback');
+
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Enviando...';
+    }
+    if (feedback) {
+      feedback.classList.remove('d-none');
+    }
+  });
+});
+</script>
+<?php endif; ?>
