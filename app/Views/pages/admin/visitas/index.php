@@ -29,7 +29,7 @@
           <?php foreach (($visits ?? []) as $visit): ?>
             <tr>
               <td><?= (int) $visit['id'] ?></td>
-              <td><?= htmlspecialchars((string) $visit['pagina_nome'], ENT_QUOTES, 'UTF-8') ?></td>
+              <td class="text-break" style="word-break: break-word; max-width: 260px;"><?= htmlspecialchars((string) $visit['pagina_nome'], ENT_QUOTES, 'UTF-8') ?></td>
               <td>
                 <?php $ua = $visit['user_agent'] ?? []; ?>
                 <span class="me-2"><i class="bi <?= UiIconHelper::device((string) ($ua['device'] ?? '')) ?>"></i> <?= htmlspecialchars((string) ($ua['device'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
