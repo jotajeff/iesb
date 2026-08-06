@@ -36,11 +36,11 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
                 <div class="p-3 rounded-3 bg-light border">
                   <div class="text-muted small text-uppercase">WhatsApp</div>
                   <div class="fw-semibold">
-                    <?php $wa = preg_replace('/\D/', '', (string) ($pre['whatsapp'] ?? '')); ?>
+                    <?php $wa = \App\Helpers\WhatsAppHelper::onlyDigits((string) ($pre['whatsapp'] ?? '')); ?>
                     <?php if ($wa !== ''): ?>
-                      <a href="https://wa.me/<?= $wa ?>" target="_blank" class="text-decoration-none"><i class="bi bi-whatsapp me-1"></i><?= htmlspecialchars((string) ($pre['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></a>
+                      <a href="https://wa.me/<?= $wa ?>" target="_blank" class="text-decoration-none"><i class="bi bi-whatsapp me-1" style="color:#128C7E;"></i><?= htmlspecialchars(\App\Helpers\WhatsAppHelper::format((string) ($pre['whatsapp'] ?? '-')), ENT_QUOTES, 'UTF-8') ?></a>
                     <?php else: ?>
-                      <?= htmlspecialchars((string) ($pre['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                      <?= htmlspecialchars(\App\Helpers\WhatsAppHelper::format((string) ($pre['whatsapp'] ?? '-')), ENT_QUOTES, 'UTF-8') ?>
                     <?php endif; ?>
                   </div>
                 </div>

@@ -53,12 +53,12 @@
                 <td><a href="/admin/preinscricao/detalhe?id=<?= (int) ($p['id'] ?? 0) ?>" class="text-decoration-none">#<?= (int) ($p['id'] ?? 0) ?></a></td>
                 <td><a href="/admin/preinscricao/detalhe?id=<?= (int) ($p['id'] ?? 0) ?>" class="text-decoration-none fw-semibold"><?= htmlspecialchars((string) ($p['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></a></td>
                 <td><?= htmlspecialchars((string) ($p['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                <?php $wa = preg_replace('/\D/', '', (string) ($p['whatsapp'] ?? '')); ?>
+                <?php $wa = \App\Helpers\WhatsAppHelper::onlyDigits((string) ($p['whatsapp'] ?? '')); ?>
                 <td>
                   <?php if ($wa !== ''): ?>
-                    <a href="https://wa.me/<?= $wa ?>" target="_blank" class="text-decoration-none"><i class="bi bi-whatsapp me-1"></i><?= htmlspecialchars((string) ($p['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></a>
+                    <a href="https://wa.me/<?= $wa ?>" target="_blank" class="text-decoration-none"><i class="bi bi-whatsapp me-1" style="color:#128C7E;"></i><?= htmlspecialchars(\App\Helpers\WhatsAppHelper::format((string) ($p['whatsapp'] ?? '-')), ENT_QUOTES, 'UTF-8') ?></a>
                   <?php else: ?>
-                    <?= htmlspecialchars((string) ($p['whatsapp'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    <?= htmlspecialchars(\App\Helpers\WhatsAppHelper::format((string) ($p['whatsapp'] ?? '-')), ENT_QUOTES, 'UTF-8') ?>
                   <?php endif; ?>
                 </td>
                 <td><?= htmlspecialchars((string) ($p['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
