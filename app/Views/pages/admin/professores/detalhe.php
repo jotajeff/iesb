@@ -104,6 +104,97 @@
     <?php endif; ?>
 
     <hr>
+    <h5><i class="bi bi-folder2-open me-1"></i>Documentos</h5>
+    <?php $documentos = is_array($documentos ?? null) ? $documentos : []; ?>
+    <?php if (empty($documentos)): ?>
+      <p class="text-muted">Nenhum documento definido para o grupo Professores.</p>
+    <?php else: ?>
+      <div class="table-responsive">
+        <table class="table table-sm table-striped align-middle">
+          <thead>
+            <tr>
+              <th>Documento</th>
+              <th>Obrigatório</th>
+              <th>Status</th>
+              <th>Arquivo</th>
+              <th>Enviado em</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php
+            $statusLabels = [
+              'nao_enviado' => 'Não enviado',
+              'enviado' => 'Enviado',
+              'em_analise' => 'Em análise',
+              'aprovado' => 'Aprovado',
+              'rejeitado' => 'Rejeitado',
+              'substituido' => 'Substituído',
+            ];
+            $statusBadges = [
+              'nao_enviado' => 'bg-secondary',
+              'enviado' => 'bg-info',
+              'em_analise' => 'bg-warning text-dark',
+              'aprovado' => 'bg-success',
+              'rejeitado' => 'bg-danger',
+              'substituido' => 'bg-dark',
+            ];
+            ?>
+            <?php foreach ($documentos as $doc): ?>
+              <?php
+              $docId = (int) ($doc['documento_id'] ?? 0);
+              $status = (string) ($doc['status'] ?? 'nao_enviado');
+              ?>
+              <tr>
+                <td><?= htmlspecialchars((string) ($doc['tipo_descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td>
+                  <?php if ((int) ($doc['obrigatorio'] ?? 0) === 1): ?>
+                    <span class="badge bg-danger">Obrigatório</span>
+                  <?php else: ?>
+                    <span class="badge bg-secondary">Opcional</span>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <span class="badge <?= $statusBadges[$status] ?? 'bg-secondary' ?>"><?= htmlspecialchars($statusLabels[$status] ?? ucfirst($status), ENT_QUOTES, 'UTF-8') ?></span>
+                  <?php if ($status === 'rejeitado' && !empty($doc['observacao'])): ?>
+                    <div class="small text-danger mt-1">
+                      <i class="bi bi-chat-left-text me-1"></i><?= htmlspecialchars((string) $doc['observacao'], ENT_QUOTES, 'UTF-8') ?>
+                    </div>
+                  <?php endif; ?>
+                </td>
+                <td>
+                  <?php if ($docId > 0): ?>
+                    <i class="bi bi-file-earmark-pdf me-1"></i>
+                    <?= htmlspecialchars((string) ($doc['nome_original'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    <?php if ((int) ($doc['versao'] ?? 1) > 1): ?>
+                      <span class="badge bg-light text-dark border ms-1">v<?= (int) $doc['versao'] ?></span>
+                    <?php endif; ?>
+                  <?php else: ?>
+                    <span class="text-muted">-</span>
+                  <?php endif; ?>
+                </td>
+                <td class="text-nowrap">
+                  <?= $docId > 0 ? htmlspecialchars((string) ($doc['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') : '<span class="text-muted">-</span>' ?>
+                </td>
+                <td>
+                  <?php if ($docId > 0): ?>
+                    <button type="button" class="btn btn-sm btn-outline-success"
+                      onclick="visualizarDocumentoProf('<?= htmlspecialchars((string) ($doc['tipo_descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars((string) ($doc['file_id'] ?? ''), ENT_QUOTES, 'UTF-8') ?>')"
+                      title="Visualizar">
+                      <i class="bi bi-eye"></i>
+                    </button>
+                  <?php else: ?>
+                    <span class="text-muted">-</span>
+                  <?php endif; ?>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php endif; ?>
+
+    <hr>
     <h5><i class="bi bi-link-45deg me-1"></i>Turmas Vinculadas</h5>
     <?php if (!empty($turmas)): ?>
       <div class="table-responsive">
@@ -137,3 +228,67 @@
     <?php endif; ?>
   </div>
 </section>
+
+<div class="modal fade" id="verDocumentoProfModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="verDocumentoProfTitulo"><i class="bi bi-eye me-2"></i>Visualizar documento</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body text-center">
+        <div class="ratio ratio-4x3">
+          <iframe id="verDocumentoProfFrame" src="" allowfullscreen></iframe>
+        </div>
+        <div id="verDocumentoProfFallback" class="d-none py-4">
+          <i class="bi bi-file-earmark-pdf fs-1 text-muted"></i>
+          <p class="mt-2 mb-0">Não foi possível incorporar a visualização.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <a id="verDocumentoProfDownload" href="#" target="_blank" rel="noopener" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-download me-1"></i>Baixar PDF
+        </a>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function visualizarDocumentoProf(titulo, fileId) {
+  if (!fileId) {
+    alert('Arquivo não encontrado no Drive.');
+    return;
+  }
+
+  document.getElementById('verDocumentoProfTitulo').textContent = 'Visualizar documento: ' + titulo;
+
+  var frame = document.getElementById('verDocumentoProfFrame');
+  var fallback = document.getElementById('verDocumentoProfFallback');
+  var download = document.getElementById('verDocumentoProfDownload');
+
+  frame.src = 'https://drive.google.com/file/d/' + encodeURIComponent(fileId) + '/preview';
+  frame.classList.remove('d-none');
+  fallback.classList.add('d-none');
+  download.href = 'https://drive.google.com/uc?export=download&id=' + encodeURIComponent(fileId);
+
+  var modalEl = document.getElementById('verDocumentoProfModal');
+  var modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+  modal.show();
+
+  frame.onload = function() {
+    try {
+      if (frame.contentDocument && frame.contentDocument.body && !frame.contentDocument.body.innerHTML.trim()) {
+        fallback.classList.remove('d-none');
+      }
+    } catch (err) {
+      frame.classList.remove('d-none');
+    }
+  };
+}
+
+document.getElementById('verDocumentoProfModal').addEventListener('hidden.bs.modal', function() {
+  document.getElementById('verDocumentoProfFrame').src = '';
+});
+</script>

@@ -1262,6 +1262,34 @@ final class ProfessorController extends Controller
             $turmas = [];
         }
 
+        $documentos = [];
+        try {
+            $pdo = Database::connection();
+            if ($pdo instanceof \PDO) {
+                $grupoProfessores = \App\Services\Storage\StorageService::GROUP_PROFESSORES;
+                $stmt = $pdo->prepare(
+                    'SELECT t.id AS tipo_id, t.descricao AS tipo_descricao, t.obrigatorio, t.ordem,'
+                    . ' d.id AS documento_id, d.nome_original, d.nome_drive, d.mime_type, d.tamanho, d.versao, d.created_at, d.file_id, d.status, d.observacao'
+                    . ' FROM documento_tipo t'
+                    . ' LEFT JOIN documento d ON d.id = ('
+                    . '   SELECT d2.id FROM documento d2'
+                    . '   WHERE d2.id_tipo = t.id AND d2.id_registro = :id_registro AND d2.ativo = 1'
+                    . '   ORDER BY d2.versao DESC, d2.id DESC LIMIT 1'
+                    . ' )'
+                    . ' WHERE t.id_grupo = :id_grupo AND t.ativo = 1'
+                    . ' ORDER BY t.ordem ASC, t.descricao ASC'
+                );
+                $stmt->bindValue(':id_registro', $id, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_grupo', $grupoProfessores, \PDO::PARAM_INT);
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+                $documentos = is_array($rows) ? $rows : [];
+            }
+        } catch (\Throwable $e) {
+            error_log('[PROFESSOR DETALHE DOCUMENTOS] Erro: ' . $e->getMessage());
+            $documentos = [];
+        }
+
         $this->render('pages/admin/professores/detalhe', [
             'title' => 'Detalhes do Professor — ' . ($professor['nome'] ?? ''),
             'currentRoute' => '/admin/professores/detalhe',
@@ -1271,6 +1299,7 @@ final class ProfessorController extends Controller
             'curriculo' => $curriculo,
             'imagens' => $imagens,
             'turmas' => $turmas,
+            'documentos' => $documentos,
         ], 'admin');
     }
 
