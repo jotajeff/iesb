@@ -37,7 +37,13 @@ final class PreInscricaoController extends Controller
             $this->redirect('/admin/login');
         }
 
-        $preInscricoes = $this->preService->listarTodos();
+        $situacao = trim((string) ($_GET['situacao'] ?? ''));
+        $situacoesValidas = ['recebido', 'atendimento', 'finalizado'];
+        if (!in_array($situacao, $situacoesValidas, true)) {
+            $situacao = '';
+        }
+
+        $preInscricoes = $this->preService->listarTodos($situacao !== '' ? $situacao : null);
 
         foreach ($preInscricoes as &$p) {
             $ip = (string) ($p['ip'] ?? '');
@@ -58,6 +64,7 @@ final class PreInscricaoController extends Controller
             'title' => 'Pré-inscrições',
             'currentRoute' => '/admin/preinscricao',
             'preInscricoes' => $preInscricoes,
+            'situacaoFiltro' => $situacao,
         ], 'admin');
     }
 

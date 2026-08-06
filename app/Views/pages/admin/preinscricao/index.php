@@ -9,6 +9,16 @@
       <div class="alert alert-info"><?= htmlspecialchars((string) $flash, ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
 
+    <form method="get" action="/admin/preinscricao" class="d-flex flex-wrap align-items-center gap-2 mb-3">
+      <label class="form-label mb-0 text-muted small"><i class="bi bi-funnel me-1"></i>Situação:</label>
+      <div class="btn-group" role="group" aria-label="Filtrar por situação">
+        <a class="btn btn-sm <?= (($situacaoFiltro ?? '') === '') ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/admin/preinscricao">Todas</a>
+        <a class="btn btn-sm <?= (($situacaoFiltro ?? '') === 'recebido') ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/admin/preinscricao?situacao=recebido">Recebido</a>
+        <a class="btn btn-sm <?= (($situacaoFiltro ?? '') === 'atendimento') ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/admin/preinscricao?situacao=atendimento">Atendimento</a>
+        <a class="btn btn-sm <?= (($situacaoFiltro ?? '') === 'finalizado') ? 'btn-primary' : 'btn-outline-secondary' ?>" href="/admin/preinscricao?situacao=finalizado">Finalizado</a>
+      </div>
+    </form>
+
     <div class="table-responsive">
       <table class="table table-striped table-sm align-middle">
         <thead>

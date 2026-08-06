@@ -18,9 +18,9 @@ final class PreInscricaoService
         return $this->repository->listar('recebido');
     }
 
-    public function listarTodos(): array
+    public function listarTodos(?string $situacao = null): array
     {
-        return $this->repository->listarTodos();
+        return $this->repository->listarTodos($situacao);
     }
 
     public function salvar(array $data): int

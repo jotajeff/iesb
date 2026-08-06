@@ -35,7 +35,7 @@ final class PreInscricaoRepository
         }
     }
 
-    public function listarTodos(): array
+    public function listarTodos(?string $situacao = null): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -47,9 +47,19 @@ final class PreInscricaoRepository
                            COALESCE(c.nome, \'-\') AS curso_nome,
                            p.situacao, p.created_at
                     FROM pre_inscricao p
-                    LEFT JOIN cursos c ON c.id = p.curso_id
-                    ORDER BY p.created_at DESC';
+                    LEFT JOIN cursos c ON c.id = p.curso_id';
+            $params = [];
+
+            if ($situacao !== null && $situacao !== '') {
+                $sql .= ' WHERE p.situacao = :situacao';
+                $params[':situacao'] = $situacao;
+            }
+
+            $sql .= ' ORDER BY p.created_at DESC';
             $stmt = $pdo->prepare($sql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value);
+            }
             $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
