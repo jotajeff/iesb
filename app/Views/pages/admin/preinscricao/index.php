@@ -63,6 +63,9 @@
           <?php endif; ?>
         </tbody>
       </table>
+      <div class="mt-2 text-muted small">
+        Total de pré-inscrições: <strong><?= count($preInscricoes ?? []) ?></strong>
+      </div>
     </div>
   </div>
 </section>
