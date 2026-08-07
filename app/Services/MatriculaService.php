@@ -109,7 +109,7 @@ final class MatriculaService
 
             $this->inscricaoService->atualizarStatus($idInscricao, 'CONFIRMADO', $idAluno, $idMatricula);
 
-            $this->enviarBoasVindas($nome, $email, $cpf, $idMatricula);
+            $this->enviarBoasVindas($idAluno, $nome, $email, $cpf, $idMatricula);
 
             return [
                 'message' => 'Matrícula realizada com sucesso',
@@ -150,7 +150,7 @@ final class MatriculaService
         return $idMatricula;
     }
 
-    private function enviarBoasVindas(string $nome, string $email, string $cpf, int $idMatricula): void
+    private function enviarBoasVindas(int $idAluno, string $nome, string $email, string $cpf, int $idMatricula): void
     {
         if ($email === '') {
             return;
@@ -158,7 +158,19 @@ final class MatriculaService
 
         try {
             $senha = explode('@', $email)[0] . '#' . date('Y');
-            $this->emailService->enviarBoasVindasMatricula($nome, $email, $cpf, $senha, (string) $idMatricula);
+
+            $linkRedefinicao = '';
+            if ($idAluno > 0) {
+                $token = bin2hex(random_bytes(32));
+                $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
+                $this->alunoService->salvarResetToken($idAluno, $token, $expires);
+
+                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+                $host = (string) ($_SERVER['HTTP_HOST'] ?? 'inteligenciaeducacionalsouzabrazil.com');
+                $linkRedefinicao = "{$scheme}://{$host}/aluno/redefinir-senha?token={$token}";
+            }
+
+            $this->emailService->enviarBoasVindasMatricula($nome, $email, $cpf, $senha, (string) $idMatricula, $linkRedefinicao);
         } catch (\Throwable $e) {
             error_log('[MATRICULA] Erro ao enviar boas-vindas: ' . $e->getMessage());
         }
