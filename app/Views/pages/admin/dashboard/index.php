@@ -78,13 +78,13 @@ $dashboardTypeLabel = match ($dashboardType) {
       </div>
     </div>
     <div class="col-md-3">
-      <div class="dashboard-task-card task-card-matriculas h-100">
+      <div class="dashboard-task-card task-card-matricula h-100">
         <div class="task-card-top">
           <div>
             <small class="task-card-label">Total de Matrículas</small>
-            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_matriculas'] ?? 0) ?></h2>
+            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_matricula'] ?? 0) ?></h2>
           </div>
-          <div class="task-card-icon task-card-icon-matriculas">
+          <div class="task-card-icon task-card-icon-matricula">
             <i class="bi bi-card-checklist"></i>
           </div>
         </div>
@@ -184,7 +184,7 @@ $dashboardTypeLabel = match ($dashboardType) {
   background: var(--purple, #6f42c1);
 }
 
-.task-card-matriculas::before {
+.task-card-matricula::before {
   background: var(--orange, #fd7e14);
 }
 
@@ -249,7 +249,7 @@ $dashboardTypeLabel = match ($dashboardType) {
   background: linear-gradient(135deg, #6f42c1, #b197fc);
 }
 
-.task-card-icon-matriculas {
+.task-card-icon-matricula {
   background: linear-gradient(135deg, #fd7e14, #ffb067);
 }
 

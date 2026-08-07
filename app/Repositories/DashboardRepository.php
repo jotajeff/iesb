@@ -16,7 +16,7 @@ final class DashboardRepository
             return [
                 'total_alunos' => 0,
                 'total_cursos' => 0,
-                'total_matriculas' => 0,
+                'total_matricula' => 0,
                 'total_pre_inscricoes' => 0,
             ];
         }
@@ -25,7 +25,7 @@ final class DashboardRepository
             return [
                 'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos'),
                 'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos'),
-                'total_matriculas' => $this->count($pdo, 'SELECT COUNT(*) FROM matriculas'),
+                'total_matricula' => $this->count($pdo, 'SELECT COUNT(*) FROM matricula'),
                 'total_pre_inscricoes' => $this->count($pdo, "SELECT COUNT(*) FROM pre_inscricao WHERE situacao = 'recebido'"),
             ];
         }
@@ -35,12 +35,12 @@ final class DashboardRepository
         $stmt->execute();
         $totalCursos = (int) $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT a.id) FROM alunos a JOIN matriculas m ON m.id_aluno = a.id JOIN turmas t ON t.id = m.id_turma JOIN turma_professor tp ON tp.id_turma = t.id WHERE tp.id_usuario = :userId');
+        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT a.id) FROM alunos a JOIN matricula m ON m.id_aluno = a.id JOIN turmas t ON t.id = m.id_turma JOIN turma_professor tp ON tp.id_turma = t.id WHERE tp.id_usuario = :userId');
         $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
         $stmt->execute();
         $totalAlunos = (int) $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM matriculas m JOIN turma_professor tp ON tp.id_turma = m.id_turma WHERE tp.id_usuario = :userId');
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM matricula m JOIN turma_professor tp ON tp.id_turma = m.id_turma WHERE tp.id_usuario = :userId');
         $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
         $stmt->execute();
         $totalMatriculas = (int) $stmt->fetchColumn();
@@ -48,7 +48,7 @@ final class DashboardRepository
         return [
             'total_alunos' => $totalAlunos,
             'total_cursos' => $totalCursos,
-            'total_matriculas' => $totalMatriculas,
+            'total_matricula' => $totalMatriculas,
         ];
     }
 

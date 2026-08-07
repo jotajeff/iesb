@@ -308,6 +308,21 @@ final class AdminController extends Controller
             'detalhe' => $detalheTexto,
             'ativo' => 1,
         ];
+
+        if ($detalheId > 0) {
+            $this->cursoService->atualizarDetalhe($detalheId, $payload);
+            $this->logService->log('atualizar', 'detalhe', $detalheId, "Detalhe atualizado para o curso #$cursoId");
+            Session::setFlash('flash', 'Detalhe atualizado com sucesso.');
+        } else {
+            $novoId = $this->cursoService->salvarDetalhe($payload);
+            $this->logService->log('criar', 'detalhe', $novoId, "Detalhe criado para o curso #$cursoId");
+            Session::setFlash('flash', 'Detalhe criado com sucesso.');
+        }
+
+        $this->redirect('/admin/cursos');
+    }
+
+    public function uploadCursoForm(): void
     {
         if (!$this->auth->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
@@ -1131,10 +1146,10 @@ final class AdminController extends Controller
             return;
         }
 
-        $matriculas = $this->alunoService->matriculasDoAluno($id);
+        $matricula = $this->alunoService->matriculaDoAluno($id);
         $turmasMatriculadas = array_map(
             static fn (array $m) => (int) ($m['id_turma'] ?? 0),
-            $matriculas
+            $matricula
         );
 
         $this->render('pages/admin/alunos/matricula', [
@@ -1142,7 +1157,7 @@ final class AdminController extends Controller
             'currentRoute' => '/admin/alunos/matricula',
             'aluno' => $aluno,
             'turmas' => $this->turmaService->turmas(500),
-            'matriculas' => $matriculas,
+            'matricula' => $matricula,
             'turmasMatriculadas' => $turmasMatriculadas,
         ], 'admin');
     }

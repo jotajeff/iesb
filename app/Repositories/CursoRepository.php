@@ -230,7 +230,7 @@ final class CursoRepository
 
             $sql = 'SELECT c.id AS curso_id, c.nome AS curso_nome,
                            t.id AS turma_id, t.nome AS turma_nome,
-                           (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos
+                           (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos
                     FROM cursos c
                     INNER JOIN turmas t ON t.id_curso = c.id
                     ORDER BY c.nome ASC, t.nome ASC';

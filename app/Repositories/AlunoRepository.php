@@ -18,7 +18,7 @@ final class AlunoRepository
 
         try {
             $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, ativo,
-                     (SELECT COUNT(*) FROM matriculas WHERE id_aluno = alunos.id) AS total_matriculas
+                     (SELECT COUNT(*) FROM matricula WHERE id_aluno = alunos.id) AS total_matricula
                      FROM alunos';
 
             if ($ativo !== null) {
@@ -196,7 +196,7 @@ final class AlunoRepository
         }
     }
 
-    public function listMatriculasByAluno(int $idAluno): array
+    public function listMatriculaByAluno(int $idAluno): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -205,7 +205,7 @@ final class AlunoRepository
 
         try {
             $sql = 'SELECT m.id, m.id_aluno, m.id_turma, m.data_matricula, m.status, t.nome AS turma_nome
-                     FROM matriculas m
+                     FROM matricula m
                      LEFT JOIN turmas t ON m.id_turma = t.id
                      WHERE m.id_aluno = :id_aluno
                      ORDER BY m.data_matricula DESC';
@@ -217,7 +217,7 @@ final class AlunoRepository
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
         } catch (\Throwable $e) {
-            error_log('[MATRICULAS] Erro em listMatriculasByAluno: ' . $e->getMessage());
+            error_log('[MATRICULA] Erro em listMatriculaByAluno: ' . $e->getMessage());
             return [];
         }
     }
@@ -233,7 +233,7 @@ final class AlunoRepository
             $sql = 'SELECT m.id AS matricula_id, m.status, m.data_matricula,
                      t.id AS turma_id, t.nome AS turma_nome,
                      c.id AS curso_id, c.nome AS curso_nome
-                     FROM matriculas m
+                     FROM matricula m
                      INNER JOIN turmas t ON m.id_turma = t.id
                      INNER JOIN cursos c ON t.id_curso = c.id
                      WHERE m.id_aluno = :id_aluno

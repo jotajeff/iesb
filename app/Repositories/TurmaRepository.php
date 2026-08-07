@@ -18,7 +18,7 @@ final class TurmaRepository
 
         try {
             $sql = 'SELECT t.id, t.nome, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
-                 . ' (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos'
+                 . ' (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos c ON t.id_curso = c.id'
                  . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
@@ -156,7 +156,7 @@ final class TurmaRepository
 
         try {
             $sql = 'SELECT a.id, a.nome, a.cpf, a.email, a.telefone, m.status, m.data_matricula'
-                 . ' FROM matriculas m'
+                 . ' FROM matricula m'
                  . ' INNER JOIN alunos a ON m.id_aluno = a.id'
                  . ' WHERE m.id_turma = :id_turma'
                  . ' ORDER BY a.nome ASC';
@@ -181,16 +181,41 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'INSERT INTO matriculas (id_aluno, id_turma, status) VALUES (:id_aluno, :id_turma, :status)';
+            $idAluno = (int) ($payload['id_aluno'] ?? 0);
+            $idTurma = (int) ($payload['id_turma'] ?? 0);
+
+            $idCurso = 0;
+            if ($idTurma > 0) {
+                $stmt = $pdo->prepare('SELECT id_curso FROM turmas WHERE id = :id LIMIT 1');
+                $stmt->bindValue(':id', $idTurma, PDO::PARAM_INT);
+                $stmt->execute();
+                $idCurso = (int) $stmt->fetchColumn();
+            }
+
+            $ano = (int) date('Y');
+            $stmt = $pdo->prepare('SELECT COUNT(*) FROM matricula WHERE numero LIKE :prefixo');
+            $stmt->bindValue(':prefixo', (string) $ano . '%');
+            $stmt->execute();
+            $numero = (string) ($ano * 100000 + (int) $stmt->fetchColumn() + 1);
+
+            $sql = 'INSERT INTO matricula
+                    (numero, id_aluno, id_curso, id_turma, id_pagamento, origem, status, data_matricula, ativo)
+                    VALUES (:numero, :id_aluno, :id_curso, :id_turma, :id_pagamento, :origem, :status, :data_matricula, :ativo)';
             $stmt = $pdo->prepare($sql);
-            $stmt->bindValue(':id_aluno', $payload['id_aluno'], PDO::PARAM_INT);
-            $stmt->bindValue(':id_turma', $payload['id_turma'], PDO::PARAM_INT);
+            $stmt->bindValue(':numero', $numero, PDO::PARAM_STR);
+            $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+            $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
+            $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
+            $stmt->bindValue(':id_pagamento', 0, PDO::PARAM_INT);
+            $stmt->bindValue(':origem', 'ADMIN', PDO::PARAM_STR);
             $stmt->bindValue(':status', $payload['status'] ?? 'matriculado', PDO::PARAM_STR);
+            $stmt->bindValue(':data_matricula', date('Y-m-d H:i:s'), PDO::PARAM_STR);
+            $stmt->bindValue(':ativo', 1, PDO::PARAM_INT);
             $stmt->execute();
 
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {
-            error_log('[MATRICULAS] Erro em saveMatricula: ' . $e->getMessage());
+            error_log('[MATRICULA] Erro em saveMatricula: ' . $e->getMessage());
             return 0;
         }
     }
@@ -203,7 +228,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT id FROM matriculas'
+            $sql = 'SELECT id FROM matricula'
                  . ' WHERE id_aluno = :id_aluno AND id_turma = :id_turma'
                  . ' LIMIT 1';
 
@@ -215,7 +240,7 @@ final class TurmaRepository
             $row = $stmt->fetch();
             return $row ?: null;
         } catch (\Throwable $e) {
-            error_log('[MATRICULAS] Erro em findMatriculaByAlunoAndTurma: ' . $e->getMessage());
+            error_log('[MATRICULA] Erro em findMatriculaByAlunoAndTurma: ' . $e->getMessage());
             return null;
         }
     }
@@ -230,7 +255,7 @@ final class TurmaRepository
         try {
             $sql = 'SELECT m.id, m.id_aluno, m.id_turma, m.data_matricula, m.status,'
                  . ' t.nome AS turma_nome, c.nome AS curso_nome'
-                 . ' FROM matriculas m'
+                 . ' FROM matricula m'
                  . ' INNER JOIN turmas t ON m.id_turma = t.id'
                  . ' INNER JOIN cursos c ON t.id_curso = c.id'
                  . ' WHERE m.id = :id'
@@ -243,7 +268,7 @@ final class TurmaRepository
             $row = $stmt->fetch();
             return $row ?: null;
         } catch (\Throwable $e) {
-            error_log('[MATRICULAS] Erro em findMatriculaById: ' . $e->getMessage());
+            error_log('[MATRICULA] Erro em findMatriculaById: ' . $e->getMessage());
             return null;
         }
     }
@@ -256,13 +281,13 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'UPDATE matriculas SET id_turma = :id_turma WHERE id = :id';
+            $sql = 'UPDATE matricula SET id_turma = :id_turma WHERE id = :id';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id_turma', $idNovaTurma, PDO::PARAM_INT);
             $stmt->bindValue(':id', $idMatricula, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (\Throwable $e) {
-            error_log('[MATRICULAS] Erro em updateMatriculaTurma: ' . $e->getMessage());
+            error_log('[MATRICULA] Erro em updateMatriculaTurma: ' . $e->getMessage());
             return false;
         }
     }
@@ -320,7 +345,7 @@ final class TurmaRepository
 
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {
-            error_log('[MATRICULAS] Erro em insertTroca: ' . $e->getMessage());
+            error_log('[MATRICULA] Erro em insertTroca: ' . $e->getMessage());
             return 0;
         }
     }

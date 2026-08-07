@@ -245,10 +245,10 @@ final class AlunoController extends Controller
             return;
         }
 
-        $matriculas = $this->alunoService->matriculasDoAluno($id);
+        $matricula = $this->alunoService->matriculaDoAluno($id);
         $turmasMatriculadas = array_map(
             static fn (array $m) => (int) ($m['id_turma'] ?? 0),
-            $matriculas
+            $matricula
         );
 
         $this->render('pages/admin/alunos/matricula', [
@@ -256,7 +256,7 @@ final class AlunoController extends Controller
             'currentRoute' => '/admin/alunos/matricula',
             'aluno' => $aluno,
             'turmas' => $this->turmaService->turmas(500),
-            'matriculas' => $matriculas,
+            'matricula' => $matricula,
             'turmasMatriculadas' => $turmasMatriculadas,
         ], 'admin');
     }

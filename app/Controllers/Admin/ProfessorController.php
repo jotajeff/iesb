@@ -485,7 +485,7 @@ final class ProfessorController extends Controller
             try {
                 $sql = 'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativo,'
                      . ' c.nome AS curso_nome, n.nome AS nivel_nome,'
-                     . ' (SELECT COUNT(*) FROM matriculas WHERE id_turma = t.id) AS total_inscritos'
+                     . ' (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos'
                      . ' FROM turma_professor tp'
                      . ' JOIN turmas t ON tp.id_turma = t.id'
                      . ' LEFT JOIN cursos c ON t.id_curso = c.id'

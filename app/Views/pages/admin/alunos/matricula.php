@@ -1,7 +1,7 @@
 <?php
   $alunoSelecionado = is_array($aluno ?? null) ? $aluno : null;
   $turmasLista = is_array($turmas ?? null) ? $turmas : [];
-  $matriculasLista = is_array($matriculas ?? null) ? $matriculas : [];
+  $matriculaLista = is_array($matricula ?? null) ? $matricula : [];
   $turmasMatriculadas = is_array($turmasMatriculadas ?? null) ? $turmasMatriculadas : [];
   $statusOptions = ['inscrito', 'matriculado', 'ativo', 'concluido', 'cancelado', 'inadimplente'];
 ?>
@@ -60,7 +60,7 @@
         </div>
       </form>
 
-      <?php if (!empty($matriculasLista)): ?>
+      <?php if (!empty($matriculaLista)): ?>
         <hr>
         <h5 class="mb-3"><i class="bi bi-list-ul me-2"></i>Matrículas existentes</h5>
         <div class="table-responsive">
@@ -74,7 +74,7 @@
               </tr>
             </thead>
             <tbody>
-              <?php foreach ($matriculasLista as $mat): ?>
+              <?php foreach ($matriculaLista as $mat): ?>
                 <tr>
                   <td><?= (int) ($mat['id'] ?? 0) ?></td>
                   <td><?= htmlspecialchars((string) ($mat['turma_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>

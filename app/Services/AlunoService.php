@@ -63,11 +63,10 @@ final class AlunoService
         $this->repository->save($payload);
     }
 
-    public function matriculasDoAluno(int $idAluno): array
+    public function matriculaDoAluno(int $idAluno): array
     {
-        return $this->repository->listMatriculasByAluno($idAluno);
+        return $this->repository->listMatriculaByAluno($idAluno);
     }
-
     public function cursosDoAluno(int $idAluno): array
     {
         return $this->repository->listCursosByAluno($idAluno);

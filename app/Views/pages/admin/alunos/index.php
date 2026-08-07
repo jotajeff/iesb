@@ -51,9 +51,9 @@
                 <td><?= htmlspecialchars((string) ($aluno['telefone'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($aluno['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td>
-                  <?php $totalMatriculas = (int) ($aluno['total_matriculas'] ?? 0); ?>
-                  <span class="badge bg-<?= $totalMatriculas > 0 ? 'success' : 'secondary' ?>">
-                    <?= $totalMatriculas ?>
+                  <?php $totalMatricula = (int) ($aluno['total_matricula'] ?? 0); ?>
+                  <span class="badge bg-<?= $totalMatricula > 0 ? 'success' : 'secondary' ?>">
+                    <?= $totalMatricula ?>
                   </span>
                 </td>
                 <td>

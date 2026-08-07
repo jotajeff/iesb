@@ -1,8 +1,8 @@
 <?php
-  $matriculasData = $matriculasDB ?? [];
-  $totalMatriculas = count($matriculasData);
+  $matriculaData = $matriculaDB ?? [];
+  $totalMatricula = count($matriculaData);
   $statusCounts = [];
-  foreach ($matriculasData as $item) {
+  foreach ($matriculaData as $item) {
       $s = $item['status'] ?? 'desconhecido';
       $statusCounts[$s] = ($statusCounts[$s] ?? 0) + 1;
   }
@@ -28,7 +28,7 @@
               <i class="bi bi-journal-bookmark-fill"></i>
             </div>
             <div>
-              <div class="fs-3 fw-bold"><?= $totalMatriculas ?></div>
+              <div class="fs-3 fw-bold"><?= $totalMatricula ?></div>
               <div class="small opacity-75">Cursos Matriculados</div>
             </div>
           </div>

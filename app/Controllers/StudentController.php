@@ -70,7 +70,7 @@ final class StudentController extends Controller
                     'SELECT COUNT(*) AS total FROM notificacao n'
                     . ' WHERE (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id)'
                     . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
-                    . '   SELECT m.id_turma FROM matriculas m WHERE m.id_aluno = :aluno_id2 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
+                    . '   SELECT m.id_turma FROM matricula m WHERE m.id_aluno = :aluno_id2 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
                     . ' ))'
                     . ' AND n.id NOT IN (SELECT nl.id_notificacao FROM notificacao_leitura_aluno nl WHERE nl.id_aluno = :aluno_id3)'
                 );
@@ -101,7 +101,7 @@ final class StudentController extends Controller
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
             'cursosDisponiveis' => $cursosDisponiveis,
-            'matriculasDB' => $this->alunoService->matriculasDoAluno($studentId),
+            'matriculaDB' => $this->alunoService->matriculaDoAluno($studentId),
             'notificacaoCount' => $notificacaoCount,
             'temEndereco' => $temEndereco,
             'noticias' => $this->noticiaService->listPublicados(),
@@ -145,7 +145,7 @@ final class StudentController extends Controller
         $this->render('pages/aluno/cursos', [
             'title' => 'Meus Cursos',
             'currentRoute' => '/aluno/cursos',
-            'matriculasDB' => $this->alunoService->matriculasDoAluno($studentId),
+            'matriculaDB' => $this->alunoService->matriculaDoAluno($studentId),
             'cursosMatriculados' => $this->alunoService->cursosDoAluno($studentId),
         ], 'aluno');
     }
@@ -173,7 +173,7 @@ final class StudentController extends Controller
                     'SELECT m.id AS matricula_id, m.status, m.data_matricula,'
                     . ' t.id AS turma_id, t.nome AS turma_nome, t.data_inicio, t.data_fim,'
                     . ' c.id AS curso_id, c.nome AS curso_nome, c.local_curso, c.horario, c.imagem_card'
-                    . ' FROM matriculas m'
+                    . ' FROM matricula m'
                     . ' JOIN turmas t ON m.id_turma = t.id'
                     . ' LEFT JOIN cursos c ON t.id_curso = c.id'
                     . ' WHERE m.id = :id AND m.id_aluno = :id_aluno'
@@ -717,7 +717,7 @@ final class StudentController extends Controller
                     . ' LEFT JOIN notificacao_leitura_aluno nl ON nl.id_notificacao = n.id AND nl.id_aluno = :aluno_id'
                     . ' WHERE (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id2)'
                     . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
-                    . '   SELECT m.id_turma FROM matriculas m WHERE m.id_aluno = :aluno_id3 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
+                    . '   SELECT m.id_turma FROM matricula m WHERE m.id_aluno = :aluno_id3 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
                     . ' ))'
                     . ' ORDER BY n.created_at DESC'
                     . ' LIMIT 200'
