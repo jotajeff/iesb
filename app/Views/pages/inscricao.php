@@ -77,8 +77,9 @@ $idCurso = (int) ($curso['id'] ?? 0);
                 <?php endif; ?>
               </div>
             <?php elseif ($invoiceUrl !== '' || $bankSlipUrl !== ''): ?>
-              <p class="text-muted mb-4">Clique no botão abaixo para abrir a cobrança gerada no Asaas.</p>
-              <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer"><i class="bi bi-credit-card me-1"></i>Abrir pagamento</a>
+              <p class="text-muted mb-4">Sua inscrição foi registrada. Clique no botão abaixo para concluir o pagamento no ambiente seguro do Asaas.</p>
+              <?php $checkoutUrl = $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl; ?>
+              <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($checkoutUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" id="btnAbrirCheckout"><i class="bi bi-credit-card me-1"></i>Abrir pagamento</a>
               <br>
             <?php else: ?>
               <p class="text-muted mb-4">A cobrança foi criada, mas ainda não foi possível recuperar os dados de pagamento. Se o problema persistir, verifique a chave sandbox e os logs do Asaas.</p>
@@ -194,3 +195,16 @@ $idCurso = (int) ($curso['id'] ?? 0);
     document.execCommand('copy');
   }
 </script>
+
+<?php if (!empty($abrirCheckoutNovaAba) && ($invoiceUrl !== '' || $bankSlipUrl !== '')): ?>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('btnAbrirCheckout');
+    if (!btn) return;
+    var url = btn.getAttribute('href');
+    if (url) {
+      window.open(url, '_blank', 'noopener');
+    }
+  });
+</script>
+<?php endif; ?>

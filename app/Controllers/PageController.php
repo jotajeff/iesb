@@ -661,8 +661,8 @@ final class PageController extends Controller
     }
 
     /**
-     * Fluxo Cartão de Crédito: cria cobranca CREDIT_CARD e redireciona
-     * para o Checkout Seguro do Asaas (nenhum dado de cartão passa pela app).
+     * Fluxo Cartão de Crédito: cria cobranca CREDIT_CARD e apresenta o
+     * Checkout Seguro do Asaas em nova aba (nenhum dado de cartão passa pela app).
      */
     private function criarPagamentoCartao(int $inscricaoId, array $curso, array $pagamentos, string $clienteId, float $valor, string $descricao): void
     {
@@ -686,28 +686,23 @@ final class PageController extends Controller
             'status' => $cobranca['status'] ?? 'PENDENTE',
         ]);
 
-        if ($invoiceUrl === '') {
-            $this->render('pages/inscricao', [
-                'title' => 'Inscrição confirmada',
-                'currentRoute' => '/inscricao',
-                'curso' => $curso,
-                'pagamentos' => $pagamentos,
-                'erro' => null,
-                'dados' => [],
-                'sucesso' => true,
-                'inscricaoId' => $inscricaoId,
-                'invoiceUrl' => '',
-                'bankSlipUrl' => '',
-                'pixQrCode' => null,
-                'linhaDigitavel' => null,
-                'billingType' => $billingType,
-                'asaasError' => $asaas->getLastError(),
-            ]);
-            return;
-        }
-
-        header('Location: ' . $invoiceUrl);
-        exit;
+        $this->render('pages/inscricao', [
+            'title' => 'Inscrição confirmada',
+            'currentRoute' => '/inscricao',
+            'curso' => $curso,
+            'pagamentos' => $pagamentos,
+            'erro' => null,
+            'dados' => [],
+            'sucesso' => true,
+            'inscricaoId' => $inscricaoId,
+            'invoiceUrl' => $invoiceUrl,
+            'bankSlipUrl' => '',
+            'pixQrCode' => null,
+            'linhaDigitavel' => null,
+            'billingType' => $billingType,
+            'abrirCheckoutNovaAba' => $invoiceUrl !== '',
+            'asaasError' => $asaas->getLastError(),
+        ]);
     }
 
     public function privacidade(): void
