@@ -44,7 +44,7 @@
           <?php foreach (($s['pages'] ?? []) as $i => $page): ?>
             <tr>
               <td><?= $i + 1 ?></td>
-              <td><?= htmlspecialchars((string) ($page['name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td class="text-break" style="min-width: 220px;"><?= htmlspecialchars((string) ($page['name'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td><span class="badge text-bg-primary"><?= (int) ($page['total'] ?? 0) ?></span></td>
               <td><?= number_format((float) ($page['percent'] ?? 0), 1, ',', '.') ?>%</td>
               <td>

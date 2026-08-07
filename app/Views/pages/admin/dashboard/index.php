@@ -34,7 +34,7 @@ $dashboardTypeLabel = match ($dashboardType) {
     <?php if ($dashboardType !== 'professor'): ?>
     <div class="col-md-3">
       <a href="/admin/preinscricao" class="text-decoration-none d-block h-100">
-        <div class="dashboard-task-card task-card-preinscricao h-100">
+        <div class="dashboard-task-card task-card-preinscricao h-100<?= (int) ($indicators['total_pre_inscricoes'] ?? 0) > 0 ? ' task-card-alert' : '' ?>">
           <div class="task-card-top">
             <div>
               <small class="task-card-label">Pré-inscrições</small>
@@ -95,18 +95,20 @@ $dashboardTypeLabel = match ($dashboardType) {
 
   <div class="row g-3 mb-4">
     <div class="col-md-4">
-      <div class="dashboard-task-card task-card-tarefa h-100">
-        <div class="task-card-top">
-          <div>
-            <small class="task-card-label"><?= $isAdmin ? 'Tarefas criadas' : 'Minhas tarefas criadas' ?></small>
-            <h2 class="task-card-value mb-0"><?= (int) ($taskIndicators['tarefas_criadas'] ?? 0) ?></h2>
+      <a href="/admin/tarefas" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-tarefa h-100">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label"><?= $isAdmin ? 'Tarefas criadas' : 'Minhas tarefas criadas' ?></small>
+              <h2 class="task-card-value mb-0"><?= (int) ($taskIndicators['tarefas_criadas'] ?? 0) ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-tarefa">
+              <i class="bi bi-kanban"></i>
+            </div>
           </div>
-          <div class="task-card-icon task-card-icon-tarefa">
-            <i class="bi bi-kanban"></i>
-          </div>
+          <div class="task-card-footer">Etapa inicial do fluxo</div>
         </div>
-        <div class="task-card-footer">Etapa inicial do fluxo</div>
-      </div>
+      </a>
     </div>
     <div class="col-md-4">
       <div class="dashboard-task-card task-card-execucao h-100">
@@ -190,6 +192,26 @@ $dashboardTypeLabel = match ($dashboardType) {
 
 .task-card-preinscricao::before {
   background: var(--pink, #d63384);
+}
+
+.task-card-alert {
+  animation: taskCardAlertPulse 2.8s ease-in-out infinite;
+}
+
+@keyframes taskCardAlertPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 18px rgba(220, 53, 69, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+  }
+}
+
+.task-card-alert:hover {
+  animation: taskCardAlertPulse 2.8s ease-in-out infinite;
 }
 
 .task-card-top {

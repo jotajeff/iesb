@@ -7,6 +7,14 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-people me-2"></i>Turmas</h4>
         <div class="d-flex flex-wrap align-items-center gap-2">
+          <form method="get" action="/admin/turmas" class="d-flex align-items-center gap-2">
+            <label class="form-label mb-0 small text-muted" for="filtroAtivo">Status</label>
+            <select class="form-select form-select-sm" name="ativo" id="filtroAtivo" onchange="this.form.submit()">
+              <option value="">Todos</option>
+              <option value="1" <?= ($filtroAtivo ?? -1) === 1 ? 'selected' : '' ?>>Ativas</option>
+              <option value="0" <?= ($filtroAtivo ?? -1) === 0 ? 'selected' : '' ?>>Inativas</option>
+            </select>
+          </form>
           <a class="btn btn-primary btn-sm" href="/admin/turmas/novo"><i class="bi bi-plus-circle me-1"></i>Nova turma</a>
         </div>
       </div>
@@ -32,7 +40,7 @@
 
             <?php foreach ($turmasView as $turma): ?>
               <tr>
-                <td><a class="text-decoration-none fw-medium" href="/admin/turmas/show?id=<?= (int) ($turma['id'] ?? 0) ?>"><i class="bi bi-box-arrow-up-right me-1"></i><?= (int) ($turma['id'] ?? 0) ?></a></td>
+                <td><a class="text-decoration-none fw-medium" href="/admin/turmas/show?id=<?= (int) ($turma['id'] ?? 0) ?>">#<?= (int) ($turma['id'] ?? 0) ?></a></td>
                 <td><?= htmlspecialchars((string) ($turma['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($turma['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($turma['nivel_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>

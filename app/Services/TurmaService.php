@@ -13,9 +13,9 @@ final class TurmaService
     ) {
     }
 
-    public function turmas(int $limit = 200): array
+    public function turmas(int $limit = 200, ?int $ativo = null): array
     {
-        return $this->repository->list($limit);
+        return $this->repository->list($limit, $ativo);
     }
 
     public function turmasAtivas(int $limit = 500): array

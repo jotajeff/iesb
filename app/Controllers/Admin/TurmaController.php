@@ -31,12 +31,15 @@ final class TurmaController extends Controller
             $this->redirect('/admin/login');
         }
 
-        $turmas = $this->turmaService->turmas();
+        $filtroAtivo = (int) ($_GET['ativo'] ?? 1);
+        $ativo = $filtroAtivo >= 0 ? $filtroAtivo : null;
+        $turmas = $this->turmaService->turmas(200, $ativo);
 
         $this->render('pages/admin/turmas/index', [
             'title' => 'Turmas',
             'currentRoute' => '/admin/turmas',
             'turmas' => $turmas,
+            'filtroAtivo' => $filtroAtivo,
         ], 'admin');
     }
 

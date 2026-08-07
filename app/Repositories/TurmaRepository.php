@@ -9,7 +9,7 @@ use PDO;
 
 final class TurmaRepository
 {
-    public function list(int $limit = 200): array
+    public function list(int $limit = 200, ?int $ativo = null): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -21,12 +21,21 @@ final class TurmaRepository
                  . ' (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos c ON t.id_curso = c.id'
-                 . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
-                 . ' ORDER BY t.id DESC'
-                 . ' LIMIT :limit';
+                 . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id';
+
+            $params = [];
+            if ($ativo !== null) {
+                $sql .= ' WHERE t.ativo = :ativo';
+                $params[':ativo'] = $ativo === 1 ? 1 : 0;
+            }
+
+            $sql .= ' ORDER BY t.id DESC LIMIT :limit';
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            }
             $stmt->execute();
 
             $rows = $stmt->fetchAll();
