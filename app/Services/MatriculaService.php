@@ -12,6 +12,8 @@ final class MatriculaService
         private readonly CursoInscricaoService $inscricaoService = new CursoInscricaoService(),
         private readonly AlunoService $alunoService = new AlunoService(),
         private readonly TurmaService $turmaService = new TurmaService(),
+        private readonly \App\Repositories\MatriculaRepository $matriculaRepository = new \App\Repositories\MatriculaRepository(),
+        private readonly EmailService $emailService = new EmailService(),
     ) {
     }
 
@@ -34,6 +36,17 @@ final class MatriculaService
         $idInscricao = (int) ($inscricao['id'] ?? 0);
         if ($idInscricao <= 0) {
             throw new RuntimeException('Inscrição inválida');
+        }
+
+        $matriculaExistente = $this->matriculaRepository->findByPagamento($idInscricao);
+        if ($matriculaExistente !== null) {
+            return [
+                'message' => 'Pagamento já processado anteriormente',
+                'inscricaoId' => $idInscricao,
+                'alunoId' => (int) ($inscricao['id_aluno'] ?? 0),
+                'matriculaId' => (int) ($matriculaExistente['id'] ?? 0),
+                'numeroMatricula' => (string) ($matriculaExistente['numero'] ?? ''),
+            ];
         }
 
         if (!empty($inscricao['id_matricula']) || ($inscricao['status'] ?? '') === 'CONFIRMADO') {
@@ -92,17 +105,11 @@ final class MatriculaService
                 throw new RuntimeException('Turma inválida');
             }
 
-            if ($this->alunoService->matriculaJaExiste($idAluno, $idTurma)) {
-                $matricula = $this->alunoService->findMatriculaByAlunoAndTurma($idAluno, $idTurma);
-                $idMatricula = (int) ($matricula['id'] ?? 0);
-            } else {
-                $idMatricula = $this->alunoService->criarMatricula($idAluno, $idTurma);
-                if ($idMatricula <= 0) {
-                    throw new RuntimeException('Falha ao criar matrícula');
-                }
-            }
+            $idMatricula = $this->criarMatricula($idAluno, $idCurso, $idTurma, $idInscricao);
 
             $this->inscricaoService->atualizarStatus($idInscricao, 'CONFIRMADO', $idAluno, $idMatricula);
+
+            $this->enviarBoasVindas($nome, $email, $cpf, $idMatricula);
 
             return [
                 'message' => 'Matrícula realizada com sucesso',
@@ -113,6 +120,47 @@ final class MatriculaService
         } catch (\Throwable $e) {
             $this->inscricaoService->atualizarStatus($idInscricao, 'CANCELADO');
             throw $e instanceof RuntimeException ? $e : new RuntimeException($e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Cria a matrícula na tabela "matricula" com número próprio.
+     */
+    private function criarMatricula(int $idAluno, int $idCurso, int $idTurma, int $idPagamento): int
+    {
+        $ano = (int) date('Y');
+        $numero = (string) $this->matriculaRepository->proximoNumero($ano);
+
+        $idMatricula = $this->matriculaRepository->create([
+            'numero' => $numero,
+            'id_aluno' => $idAluno,
+            'id_curso' => $idCurso,
+            'id_turma' => $idTurma,
+            'id_pagamento' => $idPagamento,
+            'origem' => 'SITE',
+            'status' => 'ATIVA',
+            'data_matricula' => date('Y-m-d H:i:s'),
+            'ativo' => 1,
+        ]);
+
+        if ($idMatricula <= 0) {
+            throw new RuntimeException('Falha ao criar matrícula');
+        }
+
+        return $idMatricula;
+    }
+
+    private function enviarBoasVindas(string $nome, string $email, string $cpf, int $idMatricula): void
+    {
+        if ($email === '') {
+            return;
+        }
+
+        try {
+            $senha = explode('@', $email)[0] . '#' . date('Y');
+            $this->emailService->enviarBoasVindasMatricula($nome, $email, $cpf, $senha, (string) $idMatricula);
+        } catch (\Throwable $e) {
+            error_log('[MATRICULA] Erro ao enviar boas-vindas: ' . $e->getMessage());
         }
     }
 

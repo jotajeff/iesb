@@ -122,8 +122,8 @@ HTML;
     }
 
     public function enviarPreInscricao(string $nome, string $email, string $whatsapp, string $cursoNome = ''): bool
-    {
-        try {
+        {
+            try {
             $this->mail->addAddress('direcao@inteligenciasouzabrazil.com', 'Direção IESB');
             $this->mail->addReplyTo($email, $nome);
             $this->mail->isHTML(true);
@@ -168,6 +168,66 @@ HTML;
 
             $cursoAlt = $cursoNome !== '' ? "\nCurso: {$cursoNome}" : '';
 $this->mail->AltBody = "Nova pré-inscrição\n\nNome: {$nome}\nE-mail: {$email}\nWhatsApp: {$whatsapp}{$cursoAlt}";
+
+            $this->mail->send();
+            return true;
+        } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
+
+    public function enviarBoasVindasMatricula(string $nome, string $email, string $cpf, string $senha, string $numeroMatricula): bool
+    {
+        try {
+            $this->mail->addAddress($email, $nome);
+            $this->mail->isHTML(true);
+            $this->mail->Subject = 'Bem-vindo(a) à IESB - Matrícula Realizada';
+
+            $this->mail->Body = <<<HTML
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"></head>
+<body style="font-family: Arial, sans-serif; margin: 0; padding: 0; background: #f4f4f4;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background: #f4f4f4; padding: 40px 0;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background: #ffffff; border-radius: 8px; overflow: hidden;">
+          <tr>
+            <td style="background: #0d6efd; padding: 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px;">Bem-vindo(a) à IESB</h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 30px;">
+              <p style="font-size: 16px; color: #333;">Olá, <strong>{$nome}</strong>!</p>
+              <p style="font-size: 16px; color: #333;">Sua matrícula foi realizada com sucesso. A partir de agora você tem acesso ao Portal do Aluno.</p>
+              <table width="100%" cellpadding="8" style="font-size: 15px; color: #333;">
+                <tr><td style="font-weight: 700; width: 160px;">Matrícula:</td><td>{$numeroMatricula}</td></tr>
+                <tr><td style="font-weight: 700;">CPF:</td><td>{$cpf}</td></tr>
+                <tr><td style="font-weight: 700;">E-mail:</td><td>{$email}</td></tr>
+                <tr><td style="font-weight: 700;">Senha de acesso:</td><td>{$senha}</td></tr>
+              </table>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center" style="padding: 20px 0;">
+                    <a href="https://inteligenciaeducacionalsouzabrazil.com/aluno/login" style="background: #0d6efd; color: #ffffff; text-decoration: none; padding: 14px 36px; border-radius: 6px; font-size: 16px; display: inline-block;">Acessar Portal do Aluno</a>
+                  </td>
+                </tr>
+              </table>
+              <p style="font-size: 14px; color: #999;">Recomendamos alterar sua senha no primeiro acesso.</p>
+              <p style="font-size: 14px; color: #999;">Atenciosamente,<br>Equipe IESB</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+HTML;
+
+            $this->mail->AltBody = "Olá, {$nome}!\n\nSua matrícula foi realizada com sucesso.\nMatrícula: {$numeroMatricula}\nCPF: {$cpf}\nE-mail: {$email}\nSenha de acesso: {$senha}\n\nAcesse o Portal do Aluno em: https://inteligenciaeducacionalsouzabrazil.com/aluno/login\n\nEquipe IESB";
 
             $this->mail->send();
             return true;

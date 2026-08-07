@@ -16,16 +16,94 @@ final class MatriculaRepository
             return 0;
         }
 
-        try {
-            $stmt = $pdo->prepare('INSERT INTO matriculas (id_aluno, id_turma, status) VALUES (:id_aluno, :id_turma, :status)');
-            $stmt->bindValue(':id_aluno', (int) ($data['id_aluno'] ?? 0), PDO::PARAM_INT);
-            $stmt->bindValue(':id_turma', (int) ($data['id_turma'] ?? 0), PDO::PARAM_INT);
-            $stmt->bindValue(':status', (string) ($data['status'] ?? 'matriculado'));
-            $stmt->execute();
-            return (int) $pdo->lastInsertId();
-        } catch (\Throwable $e) {
-            error_log('[MATRICULA] Erro ao criar: ' . $e->getMessage());
-            return 0;
+        $sql = 'INSERT INTO matricula
+                (numero, id_aluno, id_curso, id_turma, id_pagamento, origem, status, data_matricula, ativo)
+                VALUES (:numero, :id_aluno, :id_curso, :id_turma, :id_pagamento, :origem, :status, :data_matricula, :ativo)';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':numero', $data['numero'] ?? '');
+        $stmt->bindValue(':id_aluno', (int) ($data['id_aluno'] ?? 0), PDO::PARAM_INT);
+        $stmt->bindValue(':id_curso', (int) ($data['id_curso'] ?? 0), PDO::PARAM_INT);
+        $stmt->bindValue(':id_turma', (int) ($data['id_turma'] ?? 0), PDO::PARAM_INT);
+        $stmt->bindValue(':id_pagamento', (int) ($data['id_pagamento'] ?? 0), PDO::PARAM_INT);
+        $stmt->bindValue(':origem', $data['origem'] ?? 'SITE');
+        $stmt->bindValue(':status', $data['status'] ?? 'ATIVA');
+        $stmt->bindValue(':data_matricula', $data['data_matricula'] ?? date('Y-m-d H:i:s'));
+        $stmt->bindValue(':ativo', (int) ($data['ativo'] ?? 1), PDO::PARAM_INT);
+        $stmt->execute();
+
+        return (int) $pdo->lastInsertId();
+    }
+
+    public function findByAlunoTurma(int $idAluno, int $idTurma): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
         }
+
+        $sql = 'SELECT id, numero, id_aluno, id_curso, id_turma, id_pagamento, origem, status, data_matricula, ativo
+                FROM matricula
+                WHERE id_aluno = :id_aluno AND id_turma = :id_turma AND status = :status
+                ORDER BY id DESC
+                LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+        $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
+        $stmt->bindValue(':status', 'ATIVA');
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function findByPagamento(int $idPagamento): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        $sql = 'SELECT id, numero, id_aluno, id_curso, id_turma, id_pagamento, origem, status, data_matricula, ativo
+                FROM matricula
+                WHERE id_pagamento = :id_pagamento
+                ORDER BY id DESC
+                LIMIT 1';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':id_pagamento', $idPagamento, PDO::PARAM_INT);
+        $stmt->execute();
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function proximoNumero(int $ano): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return $ano * 100000;
+        }
+
+        $prefixo = (string) $ano;
+        $sql = 'SELECT COUNT(*) FROM matricula WHERE numero LIKE :prefixo';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':prefixo', $prefixo . '%');
+        $stmt->execute();
+        $count = (int) $stmt->fetchColumn();
+
+        return $ano * 100000 + $count + 1;
+    }
+
+    public function updateStatus(int $id, string $status): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        $sql = 'UPDATE matricula SET status = :status, updated_at = CURRENT_TIMESTAMP WHERE id = :id';
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':status', $status);
+        $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+        $stmt->execute();
     }
 }
