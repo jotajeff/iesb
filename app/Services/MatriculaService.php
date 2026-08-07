@@ -49,15 +49,6 @@ final class MatriculaService
             ];
         }
 
-        if (!empty($inscricao['id_matricula']) || ($inscricao['status'] ?? '') === 'CONFIRMADO') {
-            return [
-                'message' => 'Pagamento já processado anteriormente',
-                'inscricaoId' => $idInscricao,
-                'alunoId' => isset($inscricao['id_aluno']) ? (int) $inscricao['id_aluno'] : null,
-                'matriculaId' => isset($inscricao['id_matricula']) ? (int) $inscricao['id_matricula'] : null,
-            ];
-        }
-
         $this->inscricaoService->atualizarStatus($idInscricao, 'RECEBIDO');
 
         try {
@@ -205,6 +196,12 @@ final class MatriculaService
 
         if (isset($statusMap[$newStatus])) {
             $this->inscricaoService->atualizarStatus((int) ($inscricao['id'] ?? 0), $statusMap[$newStatus]);
+
+            // Pagamento recebido/confirmado: garantir que a matricula foi criada.
+            if (in_array($statusMap[$newStatus], ['RECEBIDO', 'CONFIRMADO'], true)) {
+                return $this->confirmarPagamento($payment);
+            }
+
             return [
                 'message' => 'Status atualizado',
                 'status' => $statusMap[$newStatus],
