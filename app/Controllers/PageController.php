@@ -431,10 +431,15 @@ final class PageController extends Controller
         $cpf = trim((string) $this->input('cpf', ''));
         $email = trim((string) $this->input('email', ''));
         $telefone = trim((string) $this->input('telefone', ''));
+        $formaPagamento = (string) $this->input('forma_pagamento', 'pix');
+        if (!in_array($formaPagamento, ['pix', 'cartao'], true)) {
+            $formaPagamento = 'pix';
+        }
 
         $curso = $this->cursoService->findCurso($idCurso);
         $pagamentos = $this->pagamentoService->listarPorCurso($idCurso);
         $dados = compact('idCurso', 'idPagamento', 'nome', 'cpf', 'email', 'telefone');
+        $dados['formaPagamento'] = $formaPagamento;
 
         if (!$curso) {
             $this->render('pages/inscricao', [
@@ -511,40 +516,61 @@ final class PageController extends Controller
             'telefone' => $telefone,
         ]);
 
-        $invoiceUrl = '';
-        $bankSlipUrl = '';
+        if (!$cliente) {
+            $this->render('pages/inscricao', [
+                'title' => 'Inscrição — ' . ($curso['nome'] ?? ''),
+                'currentRoute' => '/inscricao',
+                'curso' => $curso,
+                'pagamentos' => $pagamentos,
+                'erro' => 'Não foi possível registrar o cliente no gateway de pagamento: ' . ($asaas->getLastError() ?? 'erro desconhecido'),
+                'dados' => $dados,
+            ]);
+            return;
+        }
+
+        $clienteId = (string) $cliente['id'];
+        $valor = (float) ($pagamento['valor'] ?? 0);
+        $descricao = ($curso['nome'] ?? 'Curso') . ' - ' . ($pagamento['descricao'] ?? '');
+
+        if ($formaPagamento === 'cartao') {
+            $this->criarPagamentoCartao($result, $curso, $pagamentos, $clienteId, $valor, $descricao);
+            return;
+        }
+
+        $this->criarPagamentoPix($result, $curso, $pagamentos, $clienteId, $valor, $descricao);
+    }
+
+    /**
+     * Fluxo PIX: cria a cobranca PIX no Asaas e apresenta o QR Code.
+     */
+    private function criarPagamentoPix(int $inscricaoId, array $curso, array $pagamentos, string $clienteId, float $valor, string $descricao): void
+    {
+        $asaas = new AsaasService();
+        $billingType = 'PIX';
+
+        $cobranca = $asaas->criarCobranca([
+            'customer_id' => $clienteId,
+            'billing_type' => $billingType,
+            'value' => $valor,
+            'description' => $descricao,
+            'external_reference' => (string) $inscricaoId,
+        ]);
+
         $pixQrCode = null;
         $linhaDigitavel = null;
-        $cobranca = null;
-        $billingType = match ((string) ($pagamento['tipo'] ?? 'PIX')) {
-            'BOLETO' => 'BOLETO',
-            'CARTAO' => 'CREDIT_CARD',
-            default => 'PIX',
-        };
+        $invoiceUrl = '';
+        $bankSlipUrl = '';
 
-        if ($cliente) {
-            $cobranca = $asaas->criarCobranca([
-                'customer_id' => $cliente['id'],
-                'billing_type' => $billingType,
-                'value' => (float) ($pagamento['valor'] ?? 0),
-                'description' => ($curso['nome'] ?? 'Curso') . ' - ' . ($pagamento['descricao'] ?? ''),
-                'external_reference' => (string) $result,
-            ]);
-
-            if ($cobranca) {
-                $invoiceUrl = $cobranca['invoiceUrl'] ?? '';
-                $bankSlipUrl = $cobranca['bankSlipUrl'] ?? '';
-
-                if ($billingType === 'PIX') {
-                    $pixQrCode = $asaas->obterPixQrCode((string) ($cobranca['id'] ?? ''));
-                } elseif ($billingType === 'BOLETO') {
-                    $linhaDigitavel = $asaas->obterLinhaDigitavel((string) ($cobranca['id'] ?? ''));
-                }
+        if ($cobranca) {
+            $invoiceUrl = $cobranca['invoiceUrl'] ?? '';
+            $bankSlipUrl = $cobranca['bankSlipUrl'] ?? '';
+            if ($billingType === 'PIX') {
+                $pixQrCode = $asaas->obterPixQrCode((string) ($cobranca['id'] ?? ''));
             }
         }
 
-        $this->inscricaoService->atualizarAsaasInfo($result, [
-            'asaas_customer' => $cliente['id'] ?? null,
+        $this->inscricaoService->atualizarAsaasInfo($inscricaoId, [
+            'asaas_customer' => $clienteId,
             'asaas_payment' => $cobranca['id'] ?? null,
             'invoice_url' => $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl,
             'status' => $cobranca['status'] ?? 'PENDENTE',
@@ -558,7 +584,7 @@ final class PageController extends Controller
             'erro' => null,
             'dados' => [],
             'sucesso' => true,
-            'inscricaoId' => $result,
+            'inscricaoId' => $inscricaoId,
             'invoiceUrl' => $invoiceUrl,
             'bankSlipUrl' => $bankSlipUrl,
             'pixQrCode' => $pixQrCode,
@@ -566,6 +592,56 @@ final class PageController extends Controller
             'billingType' => $billingType,
             'asaasError' => $asaas->getLastError(),
         ]);
+    }
+
+    /**
+     * Fluxo Cartão de Crédito: cria cobranca CREDIT_CARD e redireciona
+     * para o Checkout Seguro do Asaas (nenhum dado de cartão passa pela app).
+     */
+    private function criarPagamentoCartao(int $inscricaoId, array $curso, array $pagamentos, string $clienteId, float $valor, string $descricao): void
+    {
+        $asaas = new AsaasService();
+        $billingType = 'CREDIT_CARD';
+
+        $cobranca = $asaas->criarCobranca([
+            'customer_id' => $clienteId,
+            'billing_type' => $billingType,
+            'value' => $valor,
+            'description' => $descricao,
+            'external_reference' => (string) $inscricaoId,
+        ]);
+
+        $invoiceUrl = (string) ($cobranca['invoiceUrl'] ?? '');
+
+        $this->inscricaoService->atualizarAsaasInfo($inscricaoId, [
+            'asaas_customer' => $clienteId,
+            'asaas_payment' => $cobranca['id'] ?? null,
+            'invoice_url' => $invoiceUrl,
+            'status' => $cobranca['status'] ?? 'PENDENTE',
+        ]);
+
+        if ($invoiceUrl === '') {
+            $this->render('pages/inscricao', [
+                'title' => 'Inscrição confirmada',
+                'currentRoute' => '/inscricao',
+                'curso' => $curso,
+                'pagamentos' => $pagamentos,
+                'erro' => null,
+                'dados' => [],
+                'sucesso' => true,
+                'inscricaoId' => $inscricaoId,
+                'invoiceUrl' => '',
+                'bankSlipUrl' => '',
+                'pixQrCode' => null,
+                'linhaDigitavel' => null,
+                'billingType' => $billingType,
+                'asaasError' => $asaas->getLastError(),
+            ]);
+            return;
+        }
+
+        header('Location: ' . $invoiceUrl);
+        exit;
     }
 
     public function privacidade(): void

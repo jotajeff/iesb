@@ -126,7 +126,6 @@ $idCurso = (int) ($curso['id'] ?? 0);
                         <div class="d-flex align-items-center gap-2 mb-1">
                           <input type="radio" name="id_pagamento" value="<?= (int) ($p['id'] ?? 0) ?>" class="form-check-input"<?= ((int) ($dados['idPagamento'] ?? 0) === (int) ($p['id'] ?? 0)) ? ' checked' : '' ?> required>
                           <strong class="small"><?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
-                          <span class="badge bg-secondary ms-auto"><?= htmlspecialchars((string) ($p['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></span>
                         </div>
                         <div class="d-flex justify-content-between ps-4">
                           <span class="text-muted small"><?= (int) ($p['parcelas'] ?? 1) ?>x</span>
@@ -137,6 +136,35 @@ $idCurso = (int) ($curso['id'] ?? 0);
                   <?php endforeach; ?>
                 </div>
               <?php endif; ?>
+
+              <hr class="my-4">
+              <h5 class="mb-3"><i class="bi bi-credit-card me-2"></i>Forma de pagamento</h5>
+              <div class="row g-2">
+                <div class="col-md-6">
+                  <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
+                    <div class="d-flex align-items-center gap-2">
+                      <input type="radio" name="forma_pagamento" value="pix" class="form-check-input"<?= ((string) ($dados['formaPagamento'] ?? 'pix') === 'pix') ? ' checked' : '' ?> required>
+                      <i class="bi bi-qr-code fs-4 text-success"></i>
+                      <div>
+                        <strong class="small d-block">PIX / QR Code</strong>
+                        <span class="text-muted small">Pagamento imediato via Pix</span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                <div class="col-md-6">
+                  <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
+                    <div class="d-flex align-items-center gap-2">
+                      <input type="radio" name="forma_pagamento" value="cartao" class="form-check-input"<?= ((string) ($dados['formaPagamento'] ?? 'pix') === 'cartao') ? ' checked' : '' ?> required>
+                      <i class="bi bi-credit-card fs-4 text-primary"></i>
+                      <div>
+                        <strong class="small d-block">Cartão de Crédito</strong>
+                        <span class="text-muted small">Pague com segurança no Asaas</span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+              </div>
 
               <div class="mt-4">
                 <button type="submit" class="btn-primary-custom w-100 justify-content-center"><i class="bi bi-check-lg me-1"></i>Finalizar inscrição</button>
