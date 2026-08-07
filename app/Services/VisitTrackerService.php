@@ -121,17 +121,51 @@ final class VisitTrackerService
         $findStmt->execute(['slug' => $slug]);
         $id = $findStmt->fetchColumn();
 
+        $cursoNome = $this->cursoNomeFromInscricaoPath($pdo, $path);
+
         if ($id !== false) {
-            return (int) $id;
+            $paginaId = (int) $id;
+            if ($cursoNome !== null) {
+                $updateStmt = $pdo->prepare('UPDATE paginas SET nome = :nome WHERE id = :id');
+                $updateStmt->execute(['nome' => $cursoNome, 'id' => $paginaId]);
+            }
+            return $paginaId;
+        }
+
+        $nome = $this->pageNameFromSlug($slug);
+        if ($cursoNome !== null) {
+            $nome = $cursoNome;
         }
 
         $insertStmt = $pdo->prepare('INSERT INTO paginas (slug, nome, ativo) VALUES (:slug, :nome, 1)');
         $insertStmt->execute([
             'slug' => $slug,
-            'nome' => $this->pageNameFromSlug($slug),
+            'nome' => $nome,
         ]);
 
         return (int) $pdo->lastInsertId();
+    }
+
+    private function cursoNomeFromInscricaoPath(PDO $pdo, string $path): ?string
+    {
+        if (preg_match('#^/curso/(\d+)/inscricao$#', $path, $m) !== 1) {
+            return null;
+        }
+
+        $cursoId = (int) $m[1];
+        if ($cursoId <= 0) {
+            return null;
+        }
+
+        $stmt = $pdo->prepare('SELECT nome FROM cursos WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $cursoId]);
+        $nome = $stmt->fetchColumn();
+
+        if (!is_string($nome) || trim($nome) === '') {
+            return null;
+        }
+
+        return 'Inscrição — ' . trim($nome);
     }
 
     private function alreadyVisitedToday(PDO $pdo, int $paginaId, string $ip, string $date): bool
