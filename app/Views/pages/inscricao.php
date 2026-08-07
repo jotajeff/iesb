@@ -96,6 +96,7 @@ $idCurso = (int) ($curso['id'] ?? 0);
             <h5 class="mb-3"><i class="bi bi-pencil-square me-2"></i>Dados do aluno</h5>
             <form method="post" action="/inscricao/salvar">
               <input type="hidden" name="id_curso" value="<?= $idCurso ?>">
+              <input type="hidden" name="id_turma" value="<?= (int) ($idTurma ?? 0) ?>">
 
               <div class="row g-3">
                 <div class="col-12">

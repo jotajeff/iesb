@@ -77,7 +77,16 @@ final class MatriculaService
                 throw new RuntimeException('Nenhuma turma ativa encontrada para o curso');
             }
 
-            $turma = $this->selecionarTurma($turmas);
+            $idTurmaInscricao = (int) ($inscricao['id_turma'] ?? 0);
+            if ($idTurmaInscricao > 0) {
+                $turma = $this->turmaService->findTurma($idTurmaInscricao);
+                if ($turma === null || intval($turma['ativo'] ?? 0) !== 1) {
+                    $turma = $this->selecionarTurma($turmas);
+                }
+            } else {
+                $turma = $this->selecionarTurma($turmas);
+            }
+
             $idTurma = (int) ($turma['id'] ?? 0);
             if ($idTurma <= 0) {
                 throw new RuntimeException('Turma inválida');

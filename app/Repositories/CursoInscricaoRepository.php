@@ -17,9 +17,10 @@ final class CursoInscricaoRepository
         }
 
         try {
-            $stmt = $pdo->prepare('INSERT INTO cursos_inscricao (id_curso, id_pagamento, descricao_pagamento, nome, cpf, email, telefone, valor, status) VALUES (:id_curso, :id_pagamento, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :status)');
+            $stmt = $pdo->prepare('INSERT INTO cursos_inscricao (id_curso, id_pagamento, id_turma, descricao_pagamento, nome, cpf, email, telefone, valor, status) VALUES (:id_curso, :id_pagamento, :id_turma, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :status)');
             $stmt->bindValue(':id_curso', (int) ($data['id_curso'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_pagamento', (int) ($data['id_pagamento'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':id_turma', isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? (int) $data['id_turma'] : null, isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->bindValue(':descricao_pagamento', (string) ($data['descricao_pagamento'] ?? ''));
             $stmt->bindValue(':nome', (string) ($data['nome'] ?? ''));
             $stmt->bindValue(':cpf', (string) ($data['cpf'] ?? ''));

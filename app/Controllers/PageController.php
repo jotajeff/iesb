@@ -15,6 +15,7 @@ use App\Services\LogService;
 use App\Services\NoticiaService;
 use App\Services\PreInscricaoService;
 use App\Services\SessaoService;
+use App\Services\TurmaService;
 use App\Support\Session;
 
 final class PageController extends Controller
@@ -26,6 +27,7 @@ final class PageController extends Controller
     private ImageService $imageService;
     private NoticiaService $noticiaService;
     private SessaoService $sessaoService;
+    private TurmaService $turmaService;
 
     public function __construct()
     {
@@ -36,6 +38,7 @@ final class PageController extends Controller
         $this->imageService = new ImageService();
         $this->noticiaService = new NoticiaService();
         $this->sessaoService = new SessaoService();
+        $this->turmaService = new TurmaService();
     }
 
     public function sobre(): void
@@ -275,6 +278,16 @@ final class PageController extends Controller
         $detalhe = $this->cursoService->findDetalheByCurso($id);
         $pagamentos = $this->pagamentoService->listarPorCurso($id);
 
+        $turma = null;
+        try {
+            $turmas = $this->turmaService->turmasDoCurso($id);
+            if ($turmas !== []) {
+                $turma = $turmas[0];
+            }
+        } catch (\Throwable $e) {
+            error_log('[CURSO DETALHE] Erro turma: ' . $e->getMessage());
+        }
+
         $dateText = '-';
         $rawDate = (string) ($curso['data_curso'] ?? '');
         $dtDate = \DateTime::createFromFormat('Y-m-d', $rawDate);
@@ -389,6 +402,7 @@ final class PageController extends Controller
             'coordenadores' => $coordenadores,
             'professores' => $professores,
             'imagens' => $imagens,
+            'idTurma' => $turma !== null ? (int) ($turma['id'] ?? 0) : 0,
             'schema' => [$cursoSchema],
         ]);
     }
@@ -413,11 +427,31 @@ final class PageController extends Controller
 
         $pagamentos = $this->pagamentoService->listarPorCurso($id);
 
+        $idTurma = (int) ($_GET['turma_id'] ?? 0);
+        $turmaValida = false;
+        if ($idTurma > 0) {
+            try {
+                $turmas = $this->turmaService->turmasDoCurso($id);
+                foreach ($turmas as $t) {
+                    if ((int) ($t['id'] ?? 0) === $idTurma) {
+                        $turmaValida = true;
+                        break;
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('[INSCRICAO] Erro validar turma: ' . $e->getMessage());
+            }
+        }
+        if (!$turmaValida) {
+            $idTurma = 0;
+        }
+
         $this->render('pages/inscricao', [
             'title' => 'Inscrição — ' . ($curso['nome'] ?? ''),
             'currentRoute' => '/inscricao',
             'curso' => $curso,
             'pagamentos' => $pagamentos,
+            'idTurma' => $idTurma,
             'erro' => null,
             'dados' => [],
         ]);
@@ -427,6 +461,7 @@ final class PageController extends Controller
     {
         $idCurso = (int) $this->input('id_curso', 0);
         $idPagamento = (int) $this->input('id_pagamento', 0);
+        $idTurma = (int) $this->input('id_turma', 0);
         $nome = trim((string) $this->input('nome', ''));
         $cpf = trim((string) $this->input('cpf', ''));
         $email = trim((string) $this->input('email', ''));
@@ -438,8 +473,26 @@ final class PageController extends Controller
 
         $curso = $this->cursoService->findCurso($idCurso);
         $pagamentos = $this->pagamentoService->listarPorCurso($idCurso);
-        $dados = compact('idCurso', 'idPagamento', 'nome', 'cpf', 'email', 'telefone');
+        $dados = compact('idCurso', 'idPagamento', 'idTurma', 'nome', 'cpf', 'email', 'telefone');
         $dados['formaPagamento'] = $formaPagamento;
+
+        if ($idTurma > 0) {
+            $turmaValida = false;
+            try {
+                $turmas = $this->turmaService->turmasDoCurso($idCurso);
+                foreach ($turmas as $t) {
+                    if ((int) ($t['id'] ?? 0) === $idTurma) {
+                        $turmaValida = true;
+                        break;
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('[INSCRICAO] Erro validar turma: ' . $e->getMessage());
+            }
+            if (!$turmaValida) {
+                $idTurma = 0;
+            }
+        }
 
         if (!$curso) {
             $this->render('pages/inscricao', [
@@ -488,6 +541,7 @@ final class PageController extends Controller
         $result = $this->inscricaoService->criar([
             'id_curso' => $idCurso,
             'id_pagamento' => $idPagamento,
+            'id_turma' => $idTurma,
             'descricao_pagamento' => (string) ($pagamento['descricao'] ?? ''),
             'nome' => $nome,
             'cpf' => $cpf,
@@ -531,6 +585,18 @@ final class PageController extends Controller
         $clienteId = (string) $cliente['id'];
         $valor = (float) ($pagamento['valor'] ?? 0);
         $descricao = ($curso['nome'] ?? 'Curso') . ' - ' . ($pagamento['descricao'] ?? '');
+
+        if ($idTurma > 0) {
+            try {
+                $turmaInfo = $this->turmaService->findTurma($idTurma);
+                $nomeTurma = (string) ($turmaInfo['nome'] ?? '');
+                if ($nomeTurma !== '') {
+                    $descricao .= ' - Turma: ' . $nomeTurma;
+                }
+            } catch (\Throwable $e) {
+                error_log('[INSCRICAO] Erro nome turma: ' . $e->getMessage());
+            }
+        }
 
         if ($formaPagamento === 'cartao') {
             $this->criarPagamentoCartao($result, $curso, $pagamentos, $clienteId, $valor, $descricao);
