@@ -36,6 +36,35 @@ final class CursoInscricaoRepository
         }
     }
 
+    public function createComAcordo(array $data): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            $stmt = $pdo->prepare('INSERT INTO cursos_inscricao (id_curso, id_pagamento, id_turma, id_pre_inscricao, id_acordo_pagamento, descricao_pagamento, nome, cpf, email, telefone, valor, status) VALUES (:id_curso, :id_pagamento, :id_turma, :id_pre_inscricao, :id_acordo_pagamento, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :status)');
+            $stmt->bindValue(':id_curso', (int) ($data['id_curso'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':id_pagamento', (int) ($data['id_pagamento'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':id_turma', isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? (int) $data['id_turma'] : null, isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmt->bindValue(':id_pre_inscricao', (int) ($data['id_pre_inscricao'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':id_acordo_pagamento', (int) ($data['id_acordo_pagamento'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':descricao_pagamento', (string) ($data['descricao_pagamento'] ?? ''));
+            $stmt->bindValue(':nome', (string) ($data['nome'] ?? ''));
+            $stmt->bindValue(':cpf', (string) ($data['cpf'] ?? ''));
+            $stmt->bindValue(':email', (string) ($data['email'] ?? ''));
+            $stmt->bindValue(':telefone', (string) ($data['telefone'] ?? ''));
+            $stmt->bindValue(':valor', (float) ($data['valor'] ?? 0));
+            $stmt->bindValue(':status', 'PENDENTE');
+            $stmt->execute();
+            return (int) $pdo->lastInsertId();
+        } catch (\Throwable $e) {
+            error_log('[INSCRICAO] Erro ao criar com acordo: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
     public function updateAsaasInfo(int $id, array $data): bool
     {
         $pdo = Database::connection();

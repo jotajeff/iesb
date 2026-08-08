@@ -11,7 +11,14 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
         <h4 class="mb-1"><i class="bi bi-inbox me-2"></i>Pré-inscrição #<?= $preId ?></h4>
         <p class="text-muted mb-0">Dados do formulário de pré-inscrição.</p>
       </div>
-      <a class="btn btn-outline-secondary btn-sm" href="/admin/preinscricao"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+      <div class="d-flex gap-2">
+        <?php if (!empty($planos)): ?>
+          <button type="button" class="btn-acordo-orange" data-bs-toggle="modal" data-bs-target="#modalAcordo">
+            <i class="bi bi-file-earmark-text me-1"></i>Gerar Acordo
+          </button>
+        <?php endif; ?>
+        <a class="btn btn-outline-secondary btn-sm" href="/admin/preinscricao"><i class="bi bi-arrow-left me-1"></i>Voltar</a>
+      </div>
     </div>
 
     <div class="row g-3 mb-4">
@@ -78,6 +85,77 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
       </div>
     </div>
 
+    <div class="row g-3 mb-4">
+      <div class="col-lg-12">
+        <div class="card border-0 shadow-sm h-100">
+          <div class="card-header bg-white border-0 pt-3 px-3">
+            <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Acordos de pagamento</h5>
+          </div>
+          <div class="card-body pt-0">
+            <?php if (empty($acordos)): ?>
+              <div class="alert alert-light border mb-0">
+                <i class="bi bi-info-circle me-1"></i>Nenhum acordo gerado para esta pré-inscrição.
+              </div>
+            <?php else: ?>
+              <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                  <thead>
+                    <tr>
+                      <th>#</th>
+                      <th>Plano</th>
+                      <th>Parcelas</th>
+                      <th>Valor</th>
+                      <th>Desconto</th>
+                      <th>Tipo</th>
+                      <th>Status</th>
+                      <th>Criado em</th>
+                      <th>Link</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <?php foreach ($acordos as $acordo): ?>
+                      <?php
+                        $acordoToken = (string) ($acordo['token'] ?? '');
+                        $acordoUtilizado = (int) ($acordo['utilizado'] ?? 0) === 1;
+                        $acordoData = (string) ($acordo['created_at'] ?? '');
+                      ?>
+                      <tr>
+                        <td><?= (int) ($acordo['id'] ?? 0) ?></td>
+                        <td><?= htmlspecialchars((string) ($acordo['plano_descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= (int) ($acordo['parcelas_negociadas'] ?? 0) ?>x</td>
+                        <td>R$ <?= number_format((float) ($acordo['valor_negociado'] ?? 0), 2, ',', '.') ?></td>
+                        <td>R$ <?= number_format((float) ($acordo['desconto'] ?? 0), 2, ',', '.') ?></td>
+                        <td><span class="badge bg-light text-dark"><?= htmlspecialchars((string) ($acordo['tipo_desconto'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
+                        <td>
+                          <?php if ($acordoUtilizado): ?>
+                            <span class="badge bg-success">Utilizado</span>
+                          <?php else: ?>
+                            <span class="badge bg-warning text-dark">Pendente</span>
+                          <?php endif; ?>
+                        </td>
+                        <td><?= htmlspecialchars($acordoData !== '' ? date('d/m/Y H:i', strtotime($acordoData)) : '-', ENT_QUOTES, 'UTF-8') ?></td>
+                        <td>
+                          <?php if ($acordoToken !== ''): ?>
+                            <button type="button" class="btn btn-sm btn-outline-primary btn-copiar-link"
+                                    data-link="/financeiro/<?= htmlspecialchars($acordoToken, ENT_QUOTES, 'UTF-8') ?>"
+                                    title="Copiar link do Portal Financeiro">
+                              <i class="bi bi-link-45deg me-1"></i>Copiar
+                            </button>
+                          <?php else: ?>
+                            -
+                          <?php endif; ?>
+                        </td>
+                      </tr>
+                    <?php endforeach; ?>
+                  </tbody>
+                </table>
+              </div>
+            <?php endif; ?>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <div class="row g-3">
       <div class="col-lg-7">
         <div class="card border-0 shadow-sm h-100">
@@ -134,3 +212,185 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
     </div>
   </div>
 </section>
+
+<?php if (!empty($planos)): ?>
+<div class="modal fade" id="modalAcordo" tabindex="-1" aria-labelledby="modalAcordoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formAcordo">
+        <div class="modal-header">
+          <h5 class="modal-title" id="modalAcordoLabel"><i class="bi bi-file-earmark-text me-2"></i>Gerar Acordo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Nome</label>
+              <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">E-mail</label>
+              <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Telefone</label>
+              <input type="text" class="form-control" value="<?= htmlspecialchars(\App\Helpers\WhatsAppHelper::format((string) ($pre['whatsapp'] ?? '')), ENT_QUOTES, 'UTF-8') ?>" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Curso</label>
+              <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" readonly>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">CPF <span class="text-danger">*</span></label>
+              <input type="text" class="form-control" id="acordoCpf" name="cpf" maxlength="14" required placeholder="000.000.000-00">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Plano de pagamento <span class="text-danger">*</span></label>
+              <select class="form-select" id="acordoPlano" name="id_curso_pagamento" required>
+                <option value="">Selecione...</option>
+                <?php foreach ($planos as $plano): ?>
+                  <option value="<?= (int) ($plano['id'] ?? 0) ?>"
+                          data-valor="<?= (float) ($plano['valor'] ?? 0) ?>"
+                          data-parcelas="<?= (int) ($plano['parcelas'] ?? 1) ?>">
+                    <?= htmlspecialchars((string) ($plano['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    — R$ <?= number_format((float) ($plano['valor'] ?? 0), 2, ',', '.') ?>
+                    (<?= (int) ($plano['parcelas'] ?? 1) ?>x)
+                  </option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Parcelas</label>
+              <input type="number" class="form-control" id="acordoParcelas" name="parcelas" min="1" value="1" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Valor negociado</label>
+              <input type="text" class="form-control" id="acordoValor" name="valor" required placeholder="0,00">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Desconto</label>
+              <input type="text" class="form-control" id="acordoDesconto" name="desconto" placeholder="0,00" value="0,00">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Tipo do desconto</label>
+              <select class="form-select" name="tipo_desconto">
+                <?php foreach (['ALUNO', 'CONVENIO', 'BOLSA', 'CAMPANHA', 'NEGOCIACAO', 'OUTRO'] as $tipo): ?>
+                  <option value="<?= $tipo ?>" <?= $tipo === 'NEGOCIACAO' ? 'selected' : '' ?>><?= $tipo ?></option>
+                <?php endforeach; ?>
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Motivo</label>
+              <input type="text" class="form-control" name="motivo" maxlength="150" placeholder="Motivo da negociação">
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Observação</label>
+              <textarea class="form-control" name="observacao" rows="3" placeholder="Observações adicionais"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <span id="acordoMsg" class="text-success small me-auto"></span>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="acordoBtnSalvar"><i class="bi bi-check2 me-1"></i>Salvar acordo</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+<?php endif; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var form = document.getElementById('formAcordo');
+  if (!form) {
+    return;
+  }
+
+  var plano = document.getElementById('acordoPlano');
+  var parcelas = document.getElementById('acordoParcelas');
+  var valor = document.getElementById('acordoValor');
+  var desconto = document.getElementById('acordoDesconto');
+  var msg = document.getElementById('acordoMsg');
+  var btn = document.getElementById('acordoBtnSalvar');
+
+  function toFloat(str) {
+    if (typeof str !== 'string') {
+      return 0;
+    }
+    return parseFloat(str.replace(/\./g, '').replace(',', '.')) || 0;
+  }
+
+  function toBRL(num) {
+    return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  plano.addEventListener('change', function () {
+    var opt = plano.options[plano.selectedIndex];
+    if (!opt || opt.value === '') {
+      return;
+    }
+    parcelas.value = opt.getAttribute('data-parcelas') || '1';
+    valor.value = toBRL(toFloat(opt.getAttribute('data-valor')));
+  });
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (msg) msg.textContent = '';
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Salvando...';
+
+    var data = new URLSearchParams(new FormData(form));
+    data.set('pre_id', <?= $preId ?>);
+
+    fetch('/admin/preinscricao/acordo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: data.toString()
+    })
+      .then(function (res) { return res.json(); })
+      .then(function (res) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Salvar acordo';
+        if (res.sucesso) {
+          if (msg) {
+            msg.textContent = 'Acordo salvo!';
+            msg.className = 'text-success small me-auto';
+          }
+          form.reset();
+          var modalEl = document.getElementById('modalAcordo');
+          var modal = bootstrap.Modal.getInstance(modalEl);
+          if (modal) modal.hide();
+          setTimeout(function () { window.location.reload(); }, 600);
+        } else {
+          if (msg) {
+            msg.textContent = res.erro || 'Erro ao salvar acordo.';
+            msg.className = 'text-danger small me-auto';
+          }
+        }
+      })
+      .catch(function () {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="bi bi-check2 me-1"></i>Salvar acordo';
+        if (msg) {
+          msg.textContent = 'Erro inesperado. Tente novamente.';
+          msg.className = 'text-danger small me-auto';
+        }
+      });
+  });
+
+  var copiarBtns = document.querySelectorAll('.btn-copiar-link');
+  copiarBtns.forEach(function (el) {
+    el.addEventListener('click', function () {
+      var link = window.location.origin + el.getAttribute('data-link');
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(link).then(function () {
+          var original = el.innerHTML;
+          el.innerHTML = '<i class="bi bi-check2 me-1"></i>Copiado';
+          setTimeout(function () { el.innerHTML = original; }, 1500);
+        });
+      }
+    });
+  });
+});
+</script>

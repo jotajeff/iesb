@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.2
+-- version 5.2.3
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 06/08/2026 às 22:53
+-- Tempo de geração: 07/08/2026 às 22:24
 -- Versão do servidor: 5.7.44-48
--- Versão do PHP: 8.3.31
+-- Versão do PHP: 8.4.24
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -20,6 +20,31 @@ SET time_zone = "+00:00";
 --
 -- Banco de dados: `vanes415_db`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `acordo_pagamento`
+--
+
+CREATE TABLE `acordo_pagamento` (
+  `id` int(11) NOT NULL,
+  `id_pre_inscricao` int(11) NOT NULL,
+  `id_curso_pagamento` int(11) NOT NULL,
+  `id_usuario_autorizacao` int(11) NOT NULL,
+  `cpf` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `parcelas_negociadas` int(11) NOT NULL,
+  `valor_negociado` decimal(10,2) NOT NULL,
+  `desconto` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `tipo_desconto` enum('ALUNO','CONVENIO','BOLSA','CAMPANHA','NEGOCIACAO','OUTRO') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NEGOCIACAO',
+  `motivo` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `observacao` text COLLATE utf8mb4_unicode_ci,
+  `token` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `utilizado` tinyint(1) NOT NULL DEFAULT '0',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -187,6 +212,8 @@ CREATE TABLE `cursos_inscricao` (
   `id_curso` int(11) NOT NULL,
   `id_pagamento` int(11) NOT NULL,
   `id_turma` int(11) DEFAULT NULL,
+  `id_pre_inscricao` int(11) DEFAULT NULL,
+  `id_acordo_pagamento` int(11) DEFAULT NULL,
   `descricao_pagamento` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   `nome` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
   `cpf` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
@@ -883,6 +910,15 @@ CREATE TABLE `visitas_paginas` (
 --
 
 --
+-- Índices de tabela `acordo_pagamento`
+--
+ALTER TABLE `acordo_pagamento`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_pre_inscricao` (`id_pre_inscricao`),
+  ADD KEY `idx_curso_pagamento` (`id_curso_pagamento`),
+  ADD KEY `idx_usuario` (`id_usuario_autorizacao`);
+
+--
 -- Índices de tabela `alunos`
 --
 ALTER TABLE `alunos`
@@ -1220,6 +1256,12 @@ ALTER TABLE `visitas_paginas`
 --
 -- AUTO_INCREMENT para tabelas despejadas
 --
+
+--
+-- AUTO_INCREMENT de tabela `acordo_pagamento`
+--
+ALTER TABLE `acordo_pagamento`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `alunos`

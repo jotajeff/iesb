@@ -21,6 +21,7 @@ use App\Controllers\Admin\StorageController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
+use App\Controllers\FinanceiroController;
 use App\Controllers\StudentController;
 use App\Controllers\ApiController;
 use App\Core\Router;
@@ -43,6 +44,9 @@ return static function (Router $router): void {
     $router->get('/pre-inscricao', [PageController::class, 'preInscricao']);
     $router->post('/pre-inscricao', [PageController::class, 'enviarPreInscricao']);
 
+    $router->get('/financeiro/{token}', [FinanceiroController::class, 'portal']);
+    $router->post('/financeiro/{token}/continuar', [FinanceiroController::class, 'continuar']);
+
     $router->get('/admin/login', [AuthController::class, 'adminLoginForm']);
     $router->post('/admin/login', [AuthController::class, 'adminLogin']);
     $router->get('/admin/solicitar-redefinicao', [AuthController::class, 'mostrarSolicitarRedefinicaoStaff']);
@@ -55,6 +59,9 @@ return static function (Router $router): void {
     $router->get('/admin/logs', [DashboardController::class, 'logs']);
     $router->get('/admin/dbase', [DashboardController::class, 'dbase']);
     $router->get('/admin/asaas', [AsaasController::class, 'index']);
+    $router->get('/admin/asaas/webhook-test', [AsaasController::class, 'webhookTest']);
+    $router->get('/admin/asaas/webhook-logs', [AsaasController::class, 'webhookLogs']);
+    $router->get('/admin/asaas/webhook-log-detalhe', [AsaasController::class, 'webhookLogDetalhe']);
 
     $router->get('/admin/cursos', [CursoController::class, 'index']);
     $router->get('/admin/cursos/novo', [CursoController::class, 'novo']);
@@ -197,6 +204,7 @@ return static function (Router $router): void {
     $router->get('/admin/preinscricao/detalhe', [PreInscricaoController::class, 'detalhe']);
     $router->post('/admin/preinscricao/comentario', [PreInscricaoController::class, 'comentario']);
     $router->post('/admin/preinscricao/atualizar-situacao', [PreInscricaoController::class, 'atualizarSituacao']);
+    $router->post('/admin/preinscricao/acordo', [PreInscricaoController::class, 'salvarAcordo']);
 
     $router->get('/admin/sessao', [SessaoController::class, 'index']);
     $router->get('/admin/sessao/novo', [SessaoController::class, 'novo']);

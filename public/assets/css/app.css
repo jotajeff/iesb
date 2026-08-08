@@ -892,6 +892,27 @@ a {
   color: var(--btn-text);
 }
 
+.btn-acordo-orange {
+  background: #e8772e;
+  color: #fff;
+  border: none;
+  padding: 12px 26px;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 15px rgba(232, 119, 46, 0.35);
+}
+.btn-acordo-orange:hover {
+  background: #d1651f;
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(232, 119, 46, 0.45);
+}
+
 .btn-outline-custom {
   background: transparent;
   color: var(--text-primary);

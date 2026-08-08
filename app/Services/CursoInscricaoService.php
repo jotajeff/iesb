@@ -18,6 +18,11 @@ final class CursoInscricaoService
         return $this->repository->create($data);
     }
 
+    public function criarComAcordo(array $data): int
+    {
+        return $this->repository->createComAcordo($data);
+    }
+
     public function buscar(int $id): ?array
     {
         return $this->repository->findById($id);
