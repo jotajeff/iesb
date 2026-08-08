@@ -1,6 +1,14 @@
 <?php
   $matriculaData = $matriculaDB ?? [];
-  $totalMatricula = count($matriculaData);
+  $cursosMatriculadosLista = $cursosMatriculados ?? [];
+  $cursosMatriculadosIds = [];
+  foreach ($cursosMatriculadosLista as $item) {
+      $cursoId = (int) ($item['curso_id'] ?? 0);
+      if ($cursoId > 0) {
+          $cursosMatriculadosIds[$cursoId] = $cursoId;
+      }
+  }
+  $totalMatricula = count($cursosMatriculadosIds);
   $statusCounts = [];
   foreach ($matriculaData as $item) {
       $s = $item['status'] ?? 'desconhecido';

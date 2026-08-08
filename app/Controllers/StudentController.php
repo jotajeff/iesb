@@ -101,6 +101,7 @@ final class StudentController extends Controller
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
             'cursosDisponiveis' => $cursosDisponiveis,
+            'cursosMatriculados' => $cursosMatriculados,
             'matriculaDB' => $this->alunoService->matriculaDoAluno($studentId),
             'notificacaoCount' => $notificacaoCount,
             'temEndereco' => $temEndereco,
@@ -225,6 +226,30 @@ final class StudentController extends Controller
                 error_log('[STUDENT SHOW] Erro ao buscar materiais: ' . $e->getMessage());
                 $materiais = [];
             }
+
+            $cursoId = (int) ($matricula['curso_id'] ?? 0);
+            $disciplinas = [];
+
+            if ($cursoId > 0) {
+                try {
+                    $stmt = $pdo->prepare(
+                        'SELECT d.id, d.nome, d.carga_horaria, d.ordem,'
+                        . ' e.id AS ementa_id, e.ementa'
+                        . ' FROM disciplina d'
+                        . ' LEFT JOIN ementa e ON e.id_disciplina = d.id AND e.ativo = :ementa_ativo'
+                        . ' WHERE d.id_curso = :id_curso AND d.ativo = :disciplina_ativo'
+                        . ' ORDER BY d.ordem ASC, d.nome ASC'
+                    );
+                    $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':disciplina_ativo', 1, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ementa_ativo', 1, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $disciplinas = $stmt->fetchAll() ?: [];
+                } catch (\Throwable $e) {
+                    error_log('[STUDENT SHOW] Erro ao buscar disciplinas: ' . $e->getMessage());
+                    $disciplinas = [];
+                }
+            }
         }
 
         $this->render('pages/aluno/show', [
@@ -233,6 +258,7 @@ final class StudentController extends Controller
             'matricula' => $matricula,
             'professores' => $professores,
             'materiais' => $materiais,
+            'disciplinas' => $disciplinas,
         ], 'aluno');
     }
 

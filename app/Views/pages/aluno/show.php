@@ -141,6 +141,44 @@
           </div>
         </div>
 
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapseDisciplina" aria-expanded="false">
+              <i class="bi bi-book me-2"></i>Disciplinas
+            </button>
+          </h2>
+          <div id="collapseDisciplina" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
+            <div class="accordion-body">
+              <?php if (empty($disciplinas ?? [])): ?>
+                <p class="text-muted mb-0"><i class="bi bi-inbox me-1"></i>Nenhuma disciplina disponível.</p>
+              <?php else: ?>
+                <div class="list-group">
+                  <?php foreach ($disciplinas as $i => $disciplina): ?>
+                    <div class="list-group-item py-3 <?= $i % 2 === 0 ? '' : 'list-group-item-light' ?>" style="cursor: default;">
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                        <div>
+                          <span class="badge bg-primary-subtle text-primary-emphasis me-2"><?= (int) ($disciplina['ordem'] ?? 0) ?></span>
+                          <strong><?= htmlspecialchars($disciplina['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></strong>
+                          <?php if ((int) ($disciplina['carga_horaria'] ?? 0) > 0): ?>
+                            <span class="text-muted small ms-2">
+                              <i class="bi bi-clock me-1"></i><?= (int) $disciplina['carga_horaria'] ?>h
+                            </span>
+                          <?php endif; ?>
+                        </div>
+                      </div>
+                      <?php if (!empty($disciplina['ementa'])): ?>
+                        <div class="mt-2 ps-4 border-start border-2 border-primary-subtle">
+                          <p class="mb-0 small text-muted"><i class="bi bi-journal-text me-1"></i><?= nl2br(htmlspecialchars((string) $disciplina['ementa'], ENT_QUOTES, 'UTF-8')) ?></p>
+                        </div>
+                      <?php endif; ?>
+                    </div>
+                  <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
