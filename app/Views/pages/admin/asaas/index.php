@@ -53,6 +53,7 @@ function asaasQuery(array $params): string
         <p class="text-muted mb-0">Listagem das cobranças criadas no sandbox e correlacionadas com as inscrições.</p>
       </div>
       <div class="d-flex gap-2">
+        <a href="/admin/asaas/webhook-logs" class="btn btn-outline-warning btn-sm"><i class="bi bi-journal-text me-1"></i>Webhook</a>
         <a href="/admin/asaas" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-clockwise me-1"></i>Atualizar</a>
       </div>
     </div>
