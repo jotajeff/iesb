@@ -23,6 +23,11 @@ final class UsuarioService
         return $this->repository->listByTipo($tipo, $limit);
     }
 
+    public function usuariosPorTipoPaginados(string $tipo, int $limit, int $offset): array
+    {
+        return $this->repository->listByTipoPaginated($tipo, $limit, $offset);
+    }
+
     public function findUsuario(int $id): ?array
     {
         return $this->repository->findById($id);

@@ -66,18 +66,20 @@ $dashboardTypeLabel = match ($dashboardType) {
       </a>
     </div>
     <div class="col-md-3">
-      <div class="dashboard-task-card task-card-cursos h-100">
-        <div class="task-card-top">
-          <div>
-            <small class="task-card-label">Total de Cursos</small>
-            <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_cursos'] ?? 0) ?></h2>
+      <a href="/admin/cursos" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-cursos h-100">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label">Total de Cursos</small>
+              <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_cursos'] ?? 0) ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-cursos">
+              <i class="bi bi-book-fill"></i>
+            </div>
           </div>
-          <div class="task-card-icon task-card-icon-cursos">
-            <i class="bi bi-book-fill"></i>
-          </div>
+          <div class="task-card-footer">Ofertas disponíveis</div>
         </div>
-        <div class="task-card-footer">Ofertas disponíveis</div>
-      </div>
+      </a>
     </div>
     <div class="col-md-3">
       <a href="/admin/matriculas" class="text-decoration-none d-block h-100">
@@ -115,32 +117,36 @@ $dashboardTypeLabel = match ($dashboardType) {
       </a>
     </div>
     <div class="col-md-4">
-      <div class="dashboard-task-card task-card-execucao h-100">
-        <div class="task-card-top">
-          <div>
-            <small class="task-card-label"><?= $isAdmin ? 'Tarefas em execução' : 'Minhas tarefas em execução' ?></small>
-            <h2 class="task-card-value mb-0"><?= (int) ($taskIndicators['tarefas_execucao'] ?? 0) ?></h2>
+      <a href="/admin/tarefas/lista?situacao=execucao" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-execucao h-100">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label"><?= $isAdmin ? 'Tarefas em execução' : 'Minhas tarefas em execução' ?></small>
+              <h2 class="task-card-value mb-0"><?= (int) ($taskIndicators['tarefas_execucao'] ?? 0) ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-execucao">
+              <i class="bi bi-kanban"></i>
+            </div>
           </div>
-          <div class="task-card-icon task-card-icon-execucao">
-            <i class="bi bi-kanban"></i>
-          </div>
+          <div class="task-card-footer">Itens em andamento ou revisão</div>
         </div>
-        <div class="task-card-footer">Itens em andamento ou revisão</div>
-      </div>
+      </a>
     </div>
     <div class="col-md-4">
-      <div class="dashboard-task-card task-card-finalizado h-100">
-        <div class="task-card-top">
-          <div>
-            <small class="task-card-label"><?= $isAdmin ? 'Tarefas finalizadas' : 'Minhas tarefas finalizadas' ?></small>
-            <h2 class="task-card-value mb-0"><?= (int) ($taskIndicators['tarefas_finalizadas'] ?? 0) ?></h2>
+      <a href="/admin/tarefas/lista?situacao=finalizada" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-finalizado h-100">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label"><?= $isAdmin ? 'Tarefas finalizadas' : 'Minhas tarefas finalizadas' ?></small>
+              <h2 class="task-card-value mb-0"><?= (int) ($taskIndicators['tarefas_finalizadas'] ?? 0) ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-finalizado">
+              <i class="bi bi-kanban"></i>
+            </div>
           </div>
-          <div class="task-card-icon task-card-icon-finalizado">
-            <i class="bi bi-kanban"></i>
-          </div>
+          <div class="task-card-footer">Concluídas e prontas</div>
         </div>
-        <div class="task-card-footer">Concluídas e prontas</div>
-      </div>
+      </a>
     </div>
   </div>
 </section>

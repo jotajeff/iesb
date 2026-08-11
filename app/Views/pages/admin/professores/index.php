@@ -20,7 +20,7 @@
             <th><i class="bi bi-hash"></i></th>
             <th><i class="bi bi-person me-1"></i>Nome</th>
             <th><i class="bi bi-telephone me-1"></i>Telefone</th>
-            <th><i class="bi bi-toggle-on me-1"></i>Ativo</th>
+            <th><i class="bi bi-envelope me-1"></i>Email</th>
             <th><i class="bi bi-geo-alt me-1"></i>Endereço</th>
             <th><i class="bi bi-link-45deg me-1"></i>Turmas</th>
             <th><i class="bi bi-gear me-1"></i>Ações</th>
@@ -43,15 +43,16 @@
                 <?php endif; ?>
                 <?= htmlspecialchars((string) ($prof['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
               </td>
-              <td><?= htmlspecialchars((string) ($prof['telefone'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td>
-                <?php $ativo = (int) ($prof['ativo'] ?? 1); ?>
-                <?php if ($ativo === 1): ?>
-                  <span class="badge bg-success">Sim</span>
-                <?php else: ?>
-                  <span class="badge bg-secondary">Não</span>
-                <?php endif; ?>
-              </td>
+              <td><?php
+                $telefone = preg_replace('/\D+/', '', (string) ($prof['telefone'] ?? ''));
+                if ($telefone !== '' && strlen($telefone) >= 10) {
+                  $telefone = '(' . substr($telefone, 0, 2) . ')' . substr($telefone, 2, -4) . '.' . substr($telefone, -4);
+                } else {
+                  $telefone = $telefone !== '' ? $telefone : '-';
+                }
+                echo htmlspecialchars($telefone, ENT_QUOTES, 'UTF-8');
+              ?></td>
+              <td><?= htmlspecialchars((string) ($prof['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td>
                 <?php if ($temEndereco): ?>
                   <span class="badge bg-success">Cadastrado</span>
@@ -104,6 +105,29 @@
           <?php endforeach; ?>
         </tbody>
       </table>
+    </div>
+
+    <?php
+      $currentPage = (int) ($pagination['current_page'] ?? 1);
+      $totalPages = (int) ($pagination['total_pages'] ?? 1);
+      $totalProfessores = (int) ($pagination['total'] ?? 0);
+    ?>
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-4 pt-3 border-top">
+      <div class="text-muted small">
+        <?= $totalProfessores ?> professor(es) · Página <?= $currentPage ?> de <?= $totalPages ?>
+      </div>
+      <div class="btn-group">
+        <?php if ($currentPage > 1): ?>
+          <a class="btn btn-outline-secondary btn-sm" href="/admin/professores?page=<?= $currentPage - 1 ?>">Anterior</a>
+        <?php else: ?>
+          <button class="btn btn-outline-secondary btn-sm" disabled>Anterior</button>
+        <?php endif; ?>
+        <?php if ($currentPage < $totalPages): ?>
+          <a class="btn btn-outline-secondary btn-sm" href="/admin/professores?page=<?= $currentPage + 1 ?>">Próxima</a>
+        <?php else: ?>
+          <button class="btn btn-outline-secondary btn-sm" disabled>Próxima</button>
+        <?php endif; ?>
+      </div>
     </div>
 
     <div class="mt-3 pt-3 border-top text-muted small">

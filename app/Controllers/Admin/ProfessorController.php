@@ -40,7 +40,25 @@ final class ProfessorController extends Controller
             $this->redirect('/admin/login');
         }
 
-        $professores = $this->usuarioService->usuariosPorTipo('professor');
+        $perPage = 20;
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $professoresResult = $this->usuarioService->usuariosPorTipoPaginados(
+            'professor',
+            $perPage,
+            ($page - 1) * $perPage
+        );
+        $professores = $professoresResult['data'] ?? [];
+        $totalProfessores = (int) ($professoresResult['total'] ?? 0);
+        $totalPages = max(1, (int) ceil($totalProfessores / $perPage));
+        if ($page > $totalPages) {
+            $page = $totalPages;
+            $professoresResult = $this->usuarioService->usuariosPorTipoPaginados(
+                'professor',
+                $perPage,
+                ($page - 1) * $perPage
+            );
+            $professores = $professoresResult['data'] ?? [];
+        }
 
         $enderecos = [];
         foreach ($professores as $prof) {
@@ -105,6 +123,12 @@ final class ProfessorController extends Controller
             'vinculoCounts' => $vinculoCounts,
             'fotos' => $fotos,
             'curriculos' => $curriculos,
+            'pagination' => [
+                'current_page' => $page,
+                'per_page' => $perPage,
+                'total' => $totalProfessores,
+                'total_pages' => $totalPages,
+            ],
         ], 'admin');
     }
 

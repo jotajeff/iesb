@@ -49,6 +49,37 @@ final class UsuarioRepository
         return is_array($rows) ? $rows : [];
     }
 
+    public function listByTipoPaginated(string $tipo, int $limit, int $offset): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return ['data' => [], 'total' => 0];
+        }
+
+        $countStmt = $pdo->prepare('SELECT COUNT(*) FROM usuarios WHERE tipo = :tipo');
+        $countStmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
+        $countStmt->execute();
+        $total = (int) $countStmt->fetchColumn();
+
+        $stmt = $pdo->prepare(
+            'SELECT id, nome, email, telefone, tipo, ativo, created_at, updated_at
+             FROM usuarios
+             WHERE tipo = :tipo
+             ORDER BY nome ASC, id ASC
+             LIMIT :limit OFFSET :offset'
+        );
+        $stmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
+        $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+        $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+        $stmt->execute();
+
+        $rows = $stmt->fetchAll();
+        return [
+            'data' => is_array($rows) ? $rows : [],
+            'total' => $total,
+        ];
+    }
+
     public function findById(int $id): ?array
     {
         $pdo = Database::connection();
