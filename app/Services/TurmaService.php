@@ -23,6 +23,11 @@ final class TurmaService
         return $this->repository->listAtivas($limit);
     }
 
+    public function matriculasAtivas(): array
+    {
+        return $this->repository->listMatriculasAtivas();
+    }
+
     public function findTurma(int $id): ?array
     {
         if ($id <= 0) {

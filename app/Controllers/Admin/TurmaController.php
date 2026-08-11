@@ -43,6 +43,21 @@ final class TurmaController extends Controller
         ], 'admin');
     }
 
+    public function matriculas(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as matrículas.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $this->render('pages/admin/matriculas/index', [
+            'title' => 'Matrículas',
+            'currentRoute' => '/admin/matriculas',
+            'matriculas' => $this->turmaService->matriculasAtivas(),
+        ], 'admin');
+    }
+
     public function show(): void
     {
         if (!$this->isStaff()) {

@@ -1796,7 +1796,7 @@ footer .footer-links a:hover {
     padding-left: 1rem;
     padding-right: 1rem;
     align-items: center;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     min-width: 0;
   }
 

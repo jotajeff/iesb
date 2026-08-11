@@ -40,7 +40,7 @@
 
             <?php foreach ($alunosView as $aluno): ?>
               <tr>
-                <td><a class="text-decoration-none fw-medium" href="/admin/alunos/show?id=<?= (int) ($aluno['id'] ?? 0) ?>"><i class="bi bi-box-arrow-up-right me-1"></i><?= (int) ($aluno['id'] ?? 0) ?></a></td>
+                <td><a class="text-decoration-none fw-medium" href="/admin/alunos/show?id=<?= (int) ($aluno['id'] ?? 0) ?>">#<?= (int) ($aluno['id'] ?? 0) ?></a></td>
                 <td><?= htmlspecialchars((string) ($aluno['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($aluno['cpf'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?php

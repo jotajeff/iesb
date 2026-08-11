@@ -135,6 +135,32 @@ final class TurmaRepository
         }
     }
 
+    public function listMatriculasAtivas(): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT m.id, m.id_aluno, m.id_curso, m.id_turma, m.data_matricula,
+                           a.nome AS aluno_nome, t.nome AS turma_nome, c.nome AS curso_nome
+                    FROM matricula m
+                    INNER JOIN alunos a ON a.id = m.id_aluno
+                    INNER JOIN turmas t ON t.id = m.id_turma
+                    INNER JOIN cursos c ON c.id = m.id_curso
+                    WHERE m.ativo = 1
+                    ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
+
+            $stmt = $pdo->query($sql);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[MATRICULAS] Erro em listMatriculasAtivas: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function listByCurso(int $idCurso): array
     {
         $pdo = Database::connection();

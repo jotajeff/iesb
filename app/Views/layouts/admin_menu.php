@@ -32,13 +32,14 @@
         <?php else: ?>
           <li class="nav-item"><a class="nav-link <?= ($currentRoute ?? '') === '/admin' ? 'active' : '' ?>" href="/admin"><i class="bi bi-speedometer2 me-1"></i>Dashboard</a></li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= ((strpos(($currentRoute ?? ''), '/admin/cursos') === 0) || (strpos(($currentRoute ?? ''), '/admin/turmas') === 0) || (strpos(($currentRoute ?? ''), '/admin/alunos') === 0) || (strpos(($currentRoute ?? ''), '/admin/professores') === 0) || (strpos(($currentRoute ?? ''), '/admin/preinscricao') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-bookmark-fill me-1"></i>Cadastros</a>
+            <a class="nav-link dropdown-toggle <?= ((strpos(($currentRoute ?? ''), '/admin/cursos') === 0) || (strpos(($currentRoute ?? ''), '/admin/turmas') === 0) || (strpos(($currentRoute ?? ''), '/admin/matriculas') === 0) || (strpos(($currentRoute ?? ''), '/admin/alunos') === 0) || (strpos(($currentRoute ?? ''), '/admin/professores') === 0) || (strpos(($currentRoute ?? ''), '/admin/preinscricao') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-bookmark-fill me-1"></i>Cadastros</a>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item fw-bold disabled" href="#"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
               <li><a class="dropdown-item" href="/admin/cursos" style="padding-left:2.2rem;"><i class="bi bi-list-ul me-1"></i>Listagem</a></li>
               <li><a class="dropdown-item" href="/admin/cursos/cursos-turma" style="padding-left:2.2rem;"><i class="bi bi-diagram-3 me-1"></i>Cursos-turma</a></li>
               <li><hr class="dropdown-divider"></li>
               <li><a class="dropdown-item" href="/admin/turmas"><i class="bi bi-people me-1"></i>Turmas</a></li>
+              <li><a class="dropdown-item" href="/admin/matriculas"><i class="bi bi-card-checklist me-1"></i>Matrículas</a></li>
               <li><a class="dropdown-item" href="/admin/alunos"><i class="bi bi-person-badge me-1"></i>Alunos</a></li>
               <li><a class="dropdown-item" href="/admin/professores"><i class="bi bi-person-workspace me-1"></i>Professores</a></li>
               <li><a class="dropdown-item" href="/admin/alunos/troca-historico"><i class="bi bi-arrow-left-right me-1"></i>Troca de Turmas</a></li>
