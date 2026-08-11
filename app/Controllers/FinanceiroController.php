@@ -7,7 +7,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Services\AcordoPagamentoService;
 use App\Services\AsaasService;
-use App\Services\CursoInscricaoService;
+use App\Services\CursoParcelaService;
 use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
 
@@ -16,14 +16,14 @@ final class FinanceiroController extends Controller
     private AcordoPagamentoService $acordoService;
     private CursoPagamentoService $pagamentoService;
     private CursoService $cursoService;
-    private CursoInscricaoService $inscricaoService;
+    private CursoParcelaService $parcelaService;
 
     public function __construct()
     {
         $this->acordoService = new AcordoPagamentoService();
         $this->pagamentoService = new CursoPagamentoService();
         $this->cursoService = new CursoService();
-        $this->inscricaoService = new CursoInscricaoService();
+        $this->parcelaService = new CursoParcelaService();
     }
 
     public function portal(): void
@@ -99,7 +99,15 @@ final class FinanceiroController extends Controller
         $idAcordo = (int) ($acordo['id'] ?? 0);
         $idPreInscricao = (int) ($acordo['id_pre_inscricao'] ?? 0);
         $descricaoPlano = (string) ($acordo['plano_descricao'] ?? 'Plano negociado');
-        $valorParcela = round((float) ($acordo['valor_negociado'] ?? 0) / max(1, (int) ($acordo['parcelas_negociadas'] ?? 1)), 2);
+        $tipoAcordo = (int) ($acordo['tipo'] ?? 1);
+        $totalParcelas = max(1, (int) ($acordo['total_parcelas'] ?? 1));
+        $valorEntrada = (float) ($acordo['valor_entrada'] ?? 0);
+        $valorDemaisParcelas = (float) ($acordo['valor_demais_parcelas'] ?? 0);
+        $dataVencimentoEntrada = trim((string) ($acordo['data_vencimento_entrada'] ?? ''));
+        $valorParcela = $valorEntrada > 0 ? $valorEntrada : round((float) ($acordo['valor_demais_parcelas'] ?? 0), 2);
+        if ($valorParcela <= 0) {
+            $valorParcela = round((float) ($acordo['plano_valor'] ?? 0), 2);
+        }
 
         $curso = $this->cursoService->findCurso($idCurso);
         $nomeCurso = $curso ? (string) ($curso['nome'] ?? 'Curso') : 'Curso';
@@ -123,17 +131,20 @@ final class FinanceiroController extends Controller
             return;
         }
 
-        $inscricaoId = $this->inscricaoService->criarComAcordo([
+        $inscricaoId = $this->parcelaService->criarComAcordo([
             'id_curso' => $idCurso,
             'id_pagamento' => $idCursoPagamento,
             'id_pre_inscricao' => $idPreInscricao,
             'id_acordo_pagamento' => $idAcordo,
-            'descricao_pagamento' => $descricaoPlano . ' (' . (int) ($acordo['parcelas_negociadas'] ?? 1) . 'x)',
+            'numero_parcela' => 1,
+            'total_parcelas' => $totalParcelas,
+            'descricao_pagamento' => $descricaoPlano . ' (' . $totalParcelas . 'x)',
             'nome' => $nome,
             'cpf' => $cpf,
             'email' => $email,
             'telefone' => $telefone,
             'valor' => $valorParcela,
+            'data_vencimento' => $dataVencimentoEntrada !== '' ? $dataVencimentoEntrada : date('Y-m-d', strtotime('+3 days')),
         ]);
 
         if ($inscricaoId <= 0) {
@@ -184,7 +195,7 @@ final class FinanceiroController extends Controller
 
         $clienteId = (string) $cliente['id'];
         $billingType = $forma === 'cartao' ? 'CREDIT_CARD' : 'PIX';
-        $descricao = $nomeCurso . ' - ' . $descricaoPlano . ' (' . (int) ($acordo['parcelas_negociadas'] ?? 1) . 'x) - 1ª parcela';
+        $descricao = $nomeCurso . ' - ' . $descricaoPlano . ' (' . $totalParcelas . 'x) - 1ª parcela';
 
         $cobranca = $asaas->criarCobranca([
             'customer_id' => $clienteId,
@@ -203,7 +214,7 @@ final class FinanceiroController extends Controller
             $pixQrCode = $asaas->obterPixQrCode((string) ($cobranca['id'] ?? ''));
         }
 
-        $this->inscricaoService->atualizarAsaasInfo($inscricaoId, [
+        $this->parcelaService->atualizarAsaasInfo($inscricaoId, [
             'asaas_customer' => $clienteId,
             'asaas_payment' => $cobranca['id'] ?? null,
             'invoice_url' => $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl,

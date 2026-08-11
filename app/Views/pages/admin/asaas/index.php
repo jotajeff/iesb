@@ -172,7 +172,7 @@ function asaasQuery(array $params): string
                     </td>
                     <td>
                       <?php if ($inscricaoId > 0): ?>
-                        <a href="/admin/dbase?table=cursos_inscricao&view=detail&id=<?= $inscricaoId ?>" class="text-decoration-none">#<?= $inscricaoId ?></a>
+                        <a href="/admin/dbase?table=curso_parcela&view=detail&id=<?= $inscricaoId ?>" class="text-decoration-none">#<?= $inscricaoId ?></a>
                         <?php if ($inscricaoNome !== ''): ?>
                           <div class="text-muted small"><?= htmlspecialchars($inscricaoNome, ENT_QUOTES, 'UTF-8') ?></div>
                         <?php endif; ?>
@@ -195,7 +195,13 @@ function asaasQuery(array $params): string
                       <span class="badge <?= $statusClass($statusValue) ?>"><?= htmlspecialchars($statusLabels[$statusValue] ?? $statusValue ?: '-', ENT_QUOTES, 'UTF-8') ?></span>
                     </td>
                     <td>R$ <?= number_format((float) ($payment['value'] ?? 0), 2, ',', '.') ?></td>
-                    <td><?= htmlspecialchars((string) ($payment['dueDate'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td>
+                      <?php
+                        $dueDateRaw = (string) ($payment['dueDate'] ?? '');
+                        $dueDateFormatado = $dueDateRaw !== '' ? date('d/m/Y', strtotime($dueDateRaw)) : '-';
+                      ?>
+                      <?= htmlspecialchars($dueDateFormatado, ENT_QUOTES, 'UTF-8') ?>
+                    </td>
                     <td class="text-end">
                       <div class="btn-group btn-group-sm" role="group">
                         <?php if ($invoiceUrl !== ''): ?>

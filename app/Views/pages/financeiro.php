@@ -14,11 +14,15 @@ $abrirCheckoutNovaAba = $abrirCheckoutNovaAba ?? false;
 
 $cursoNome = (string) ($acordo['curso_nome'] ?? '-');
 $candidatoNome = (string) ($acordo['candidato_nome'] ?? '-');
-$valorNegociado = (float) ($acordo['valor_negociado'] ?? 0);
+$valorEntrada = (float) ($acordo['valor_entrada'] ?? 0);
+$valorDemais = (float) ($acordo['valor_demais_parcelas'] ?? 0);
 $desconto = (float) ($acordo['desconto'] ?? 0);
-$parcelas = (int) ($acordo['parcelas_negociadas'] ?? 1);
+$parcelas = (int) ($acordo['total_parcelas'] ?? 1);
 $observacao = (string) ($acordo['observacao'] ?? '');
-$valorParcela = $parcelas > 0 ? round($valorNegociado / $parcelas, 2) : $valorNegociado;
+$valorParcela = $valorEntrada > 0 ? $valorEntrada : $valorDemais;
+if ($valorParcela <= 0) {
+    $valorParcela = (float) ($acordo['plano_valor'] ?? 0);
+}
 ?>
 <section class="hero-section" id="home" style="min-height:40vh;">
   <div class="hero-bg"></div>
@@ -47,8 +51,8 @@ $valorParcela = $parcelas > 0 ? round($valorNegociado / $parcelas, 2) : $valorNe
           <div class="bg-white border rounded-4 p-5 shadow-sm text-center">
             <div class="mb-3 text-success"><i class="bi bi-check-circle-fill" style="font-size:4rem;"></i></div>
             <h3 class="mb-2">Cobrança gerada!</h3>
-            <p class="text-muted mb-1">Primeira parcela do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
-            <p class="mb-4">Valor: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (<?= $parcelas ?>x de R$ <?= number_format($valorParcela, 2, ',', '.') ?>)</p>
+            <p class="text-muted mb-1">Primeira parcela (entrada) do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+            <p class="mb-4">Valor da entrada: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
             <?php if ($asaasError): ?>
               <div class="alert alert-warning text-start mt-4 mb-4">
                 <strong>Pagamento no Asaas não concluído:</strong> <?= htmlspecialchars((string) $asaasError, ENT_QUOTES, 'UTF-8') ?>
@@ -104,16 +108,16 @@ $valorParcela = $parcelas > 0 ? round($valorNegociado / $parcelas, 2) : $valorNe
                 <div class="fw-semibold"><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></div>
               </div>
               <div class="col-md-4">
-                <div class="text-muted small text-uppercase">Valor negociado</div>
-                <div class="fw-semibold">R$ <?= number_format($valorNegociado, 2, ',', '.') ?></div>
+                <div class="text-muted small text-uppercase">Entrada</div>
+                <div class="fw-semibold">R$ <?= number_format($valorEntrada, 2, ',', '.') ?></div>
               </div>
               <div class="col-md-4">
                 <div class="text-muted small text-uppercase">Parcelas</div>
-                <div class="fw-semibold"><?= $parcelas ?>x de R$ <?= number_format($valorParcela, 2, ',', '.') ?></div>
+                <div class="fw-semibold"><?= $parcelas ?>x</div>
               </div>
               <div class="col-md-4">
-                <div class="text-muted small text-uppercase">Desconto</div>
-                <div class="fw-semibold">R$ <?= number_format($desconto, 2, ',', '.') ?></div>
+                <div class="text-muted small text-uppercase">Valor demais parcelas</div>
+                <div class="fw-semibold">R$ <?= number_format($valorDemais, 2, ',', '.') ?></div>
               </div>
               <?php if ($observacao !== ''): ?>
                 <div class="col-12">
@@ -156,7 +160,7 @@ $valorParcela = $parcelas > 0 ? round($valorNegociado / $parcelas, 2) : $valorNe
 
               <div class="alert alert-light border mt-4 mb-0">
                 <i class="bi bi-info-circle me-1"></i>
-                Ao continuar, será gerada a cobrança referente à <strong>primeira parcela</strong>
+                Ao continuar, será gerada a cobrança referente à <strong>entrada</strong>
                 (R$ <?= number_format($valorParcela, 2, ',', '.') ?>). As demais parcelas serão geradas após a confirmação do pagamento.
               </div>
 

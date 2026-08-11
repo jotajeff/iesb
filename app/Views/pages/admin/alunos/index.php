@@ -68,9 +68,6 @@
                   <a class="btn btn-outline-secondary btn-sm" href="/admin/alunos/editar?id=<?= (int) ($aluno['id'] ?? 0) ?>">
                     <i class="bi bi-pencil-square"></i>
                   </a>
-                  <a class="btn btn-outline-success btn-sm" href="/admin/alunos/matricula?id=<?= (int) ($aluno['id'] ?? 0) ?>">
-                    <i class="bi bi-journal-plus"></i> Matricular
-                  </a>
                   </div>
                 </td>
               </tr>

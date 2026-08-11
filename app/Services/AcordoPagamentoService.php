@@ -33,6 +33,11 @@ final class AcordoPagamentoService
         return $this->repository->listarPorPreInscricao($idPreInscricao);
     }
 
+    public function listarComPreInscrito(): array
+    {
+        return $this->repository->listarComPreInscrito();
+    }
+
     public function marcarUtilizado(int $id): bool
     {
         return $this->repository->marcarUtilizado($id);

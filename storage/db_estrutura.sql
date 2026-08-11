@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 07/08/2026 às 22:24
+-- Tempo de geração: 10/08/2026 às 21:03
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -29,12 +29,16 @@ SET time_zone = "+00:00";
 
 CREATE TABLE `acordo_pagamento` (
   `id` int(11) NOT NULL,
+  `tipo` tinyint(4) NOT NULL DEFAULT '1',
   `id_pre_inscricao` int(11) NOT NULL,
   `id_curso_pagamento` int(11) NOT NULL,
+  `id_curso_parcela_origem` int(11) DEFAULT NULL,
   `id_usuario_autorizacao` int(11) NOT NULL,
   `cpf` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `parcelas_negociadas` int(11) NOT NULL,
-  `valor_negociado` decimal(10,2) NOT NULL,
+  `valor_entrada` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `data_vencimento_entrada` date DEFAULT NULL,
+  `total_parcelas` int(11) NOT NULL DEFAULT '1',
+  `valor_demais_parcelas` decimal(10,2) NOT NULL DEFAULT '0.00',
   `desconto` decimal(10,2) NOT NULL DEFAULT '0.00',
   `tipo_desconto` enum('ALUNO','CONVENIO','BOLSA','CAMPANHA','NEGOCIACAO','OUTRO') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'NEGOCIACAO',
   `motivo` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -204,36 +208,6 @@ CREATE TABLE `cursos` (
 -- --------------------------------------------------------
 
 --
--- Estrutura para tabela `cursos_inscricao`
---
-
-CREATE TABLE `cursos_inscricao` (
-  `id` int(11) NOT NULL,
-  `id_curso` int(11) NOT NULL,
-  `id_pagamento` int(11) NOT NULL,
-  `id_turma` int(11) DEFAULT NULL,
-  `id_pre_inscricao` int(11) DEFAULT NULL,
-  `id_acordo_pagamento` int(11) DEFAULT NULL,
-  `descricao_pagamento` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `nome` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `cpf` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `email` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `telefone` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `id_aluno` int(11) DEFAULT NULL,
-  `id_matricula` int(11) DEFAULT NULL,
-  `asaas_customer` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `asaas_payment` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `invoice_url` text COLLATE utf8_unicode_ci,
-  `status` enum('PENDENTE','AGUARDANDO','RECEBIDO','CONFIRMADO','CANCELADO','ESTORNADO') COLLATE utf8_unicode_ci DEFAULT 'PENDENTE',
-  `valor` decimal(10,2) DEFAULT NULL,
-  `ativo` tinyint(1) NOT NULL DEFAULT '1',
-  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
-
--- --------------------------------------------------------
-
---
 -- Estrutura para tabela `cursos_pagamento`
 --
 
@@ -258,6 +232,39 @@ CREATE TABLE `cursos_pagamento` (
 CREATE TABLE `cursos_tipo` (
   `id` int(11) NOT NULL,
   `tipo` varchar(20) COLLATE utf8_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `curso_parcela`
+--
+
+CREATE TABLE `curso_parcela` (
+  `id` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `id_pagamento` int(11) NOT NULL,
+  `id_turma` int(11) DEFAULT NULL,
+  `id_pre_inscricao` int(11) DEFAULT NULL,
+  `id_acordo_pagamento` int(11) DEFAULT NULL,
+  `numero_parcela` int(11) DEFAULT NULL,
+  `total_parcelas` int(11) DEFAULT NULL,
+  `descricao_pagamento` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `nome` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `cpf` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `email` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `telefone` varchar(30) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `id_aluno` int(11) DEFAULT NULL,
+  `id_matricula` int(11) DEFAULT NULL,
+  `asaas_customer` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `asaas_payment` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `invoice_url` text COLLATE utf8_unicode_ci,
+  `status` enum('PENDENTE','AGUARDANDO','RECEBIDO','CONFIRMADO','CANCELADO','ESTORNADO') COLLATE utf8_unicode_ci DEFAULT 'PENDENTE',
+  `valor` decimal(10,2) DEFAULT NULL,
+  `data_vencimento` date DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -914,6 +921,7 @@ CREATE TABLE `visitas_paginas` (
 --
 ALTER TABLE `acordo_pagamento`
   ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uq_acordo_pagamento_token` (`token`),
   ADD KEY `idx_pre_inscricao` (`id_pre_inscricao`),
   ADD KEY `idx_curso_pagamento` (`id_curso_pagamento`),
   ADD KEY `idx_usuario` (`id_usuario_autorizacao`);
@@ -977,15 +985,6 @@ ALTER TABLE `cursos`
   ADD PRIMARY KEY (`id`);
 
 --
--- Índices de tabela `cursos_inscricao`
---
-ALTER TABLE `cursos_inscricao`
-  ADD PRIMARY KEY (`id`),
-  ADD KEY `id_curso` (`id_curso`),
-  ADD KEY `id_pagamento` (`id_pagamento`),
-  ADD KEY `asaas_payment` (`asaas_payment`);
-
---
 -- Índices de tabela `cursos_pagamento`
 --
 ALTER TABLE `cursos_pagamento`
@@ -997,6 +996,15 @@ ALTER TABLE `cursos_pagamento`
 --
 ALTER TABLE `cursos_tipo`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `curso_parcela`
+--
+ALTER TABLE `curso_parcela`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `id_curso` (`id_curso`),
+  ADD KEY `id_pagamento` (`id_pagamento`),
+  ADD KEY `asaas_payment` (`asaas_payment`);
 
 --
 -- Índices de tabela `detalhes`
@@ -1312,12 +1320,6 @@ ALTER TABLE `cursos`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
--- AUTO_INCREMENT de tabela `cursos_inscricao`
---
-ALTER TABLE `cursos_inscricao`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
-
---
 -- AUTO_INCREMENT de tabela `cursos_pagamento`
 --
 ALTER TABLE `cursos_pagamento`
@@ -1327,6 +1329,12 @@ ALTER TABLE `cursos_pagamento`
 -- AUTO_INCREMENT de tabela `cursos_tipo`
 --
 ALTER TABLE `cursos_tipo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `curso_parcela`
+--
+ALTER TABLE `curso_parcela`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1564,17 +1572,17 @@ ALTER TABLE `curriculo`
   ADD CONSTRAINT `fk_curriculo_usuario` FOREIGN KEY (`id_fk`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE;
 
 --
--- Restrições para tabelas `cursos_inscricao`
---
-ALTER TABLE `cursos_inscricao`
-  ADD CONSTRAINT `cursos_inscricao_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`),
-  ADD CONSTRAINT `cursos_inscricao_ibfk_2` FOREIGN KEY (`id_pagamento`) REFERENCES `cursos_pagamento` (`id`);
-
---
 -- Restrições para tabelas `cursos_pagamento`
 --
 ALTER TABLE `cursos_pagamento`
   ADD CONSTRAINT `cursos_pagamento_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`);
+
+--
+-- Restrições para tabelas `curso_parcela`
+--
+ALTER TABLE `curso_parcela`
+  ADD CONSTRAINT `curso_parcela_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`),
+  ADD CONSTRAINT `curso_parcela_ibfk_2` FOREIGN KEY (`id_pagamento`) REFERENCES `cursos_pagamento` (`id`);
 
 --
 -- Restrições para tabelas `disciplina`

@@ -4,12 +4,12 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Repositories\CursoInscricaoRepository;
+use App\Repositories\CursoParcelaRepository;
 
-final class CursoInscricaoService
+final class CursoParcelaService
 {
     public function __construct(
-        private readonly CursoInscricaoRepository $repository = new CursoInscricaoRepository(),
+        private readonly CursoParcelaRepository $repository = new CursoParcelaRepository(),
     ) {
     }
 

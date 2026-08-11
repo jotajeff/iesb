@@ -201,6 +201,7 @@ return static function (Router $router): void {
 
     $router->get('/admin/preinscricao', [PreInscricaoController::class, 'index']);
     $router->get('/admin/preinscricao/kanban', [PreInscricaoController::class, 'kanban']);
+    $router->get('/admin/preinscricao/acordos', [PreInscricaoController::class, 'acordos']);
     $router->get('/admin/preinscricao/detalhe', [PreInscricaoController::class, 'detalhe']);
     $router->post('/admin/preinscricao/comentario', [PreInscricaoController::class, 'comentario']);
     $router->post('/admin/preinscricao/atualizar-situacao', [PreInscricaoController::class, 'atualizarSituacao']);

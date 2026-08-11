@@ -7,7 +7,7 @@ namespace App\Repositories;
 use App\Core\Database;
 use PDO;
 
-final class CursoInscricaoRepository
+final class CursoParcelaRepository
 {
     public function create(array $data): int
     {
@@ -17,21 +17,24 @@ final class CursoInscricaoRepository
         }
 
         try {
-            $stmt = $pdo->prepare('INSERT INTO cursos_inscricao (id_curso, id_pagamento, id_turma, descricao_pagamento, nome, cpf, email, telefone, valor, status) VALUES (:id_curso, :id_pagamento, :id_turma, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :status)');
+            $stmt = $pdo->prepare('INSERT INTO curso_parcela (id_curso, id_pagamento, id_turma, numero_parcela, total_parcelas, descricao_pagamento, nome, cpf, email, telefone, valor, data_vencimento, status) VALUES (:id_curso, :id_pagamento, :id_turma, :numero_parcela, :total_parcelas, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :data_vencimento, :status)');
             $stmt->bindValue(':id_curso', (int) ($data['id_curso'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_pagamento', (int) ($data['id_pagamento'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_turma', isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? (int) $data['id_turma'] : null, isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmt->bindValue(':numero_parcela', (int) ($data['numero_parcela'] ?? 1), PDO::PARAM_INT);
+            $stmt->bindValue(':total_parcelas', (int) ($data['total_parcelas'] ?? 1), PDO::PARAM_INT);
             $stmt->bindValue(':descricao_pagamento', (string) ($data['descricao_pagamento'] ?? ''));
             $stmt->bindValue(':nome', (string) ($data['nome'] ?? ''));
             $stmt->bindValue(':cpf', (string) ($data['cpf'] ?? ''));
             $stmt->bindValue(':email', (string) ($data['email'] ?? ''));
             $stmt->bindValue(':telefone', (string) ($data['telefone'] ?? ''));
             $stmt->bindValue(':valor', (float) ($data['valor'] ?? 0));
+            $stmt->bindValue(':data_vencimento', $data['data_vencimento'] ?? null, $data['data_vencimento'] ?? null ? PDO::PARAM_STR : PDO::PARAM_NULL);
             $stmt->bindValue(':status', 'PENDENTE');
             $stmt->execute();
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {
-            error_log('[INSCRICAO] Erro ao criar: ' . $e->getMessage());
+            error_log('[CURSO_PARCELA] Erro ao criar: ' . $e->getMessage());
             return 0;
         }
     }
@@ -44,23 +47,26 @@ final class CursoInscricaoRepository
         }
 
         try {
-            $stmt = $pdo->prepare('INSERT INTO cursos_inscricao (id_curso, id_pagamento, id_turma, id_pre_inscricao, id_acordo_pagamento, descricao_pagamento, nome, cpf, email, telefone, valor, status) VALUES (:id_curso, :id_pagamento, :id_turma, :id_pre_inscricao, :id_acordo_pagamento, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :status)');
+            $stmt = $pdo->prepare('INSERT INTO curso_parcela (id_curso, id_pagamento, id_turma, id_pre_inscricao, id_acordo_pagamento, numero_parcela, total_parcelas, descricao_pagamento, nome, cpf, email, telefone, valor, data_vencimento, status) VALUES (:id_curso, :id_pagamento, :id_turma, :id_pre_inscricao, :id_acordo_pagamento, :numero_parcela, :total_parcelas, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :data_vencimento, :status)');
             $stmt->bindValue(':id_curso', (int) ($data['id_curso'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_pagamento', (int) ($data['id_pagamento'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_turma', isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? (int) $data['id_turma'] : null, isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->bindValue(':id_pre_inscricao', (int) ($data['id_pre_inscricao'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_acordo_pagamento', (int) ($data['id_acordo_pagamento'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':numero_parcela', (int) ($data['numero_parcela'] ?? 1), PDO::PARAM_INT);
+            $stmt->bindValue(':total_parcelas', (int) ($data['total_parcelas'] ?? 1), PDO::PARAM_INT);
             $stmt->bindValue(':descricao_pagamento', (string) ($data['descricao_pagamento'] ?? ''));
             $stmt->bindValue(':nome', (string) ($data['nome'] ?? ''));
             $stmt->bindValue(':cpf', (string) ($data['cpf'] ?? ''));
             $stmt->bindValue(':email', (string) ($data['email'] ?? ''));
             $stmt->bindValue(':telefone', (string) ($data['telefone'] ?? ''));
             $stmt->bindValue(':valor', (float) ($data['valor'] ?? 0));
+            $stmt->bindValue(':data_vencimento', $data['data_vencimento'] ?? null, $data['data_vencimento'] ?? null ? PDO::PARAM_STR : PDO::PARAM_NULL);
             $stmt->bindValue(':status', 'PENDENTE');
             $stmt->execute();
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {
-            error_log('[INSCRICAO] Erro ao criar com acordo: ' . $e->getMessage());
+            error_log('[CURSO_PARCELA] Erro ao criar com acordo: ' . $e->getMessage());
             return 0;
         }
     }
@@ -102,7 +108,7 @@ final class CursoInscricaoRepository
 
             $fields[] = 'updated_at = CURRENT_TIMESTAMP';
 
-            $sql = 'UPDATE cursos_inscricao SET ' . implode(', ', $fields) . ' WHERE id = :id';
+            $sql = 'UPDATE curso_parcela SET ' . implode(', ', $fields) . ' WHERE id = :id';
             $stmt = $pdo->prepare($sql);
 
             foreach ($params as $key => $value) {
@@ -116,7 +122,7 @@ final class CursoInscricaoRepository
 
             return $stmt->execute();
         } catch (\Throwable $e) {
-            error_log('[INSCRICAO] Erro ao atualizar dados do Asaas: ' . $e->getMessage());
+            error_log('[CURSO_PARCELA] Erro ao atualizar dados do Asaas: ' . $e->getMessage());
             return false;
         }
     }
@@ -129,13 +135,13 @@ final class CursoInscricaoRepository
                 return null;
             }
 
-            $stmt = $pdo->prepare('SELECT * FROM cursos_inscricao WHERE id = :id LIMIT 1');
+            $stmt = $pdo->prepare('SELECT * FROM curso_parcela WHERE id = :id LIMIT 1');
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             $stmt->execute();
             $row = $stmt->fetch();
             return $row ?: null;
         } catch (\Throwable $e) {
-            error_log('[INSCRICAO] Erro ao buscar: ' . $e->getMessage());
+            error_log('[CURSO_PARCELA] Erro ao buscar: ' . $e->getMessage());
             return null;
         }
     }
@@ -148,13 +154,13 @@ final class CursoInscricaoRepository
                 return null;
             }
 
-            $stmt = $pdo->prepare('SELECT * FROM cursos_inscricao WHERE asaas_payment = :asaas_payment LIMIT 1');
+            $stmt = $pdo->prepare('SELECT * FROM curso_parcela WHERE asaas_payment = :asaas_payment LIMIT 1');
             $stmt->bindValue(':asaas_payment', $asaasPayment);
             $stmt->execute();
             $row = $stmt->fetch();
             return $row ?: null;
         } catch (\Throwable $e) {
-            error_log('[INSCRICAO] Erro em findByAsaasPayment: ' . $e->getMessage());
+            error_log('[CURSO_PARCELA] Erro em findByAsaasPayment: ' . $e->getMessage());
             return null;
         }
     }
@@ -167,7 +173,7 @@ final class CursoInscricaoRepository
                 return false;
             }
 
-            $sql = 'UPDATE cursos_inscricao SET status = :status, updated_at = CURRENT_TIMESTAMP';
+            $sql = 'UPDATE curso_parcela SET status = :status, updated_at = CURRENT_TIMESTAMP';
             $params = [':status' => $status, ':id' => $id];
 
             if ($idAluno !== null) {
@@ -191,7 +197,7 @@ final class CursoInscricaoRepository
             $stmt->bindValue(':id', $id, PDO::PARAM_INT);
             return $stmt->execute();
         } catch (\Throwable $e) {
-            error_log('[INSCRICAO] Erro em updateStatus: ' . $e->getMessage());
+            error_log('[CURSO_PARCELA] Erro em updateStatus: ' . $e->getMessage());
             return false;
         }
     }

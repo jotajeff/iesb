@@ -9,7 +9,7 @@ use RuntimeException;
 final class MatriculaService
 {
     public function __construct(
-        private readonly CursoInscricaoService $inscricaoService = new CursoInscricaoService(),
+        private readonly CursoParcelaService $parcelaService = new CursoParcelaService(),
         private readonly AlunoService $alunoService = new AlunoService(),
         private readonly TurmaService $turmaService = new TurmaService(),
         private readonly \App\Repositories\MatriculaRepository $matriculaRepository = new \App\Repositories\MatriculaRepository(),
@@ -28,7 +28,7 @@ final class MatriculaService
             throw new RuntimeException('Payment ID vazio');
         }
 
-        $inscricao = $this->inscricaoService->findByAsaasPayment($paymentId);
+        $inscricao = $this->parcelaService->findByAsaasPayment($paymentId);
         if (!$inscricao) {
             throw new RuntimeException('Inscrição não encontrada');
         }
@@ -49,7 +49,7 @@ final class MatriculaService
             ];
         }
 
-        $this->inscricaoService->atualizarStatus($idInscricao, 'RECEBIDO');
+        $this->parcelaService->atualizarStatus($idInscricao, 'RECEBIDO');
 
         try {
             $cpf = preg_replace('/\D/', '', (string) ($inscricao['cpf'] ?? ''));
@@ -98,7 +98,7 @@ final class MatriculaService
 
             $idMatricula = $this->criarMatricula($idAluno, $idCurso, $idTurma, $idInscricao);
 
-            $this->inscricaoService->atualizarStatus($idInscricao, 'CONFIRMADO', $idAluno, $idMatricula);
+            $this->parcelaService->atualizarStatus($idInscricao, 'CONFIRMADO', $idAluno, $idMatricula);
 
             $this->enviarBoasVindas($idAluno, $nome, $email, $cpf, $idMatricula);
 
@@ -109,7 +109,7 @@ final class MatriculaService
                 'matriculaId' => $idMatricula,
             ];
         } catch (\Throwable $e) {
-            $this->inscricaoService->atualizarStatus($idInscricao, 'CANCELADO');
+            $this->parcelaService->atualizarStatus($idInscricao, 'CANCELADO');
             throw $e instanceof RuntimeException ? $e : new RuntimeException($e->getMessage(), 0, $e);
         }
     }
@@ -178,7 +178,7 @@ final class MatriculaService
             throw new RuntimeException('Payment ID vazio');
         }
 
-        $inscricao = $this->inscricaoService->findByAsaasPayment($paymentId);
+        $inscricao = $this->parcelaService->findByAsaasPayment($paymentId);
         if (!$inscricao) {
             throw new RuntimeException('Inscrição não encontrada');
         }
@@ -195,7 +195,7 @@ final class MatriculaService
         $newStatus = (string) ($payment['status'] ?? '');
 
         if (isset($statusMap[$newStatus])) {
-            $this->inscricaoService->atualizarStatus((int) ($inscricao['id'] ?? 0), $statusMap[$newStatus]);
+            $this->parcelaService->atualizarStatus((int) ($inscricao['id'] ?? 0), $statusMap[$newStatus]);
 
             // Pagamento recebido/confirmado: garantir que a matricula foi criada.
             if (in_array($statusMap[$newStatus], ['RECEBIDO', 'CONFIRMADO'], true)) {

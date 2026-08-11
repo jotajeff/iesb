@@ -102,11 +102,12 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
                   <thead>
                     <tr>
                       <th>#</th>
-                      <th>Plano</th>
-                      <th>Parcelas</th>
-                      <th>Valor</th>
-                      <th>Desconto</th>
                       <th>Tipo</th>
+                      <th>Plano</th>
+                      <th>Entrada</th>
+                      <th>Parcelas</th>
+                      <th>Valor demais</th>
+                      <th>Desconto</th>
                       <th>Status</th>
                       <th>Criado em</th>
                       <th>Link</th>
@@ -118,14 +119,17 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
                         $acordoToken = (string) ($acordo['token'] ?? '');
                         $acordoUtilizado = (int) ($acordo['utilizado'] ?? 0) === 1;
                         $acordoData = (string) ($acordo['created_at'] ?? '');
+                        $acordoTipo = (int) ($acordo['tipo'] ?? 1);
+                        $acordoTipos = [1 => 'Padrão', 2 => 'À vista', 3 => 'Entrada + parcelas'];
                       ?>
                       <tr>
                         <td><?= (int) ($acordo['id'] ?? 0) ?></td>
+                        <td><span class="badge bg-light text-dark"><?= htmlspecialchars($acordoTipos[$acordoTipo] ?? 'Tipo ' . $acordoTipo, ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td><?= htmlspecialchars((string) ($acordo['plano_descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= (int) ($acordo['parcelas_negociadas'] ?? 0) ?>x</td>
-                        <td>R$ <?= number_format((float) ($acordo['valor_negociado'] ?? 0), 2, ',', '.') ?></td>
+                        <td>R$ <?= number_format((float) ($acordo['valor_entrada'] ?? 0), 2, ',', '.') ?></td>
+                        <td><?= (int) ($acordo['total_parcelas'] ?? 1) ?>x</td>
+                        <td>R$ <?= number_format((float) ($acordo['valor_demais_parcelas'] ?? 0), 2, ',', '.') ?></td>
                         <td>R$ <?= number_format((float) ($acordo['desconto'] ?? 0), 2, ',', '.') ?></td>
-                        <td><span class="badge bg-light text-dark"><?= htmlspecialchars((string) ($acordo['tipo_desconto'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
                         <td>
                           <?php if ($acordoUtilizado): ?>
                             <span class="badge bg-success">Utilizado</span>
@@ -245,6 +249,14 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
               <input type="text" class="form-control" id="acordoCpf" name="cpf" maxlength="14" required placeholder="000.000.000-00">
             </div>
             <div class="col-md-6">
+              <label class="form-label">Tipo do acordo</label>
+              <select class="form-select" name="tipo">
+                <option value="1" selected>Padrão</option>
+                <option value="2">À vista</option>
+                <option value="3">Entrada + parcelas</option>
+              </select>
+            </div>
+            <div class="col-md-6">
               <label class="form-label">Plano de pagamento <span class="text-danger">*</span></label>
               <select class="form-select" id="acordoPlano" name="id_curso_pagamento" required>
                 <option value="">Selecione...</option>
@@ -260,12 +272,20 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
               </select>
             </div>
             <div class="col-md-3">
-              <label class="form-label">Parcelas</label>
-              <input type="number" class="form-control" id="acordoParcelas" name="parcelas" min="1" value="1" required>
+              <label class="form-label">Valor de entrada</label>
+              <input type="text" class="form-control" id="acordoValorEntrada" name="valor_entrada" required placeholder="0,00">
             </div>
             <div class="col-md-3">
-              <label class="form-label">Valor negociado</label>
-              <input type="text" class="form-control" id="acordoValor" name="valor" required placeholder="0,00">
+              <label class="form-label">Vencimento da entrada</label>
+              <input type="date" class="form-control" id="acordoVencimentoEntrada" name="data_vencimento_entrada">
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Total de parcelas</label>
+              <input type="number" class="form-control" id="acordoTotalParcelas" name="total_parcelas" min="1" value="1" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Valor demais parcelas</label>
+              <input type="text" class="form-control" id="acordoValorDemais" name="valor_demais_parcelas" placeholder="0,00">
             </div>
             <div class="col-md-3">
               <label class="form-label">Desconto</label>
@@ -308,8 +328,9 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var plano = document.getElementById('acordoPlano');
-  var parcelas = document.getElementById('acordoParcelas');
-  var valor = document.getElementById('acordoValor');
+  var valorEntrada = document.getElementById('acordoValorEntrada');
+  var totalParcelas = document.getElementById('acordoTotalParcelas');
+  var valorDemais = document.getElementById('acordoValorDemais');
   var desconto = document.getElementById('acordoDesconto');
   var msg = document.getElementById('acordoMsg');
   var btn = document.getElementById('acordoBtnSalvar');
@@ -330,8 +351,17 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!opt || opt.value === '') {
       return;
     }
-    parcelas.value = opt.getAttribute('data-parcelas') || '1';
-    valor.value = toBRL(toFloat(opt.getAttribute('data-valor')));
+    var planoParcelas = parseInt(opt.getAttribute('data-parcelas') || '1', 10) || 1;
+    var planoValor = toFloat(opt.getAttribute('data-valor'));
+    totalParcelas.value = planoParcelas;
+    if (planoParcelas === 1) {
+      valorEntrada.value = toBRL(planoValor);
+      valorDemais.value = '0,00';
+    } else {
+      var valorParcela = planoParcelas > 0 ? planoValor / planoParcelas : planoValor;
+      valorEntrada.value = toBRL(valorParcela);
+      valorDemais.value = toBRL(valorParcela);
+    }
   });
 
   form.addEventListener('submit', function (e) {

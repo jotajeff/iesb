@@ -2,7 +2,10 @@
   <div class="bg-white border rounded-3 p-4 shadow-sm">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h4 class="mb-0"><i class="bi bi-inbox me-2"></i>Pré-inscrições</h4>
-      <a class="btn btn-outline-secondary btn-sm" href="/admin/preinscricao/kanban"><i class="bi bi-kanban me-1"></i>Visão em quadro</a>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary btn-sm" href="/admin/preinscricao/acordos"><i class="bi bi-file-earmark-text me-1"></i>Acordo</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/admin/preinscricao/kanban"><i class="bi bi-kanban me-1"></i>Visão em quadro</a>
+      </div>
     </div>
 
     <?php if (!empty($flash ?? '')): ?>

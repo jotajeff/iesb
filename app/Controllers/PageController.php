@@ -7,7 +7,7 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Services\AsaasService;
 use App\Services\ConfigService;
-use App\Services\CursoInscricaoService;
+use App\Services\CursoParcelaService;
 use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
 use App\Services\ImageService;
@@ -23,7 +23,7 @@ final class PageController extends Controller
     private ConfigService $configService;
     private CursoService $cursoService;
     private CursoPagamentoService $pagamentoService;
-    private CursoInscricaoService $inscricaoService;
+    private CursoParcelaService $parcelaService;
     private ImageService $imageService;
     private NoticiaService $noticiaService;
     private SessaoService $sessaoService;
@@ -34,7 +34,7 @@ final class PageController extends Controller
         $this->configService = new ConfigService();
         $this->cursoService = new CursoService();
         $this->pagamentoService = new CursoPagamentoService();
-        $this->inscricaoService = new CursoInscricaoService();
+        $this->parcelaService = new CursoParcelaService();
         $this->imageService = new ImageService();
         $this->noticiaService = new NoticiaService();
         $this->sessaoService = new SessaoService();
@@ -538,7 +538,7 @@ final class PageController extends Controller
             return;
         }
 
-        $result = $this->inscricaoService->criar([
+        $result = $this->parcelaService->criar([
             'id_curso' => $idCurso,
             'id_pagamento' => $idPagamento,
             'id_turma' => $idTurma,
@@ -635,7 +635,7 @@ final class PageController extends Controller
             }
         }
 
-        $this->inscricaoService->atualizarAsaasInfo($inscricaoId, [
+        $this->parcelaService->atualizarAsaasInfo($inscricaoId, [
             'asaas_customer' => $clienteId,
             'asaas_payment' => $cobranca['id'] ?? null,
             'invoice_url' => $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl,
@@ -679,7 +679,7 @@ final class PageController extends Controller
 
         $invoiceUrl = (string) ($cobranca['invoiceUrl'] ?? '');
 
-        $this->inscricaoService->atualizarAsaasInfo($inscricaoId, [
+        $this->parcelaService->atualizarAsaasInfo($inscricaoId, [
             'asaas_customer' => $clienteId,
             'asaas_payment' => $cobranca['id'] ?? null,
             'invoice_url' => $invoiceUrl,

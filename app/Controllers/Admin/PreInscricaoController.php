@@ -161,10 +161,13 @@ final class PreInscricaoController extends Controller
         }
 
         $id = (int) $this->input('pre_id', 0);
+        $tipo = (int) $this->input('tipo', 1);
         $idCursoPagamento = (int) $this->input('id_curso_pagamento', 0);
         $cpf = preg_replace('/\D/', '', trim((string) $this->input('cpf', '')));
-        $parcelas = (int) $this->input('parcelas', 0);
-        $valor = (float) $this->input('valor', 0);
+        $valorEntrada = (float) $this->input('valor_entrada', 0);
+        $dataVencimentoEntrada = trim((string) $this->input('data_vencimento_entrada', ''));
+        $totalParcelas = (int) $this->input('total_parcelas', 0);
+        $valorDemaisParcelas = (float) $this->input('valor_demais_parcelas', 0);
         $desconto = (float) $this->input('desconto', 0);
         $tipoDesconto = trim((string) $this->input('tipo_desconto', 'NEGOCIACAO'));
         $motivo = trim((string) $this->input('motivo', ''));
@@ -180,6 +183,10 @@ final class PreInscricaoController extends Controller
             $this->json(['erro' => 'Plano de pagamento inválido.'], 400);
         }
 
+        if ($tipo < 1) {
+            $tipo = 1;
+        }
+
         $valoresTipoDesconto = ['ALUNO', 'CONVENIO', 'BOLSA', 'CAMPANHA', 'NEGOCIACAO', 'OUTRO'];
         if (!in_array($tipoDesconto, $valoresTipoDesconto, true)) {
             $tipoDesconto = 'NEGOCIACAO';
@@ -189,27 +196,36 @@ final class PreInscricaoController extends Controller
             $this->json(['erro' => 'CPF é obrigatório.'], 400);
         }
 
-        if ($parcelas < 1) {
-            $parcelas = max(1, (int) ($plano['parcelas'] ?? 1));
+        if ($totalParcelas < 1) {
+            $totalParcelas = max(1, (int) ($plano['parcelas'] ?? 1));
         }
-        if ($valor <= 0) {
-            $valor = (float) ($plano['valor'] ?? 0);
+        if ($valorEntrada <= 0) {
+            $valorEntrada = (float) ($plano['valor'] ?? 0);
         }
-        if ($valor <= 0) {
-            $this->json(['erro' => 'Valor negociado inválido.'], 400);
+        if ($valorEntrada <= 0) {
+            $this->json(['erro' => 'Valor de entrada inválido.'], 400);
+        }
+        if ($totalParcelas > 1 && $valorDemaisParcelas <= 0) {
+            $valorDemaisParcelas = $valorEntrada;
+        }
+        if ($dataVencimentoEntrada !== '' && strtotime($dataVencimentoEntrada) === false) {
+            $dataVencimentoEntrada = '';
         }
 
         $user = Session::get('user');
         $idUsuarioAutorizacao = is_array($user) ? (int) ($user['id'] ?? 0) : 0;
 
         $acordoId = $this->acordoService->salvar([
+            'tipo' => $tipo,
             'id_pre_inscricao' => $id,
             'id_curso_pagamento' => $idCursoPagamento,
             'id_usuario_autorizacao' => $idUsuarioAutorizacao,
             'cpf' => $cpf,
             'token' => $this->acordoService->gerarToken(),
-            'parcelas_negociadas' => $parcelas,
-            'valor_negociado' => $valor,
+            'valor_entrada' => $valorEntrada,
+            'data_vencimento_entrada' => $dataVencimentoEntrada !== '' ? $dataVencimentoEntrada : null,
+            'total_parcelas' => $totalParcelas,
+            'valor_demais_parcelas' => $totalParcelas > 1 ? $valorDemaisParcelas : 0,
             'desconto' => $desconto,
             'tipo_desconto' => $tipoDesconto,
             'motivo' => $motivo,
@@ -234,6 +250,22 @@ final class PreInscricaoController extends Controller
             'token' => $token,
             'link_financeiro' => $linkFinanceiro,
         ]);
+    }
+
+    public function acordos(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $acordos = $this->acordoService->listarComPreInscrito();
+
+        $this->render('pages/admin/preinscricao/acordo', [
+            'title' => 'Acordos',
+            'currentRoute' => '/admin/preinscricao/acordos',
+            'acordos' => $acordos,
+        ], 'admin');
     }
 
     public function comentario(): void
