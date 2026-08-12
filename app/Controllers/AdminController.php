@@ -1117,6 +1117,7 @@ final class AdminController extends Controller
         $telefone = trim((string) $this->input('telefone', ''));
         $email = trim((string) $this->input('email', ''));
         $ativo = strtoupper(trim((string) $this->input('ativo', '0')));
+        $ativo = in_array($ativo, ['1', 'S', 'Y', 'TRUE'], true) ? 1 : 0;
 
         if ($id <= 0 || $nome === '') {
             Session::setFlash('flash', 'Dados inválidos para atualização.');

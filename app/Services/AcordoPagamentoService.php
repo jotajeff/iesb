@@ -28,6 +28,11 @@ final class AcordoPagamentoService
         return $this->repository->findById($id);
     }
 
+    public function findByAsaasSubscription(string $subscription): ?array
+    {
+        return $this->repository->findByAsaasSubscription($subscription);
+    }
+
     public function listarPorPreInscricao(int $idPreInscricao): array
     {
         return $this->repository->listarPorPreInscricao($idPreInscricao);
@@ -41,6 +46,11 @@ final class AcordoPagamentoService
     public function marcarUtilizado(int $id): bool
     {
         return $this->repository->marcarUtilizado($id);
+    }
+
+    public function atualizarRecorrencia(int $id, array $data): bool
+    {
+        return $this->repository->atualizarRecorrencia($id, $data);
     }
 
     public function gerarToken(): string

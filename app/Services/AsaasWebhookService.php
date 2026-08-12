@@ -60,7 +60,12 @@ final class AsaasWebhookService
         try {
             return match ($event) {
                 'PAYMENT_RECEIVED' => $this->handlePaymentReceived($payment),
+                'PAYMENT_CONFIRMED' => $this->handlePaymentReceived($payment),
+                'PAYMENT_CREATED' => $this->handlePaymentCreated($payment),
                 'PAYMENT_UPDATED' => $this->handlePaymentUpdated($payment),
+                'PAYMENT_OVERDUE' => $this->handlePaymentUpdated($payment),
+                'PAYMENT_REFUNDED' => $this->handlePaymentUpdated($payment),
+                'PAYMENT_DUNNING_RECEIVED' => $this->handlePaymentUpdated($payment),
                 default => $this->handleIgnoredEvent($event, $paymentId),
             };
         } catch (\Throwable $e) {
@@ -117,6 +122,39 @@ final class AsaasWebhookService
 
         $result = $this->matriculaService->atualizarPagamento($payment);
         $message = (string) ($result['message'] ?? 'Status atualizado');
+
+        $this->log('INFO', $message, $paymentId, $result);
+
+        return [
+            'success' => true,
+            'httpStatus' => 200,
+        ];
+    }
+
+    private function handlePaymentCreated(array $payment): array
+    {
+        $paymentId = (string) ($payment['id'] ?? '');
+        if ($paymentId === '') {
+            $this->log('ERROR', 'Payment ID vazio');
+            return [
+                'success' => false,
+                'error' => 'Payment ID inválido',
+                'httpStatus' => 400,
+            ];
+        }
+
+        // Somente cobranças recorrentes são associadas no PAYMENT_CREATED.
+        // Cobranças normais seguem pendentes até o pagamento.
+        if (trim((string) ($payment['subscription'] ?? '')) === '') {
+            $this->log('WARN', 'PAYMENT_CREATED ignorado (sem subscription)', $paymentId);
+            return [
+                'success' => true,
+                'httpStatus' => 200,
+            ];
+        }
+
+        $result = $this->matriculaService->processarCobrancaRecorrente($payment);
+        $message = (string) ($result['message'] ?? 'Cobrança recorrente associada');
 
         $this->log('INFO', $message, $paymentId, $result);
 

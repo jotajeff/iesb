@@ -94,6 +94,8 @@ final class FinanceiroController extends Controller
             $forma = 'pix';
         }
 
+        $recorrenciaAutorizada = $forma === 'cartao' && (int) $this->input('recorrencia', 0) === 1;
+
         $nome = trim((string) ($acordo['candidato_nome'] ?? ''));
         $email = trim((string) ($acordo['candidato_email'] ?? ''));
         $telefone = trim((string) ($acordo['candidato_telefone'] ?? ''));
@@ -233,6 +235,12 @@ final class FinanceiroController extends Controller
 
         if ($cobranca) {
             $this->acordoService->marcarUtilizado($idAcordo);
+
+            if ($recorrenciaAutorizada) {
+                $this->acordoService->atualizarRecorrencia($idAcordo, [
+                    'recorrencia_cartao' => 1,
+                ]);
+            }
         }
 
         $this->render('pages/financeiro', [

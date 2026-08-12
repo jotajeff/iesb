@@ -17,6 +17,7 @@ use App\Services\CourseService;
 use App\Services\CursoParcelaService;
 use App\Services\EnrollmentService;
 use App\Services\IpLocationService;
+use App\Services\MatriculaService;
 use App\Services\NoticiaService;
 use App\Services\Storage\StorageException;
 use App\Services\Storage\StorageService;
@@ -34,6 +35,7 @@ final class StudentController extends Controller
     private NoticiaService $noticiaService;
     private CursoParcelaService $parcelaService;
     private AcordoPagamentoService $acordoService;
+    private MatriculaService $matriculaService;
 
     public function __construct()
     {
@@ -47,6 +49,7 @@ final class StudentController extends Controller
         $this->noticiaService = new NoticiaService();
         $this->parcelaService = new CursoParcelaService();
         $this->acordoService = new AcordoPagamentoService();
+        $this->matriculaService = new MatriculaService();
     }
 
     public function dashboard(): void
@@ -171,6 +174,8 @@ final class StudentController extends Controller
 
         $parcelas = $this->garantirParcelasRestantes($parcelas);
 
+        $parcelas = $this->marcarRecorrencia($parcelas);
+
         $this->render('pages/aluno/financeiro', [
             'title' => 'Financeiro',
             'currentRoute' => '/aluno/financeiro',
@@ -205,6 +210,15 @@ final class StudentController extends Controller
                 continue;
             }
 
+            // Reconciliação: garante a matrícula quando o webhook foi interrompido.
+            if ((int) ($parcela['id_matricula'] ?? 0) <= 0) {
+                try {
+                    $this->matriculaService->reprocessarParcela($parcela);
+                } catch (\Throwable $e) {
+                    error_log('[STUDENT FINANCEIRO] Erro ao reprocessar parcela #' . (int) ($parcela['id'] ?? 0) . ': ' . $e->getMessage());
+                }
+            }
+
             $idAcordo = (int) ($parcela['id_acordo_pagamento'] ?? 0);
             if ($idAcordo > 0) {
                 if (isset($processados['acordo_' . $idAcordo])) {
@@ -216,6 +230,14 @@ final class StudentController extends Controller
                 if ($acordo === null) {
                     continue;
                 }
+
+                // Backfill: propaga id_aluno/id_matricula para parcelas irmãs
+                // geradas antes da correção (com id_aluno = 0).
+                $this->parcelaService->vincularAlunoPorAcordo(
+                    $idAcordo,
+                    (int) ($parcela['id_aluno'] ?? 0),
+                    (int) ($parcela['id_matricula'] ?? 0)
+                );
 
                 $this->parcelaService->gerarParcelasRestantes($parcela, $acordo);
                 continue;
@@ -236,6 +258,45 @@ final class StudentController extends Controller
         }
 
         return $this->parcelaService->listarPorAluno($studentId);
+    }
+
+    /**
+     * Enriquece cada parcela com o status da recorrência do acordo vinculado,
+     * para o painel exibir "Cobrança automática ativa" quando aplicável.
+     *
+     * @param array<int, array<string, mixed>> $parcelas
+     * @return array<int, array<string, mixed>>
+     */
+    private function marcarRecorrencia(array $parcelas): array
+    {
+        $cache = [];
+
+        foreach ($parcelas as &$parcela) {
+            $parcela['recorrencia_ativa'] = false;
+            $parcela['status_recorrencia'] = '';
+
+            $idAcordo = (int) ($parcela['id_acordo_pagamento'] ?? 0);
+            if ($idAcordo <= 0) {
+                continue;
+            }
+
+            if (!array_key_exists($idAcordo, $cache)) {
+                $acordo = $this->acordoService->findById($idAcordo);
+                $cache[$idAcordo] = is_array($acordo) ? $acordo : false;
+            }
+
+            $acordo = $cache[$idAcordo];
+            if (!is_array($acordo)) {
+                continue;
+            }
+
+            $status = strtoupper(trim((string) ($acordo['status_recorrencia'] ?? '')));
+            $parcela['status_recorrencia'] = $status;
+            $parcela['recorrencia_ativa'] = $status === 'ATIVA';
+        }
+        unset($parcela);
+
+        return $parcelas;
     }
 
     public function show(): void

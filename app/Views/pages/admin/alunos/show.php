@@ -289,6 +289,133 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
 
         <div class="accordion-item">
           <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#financeiroAluno" aria-expanded="false" aria-controls="financeiroAluno">
+              <i class="bi bi-cash-coin me-2"></i>Financeiro
+            </button>
+          </h2>
+          <div id="financeiroAluno" class="accordion-collapse collapse" data-bs-parent="#alunoAccordion">
+            <div class="accordion-body p-0">
+              <?php $parcelasFin = is_array($parcelasFinanceiro ?? null) ? $parcelasFinanceiro : []; ?>
+              <?php
+                $totalParcelas = count($parcelasFin);
+                $qtdPagas = 0;
+                $valorTotal = 0.0;
+                $valorPago = 0.0;
+                foreach ($parcelasFin as $pf) {
+                    $v = (float) ($pf['valor'] ?? 0);
+                    $valorTotal += $v;
+                    if (in_array((string) ($pf['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
+                        $qtdPagas++;
+                        $valorPago += $v;
+                    }
+                }
+              ?>
+              <?php if ($totalParcelas > 0): ?>
+                <div class="d-flex flex-wrap gap-2 p-3 pb-0">
+                  <span class="badge bg-light text-dark border"><?= $totalParcelas ?> parcela(s)</span>
+                  <span class="badge bg-success"><?= $qtdPagas ?> paga(s)</span>
+                  <span class="badge bg-warning text-dark"><?= $totalParcelas - $qtdPagas ?> pendente(s)</span>
+                  <span class="badge bg-info text-dark">Total: R$ <?= number_format($valorTotal, 2, ',', '.') ?></span>
+                  <span class="badge bg-success">Pago: R$ <?= number_format($valorPago, 2, ',', '.') ?></span>
+                  <span class="badge bg-danger">Aberto: R$ <?= number_format($valorTotal - $valorPago, 2, ',', '.') ?></span>
+                </div>
+              <?php endif; ?>
+              <?php if (empty($parcelasFin)): ?>
+                <div class="alert alert-light border text-muted m-3">
+                  <i class="bi bi-inbox me-1"></i>Nenhuma parcela financeira encontrada para este aluno.
+                </div>
+              <?php else: ?>
+                <div class="table-responsive">
+                  <table class="table table-striped table-sm align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Curso</th>
+                        <th>Parcela</th>
+                        <th>Vencimento</th>
+                        <th>Valor</th>
+                        <th>Situação</th>
+                        <th>Pagamento</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($parcelasFin as $pf): ?>
+                        <?php
+                          $pfNumero = (int) ($pf['numero_parcela'] ?? 0);
+                          $pfTotal = (int) ($pf['total_parcelas'] ?? 0);
+                          $pfStatus = (string) ($pf['status'] ?? 'PENDENTE');
+                          $pfVenc = (string) ($pf['data_vencimento'] ?? '');
+                          $pfValor = (float) ($pf['valor'] ?? 0);
+                          $pfInvoice = (string) ($pf['invoice_url'] ?? '');
+                          $pfPayment = (string) ($pf['asaas_payment'] ?? '');
+
+                          $pfStatusLabel = match ($pfStatus) {
+                              'RECEBIDO', 'CONFIRMADO' => 'Pago',
+                              'CANCELADO' => 'Cancelado',
+                              'ESTORNADO' => 'Estornado',
+                              default => 'Pendente',
+                          };
+                          $pfStatusClass = match ($pfStatus) {
+                              'RECEBIDO', 'CONFIRMADO' => 'success',
+                              'CANCELADO', 'ESTORNADO' => 'danger',
+                              default => 'warning',
+                          };
+                        ?>
+                        <tr>
+                          <td>
+                            <div class="fw-semibold"><?= htmlspecialchars((string) ($pf['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php if (!empty($pf['turma_nome']) && (string) $pf['turma_nome'] !== '-'): ?>
+                              <div class="text-muted small"><i class="bi bi-people me-1"></i><?= htmlspecialchars((string) $pf['turma_nome'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
+                          </td>
+                          <td>
+                            <?php if ($pfNumero > 0): ?>
+                              <span class="fw-semibold"><?= $pfNumero ?>ª</span>
+                              <?php if ($pfTotal > 0): ?>
+                                <span class="text-muted small"> de <?= $pfTotal ?></span>
+                              <?php endif; ?>
+                              <?php if ($pfNumero === 1): ?>
+                                <span class="badge bg-light text-dark border ms-1">Entrada</span>
+                              <?php endif; ?>
+                            <?php else: ?>
+                              -
+                            <?php endif; ?>
+                          </td>
+                          <td class="text-nowrap">
+                            <?= htmlspecialchars(
+                              $pfVenc !== ''
+                                ? (new \DateTime($pfVenc))->format('d/m/Y')
+                                : '-',
+                              ENT_QUOTES,
+                              'UTF-8'
+                            ) ?>
+                          </td>
+                          <td>R$ <?= number_format($pfValor, 2, ',', '.') ?></td>
+                          <td>
+                            <span class="badge bg-<?= $pfStatusClass ?>"><?= $pfStatusLabel ?></span>
+                          </td>
+                          <td>
+                            <?php if ($pfInvoice !== ''): ?>
+                              <a href="<?= htmlspecialchars($pfInvoice, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" title="Ver cobrança no Asaas">
+                                <i class="bi bi-box-arrow-up-right me-1"></i>Cobrança
+                              </a>
+                            <?php elseif ($pfPayment !== ''): ?>
+                              <span class="text-muted small" title="<?= htmlspecialchars($pfPayment, ENT_QUOTES, 'UTF-8') ?>"><?= htmlspecialchars(substr($pfPayment, 0, 20) . (strlen($pfPayment) > 20 ? '…' : ''), ENT_QUOTES, 'UTF-8') ?></span>
+                            <?php else: ?>
+                              <span class="text-muted">-</span>
+                            <?php endif; ?>
+                          </td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#logsAluno" aria-expanded="false" aria-controls="logsAluno">
               <i class="bi bi-clock-history me-2"></i>Logs (últimos 50)
             </button>

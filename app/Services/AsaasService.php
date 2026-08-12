@@ -78,6 +78,36 @@ final class AsaasService
         return null;
     }
 
+    public function criarAssinatura(array $data): ?array
+    {
+        $body = [
+            'customer' => (string) ($data['customer_id'] ?? ''),
+            'billingType' => (string) ($data['billing_type'] ?? 'CREDIT_CARD'),
+            'value' => (float) ($data['value'] ?? 0),
+            'cycle' => (string) ($data['cycle'] ?? 'MONTHLY'),
+            'nextDueDate' => $data['next_due_date'] ?? date('Y-m-d', strtotime('+30 days')),
+            'description' => mb_substr((string) ($data['description'] ?? ''), 0, 200),
+            'externalReference' => (string) ($data['external_reference'] ?? ''),
+        ];
+
+        if (!empty($data['end_date'])) {
+            $body['endDate'] = $data['end_date'];
+        }
+
+        $response = $this->request('POST', '/subscriptions', $body);
+
+        if ($response && isset($response['id'])) {
+            return [
+                'id' => (string) $response['id'],
+                'status' => $response['status'] ?? 'ACTIVE',
+                'nextDueDate' => $response['nextDueDate'] ?? '',
+                'endDate' => $response['endDate'] ?? '',
+            ];
+        }
+
+        return null;
+    }
+
     public function listarCobrancas(array $filters = []): ?array
     {
         $query = array_filter([

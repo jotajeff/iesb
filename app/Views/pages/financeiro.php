@@ -228,6 +228,17 @@ $formAction = $ehParcela
                 </div>
               </div>
 
+              <?php if (!$ehParcela): ?>
+                <div class="form-check mt-3" id="recorrenciaBox" style="display:none;">
+                  <input class="form-check-input" type="checkbox" name="recorrencia" value="1" id="recorrenciaCheck">
+                  <label class="form-check-label" for="recorrenciaCheck">
+                    <i class="bi bi-arrow-repeat me-1"></i>Autorizar cobrança automática das próximas parcelas
+                    <span class="text-muted">no cartão de crédito</span>
+                  </label>
+                  <div class="form-text">Ao autorizar, as parcelas restantes do acordo serão cobradas automaticamente no seu cartão após a confirmação do pagamento da entrada.</div>
+                </div>
+              <?php endif; ?>
+
               <div class="alert alert-light border mt-4 mb-0">
                 <i class="bi bi-info-circle me-1"></i>
                 <?php if ($ehParcela): ?>
@@ -265,6 +276,24 @@ $formAction = $ehParcela
     el.select?.();
     document.execCommand('copy');
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const recorrenciaBox = document.getElementById('recorrenciaBox');
+    if (!recorrenciaBox) return;
+
+    function atualizarRecorrencia() {
+      const selecionado = document.querySelector('input[name="forma_pagamento"]:checked');
+      const mostra = selecionado && selecionado.value === 'cartao';
+      recorrenciaBox.style.display = mostra ? 'block' : 'none';
+      const check = document.getElementById('recorrenciaCheck');
+      if (check) check.checked = false;
+    }
+
+    document.querySelectorAll('input[name="forma_pagamento"]').forEach(function(radio) {
+      radio.addEventListener('change', atualizarRecorrencia);
+    });
+    atualizarRecorrencia();
+  });
 </script>
 
 <?php if (!empty($abrirCheckoutNovaAba) && ($invoiceUrl !== '' || $bankSlipUrl !== '')): ?>

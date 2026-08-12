@@ -14,6 +14,7 @@ final class MatriculaService
         private readonly TurmaService $turmaService = new TurmaService(),
         private readonly \App\Repositories\MatriculaRepository $matriculaRepository = new \App\Repositories\MatriculaRepository(),
         private readonly EmailService $emailService = new EmailService(),
+        private readonly RecorrenciaService $recorrenciaService = new RecorrenciaService(),
     ) {
     }
 
@@ -28,7 +29,18 @@ final class MatriculaService
             throw new RuntimeException('Payment ID vazio');
         }
 
+        // Cobrança recorrente: nunca executa inscrição/matrícula.
+        if (trim((string) ($payment['subscription'] ?? '')) !== '') {
+            return $this->processarCobrancaRecorrente($payment);
+        }
+
         $inscricao = $this->parcelaService->findByAsaasPayment($paymentId);
+        if (!$inscricao) {
+            $inscricao = $this->recorrenciaService->vincularParcelaRecorrente($payment);
+        }
+        if (!$inscricao) {
+            $inscricao = $this->vincularParcelaPorReferencia($payment);
+        }
         if (!$inscricao) {
             throw new RuntimeException('Inscrição não encontrada');
         }
@@ -55,6 +67,7 @@ final class MatriculaService
 
         $matriculaExistente = $this->matriculaRepository->findByPagamento($idInscricao);
         if ($matriculaExistente !== null) {
+            $this->criarAssinaturaSeNecessario($inscricao);
             return [
                 'message' => 'Pagamento já processado anteriormente',
                 'inscricaoId' => $idInscricao,
@@ -65,6 +78,20 @@ final class MatriculaService
         }
 
         $this->parcelaService->atualizarStatus($idInscricao, 'RECEBIDO');
+
+        return $this->efetivarMatricula($inscricao);
+    }
+
+    /**
+     * Conclui a matrícula de uma parcela paga (1ª parcela): cria o aluno se
+     * necessário, seleciona a turma, cria a matrícula e dispara a recorrência.
+     *
+     * @param array<string, mixed> $inscricao
+     * @return array<string, mixed>
+     */
+    private function efetivarMatricula(array $inscricao): array
+    {
+        $idInscricao = (int) ($inscricao['id'] ?? 0);
 
         try {
             $cpf = preg_replace('/\D/', '', (string) ($inscricao['cpf'] ?? ''));
@@ -115,6 +142,11 @@ final class MatriculaService
 
             $this->parcelaService->atualizarStatus($idInscricao, 'CONFIRMADO', $idAluno, $idMatricula);
 
+            $inscricao['id_aluno'] = $idAluno;
+            $inscricao['id_matricula'] = $idMatricula;
+
+            $this->criarAssinaturaSeNecessario($inscricao);
+
             $this->enviarBoasVindas($idAluno, $nome, $email, $cpf, $idMatricula);
 
             return [
@@ -127,6 +159,132 @@ final class MatriculaService
             $this->parcelaService->atualizarStatus($idInscricao, 'CANCELADO');
             throw $e instanceof RuntimeException ? $e : new RuntimeException($e->getMessage(), 0, $e);
         }
+    }
+
+    /**
+     * Reprocessa uma parcela já paga (status RECEBIDO ou CONFIRMADO) para
+     * concluir o fluxo: matrícula (se ainda não existir) e recorrência.
+     * Idempotente.
+     *
+     * @param array<string, mixed> $inscricao
+     * @return array<string, mixed>
+     */
+    public function reprocessarParcela(array $inscricao): array
+    {
+        $idInscricao = (int) ($inscricao['id'] ?? 0);
+        if ($idInscricao <= 0) {
+            return ['id' => 0, 'status' => 'erro', 'message' => 'Parcela inválida'];
+        }
+
+        if (!in_array((string) ($inscricao['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
+            return ['id' => $idInscricao, 'status' => 'ignorada', 'message' => 'Parcela não está paga'];
+        }
+
+        $numeroParcela = (int) ($inscricao['numero_parcela'] ?? 1);
+        $idAluno = (int) ($inscricao['id_aluno'] ?? 0);
+        $idMatricula = (int) ($inscricao['id_matricula'] ?? 0);
+
+        if ($numeroParcela > 1 && $idAluno > 0 && $idMatricula > 0) {
+            $this->parcelaService->atualizarStatus($idInscricao, 'CONFIRMADO', $idAluno, $idMatricula);
+            return ['id' => $idInscricao, 'status' => 'ok', 'message' => 'Parcela recorrente já confirmada'];
+        }
+
+        $matriculaExistente = $this->matriculaRepository->findByPagamento($idInscricao);
+        if ($matriculaExistente !== null) {
+            $this->criarAssinaturaSeNecessario($inscricao);
+            return [
+                'id' => $idInscricao,
+                'status' => 'ok',
+                'message' => 'Matrícula já existente',
+                'matriculaId' => (int) ($matriculaExistente['id'] ?? 0),
+            ];
+        }
+
+        $resultado = $this->efetivarMatricula($inscricao);
+        $resultado['id'] = $idInscricao;
+        $resultado['status'] = 'ok';
+
+        return $resultado;
+    }
+
+    /**
+     * Varre as parcelas com status RECEBIDO/CONFIRMADO que ainda não possuem
+     * matrícula vinculada e efetiva o fluxo. Usado como reconciliação quando o
+     * webhook foi interrompido.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function reprocessarParcelasSemMatricula(): array
+    {
+        $parcelas = $this->parcelaService->listarPagasSemMatricula();
+        $resultados = [];
+
+        foreach ($parcelas as $parcela) {
+            try {
+                $resultados[] = $this->reprocessarParcela($parcela);
+            } catch (\Throwable $e) {
+                $resultados[] = [
+                    'id' => (int) ($parcela['id'] ?? 0),
+                    'status' => 'erro',
+                    'message' => $e->getMessage(),
+                ];
+            }
+        }
+
+        return $resultados;
+    }
+
+    /**
+     * Cria a assinatura recorrente após a confirmação da 1ª parcela do acordo,
+     * desde que o aluno tenha autorizado e ainda não exista assinatura.
+     *
+     * @param array<string, mixed> $inscricao
+     */
+    private function criarAssinaturaSeNecessario(array $inscricao): void
+    {
+        if ((int) ($inscricao['numero_parcela'] ?? 1) !== 1) {
+            return;
+        }
+
+        $idAcordo = (int) ($inscricao['id_acordo_pagamento'] ?? 0);
+        if ($idAcordo <= 0) {
+            return;
+        }
+
+        try {
+            $this->recorrenciaService->criarAssinatura($inscricao);
+        } catch (\Throwable $e) {
+            error_log('[RECORRENCIA] Erro ao criar assinatura: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Tenta vincular o pagamento a uma parcela cujo id foi gravado como
+     * externalReference na cobrança (ex.: primeira cobrança do acordo) e que
+     * ainda não possui asaas_payment. Protege o fluxo contra a perda do
+     * asaas_payment na parcela.
+     *
+     * @param array<string, mixed> $payment
+     * @return array<string, mixed>|null
+     */
+    private function vincularParcelaPorReferencia(array $payment): ?array
+    {
+        $paymentId = (string) ($payment['id'] ?? '');
+        $externalReference = (string) ($payment['externalReference'] ?? '');
+        if ($paymentId === '' || $externalReference === '' || !ctype_digit($externalReference)) {
+            return null;
+        }
+
+        $parcela = $this->parcelaService->findByExternalReference((int) $externalReference);
+        if ($parcela === null) {
+            return null;
+        }
+
+        $this->parcelaService->atualizarAsaasInfo((int) $parcela['id'], [
+            'asaas_payment' => $paymentId,
+        ]);
+
+        return $this->parcelaService->buscar((int) $parcela['id']);
     }
 
     /**
@@ -193,33 +351,36 @@ final class MatriculaService
             throw new RuntimeException('Payment ID vazio');
         }
 
+        // Cobrança recorrente: nunca executa inscrição/matrícula.
+        if (trim((string) ($payment['subscription'] ?? '')) !== '') {
+            return $this->processarCobrancaRecorrente($payment);
+        }
+
         $inscricao = $this->parcelaService->findByAsaasPayment($paymentId);
+        if (!$inscricao) {
+            $inscricao = $this->recorrenciaService->vincularParcelaRecorrente($payment);
+        }
+        if (!$inscricao) {
+            $inscricao = $this->vincularParcelaPorReferencia($payment);
+        }
         if (!$inscricao) {
             throw new RuntimeException('Inscrição não encontrada');
         }
 
-        $statusMap = [
-            'RECEIVED' => 'RECEBIDO',
-            'CONFIRMED' => 'CONFIRMADO',
-            'OVERDUE' => 'CANCELADO',
-            'REFUNDED' => 'ESTORNADO',
-            'CANCELED' => 'CANCELADO',
-            'RECEIVED_IN_CASH' => 'RECEBIDO',
-        ];
-
         $newStatus = (string) ($payment['status'] ?? '');
+        $novoStatus = $this->mapearStatus($newStatus);
 
-        if (isset($statusMap[$newStatus])) {
-            $this->parcelaService->atualizarStatus((int) ($inscricao['id'] ?? 0), $statusMap[$newStatus]);
+        if ($novoStatus !== null) {
+            $this->parcelaService->atualizarStatus((int) ($inscricao['id'] ?? 0), $novoStatus);
 
             // Pagamento recebido/confirmado: garantir que a matricula foi criada.
-            if (in_array($statusMap[$newStatus], ['RECEBIDO', 'CONFIRMADO'], true)) {
+            if (in_array($novoStatus, ['RECEBIDO', 'CONFIRMADO'], true)) {
                 return $this->confirmarPagamento($payment);
             }
 
             return [
                 'message' => 'Status atualizado',
-                'status' => $statusMap[$newStatus],
+                'status' => $novoStatus,
                 'inscricaoId' => (int) ($inscricao['id'] ?? 0),
             ];
         }
@@ -229,6 +390,56 @@ final class MatriculaService
             'status' => $newStatus,
             'inscricaoId' => (int) ($inscricao['id'] ?? 0),
         ];
+    }
+
+    /**
+     * Processa uma cobrança recorrente (payment.subscription != NULL).
+     *
+     * Associa o asaas_payment à parcela existente do acordo e atualiza o
+     * status conforme o evento. NUNCA cria inscrição, aluno ou matrícula.
+     *
+     * @param array<string, mixed> $payment
+     * @return array<string, mixed>
+     */
+    public function processarCobrancaRecorrente(array $payment): array
+    {
+        $parcela = $this->recorrenciaService->vincularParcelaRecorrente($payment);
+        if ($parcela === null) {
+            throw new RuntimeException('Cobrança recorrente sem parcela correspondente');
+        }
+
+        $idParcela = (int) ($parcela['id'] ?? 0);
+
+        $novoStatus = $this->mapearStatus((string) ($payment['status'] ?? ''));
+        if ($novoStatus !== null && $idParcela > 0) {
+            $this->parcelaService->atualizarStatus($idParcela, $novoStatus);
+        }
+
+        return [
+            'message' => 'Cobrança recorrente processada',
+            'inscricaoId' => $idParcela,
+            'alunoId' => (int) ($parcela['id_aluno'] ?? 0),
+            'matriculaId' => (int) ($parcela['id_matricula'] ?? 0),
+            'status' => $novoStatus ?? (string) ($parcela['status'] ?? ''),
+        ];
+    }
+
+    /**
+     * Converte o status do Asaas para a convenção do sistema.
+     */
+    private function mapearStatus(string $status): ?string
+    {
+        $map = [
+            'PENDING' => 'PENDENTE',
+            'RECEIVED' => 'RECEBIDO',
+            'CONFIRMED' => 'CONFIRMADO',
+            'OVERDUE' => 'CANCELADO',
+            'REFUNDED' => 'ESTORNADO',
+            'CANCELED' => 'CANCELADO',
+            'RECEIVED_IN_CASH' => 'RECEBIDO',
+        ];
+
+        return $map[$status] ?? null;
     }
 
     /**

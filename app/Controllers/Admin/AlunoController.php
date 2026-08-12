@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Core\Database;
 use App\Services\AlunoService;
+use App\Services\CursoParcelaService;
 use App\Services\TurmaService;
 use App\Services\CursoService;
 use App\Services\LogService;
@@ -19,6 +20,7 @@ final class AlunoController extends Controller
     private TurmaService $turmaService;
     private CursoService $cursoService;
     private LogService $logService;
+    private CursoParcelaService $parcelaService;
 
     public function __construct()
     {
@@ -26,6 +28,7 @@ final class AlunoController extends Controller
         $this->turmaService = new TurmaService();
         $this->cursoService = new CursoService();
         $this->logService = new LogService();
+        $this->parcelaService = new CursoParcelaService();
     }
 
     public function index(): void
@@ -126,6 +129,7 @@ final class AlunoController extends Controller
             'cursos' => $this->alunoService->cursosDoAluno($id),
             'logsAluno' => $logs,
             'documentos' => $documentos,
+            'parcelasFinanceiro' => $this->parcelaService->listarPorAluno($id),
         ], 'admin');
     }
 
@@ -183,6 +187,7 @@ final class AlunoController extends Controller
         $telefone = trim((string) $this->input('telefone', ''));
         $email = trim((string) $this->input('email', ''));
         $ativo = strtoupper(trim((string) $this->input('ativo', '0')));
+        $ativo = in_array($ativo, ['1', 'S', 'Y', 'TRUE'], true) ? 1 : 0;
 
         if ($nome === '') {
             Session::setFlash('flash', 'Informe o nome do aluno.');
@@ -216,6 +221,7 @@ final class AlunoController extends Controller
         $telefone = trim((string) $this->input('telefone', ''));
         $email = trim((string) $this->input('email', ''));
         $ativo = strtoupper(trim((string) $this->input('ativo', '0')));
+        $ativo = in_array($ativo, ['1', 'S', 'Y', 'TRUE'], true) ? 1 : 0;
 
         if ($id <= 0 || $nome === '') {
             Session::setFlash('flash', 'Dados inválidos para atualização.');

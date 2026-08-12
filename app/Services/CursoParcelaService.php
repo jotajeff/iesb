@@ -180,8 +180,23 @@ final class CursoParcelaService
         return $this->repository->findByAsaasPayment($asaasPayment);
     }
 
+    public function findByExternalReference(int $id): ?array
+    {
+        return $this->repository->findByExternalReference($id);
+    }
+
+    public function listarPagasSemMatricula(): array
+    {
+        return $this->repository->listarPagasSemMatricula();
+    }
+
     public function atualizarStatus(int $id, string $status, ?int $idAluno = null, ?int $idMatricula = null): bool
     {
         return $this->repository->updateStatus($id, $status, $idAluno, $idMatricula);
+    }
+
+    public function vincularAlunoPorAcordo(int $idAcordo, int $idAluno, int $idMatricula): bool
+    {
+        return $this->repository->vincularAlunoPorAcordo($idAcordo, $idAluno, $idMatricula);
     }
 }

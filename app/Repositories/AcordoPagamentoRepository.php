@@ -117,6 +117,29 @@ final class AcordoPagamentoRepository
         }
     }
 
+    public function findByAsaasSubscription(string $subscription): ?array
+    {
+        if ($subscription === '') {
+            return null;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT * FROM acordo_pagamento WHERE asaas_subscription = :asaas_subscription LIMIT 1');
+            $stmt->bindValue(':asaas_subscription', $subscription);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return is_array($row) ? $row : null;
+        } catch (\Throwable $e) {
+            error_log('[ACORDO_PAGAMENTO] Erro em findByAsaasSubscription: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function listarPorPreInscricao(int $idPreInscricao): array
     {
         $pdo = Database::connection();
@@ -218,6 +241,75 @@ final class AcordoPagamentoRepository
             return $stmt->rowCount() > 0;
         } catch (\Throwable $e) {
             error_log('[ACORDO_PAGAMENTO] Erro ao marcar utilizado: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function atualizarRecorrencia(int $id, array $data): bool
+    {
+        if ($id < 1) {
+            return false;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return false;
+        }
+
+        try {
+            $fields = [];
+            $params = [':id' => $id];
+
+            if (array_key_exists('recorrencia_cartao', $data)) {
+                $fields[] = 'recorrencia_cartao = :recorrencia_cartao';
+                $params[':recorrencia_cartao'] = (int) $data['recorrencia_cartao'];
+            }
+
+            if (array_key_exists('asaas_subscription', $data)) {
+                $fields[] = 'asaas_subscription = :asaas_subscription';
+                $params[':asaas_subscription'] = $data['asaas_subscription'] !== null && $data['asaas_subscription'] !== ''
+                    ? (string) $data['asaas_subscription']
+                    : null;
+            }
+
+            if (array_key_exists('data_inicio_recorrencia', $data)) {
+                $fields[] = 'data_inicio_recorrencia = :data_inicio_recorrencia';
+                $params[':data_inicio_recorrencia'] = $data['data_inicio_recorrencia'] ?? null;
+            }
+
+            if (array_key_exists('data_fim_recorrencia', $data)) {
+                $fields[] = 'data_fim_recorrencia = :data_fim_recorrencia';
+                $params[':data_fim_recorrencia'] = $data['data_fim_recorrencia'] ?? null;
+            }
+
+            if (array_key_exists('status_recorrencia', $data)) {
+                $fields[] = 'status_recorrencia = :status_recorrencia';
+                $params[':status_recorrencia'] = $data['status_recorrencia'] !== null && $data['status_recorrencia'] !== ''
+                    ? (string) $data['status_recorrencia']
+                    : null;
+            }
+
+            if ($fields === []) {
+                return true;
+            }
+
+            $fields[] = 'updated_at = CURRENT_TIMESTAMP';
+
+            $sql = 'UPDATE acordo_pagamento SET ' . implode(', ', $fields) . ' WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+
+            foreach ($params as $key => $value) {
+                if ($value === null) {
+                    $stmt->bindValue($key, null, PDO::PARAM_NULL);
+                    continue;
+                }
+
+                $stmt->bindValue($key, $value);
+            }
+
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[ACORDO_PAGAMENTO] Erro ao atualizar recorrência: ' . $e->getMessage());
             return false;
         }
     }

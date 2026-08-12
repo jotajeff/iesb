@@ -33,9 +33,16 @@ foreach ($parcelasView as $parcela) {
           <?php $parcelasCurso = $grupo['parcelas']; ?>
           <?php
             $pago = 0;
+            $recorrenciaAtiva = false;
+            $proximaCobranca = null;
             foreach ($parcelasCurso as $p) {
                 if (in_array((string) ($p['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
                     $pago++;
+                    continue;
+                }
+                if (!empty($p['recorrencia_ativa']) && (int) ($p['numero_parcela'] ?? 0) >= 2 && $proximaCobranca === null) {
+                    $recorrenciaAtiva = true;
+                    $proximaCobranca = (string) ($p['data_vencimento'] ?? '');
                 }
             }
           ?>
@@ -49,6 +56,20 @@ foreach ($parcelasView as $parcela) {
               </div>
               <span class="badge bg-success"><?= $pago ?> de <?= count($parcelasCurso) ?> paga(s)</span>
             </div>
+
+            <?php if ($recorrenciaAtiva): ?>
+              <div class="alert alert-info d-flex align-items-center gap-2 py-2 px-3 small mb-3">
+                <i class="bi bi-arrow-repeat fs-5"></i>
+                <div>
+                  <strong>Cobrança automática ativa</strong>
+                  <?php if ($proximaCobranca !== null && $proximaCobranca !== ''): ?>
+                    — Próxima cobrança: <?= (new \DateTime($proximaCobranca))->format('d/m/Y') ?> no cartão de crédito.
+                  <?php else: ?>
+                    — As parcelas restantes serão cobradas no cartão de crédito.
+                  <?php endif; ?>
+                </div>
+              </div>
+            <?php endif; ?>
 
             <div class="table-responsive">
               <table class="table table-striped table-sm align-middle mb-0">
@@ -105,9 +126,15 @@ foreach ($parcelasView as $parcela) {
                       </td>
                       <td>
                         <?php if (!$estaPaga && $parcelaId > 0): ?>
-                          <a class="btn btn-success btn-sm" href="/financeiro/parcela/<?= $parcelaId ?>">
-                            <i class="bi bi-credit-card me-1"></i>Pagar
-                          </a>
+                          <?php if (!empty($parcela['recorrencia_ativa']) && $numero >= 2): ?>
+                            <span class="badge bg-info text-dark" title="Esta parcela será cobrada automaticamente no cartão de crédito">
+                              <i class="bi bi-arrow-repeat me-1"></i>Cobrança automática
+                            </span>
+                          <?php else: ?>
+                            <a class="btn btn-success btn-sm" href="/financeiro/parcela/<?= $parcelaId ?>">
+                              <i class="bi bi-credit-card me-1"></i>Pagar
+                            </a>
+                          <?php endif; ?>
                         <?php else: ?>
                           <span class="text-muted">-</span>
                         <?php endif; ?>

@@ -12,6 +12,31 @@
       <div class="alert alert-info"><?= htmlspecialchars((string) $flash, ENT_QUOTES, 'UTF-8') ?></div>
     <?php endif; ?>
 
+    <?php
+      $reprocessados = $reprocessados ?? [];
+      $efetivados = array_values(array_filter(
+          $reprocessados,
+          static fn (array $r): bool => ($r['status'] ?? '') === 'ok'
+      ));
+      $erros = array_values(array_filter(
+          $reprocessados,
+          static fn (array $r): bool => ($r['status'] ?? '') === 'erro'
+      ));
+    ?>
+    <?php if ($efetivados !== []): ?>
+      <div class="alert alert-success">
+        <i class="bi bi-check-circle me-1"></i><strong><?= count($efetivados) ?> pagamento(s)</strong> processado(s): matrícula e/ou recorrência efetivadas.
+      </div>
+    <?php endif; ?>
+    <?php if ($erros !== []): ?>
+      <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-1"></i>Erros ao processar pagamentos:
+        <?php foreach ($erros as $erro): ?>
+          <div class="small">Parcela #<?= (int) ($erro['id'] ?? 0) ?>: <?= htmlspecialchars((string) ($erro['message'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
     <div class="table-responsive">
       <table class="table table-striped table-sm align-middle">
         <thead>

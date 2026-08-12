@@ -12,6 +12,7 @@ use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
 use App\Services\IpLocationService;
 use App\Services\LogService;
+use App\Services\MatriculaService;
 use App\Services\PreInscricaoService;
 use App\Support\Session;
 
@@ -24,6 +25,7 @@ final class PreInscricaoController extends Controller
     private AcordoPagamentoService $acordoService;
     private CommentService $comments;
     private LogService $logService;
+    private MatriculaService $matriculaService;
 
     public function __construct()
     {
@@ -34,6 +36,7 @@ final class PreInscricaoController extends Controller
         $this->acordoService = new AcordoPagamentoService();
         $this->comments = new CommentService();
         $this->logService = new LogService();
+        $this->matriculaService = new MatriculaService();
     }
 
     public function index(): void
@@ -259,12 +262,22 @@ final class PreInscricaoController extends Controller
             $this->redirect('/admin/login');
         }
 
+        // Reconciliação: parcelas com status RECEBIDO/CONFIRMADO que ainda não
+        // geraram matrícula (webhook interrompido) são efetivadas aqui.
+        try {
+            $reprocessados = $this->matriculaService->reprocessarParcelasSemMatricula();
+        } catch (\Throwable $e) {
+            error_log('[PREINSCRICAO ACORDOS] Erro na reconciliação: ' . $e->getMessage());
+            $reprocessados = [];
+        }
+
         $acordos = $this->acordoService->listarComPreInscrito();
 
         $this->render('pages/admin/preinscricao/acordo', [
             'title' => 'Acordos',
             'currentRoute' => '/admin/preinscricao/acordos',
             'acordos' => $acordos,
+            'reprocessados' => $reprocessados,
         ], 'admin');
     }
 

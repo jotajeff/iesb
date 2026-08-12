@@ -170,6 +170,55 @@ final class CursoParcelaRepository
         }
     }
 
+    public function findByExternalReference(int $id): ?array
+    {
+        if ($id < 1) {
+            return null;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return null;
+            }
+
+            $stmt = $pdo->prepare('SELECT * FROM curso_parcela
+                                   WHERE id = :id AND ativo = 1
+                                     AND (asaas_payment IS NULL OR asaas_payment = \'\')
+                                   LIMIT 1');
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em findByExternalReference: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function listarPagasSemMatricula(): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $stmt = $pdo->prepare('SELECT cp.*
+                                   FROM curso_parcela cp
+                                   WHERE cp.ativo = 1
+                                     AND cp.status IN (\'RECEBIDO\', \'CONFIRMADO\')
+                                     AND cp.id_matricula IS NULL
+                                   ORDER BY cp.id ASC');
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em listarPagasSemMatricula: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function listByAluno(int $idAluno): array
     {
         try {
@@ -182,11 +231,25 @@ final class CursoParcelaRepository
                     FROM curso_parcela cp
                     LEFT JOIN cursos c ON c.id = cp.id_curso
                     LEFT JOIN turmas t ON t.id = cp.id_turma
-                    WHERE cp.id_aluno = :id_aluno AND cp.ativo = 1
+                    WHERE cp.ativo = 1
+                      AND (
+                          cp.id_aluno = :id_aluno
+                          OR (
+                              cp.id_acordo_pagamento IS NOT NULL
+                              AND cp.id_acordo_pagamento IN (
+                                  SELECT cp2.id_acordo_pagamento
+                                  FROM curso_parcela cp2
+                                  WHERE cp2.id_aluno = :id_aluno2
+                                    AND cp2.id_acordo_pagamento IS NOT NULL
+                                    AND cp2.ativo = 1
+                              )
+                          )
+                      )
                     ORDER BY c.nome ASC, cp.numero_parcela ASC';
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+            $stmt->bindValue(':id_aluno2', $idAluno, PDO::PARAM_INT);
             $stmt->execute();
 
             $rows = $stmt->fetchAll();
@@ -205,10 +268,10 @@ final class CursoParcelaRepository
                 return [];
             }
 
-            $stmt = $pdo->prepare('SELECT id, numero_parcela, status, data_vencimento
-                                   FROM curso_parcela
-                                   WHERE id_acordo_pagamento = :id_acordo AND ativo = 1
-                                   ORDER BY numero_parcela ASC');
+            $stmt = $pdo->prepare('SELECT cp.*
+                                   FROM curso_parcela cp
+                                   WHERE cp.id_acordo_pagamento = :id_acordo AND cp.ativo = 1
+                                   ORDER BY cp.numero_parcela ASC');
             $stmt->bindValue(':id_acordo', $idAcordo, PDO::PARAM_INT);
             $stmt->execute();
 
@@ -281,6 +344,41 @@ final class CursoParcelaRepository
             return $stmt->execute();
         } catch (\Throwable $e) {
             error_log('[CURSO_PARCELA] Erro em updateStatus: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Propaga id_aluno/id_matricula para as parcelas do acordo que ainda não
+     * possuem vínculo (dados gerados antes da correção). Evita que parcelas
+     * legadas fiquem ocultas ou sejam rejeitadas no pagamento do painel.
+     */
+    public function vincularAlunoPorAcordo(int $idAcordo, int $idAluno, int $idMatricula): bool
+    {
+        if ($idAcordo < 1 || $idAluno < 1) {
+            return false;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return false;
+            }
+
+            $stmt = $pdo->prepare('UPDATE curso_parcela
+                                   SET id_aluno = :id_aluno,
+                                       id_matricula = :id_matricula,
+                                       updated_at = CURRENT_TIMESTAMP
+                                   WHERE id_acordo_pagamento = :id_acordo
+                                     AND ativo = 1
+                                     AND (id_aluno IS NULL OR id_aluno = 0)');
+            $stmt->bindValue(':id_acordo', $idAcordo, PDO::PARAM_INT);
+            $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+            $stmt->bindValue(':id_matricula', $idMatricula, PDO::PARAM_INT);
+            $stmt->execute();
+            return true;
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em vincularAlunoPorAcordo: ' . $e->getMessage());
             return false;
         }
     }
