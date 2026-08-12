@@ -2077,3 +2077,30 @@ footer .footer-links a:hover {
   background: rgba(255,255,255,0.06);
   color: #ecf1ee;
 }
+
+/* ============================================
+           ADMIN PRELOADER
+           ============================================ */
+.admin-preloader {
+  position: sticky;
+  top: 0;
+  z-index: 1090;
+  height: 4px;
+  background: rgba(239, 192, 43, 0.18);
+  overflow: hidden;
+}
+.admin-preloader-bar {
+  height: 100%;
+  width: 40%;
+  background: linear-gradient(90deg, #d4a017, #efc02b, #ffe28a);
+  border-radius: 0 4px 4px 0;
+  animation: adminPreloaderSlide 1.1s ease-in-out infinite;
+}
+.admin-preloader--done {
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+@keyframes adminPreloaderSlide {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(350%); }
+}

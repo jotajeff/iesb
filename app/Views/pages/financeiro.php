@@ -1,5 +1,7 @@
 <?php
 $acordo = $acordo ?? [];
+$parcela = $parcela ?? [];
+$modo = $modo ?? 'acordo';
 $token = $token ?? '';
 $sucesso = $sucesso ?? false;
 $jaUtilizado = $jaUtilizado ?? false;
@@ -12,17 +14,35 @@ $billingType = $billingType ?? '';
 $asaasError = $asaasError ?? null;
 $abrirCheckoutNovaAba = $abrirCheckoutNovaAba ?? false;
 
-$cursoNome = (string) ($acordo['curso_nome'] ?? '-');
-$candidatoNome = (string) ($acordo['candidato_nome'] ?? '-');
-$valorEntrada = (float) ($acordo['valor_entrada'] ?? 0);
-$valorDemais = (float) ($acordo['valor_demais_parcelas'] ?? 0);
-$desconto = (float) ($acordo['desconto'] ?? 0);
-$parcelas = (int) ($acordo['total_parcelas'] ?? 1);
-$observacao = (string) ($acordo['observacao'] ?? '');
-$valorParcela = $valorEntrada > 0 ? $valorEntrada : $valorDemais;
-if ($valorParcela <= 0) {
-    $valorParcela = (float) ($acordo['plano_valor'] ?? 0);
+$ehParcela = $modo === 'parcela';
+
+if ($ehParcela) {
+    $cursoNome = (string) ($parcela['curso_nome'] ?? '-');
+    $candidatoNome = (string) ($parcela['nome'] ?? '-');
+    $numeroParcela = (int) ($parcela['numero_parcela'] ?? 0);
+    $totalParcelas = (int) ($parcela['total_parcelas'] ?? 1);
+    $valorParcela = (float) ($parcela['valor'] ?? 0);
+    $vencimentoParcela = (string) ($parcela['data_vencimento'] ?? '');
+    $descricaoParcela = (string) ($parcela['descricao_pagamento'] ?? '');
+    $parcelas = $totalParcelas;
+} else {
+    $cursoNome = (string) ($acordo['curso_nome'] ?? '-');
+    $candidatoNome = (string) ($acordo['candidato_nome'] ?? '-');
+    $valorEntrada = (float) ($acordo['valor_entrada'] ?? 0);
+    $valorDemais = (float) ($acordo['valor_demais_parcelas'] ?? 0);
+    $desconto = (float) ($acordo['desconto'] ?? 0);
+    $parcelas = (int) ($acordo['total_parcelas'] ?? 1);
+    $observacao = (string) ($acordo['observacao'] ?? '');
+    $valorParcela = $valorEntrada > 0 ? $valorEntrada : $valorDemais;
+    if ($valorParcela <= 0) {
+        $valorParcela = (float) ($acordo['plano_valor'] ?? 0);
+    }
+    $numeroParcela = 1;
+    $totalParcelas = $parcelas;
 }
+$formAction = $ehParcela
+    ? '/financeiro/parcela/' . (int) $inscricaoId . '/continuar'
+    : '/financeiro/' . htmlspecialchars($token, ENT_QUOTES, 'UTF-8') . '/continuar';
 ?>
 <section class="hero-section" id="home" style="min-height:40vh;">
   <div class="hero-bg"></div>
@@ -51,8 +71,13 @@ if ($valorParcela <= 0) {
           <div class="bg-white border rounded-4 p-5 shadow-sm text-center">
             <div class="mb-3 text-success"><i class="bi bi-check-circle-fill" style="font-size:4rem;"></i></div>
             <h3 class="mb-2">Cobrança gerada!</h3>
-            <p class="text-muted mb-1">Primeira parcela (entrada) do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
-            <p class="mb-4">Valor da entrada: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
+            <?php if ($ehParcela): ?>
+              <p class="text-muted mb-1"><?= $numeroParcela ?>ª parcela (de <?= $totalParcelas ?>) para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+              <p class="mb-4">Valor da parcela: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong></p>
+            <?php else: ?>
+              <p class="text-muted mb-1">Primeira parcela (entrada) do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+              <p class="mb-4">Valor da entrada: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
+            <?php endif; ?>
             <?php if ($asaasError): ?>
               <div class="alert alert-warning text-start mt-4 mb-4">
                 <strong>Pagamento no Asaas não concluído:</strong> <?= htmlspecialchars((string) $asaasError, ENT_QUOTES, 'UTF-8') ?>
@@ -82,9 +107,15 @@ if ($valorParcela <= 0) {
                 <?php endif; ?>
               </div>
             <?php elseif ($invoiceUrl !== '' || $bankSlipUrl !== ''): ?>
-              <p class="text-muted mb-4">Sua cobrança foi gerada. Clique no botão abaixo para concluir o pagamento no ambiente seguro do Asaas.</p>
-              <?php $checkoutUrl = $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl; ?>
-              <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($checkoutUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" id="btnAbrirCheckout"><i class="bi bi-credit-card me-1"></i>Abrir pagamento</a>
+              <?php if ((string) $billingType === 'BOLETO'): ?>
+                <p class="text-muted mb-4">Seu boleto foi gerado com sucesso. Clique no botão abaixo para visualizar e efetuar o pagamento. O vencimento é em até 3 dias úteis.</p>
+                <?php $checkoutUrl = $bankSlipUrl !== '' ? $bankSlipUrl : $invoiceUrl; ?>
+                <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($checkoutUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" id="btnAbrirCheckout"><i class="bi bi-upc-scan me-1"></i>Abrir Boleto</a>
+              <?php else: ?>
+                <p class="text-muted mb-4">Sua cobrança foi gerada. Clique no botão abaixo para concluir o pagamento no ambiente seguro do Asaas.</p>
+                <?php $checkoutUrl = $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl; ?>
+                <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($checkoutUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" id="btnAbrirCheckout"><i class="bi bi-credit-card me-1"></i>Abrir pagamento</a>
+              <?php endif; ?>
               <br>
             <?php else: ?>
               <p class="text-muted mb-4">A cobrança foi criada, mas ainda não foi possível recuperar os dados de pagamento. Se o problema persistir, entre em contato com a secretaria.</p>
@@ -97,7 +128,7 @@ if ($valorParcela <= 0) {
           <?php endif; ?>
 
           <div class="bg-white border rounded-4 p-4 shadow-sm mb-4">
-            <h5 class="mb-3"><i class="bi bi-person-check me-2"></i>Acordo negociado</h5>
+            <h5 class="mb-3"><i class="bi bi-person-check me-2"></i><?= $ehParcela ? 'Parcela a pagar' : 'Acordo negociado' ?></h5>
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="text-muted small text-uppercase">Candidato</div>
@@ -107,19 +138,46 @@ if ($valorParcela <= 0) {
                 <div class="text-muted small text-uppercase">Curso</div>
                 <div class="fw-semibold"><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></div>
               </div>
-              <div class="col-md-4">
-                <div class="text-muted small text-uppercase">Entrada</div>
-                <div class="fw-semibold">R$ <?= number_format($valorEntrada, 2, ',', '.') ?></div>
-              </div>
-              <div class="col-md-4">
-                <div class="text-muted small text-uppercase">Parcelas</div>
-                <div class="fw-semibold"><?= $parcelas ?>x</div>
-              </div>
-              <div class="col-md-4">
-                <div class="text-muted small text-uppercase">Valor demais parcelas</div>
-                <div class="fw-semibold">R$ <?= number_format($valorDemais, 2, ',', '.') ?></div>
-              </div>
-              <?php if ($observacao !== ''): ?>
+              <?php if ($ehParcela): ?>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Parcelas</div>
+                  <div class="fw-semibold"><?= $totalParcelas ?>x</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Entrada e demais parcelas</div>
+                  <div class="fw-semibold">1ª (entrada) + <?= max(0, $totalParcelas - 1) ?> demais</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Parcela atual</div>
+                  <div class="fw-semibold"><?= $numeroParcela ?>ª de <?= $totalParcelas ?>x</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Valor</div>
+                  <div class="fw-semibold">R$ <?= number_format($valorParcela, 2, ',', '.') ?></div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Vencimento</div>
+                  <div class="fw-semibold"><?= htmlspecialchars(
+                    $vencimentoParcela !== '' ? (new \DateTime($vencimentoParcela))->format('d/m/Y') : '-',
+                    ENT_QUOTES,
+                    'UTF-8'
+                  ) ?></div>
+                </div>
+              <?php else: ?>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Parcelas</div>
+                  <div class="fw-semibold"><?= $parcelas ?>x</div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Entrada</div>
+                  <div class="fw-semibold">R$ <?= number_format($valorEntrada, 2, ',', '.') ?></div>
+                </div>
+                <div class="col-md-4">
+                  <div class="text-muted small text-uppercase">Valor demais parcelas</div>
+                  <div class="fw-semibold">R$ <?= number_format($valorDemais, 2, ',', '.') ?></div>
+                </div>
+              <?php endif; ?>
+              <?php if (!$ehParcela && $observacao !== ''): ?>
                 <div class="col-12">
                   <div class="text-muted small text-uppercase">Observações</div>
                   <div class="fw-semibold"><?= nl2br(htmlspecialchars($observacao, ENT_QUOTES, 'UTF-8')) ?></div>
@@ -130,9 +188,9 @@ if ($valorParcela <= 0) {
 
           <div class="bg-white border rounded-4 p-4 shadow-sm">
             <h5 class="mb-3"><i class="bi bi-credit-card me-2"></i>Escolha a forma de pagamento</h5>
-            <form method="post" action="/financeiro/<?= htmlspecialchars($token, ENT_QUOTES, 'UTF-8') ?>/continuar">
+            <form method="post" action="<?= htmlspecialchars($formAction, ENT_QUOTES, 'UTF-8') ?>">
               <div class="row g-2">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
                     <div class="d-flex align-items-center gap-2">
                       <input type="radio" name="forma_pagamento" value="pix" class="form-check-input" checked required>
@@ -144,7 +202,7 @@ if ($valorParcela <= 0) {
                     </div>
                   </label>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
                     <div class="d-flex align-items-center gap-2">
                       <input type="radio" name="forma_pagamento" value="cartao" class="form-check-input" required>
@@ -156,12 +214,29 @@ if ($valorParcela <= 0) {
                     </div>
                   </label>
                 </div>
+                <div class="col-md-4">
+                  <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
+                    <div class="d-flex align-items-center gap-2">
+                      <input type="radio" name="forma_pagamento" value="boleto" class="form-check-input" required>
+                      <i class="bi bi-upc-scan fs-4 text-warning"></i>
+                      <div>
+                        <strong class="small d-block">Boleto Bancário</strong>
+                        <span class="text-muted small">Vencimento em até 3 dias úteis</span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
               <div class="alert alert-light border mt-4 mb-0">
                 <i class="bi bi-info-circle me-1"></i>
-                Ao continuar, será gerada a cobrança referente à <strong>entrada</strong>
-                (R$ <?= number_format($valorParcela, 2, ',', '.') ?>). As demais parcelas serão geradas após a confirmação do pagamento.
+                <?php if ($ehParcela): ?>
+                  Ao continuar, será gerada a cobrança da <strong><?= $numeroParcela ?>ª parcela</strong>
+                  (R$ <?= number_format($valorParcela, 2, ',', '.') ?>).
+                <?php else: ?>
+                  Ao continuar, será gerada a cobrança referente à <strong>entrada</strong>
+                  (R$ <?= number_format($valorParcela, 2, ',', '.') ?>). As demais parcelas serão geradas após a confirmação do pagamento.
+                <?php endif; ?>
               </div>
 
               <div class="mt-4">

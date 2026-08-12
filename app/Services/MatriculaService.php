@@ -38,6 +38,21 @@ final class MatriculaService
             throw new RuntimeException('Inscrição inválida');
         }
 
+        // Parcelas 2..N já possuem aluno e matrícula vinculados na geração.
+        // Basta confirmar o status, sem criar nova matrícula.
+        $idAlunoVinculado = (int) ($inscricao['id_aluno'] ?? 0);
+        $idMatriculaVinculada = (int) ($inscricao['id_matricula'] ?? 0);
+        $numeroParcela = (int) ($inscricao['numero_parcela'] ?? 1);
+        if ($numeroParcela > 1 && $idAlunoVinculado > 0 && $idMatriculaVinculada > 0) {
+            $this->parcelaService->atualizarStatus($idInscricao, 'CONFIRMADO', $idAlunoVinculado, $idMatriculaVinculada);
+            return [
+                'message' => 'Parcela confirmada com sucesso',
+                'inscricaoId' => $idInscricao,
+                'alunoId' => $idAlunoVinculado,
+                'matriculaId' => $idMatriculaVinculada,
+            ];
+        }
+
         $matriculaExistente = $this->matriculaRepository->findByPagamento($idInscricao);
         if ($matriculaExistente !== null) {
             return [

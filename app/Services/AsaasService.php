@@ -57,7 +57,7 @@ final class AsaasService
             'customer' => (string) ($data['customer_id'] ?? ''),
             'billingType' => (string) ($data['billing_type'] ?? 'PIX'),
             'value' => (float) ($data['value'] ?? 0),
-            'dueDate' => date('Y-m-d', strtotime('+3 days')),
+            'dueDate' => $data['due_date'] ?? date('Y-m-d', strtotime('+3 days')),
             'description' => mb_substr((string) ($data['description'] ?? ''), 0, 200),
             'externalReference' => (string) ($data['external_reference'] ?? ''),
             'postalService' => false,

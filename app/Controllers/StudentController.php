@@ -12,7 +12,9 @@ use App\Services\CursoService;
 use App\Services\LogService;
 use App\Services\TurmaService;
 use App\Services\AuthService;
+use App\Services\AcordoPagamentoService;
 use App\Services\CourseService;
+use App\Services\CursoParcelaService;
 use App\Services\EnrollmentService;
 use App\Services\IpLocationService;
 use App\Services\NoticiaService;
@@ -30,6 +32,8 @@ final class StudentController extends Controller
     private CourseService $courses;
     private EnrollmentService $enrollments;
     private NoticiaService $noticiaService;
+    private CursoParcelaService $parcelaService;
+    private AcordoPagamentoService $acordoService;
 
     public function __construct()
     {
@@ -41,6 +45,8 @@ final class StudentController extends Controller
         $this->courses = new CourseService();
         $this->enrollments = new EnrollmentService();
         $this->noticiaService = new NoticiaService();
+        $this->parcelaService = new CursoParcelaService();
+        $this->acordoService = new AcordoPagamentoService();
     }
 
     public function dashboard(): void
@@ -149,6 +155,87 @@ final class StudentController extends Controller
             'matriculaDB' => $this->alunoService->matriculaDoAluno($studentId),
             'cursosMatriculados' => $this->alunoService->cursosDoAluno($studentId),
         ], 'aluno');
+    }
+
+    public function financeiro(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno para acessar o financeiro.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $parcelas = $this->parcelaService->listarPorAluno($studentId);
+
+        $parcelas = $this->garantirParcelasRestantes($parcelas);
+
+        $this->render('pages/aluno/financeiro', [
+            'title' => 'Financeiro',
+            'currentRoute' => '/aluno/financeiro',
+            'parcelas' => $parcelas,
+            'cursosMatriculados' => $this->alunoService->cursosDoAluno($studentId),
+        ], 'aluno');
+    }
+
+    /**
+     * Garante a geração das parcelas restantes (2..N) quando a primeira
+     * parcela do curso já estiver paga. Idempotente.
+     *
+     * @param array<int, array<string, mixed>> $parcelas
+     * @return array<int, array<string, mixed>>
+     */
+    private function garantirParcelasRestantes(array $parcelas): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            return $parcelas;
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $processados = [];
+        foreach ($parcelas as $parcela) {
+            if ((int) ($parcela['numero_parcela'] ?? 0) !== 1) {
+                continue;
+            }
+            if (!in_array((string) ($parcela['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
+                continue;
+            }
+
+            $idAcordo = (int) ($parcela['id_acordo_pagamento'] ?? 0);
+            if ($idAcordo > 0) {
+                if (isset($processados['acordo_' . $idAcordo])) {
+                    continue;
+                }
+                $processados['acordo_' . $idAcordo] = true;
+
+                $acordo = $this->acordoService->findById($idAcordo);
+                if ($acordo === null) {
+                    continue;
+                }
+
+                $this->parcelaService->gerarParcelasRestantes($parcela, $acordo);
+                continue;
+            }
+
+            // Inscrição feita pelo site (sem acordo): usa o plano de pagamento.
+            $idPagamento = (int) ($parcela['id_pagamento'] ?? 0);
+            $idCurso = (int) ($parcela['id_curso'] ?? 0);
+            if ($idPagamento > 0 && $idCurso > 0) {
+                $chave = 'plano_' . $idPagamento . '_' . $idCurso;
+                if (isset($processados[$chave])) {
+                    continue;
+                }
+                $processados[$chave] = true;
+
+                $this->parcelaService->gerarParcelasRestantesPorPlano($parcela);
+            }
+        }
+
+        return $this->parcelaService->listarPorAluno($studentId);
     }
 
     public function show(): void

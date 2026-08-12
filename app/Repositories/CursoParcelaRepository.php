@@ -97,6 +97,11 @@ final class CursoParcelaRepository
                 $params[':invoice_url'] = $data['invoice_url'] !== null ? (string) $data['invoice_url'] : null;
             }
 
+            if (array_key_exists('bank_slip_url', $data)) {
+                $fields[] = 'bank_slip_url = :bank_slip_url';
+                $params[':bank_slip_url'] = $data['bank_slip_url'] !== null ? (string) $data['bank_slip_url'] : null;
+            }
+
             if (array_key_exists('status', $data)) {
                 $fields[] = 'status = :status';
                 $params[':status'] = (string) $data['status'];
@@ -162,6 +167,84 @@ final class CursoParcelaRepository
         } catch (\Throwable $e) {
             error_log('[CURSO_PARCELA] Erro em findByAsaasPayment: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    public function listByAluno(int $idAluno): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $sql = 'SELECT cp.*, COALESCE(c.nome, \'-\') AS curso_nome, COALESCE(t.nome, \'-\') AS turma_nome
+                    FROM curso_parcela cp
+                    LEFT JOIN cursos c ON c.id = cp.id_curso
+                    LEFT JOIN turmas t ON t.id = cp.id_turma
+                    WHERE cp.id_aluno = :id_aluno AND cp.ativo = 1
+                    ORDER BY c.nome ASC, cp.numero_parcela ASC';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em listByAluno: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listByAcordo(int $idAcordo): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $stmt = $pdo->prepare('SELECT id, numero_parcela, status, data_vencimento
+                                   FROM curso_parcela
+                                   WHERE id_acordo_pagamento = :id_acordo AND ativo = 1
+                                   ORDER BY numero_parcela ASC');
+            $stmt->bindValue(':id_acordo', $idAcordo, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em listByAcordo: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listByInscricao(int $idAluno, int $idPagamento, int $idCurso): array
+    {
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $stmt = $pdo->prepare('SELECT id, numero_parcela, status, data_vencimento
+                                   FROM curso_parcela
+                                   WHERE id_aluno = :id_aluno
+                                     AND id_pagamento = :id_pagamento
+                                     AND id_curso = :id_curso
+                                     AND ativo = 1
+                                   ORDER BY numero_parcela ASC');
+            $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
+            $stmt->bindValue(':id_pagamento', $idPagamento, PDO::PARAM_INT);
+            $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em listByInscricao: ' . $e->getMessage());
+            return [];
         }
     }
 

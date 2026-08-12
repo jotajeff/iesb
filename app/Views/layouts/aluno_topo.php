@@ -36,6 +36,11 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/financeiro' ? 'active' : '' ?>" href="/aluno/financeiro">
+              <i class="bi bi-cash-coin me-1"></i>Financeiro
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link <?= ($currentRoute ?? '') === '/aluno/notificacoes' ? 'active' : '' ?>" href="/aluno/notificacoes">
               <i class="bi bi-bell me-1"></i>Notificações
             </a>

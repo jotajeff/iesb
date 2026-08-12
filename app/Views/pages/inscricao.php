@@ -63,19 +63,25 @@ $idCurso = (int) ($curso['id'] ?? 0);
                   <p class="small text-muted mb-0">Validade: <?= htmlspecialchars((string) $pixQrCode['expirationDate'], ENT_QUOTES, 'UTF-8') ?></p>
                 <?php endif; ?>
               </div>
-            <?php elseif ((string) $billingType === 'BOLETO' && is_array($linhaDigitavel) && !empty($linhaDigitavel['identificationField'])): ?>
-              <div class="border rounded-4 p-4 mt-4 text-start bg-light">
-                <h5 class="mb-3"><i class="bi bi-upc-scan me-2"></i>Linha digitável do boleto</h5>
-                <label class="form-label small text-muted mb-1">Código para pagamento</label>
-                <div class="input-group mb-3">
-                  <input id="boletoLinhaDigitavel" type="text" class="form-control" value="<?= htmlspecialchars((string) ($linhaDigitavel['identificationField'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
-                  <button class="btn btn-outline-secondary" type="button" onclick="copiarTexto('boletoLinhaDigitavel')">Copiar</button>
+            <?php elseif ((string) $billingType === 'BOLETO' && ($invoiceUrl !== '' || $bankSlipUrl !== '')): ?>
+              <p class="text-muted mb-4">Seu boleto foi gerado com sucesso. Clique no botão abaixo para visualizar e efetuar o pagamento. O vencimento é em até 3 dias úteis.</p>
+              <?php $checkoutUrl = $bankSlipUrl !== '' ? $bankSlipUrl : $invoiceUrl; ?>
+              <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($checkoutUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" id="btnAbrirCheckout"><i class="bi bi-upc-scan me-1"></i>Abrir Boleto</a>
+              <br>
+              <?php if (is_array($linhaDigitavel) && !empty($linhaDigitavel['identificationField'])): ?>
+                <div class="border rounded-4 p-4 mt-4 text-start bg-light">
+                  <h5 class="mb-3"><i class="bi bi-upc-scan me-2"></i>Linha digitável do boleto</h5>
+                  <label class="form-label small text-muted mb-1">Código para pagamento</label>
+                  <div class="input-group mb-3">
+                    <input id="boletoLinhaDigitavel" type="text" class="form-control" value="<?= htmlspecialchars((string) ($linhaDigitavel['identificationField'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
+                    <button class="btn btn-outline-secondary" type="button" onclick="copiarTexto('boletoLinhaDigitavel')">Copiar</button>
+                  </div>
+                  <?php if (!empty($linhaDigitavel['barCode'])): ?>
+                    <p class="small text-muted mb-1">Código de barras</p>
+                    <p class="mb-0 font-monospace small text-break"><?= htmlspecialchars((string) $linhaDigitavel['barCode'], ENT_QUOTES, 'UTF-8') ?></p>
+                  <?php endif; ?>
                 </div>
-                <?php if (!empty($linhaDigitavel['barCode'])): ?>
-                  <p class="small text-muted mb-1">Código de barras</p>
-                  <p class="mb-0 font-monospace small text-break"><?= htmlspecialchars((string) $linhaDigitavel['barCode'], ENT_QUOTES, 'UTF-8') ?></p>
-                <?php endif; ?>
-              </div>
+              <?php endif; ?>
             <?php elseif ($invoiceUrl !== '' || $bankSlipUrl !== ''): ?>
               <p class="text-muted mb-4">Sua inscrição foi registrada. Clique no botão abaixo para concluir o pagamento no ambiente seguro do Asaas.</p>
               <?php $checkoutUrl = $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl; ?>
@@ -142,7 +148,7 @@ $idCurso = (int) ($curso['id'] ?? 0);
               <hr class="my-4">
               <h5 class="mb-3"><i class="bi bi-credit-card me-2"></i>Forma de pagamento</h5>
               <div class="row g-2">
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
                     <div class="d-flex align-items-center gap-2">
                       <input type="radio" name="forma_pagamento" value="pix" class="form-check-input"<?= ((string) ($dados['formaPagamento'] ?? 'pix') === 'pix') ? ' checked' : '' ?> required>
@@ -154,7 +160,7 @@ $idCurso = (int) ($curso['id'] ?? 0);
                     </div>
                   </label>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                   <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
                     <div class="d-flex align-items-center gap-2">
                       <input type="radio" name="forma_pagamento" value="cartao" class="form-check-input"<?= ((string) ($dados['formaPagamento'] ?? 'pix') === 'cartao') ? ' checked' : '' ?> required>
@@ -162,6 +168,18 @@ $idCurso = (int) ($curso['id'] ?? 0);
                       <div>
                         <strong class="small d-block">Cartão de Crédito</strong>
                         <span class="text-muted small">Pague com segurança no Asaas</span>
+                      </div>
+                    </div>
+                  </label>
+                </div>
+                <div class="col-md-4">
+                  <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
+                    <div class="d-flex align-items-center gap-2">
+                      <input type="radio" name="forma_pagamento" value="boleto" class="form-check-input"<?= ((string) ($dados['formaPagamento'] ?? 'pix') === 'boleto') ? ' checked' : '' ?> required>
+                      <i class="bi bi-upc-scan fs-4 text-warning"></i>
+                      <div>
+                        <strong class="small d-block">Boleto Bancário</strong>
+                        <span class="text-muted small">Vencimento em até 3 dias úteis</span>
                       </div>
                     </div>
                   </label>

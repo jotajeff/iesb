@@ -7,9 +7,11 @@ namespace App\Controllers;
 use App\Core\Controller;
 use App\Services\AcordoPagamentoService;
 use App\Services\AsaasService;
+use App\Services\AuthService;
 use App\Services\CursoParcelaService;
 use App\Services\CursoPagamentoService;
 use App\Services\CursoService;
+use App\Support\Session;
 
 final class FinanceiroController extends Controller
 {
@@ -17,6 +19,7 @@ final class FinanceiroController extends Controller
     private CursoPagamentoService $pagamentoService;
     private CursoService $cursoService;
     private CursoParcelaService $parcelaService;
+    private AuthService $auth;
 
     public function __construct()
     {
@@ -24,6 +27,7 @@ final class FinanceiroController extends Controller
         $this->pagamentoService = new CursoPagamentoService();
         $this->cursoService = new CursoService();
         $this->parcelaService = new CursoParcelaService();
+        $this->auth = new AuthService();
     }
 
     public function portal(): void
@@ -86,7 +90,7 @@ final class FinanceiroController extends Controller
         }
 
         $forma = trim((string) $this->input('forma_pagamento', 'pix'));
-        if (!in_array($forma, ['pix', 'cartao'], true)) {
+        if (!in_array($forma, ['pix', 'cartao', 'boleto'], true)) {
             $forma = 'pix';
         }
 
@@ -194,7 +198,12 @@ final class FinanceiroController extends Controller
         }
 
         $clienteId = (string) $cliente['id'];
-        $billingType = $forma === 'cartao' ? 'CREDIT_CARD' : 'PIX';
+        $billingTypeMap = [
+            'pix' => 'PIX',
+            'cartao' => 'CREDIT_CARD',
+            'boleto' => 'BOLETO',
+        ];
+        $billingType = $billingTypeMap[$forma] ?? 'PIX';
         $descricao = $nomeCurso . ' - ' . $descricaoPlano . ' (' . $totalParcelas . 'x) - 1ª parcela';
 
         $cobranca = $asaas->criarCobranca([
@@ -218,6 +227,7 @@ final class FinanceiroController extends Controller
             'asaas_customer' => $clienteId,
             'asaas_payment' => $cobranca['id'] ?? null,
             'invoice_url' => $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl,
+            'bank_slip_url' => $bankSlipUrl !== '' ? $bankSlipUrl : null,
             'status' => $cobranca['status'] ?? 'PENDENTE',
         ]);
 
@@ -238,7 +248,231 @@ final class FinanceiroController extends Controller
             'linhaDigitavel' => $linhaDigitavel,
             'billingType' => $billingType,
             'asaasError' => $asaas->getLastError(),
-            'abrirCheckoutNovaAba' => $billingType === 'CREDIT_CARD' && $invoiceUrl !== '',
+            'abrirCheckoutNovaAba' => in_array($billingType, ['CREDIT_CARD', 'BOLETO'], true) && ($invoiceUrl !== '' || $bankSlipUrl !== ''),
         ]);
+    }
+
+    /**
+     * Exibe o portal financeiro para pagamento de uma parcela específica.
+     * Requer aluno logado e parcela pertencente ao aluno.
+     */
+    public function parcela(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno para acessar o financeiro.');
+            $this->redirect('/aluno/login');
+            return;
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+        $idParcela = (int) ($_GET['id'] ?? 0);
+
+        $parcela = $idParcela > 0 ? $this->parcelaService->buscar($idParcela) : null;
+        if ($parcela === null || (int) ($parcela['id_aluno'] ?? 0) !== $studentId || (int) ($parcela['ativo'] ?? 1) !== 1) {
+            Session::setFlash('flash', 'Parcela não encontrada.');
+            $this->redirect('/aluno/financeiro');
+            return;
+        }
+
+        if (in_array((string) ($parcela['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
+            Session::setFlash('flash', 'Esta parcela já foi paga.');
+            $this->redirect('/aluno/financeiro');
+            return;
+        }
+
+        $parcela = $this->comCursoNome($parcela);
+
+        $this->render('pages/financeiro', [
+            'title' => 'Pagamento de parcela',
+            'currentRoute' => '/financeiro',
+            'modo' => 'parcela',
+            'parcela' => $parcela,
+            'acordo' => [],
+            'token' => (string) $idParcela,
+            'sucesso' => false,
+            'jaUtilizado' => false,
+            'inscricaoId' => $idParcela,
+            'invoiceUrl' => '',
+            'bankSlipUrl' => '',
+            'pixQrCode' => null,
+            'linhaDigitavel' => null,
+            'billingType' => '',
+            'asaasError' => null,
+            'abrirCheckoutNovaAba' => false,
+        ]);
+    }
+
+    /**
+     * Gera a cobrança Asaas para uma parcela específica.
+     */
+    public function continuarParcela(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno para acessar o financeiro.');
+            $this->redirect('/aluno/login');
+            return;
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+        $idParcela = (int) ($_GET['id'] ?? 0);
+
+        $parcela = $idParcela > 0 ? $this->parcelaService->buscar($idParcela) : null;
+        if ($parcela === null || (int) ($parcela['id_aluno'] ?? 0) !== $studentId || (int) ($parcela['ativo'] ?? 1) !== 1) {
+            Session::setFlash('flash', 'Parcela não encontrada.');
+            $this->redirect('/aluno/financeiro');
+            return;
+        }
+
+        if (in_array((string) ($parcela['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
+            Session::setFlash('flash', 'Esta parcela já foi paga.');
+            $this->redirect('/aluno/financeiro');
+            return;
+        }
+
+        $forma = trim((string) $this->input('forma_pagamento', 'pix'));
+        if (!in_array($forma, ['pix', 'cartao', 'boleto'], true)) {
+            $forma = 'pix';
+        }
+
+        $nome = (string) ($parcela['nome'] ?? '');
+        $email = (string) ($parcela['email'] ?? '');
+        $telefone = (string) ($parcela['telefone'] ?? '');
+        $cpf = preg_replace('/\D/', '', (string) ($parcela['cpf'] ?? ''));
+        $idCurso = (int) ($parcela['id_curso'] ?? 0);
+        $valor = (float) ($parcela['valor'] ?? 0);
+        $vencimento = (string) ($parcela['data_vencimento'] ?? '');
+        $numeroParcela = (int) ($parcela['numero_parcela'] ?? 0);
+        $totalParcelas = (int) ($parcela['total_parcelas'] ?? 0);
+
+        $curso = $this->cursoService->findCurso($idCurso);
+        $nomeCurso = $curso ? (string) ($curso['nome'] ?? 'Curso') : 'Curso';
+        $parcela = $this->comCursoNome($parcela, $nomeCurso);
+
+        if ($nome === '' || $cpf === '' || $idCurso <= 0 || $valor <= 0) {
+            $this->render('pages/financeiro', [
+                'title' => 'Pagamento de parcela',
+                'currentRoute' => '/financeiro',
+                'modo' => 'parcela',
+                'parcela' => $parcela,
+                'acordo' => [],
+                'token' => (string) $idParcela,
+                'sucesso' => false,
+                'jaUtilizado' => false,
+                'inscricaoId' => $idParcela,
+                'invoiceUrl' => '',
+                'bankSlipUrl' => '',
+                'pixQrCode' => null,
+                'linhaDigitavel' => null,
+                'billingType' => '',
+                'asaasError' => 'Dados da parcela incompletos. Contate a secretaria.',
+                'abrirCheckoutNovaAba' => false,
+            ]);
+            return;
+        }
+
+        $asaas = new AsaasService();
+        $cliente = $asaas->criarCliente([
+            'nome' => $nome,
+            'cpf' => $cpf,
+            'email' => $email,
+            'telefone' => $telefone,
+        ]);
+
+        if (!$cliente) {
+            $this->render('pages/financeiro', [
+                'title' => 'Pagamento de parcela',
+                'currentRoute' => '/financeiro',
+                'modo' => 'parcela',
+                'parcela' => $parcela,
+                'acordo' => [],
+                'token' => (string) $idParcela,
+                'sucesso' => false,
+                'jaUtilizado' => false,
+                'inscricaoId' => $idParcela,
+                'invoiceUrl' => '',
+                'bankSlipUrl' => '',
+                'pixQrCode' => null,
+                'linhaDigitavel' => null,
+                'billingType' => '',
+                'asaasError' => 'Não foi possível registrar o cliente no gateway de pagamento: ' . ($asaas->getLastError() ?? 'erro desconhecido'),
+                'abrirCheckoutNovaAba' => false,
+            ]);
+            return;
+        }
+
+        $clienteId = (string) $cliente['id'];
+        $billingTypeMap = [
+            'pix' => 'PIX',
+            'cartao' => 'CREDIT_CARD',
+            'boleto' => 'BOLETO',
+        ];
+        $billingType = $billingTypeMap[$forma] ?? 'PIX';
+        $descricao = $nomeCurso . ' - ' . $numeroParcela . 'ª parcela de ' . $totalParcelas;
+
+        $cobranca = $asaas->criarCobranca([
+            'customer_id' => $clienteId,
+            'billing_type' => $billingType,
+            'value' => $valor,
+            'description' => $descricao,
+            'external_reference' => (string) $idParcela,
+            'due_date' => $vencimento !== '' ? $vencimento : null,
+        ]);
+
+        $invoiceUrl = (string) ($cobranca['invoiceUrl'] ?? '');
+        $bankSlipUrl = (string) ($cobranca['bankSlipUrl'] ?? '');
+        $pixQrCode = null;
+        $linhaDigitavel = null;
+
+        if ($cobranca && $billingType === 'PIX') {
+            $pixQrCode = $asaas->obterPixQrCode((string) ($cobranca['id'] ?? ''));
+        }
+
+        $this->parcelaService->atualizarAsaasInfo($idParcela, [
+            'asaas_customer' => $clienteId,
+            'asaas_payment' => $cobranca['id'] ?? null,
+            'invoice_url' => $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl,
+            'bank_slip_url' => $bankSlipUrl !== '' ? $bankSlipUrl : null,
+            'status' => $cobranca['status'] ?? 'PENDENTE',
+        ]);
+
+        $this->render('pages/financeiro', [
+            'title' => 'Pagamento de parcela',
+            'currentRoute' => '/financeiro',
+            'modo' => 'parcela',
+            'parcela' => $parcela,
+            'acordo' => [],
+            'token' => (string) $idParcela,
+            'sucesso' => true,
+            'jaUtilizado' => false,
+            'inscricaoId' => $idParcela,
+            'invoiceUrl' => $invoiceUrl,
+            'bankSlipUrl' => $bankSlipUrl,
+            'pixQrCode' => $pixQrCode,
+            'linhaDigitavel' => $linhaDigitavel,
+            'billingType' => $billingType,
+            'asaasError' => $asaas->getLastError(),
+            'abrirCheckoutNovaAba' => in_array($billingType, ['CREDIT_CARD', 'BOLETO'], true) && ($invoiceUrl !== '' || $bankSlipUrl !== ''),
+        ]);
+    }
+
+    /**
+     * Enriquece a parcela com o nome do curso para exibição na view.
+     *
+     * @param array<string, mixed> $parcela
+     * @return array<string, mixed>
+     */
+    private function comCursoNome(array $parcela, string $nomeCurso = ''): array
+    {
+        if ($nomeCurso !== '') {
+            $parcela['curso_nome'] = $nomeCurso;
+            return $parcela;
+        }
+
+        $idCurso = (int) ($parcela['id_curso'] ?? 0);
+        $curso = $idCurso > 0 ? $this->cursoService->findCurso($idCurso) : null;
+        $parcela['curso_nome'] = $curso ? (string) ($curso['nome'] ?? 'Curso') : 'Curso';
+        return $parcela;
     }
 }

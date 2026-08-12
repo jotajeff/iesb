@@ -467,7 +467,7 @@ final class PageController extends Controller
         $email = trim((string) $this->input('email', ''));
         $telefone = trim((string) $this->input('telefone', ''));
         $formaPagamento = (string) $this->input('forma_pagamento', 'pix');
-        if (!in_array($formaPagamento, ['pix', 'cartao'], true)) {
+        if (!in_array($formaPagamento, ['pix', 'cartao', 'boleto'], true)) {
             $formaPagamento = 'pix';
         }
 
@@ -538,10 +538,14 @@ final class PageController extends Controller
             return;
         }
 
+        $totalParcelas = max(1, (int) ($pagamento['parcelas'] ?? 1));
+
         $result = $this->parcelaService->criar([
             'id_curso' => $idCurso,
             'id_pagamento' => $idPagamento,
             'id_turma' => $idTurma,
+            'numero_parcela' => 1,
+            'total_parcelas' => $totalParcelas,
             'descricao_pagamento' => (string) ($pagamento['descricao'] ?? ''),
             'nome' => $nome,
             'cpf' => $cpf,
@@ -600,6 +604,11 @@ final class PageController extends Controller
 
         if ($formaPagamento === 'cartao') {
             $this->criarPagamentoCartao($result, $curso, $pagamentos, $clienteId, $valor, $descricao);
+            return;
+        }
+
+        if ($formaPagamento === 'boleto') {
+            $this->criarPagamentoBoleto($result, $curso, $pagamentos, $clienteId, $valor, $descricao);
             return;
         }
 
@@ -701,6 +710,58 @@ final class PageController extends Controller
             'linhaDigitavel' => null,
             'billingType' => $billingType,
             'abrirCheckoutNovaAba' => $invoiceUrl !== '',
+            'asaasError' => $asaas->getLastError(),
+        ]);
+    }
+
+    /**
+     * Fluxo Boleto Bancário: cria cobranca BOLETO e apresenta o boleto
+     * com linha digitável e link de pagamento do Asaas.
+     */
+    private function criarPagamentoBoleto(int $inscricaoId, array $curso, array $pagamentos, string $clienteId, float $valor, string $descricao): void
+    {
+        $asaas = new AsaasService();
+        $billingType = 'BOLETO';
+
+        $cobranca = $asaas->criarCobranca([
+            'customer_id' => $clienteId,
+            'billing_type' => $billingType,
+            'value' => $valor,
+            'description' => $descricao,
+            'external_reference' => (string) $inscricaoId,
+        ]);
+
+        $invoiceUrl = (string) ($cobranca['invoiceUrl'] ?? '');
+        $bankSlipUrl = (string) ($cobranca['bankSlipUrl'] ?? '');
+        $linhaDigitavel = null;
+
+        if ($cobranca && $bankSlipUrl !== '') {
+            $linhaDigitavel = $asaas->obterLinhaDigitavel((string) ($cobranca['id'] ?? ''));
+        }
+
+        $this->parcelaService->atualizarAsaasInfo($inscricaoId, [
+            'asaas_customer' => $clienteId,
+            'asaas_payment' => $cobranca['id'] ?? null,
+            'invoice_url' => $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl,
+            'bank_slip_url' => $bankSlipUrl !== '' ? $bankSlipUrl : null,
+            'status' => $cobranca['status'] ?? 'PENDENTE',
+        ]);
+
+        $this->render('pages/inscricao', [
+            'title' => 'Inscrição confirmada',
+            'currentRoute' => '/inscricao',
+            'curso' => $curso,
+            'pagamentos' => $pagamentos,
+            'erro' => null,
+            'dados' => [],
+            'sucesso' => true,
+            'inscricaoId' => $inscricaoId,
+            'invoiceUrl' => $invoiceUrl,
+            'bankSlipUrl' => $bankSlipUrl,
+            'pixQrCode' => null,
+            'linhaDigitavel' => $linhaDigitavel,
+            'billingType' => $billingType,
+            'abrirCheckoutNovaAba' => $bankSlipUrl !== '',
             'asaasError' => $asaas->getLastError(),
         ]);
     }

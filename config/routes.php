@@ -44,6 +44,8 @@ return static function (Router $router): void {
     $router->get('/pre-inscricao', [PageController::class, 'preInscricao']);
     $router->post('/pre-inscricao', [PageController::class, 'enviarPreInscricao']);
 
+    $router->get('/financeiro/parcela/{id}', [FinanceiroController::class, 'parcela']);
+    $router->post('/financeiro/parcela/{id}/continuar', [FinanceiroController::class, 'continuarParcela']);
     $router->get('/financeiro/{token}', [FinanceiroController::class, 'portal']);
     $router->post('/financeiro/{token}/continuar', [FinanceiroController::class, 'continuar']);
 
@@ -251,6 +253,7 @@ return static function (Router $router): void {
     $router->post('/aluno/redefinir-senha', [AuthController::class, 'redefinirSenha']);
     $router->get('/aluno', [StudentController::class, 'dashboard']);
     $router->get('/aluno/cursos', [StudentController::class, 'cursos']);
+    $router->get('/aluno/financeiro', [StudentController::class, 'financeiro']);
     $router->get('/aluno/show', [StudentController::class, 'show']);
     $router->get('/aluno/video', [StudentController::class, 'video']);
     $router->get('/aluno/drive', [StudentController::class, 'drive']);
