@@ -18,6 +18,27 @@
 
 <section class="py-4" id="home" style="margin-top: 20px;">
   <div class="container">
+    <?php if (!empty($documentosPendentes)): ?>
+      <?php
+        $documentosPendentesLista = array_map(
+            static fn (string $documento): string => htmlspecialchars($documento, ENT_QUOTES, 'UTF-8'),
+            $documentosPendentes
+        );
+      ?>
+      <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert">
+        <i class="bi bi-file-earmark-exclamation-fill fs-4 mt-1" aria-hidden="true"></i>
+        <div>
+          <div class="fw-semibold">Há documentos obrigatórios pendentes.</div>
+          <div class="small mt-1">
+            Envie os seguintes documentos: <?= implode(', ', $documentosPendentesLista) ?>.
+          </div>
+          <a href="/aluno/documentos" class="alert-link fw-semibold d-inline-block mt-2">
+            <i class="bi bi-upload me-1" aria-hidden="true"></i>Enviar documentos
+          </a>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <?php if (empty($temEndereco)): ?>
       <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
         <i class="bi bi-exclamation-triangle-fill"></i>

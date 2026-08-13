@@ -106,6 +106,46 @@ final class StudentController extends Controller
             }
         }
 
+        $documentosPendentes = [];
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT t.id, t.descricao, d.id AS documento_id, d.status'
+                    . ' FROM documento_tipo t'
+                    . ' LEFT JOIN documento d ON d.id_tipo = t.id'
+                    . ' AND d.id_grupo = :documento_grupo'
+                    . ' AND d.id_registro = :documento_aluno'
+                    . ' AND d.ativo = 1'
+                    . ' LEFT JOIN documento d_novo ON d_novo.id_tipo = d.id_tipo'
+                    . ' AND d_novo.id_grupo = :novo_grupo'
+                    . ' AND d_novo.id_registro = :novo_aluno'
+                    . ' AND d_novo.ativo = 1'
+                    . ' AND (d_novo.versao > d.versao OR (d_novo.versao = d.versao AND d_novo.id > d.id))'
+                    . ' WHERE t.id_grupo = :tipo_grupo'
+                    . ' AND t.obrigatorio = 1'
+                    . ' AND t.ativo = 1'
+                    . ' AND d_novo.id IS NULL'
+                    . ' ORDER BY t.ordem ASC, t.descricao ASC'
+                );
+                $stmt->bindValue(':documento_grupo', StorageService::GROUP_ALUNOS, \PDO::PARAM_INT);
+                $stmt->bindValue(':documento_aluno', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':novo_grupo', StorageService::GROUP_ALUNOS, \PDO::PARAM_INT);
+                $stmt->bindValue(':novo_aluno', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':tipo_grupo', StorageService::GROUP_ALUNOS, \PDO::PARAM_INT);
+                $stmt->execute();
+
+                foreach ($stmt->fetchAll() ?: [] as $documento) {
+                    $status = (string) ($documento['status'] ?? '');
+                    if ((int) ($documento['documento_id'] ?? 0) === 0 || in_array($status, ['rejeitado', 'substituido', 'nao_enviado'], true)) {
+                        $documentosPendentes[] = (string) ($documento['descricao'] ?? 'Documento');
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('[STUDENT DASHBOARD DOCS] Erro: ' . $e->getMessage());
+                $documentosPendentes = [];
+            }
+        }
+
         $this->render('pages/aluno/dashboard', [
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
@@ -114,6 +154,7 @@ final class StudentController extends Controller
             'matriculaDB' => $this->alunoService->matriculaDoAluno($studentId),
             'notificacaoCount' => $notificacaoCount,
             'temEndereco' => $temEndereco,
+            'documentosPendentes' => $documentosPendentes,
             'noticias' => $this->noticiaService->listPublicados(),
         ], 'aluno');
     }

@@ -13,24 +13,68 @@
 (function(){
   var preloader = document.getElementById('alunoPreloader');
   if (preloader) {
+    var minimumVisibleTime = 500;
     var preloaderStartedAt = window.__alunoPreloaderStartedAt || performance.now();
-    var ocultarPreloader = function() {
-      var elapsed = performance.now() - preloaderStartedAt;
-      var remaining = Math.max(0, 650 - elapsed);
-      window.setTimeout(function() {
-        preloader.classList.add('aluno-preloader--done');
-        window.setTimeout(function() {
-          if (preloader.parentNode) preloader.remove();
-        }, 400);
-      }, remaining);
-    };
+    var pageLoaded = document.readyState === 'complete';
+    var finished = false;
 
-    if (document.readyState === 'complete') {
-      ocultarPreloader();
-    } else {
-      window.addEventListener('load', ocultarPreloader, { once: true });
-      window.setTimeout(ocultarPreloader, 3000);
+    function mostrarPreloader() {
+      finished = false;
+      preloaderStartedAt = performance.now();
+      pageLoaded = false;
+      preloader.classList.remove('aluno-preloader--done');
+      preloader.setAttribute('aria-hidden', 'false');
     }
+
+    function ocultarPreloader() {
+      if (finished) return;
+      finished = true;
+      preloader.classList.add('aluno-preloader--done');
+      preloader.setAttribute('aria-hidden', 'true');
+    }
+
+    function finalizarQuandoPronto() {
+      if (!pageLoaded || finished) return;
+      var elapsed = performance.now() - preloaderStartedAt;
+      var remaining = Math.max(0, minimumVisibleTime - elapsed);
+      window.setTimeout(ocultarPreloader, remaining);
+    }
+
+    function isInternalAlunoLink(link) {
+      if (!link || !link.href || link.target === '_blank' || link.hasAttribute('download')) return false;
+      if (link.getAttribute('href').charAt(0) === '#') return false;
+      if (link.protocol !== window.location.protocol || link.host !== window.location.host) return false;
+      return link.pathname.indexOf('/aluno') === 0 || link.pathname === '/area-do-aluno';
+    }
+
+    document.addEventListener('click', function(event){
+      if (event.defaultPrevented || event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      var link = event.target.closest ? event.target.closest('a') : null;
+      if (isInternalAlunoLink(link)) mostrarPreloader();
+    });
+
+    document.addEventListener('submit', function(event){
+      var form = event.target;
+      if (!form || !form.action) return;
+      var action = new URL(form.action, window.location.href);
+      if (action.origin === window.location.origin && (action.pathname.indexOf('/aluno') === 0 || action.pathname === '/area-do-aluno' || action.pathname === '/logout')) {
+        mostrarPreloader();
+      }
+    });
+
+    window.addEventListener('load', function(){
+      pageLoaded = true;
+      finalizarQuandoPronto();
+    }, { once: true });
+    window.addEventListener('pageshow', function(){
+      pageLoaded = true;
+      finalizarQuandoPronto();
+    }, { once: true });
+    finalizarQuandoPronto();
+    window.setTimeout(function(){
+      pageLoaded = true;
+      finalizarQuandoPronto();
+    }, 10000);
   }
 
   var btn=document.getElementById('alunoScrollTop');
