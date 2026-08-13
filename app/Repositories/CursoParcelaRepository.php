@@ -17,7 +17,7 @@ final class CursoParcelaRepository
         }
 
         try {
-            $stmt = $pdo->prepare('INSERT INTO curso_parcela (id_curso, id_pagamento, id_turma, numero_parcela, total_parcelas, descricao_pagamento, nome, cpf, email, telefone, valor, data_vencimento, status) VALUES (:id_curso, :id_pagamento, :id_turma, :numero_parcela, :total_parcelas, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :data_vencimento, :status)');
+            $stmt = $pdo->prepare('INSERT INTO curso_parcela (id_curso, id_pagamento, id_turma, numero_parcela, total_parcelas, descricao_pagamento, nome, cpf, email, telefone, valor, data_vencimento, status, recorrencia_cartao) VALUES (:id_curso, :id_pagamento, :id_turma, :numero_parcela, :total_parcelas, :descricao_pagamento, :nome, :cpf, :email, :telefone, :valor, :data_vencimento, :status, :recorrencia_cartao)');
             $stmt->bindValue(':id_curso', (int) ($data['id_curso'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_pagamento', (int) ($data['id_pagamento'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_turma', isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? (int) $data['id_turma'] : null, isset($data['id_turma']) && (int) $data['id_turma'] > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
@@ -31,6 +31,7 @@ final class CursoParcelaRepository
             $stmt->bindValue(':valor', (float) ($data['valor'] ?? 0));
             $stmt->bindValue(':data_vencimento', $data['data_vencimento'] ?? null, $data['data_vencimento'] ?? null ? PDO::PARAM_STR : PDO::PARAM_NULL);
             $stmt->bindValue(':status', 'PENDENTE');
+            $stmt->bindValue(':recorrencia_cartao', (int) ($data['recorrencia_cartao'] ?? 0), PDO::PARAM_INT);
             $stmt->execute();
             return (int) $pdo->lastInsertId();
         } catch (\Throwable $e) {
@@ -196,6 +197,98 @@ final class CursoParcelaRepository
         }
     }
 
+    public function findByAsaasSubscription(string $subscription): ?array
+    {
+        if ($subscription === '') {
+            return null;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return null;
+            }
+
+            $stmt = $pdo->prepare('SELECT * FROM curso_parcela WHERE asaas_subscription = :asaas_subscription AND ativo = 1 LIMIT 1');
+            $stmt->bindValue(':asaas_subscription', $subscription);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return $row ?: null;
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em findByAsaasSubscription: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function atualizarRecorrencia(int $id, array $data): bool
+    {
+        if ($id < 1) {
+            return false;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return false;
+            }
+
+            $fields = [];
+            $params = [':id' => $id];
+
+            if (array_key_exists('recorrencia_cartao', $data)) {
+                $fields[] = 'recorrencia_cartao = :recorrencia_cartao';
+                $params[':recorrencia_cartao'] = (int) $data['recorrencia_cartao'];
+            }
+
+            if (array_key_exists('asaas_subscription', $data)) {
+                $fields[] = 'asaas_subscription = :asaas_subscription';
+                $params[':asaas_subscription'] = $data['asaas_subscription'] !== null && $data['asaas_subscription'] !== ''
+                    ? (string) $data['asaas_subscription']
+                    : null;
+            }
+
+            if (array_key_exists('data_inicio_recorrencia', $data)) {
+                $fields[] = 'data_inicio_recorrencia = :data_inicio_recorrencia';
+                $params[':data_inicio_recorrencia'] = $data['data_inicio_recorrencia'] ?? null;
+            }
+
+            if (array_key_exists('data_fim_recorrencia', $data)) {
+                $fields[] = 'data_fim_recorrencia = :data_fim_recorrencia';
+                $params[':data_fim_recorrencia'] = $data['data_fim_recorrencia'] ?? null;
+            }
+
+            if (array_key_exists('status_recorrencia', $data)) {
+                $fields[] = 'status_recorrencia = :status_recorrencia';
+                $params[':status_recorrencia'] = $data['status_recorrencia'] !== null && $data['status_recorrencia'] !== ''
+                    ? (string) $data['status_recorrencia']
+                    : null;
+            }
+
+            if ($fields === []) {
+                return true;
+            }
+
+            $fields[] = 'updated_at = CURRENT_TIMESTAMP';
+
+            $sql = 'UPDATE curso_parcela SET ' . implode(', ', $fields) . ' WHERE id = :id';
+            $stmt = $pdo->prepare($sql);
+
+            foreach ($params as $key => $value) {
+                if ($value === null) {
+                    $stmt->bindValue($key, null, PDO::PARAM_NULL);
+                    continue;
+                }
+
+                $stmt->bindValue($key, $value);
+            }
+
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em atualizarRecorrencia: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function listarPagasSemMatricula(): array
     {
         try {
@@ -291,13 +384,13 @@ final class CursoParcelaRepository
                 return [];
             }
 
-            $stmt = $pdo->prepare('SELECT id, numero_parcela, status, data_vencimento
-                                   FROM curso_parcela
-                                   WHERE id_aluno = :id_aluno
-                                     AND id_pagamento = :id_pagamento
-                                     AND id_curso = :id_curso
-                                     AND ativo = 1
-                                   ORDER BY numero_parcela ASC');
+            $stmt = $pdo->prepare('SELECT cp.*
+                                   FROM curso_parcela cp
+                                   WHERE cp.id_aluno = :id_aluno
+                                     AND cp.id_pagamento = :id_pagamento
+                                     AND cp.id_curso = :id_curso
+                                     AND cp.ativo = 1
+                                   ORDER BY cp.numero_parcela ASC');
             $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
             $stmt->bindValue(':id_pagamento', $idPagamento, PDO::PARAM_INT);
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);

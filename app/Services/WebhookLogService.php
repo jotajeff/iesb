@@ -79,6 +79,46 @@ final class WebhookLogService
     }
 
     /**
+     * Conta as cobranças pendentes (status PENDING) no log do webhook mais
+     * recente. Usa o último status registrado para cada payment id.
+     */
+    public function contarPendentesUltimoLog(): int
+    {
+        $arquivos = $this->listarArquivos();
+        if ($arquivos === []) {
+            return 0;
+        }
+
+        $conteudo = $this->lerArquivo((string) ($arquivos[0]['arquivo'] ?? ''));
+        if ($conteudo === null) {
+            return 0;
+        }
+
+        $statusPorPayment = [];
+
+        foreach ($this->parsear($conteudo) as $evento) {
+            $dados = is_array($evento['dados'] ?? null) ? $evento['dados'] : [];
+            $paymentId = (string) ($dados['payment_id'] ?? '');
+            $status = strtoupper((string) ($dados['status'] ?? ''));
+
+            if ($paymentId === '' || $status === '') {
+                continue;
+            }
+
+            $statusPorPayment[$paymentId] = $status;
+        }
+
+        $pendentes = 0;
+        foreach ($statusPorPayment as $status) {
+            if ($status === 'PENDING') {
+                $pendentes++;
+            }
+        }
+
+        return $pendentes;
+    }
+
+    /**
      * Parseia as linhas do log em eventos estruturados.
      *
      * @return array<int, array<string, mixed>>

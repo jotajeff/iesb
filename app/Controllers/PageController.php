@@ -409,21 +409,23 @@ final class PageController extends Controller
 
     public function inscricao(): void
     {
-        $id = (int) ($_GET['id'] ?? 0);
+        $slug = trim((string) ($_GET['slug'] ?? ''));
 
-        if ($id <= 0) {
+        if ($slug === '') {
             http_response_code(404);
             $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
             return;
         }
 
-        $curso = $this->cursoService->findCurso($id);
+        $curso = $this->cursoService->findCursoBySlug($slug);
 
         if (!$curso) {
             http_response_code(404);
             $this->render('pages/404', ['title' => 'Curso não encontrado', 'currentRoute' => '/curso']);
             return;
         }
+
+        $id = (int) ($curso['id'] ?? 0);
 
         $pagamentos = $this->pagamentoService->listarPorCurso($id);
 
@@ -470,11 +472,13 @@ final class PageController extends Controller
         if (!in_array($formaPagamento, ['pix', 'cartao', 'boleto'], true)) {
             $formaPagamento = 'pix';
         }
+        $recorrencia = $formaPagamento === 'cartao' && (int) $this->input('recorrencia', 0) === 1 ? 1 : 0;
 
         $curso = $this->cursoService->findCurso($idCurso);
         $pagamentos = $this->pagamentoService->listarPorCurso($idCurso);
         $dados = compact('idCurso', 'idPagamento', 'idTurma', 'nome', 'cpf', 'email', 'telefone');
         $dados['formaPagamento'] = $formaPagamento;
+        $dados['recorrencia'] = $recorrencia;
 
         if ($idTurma > 0) {
             $turmaValida = false;
@@ -552,6 +556,7 @@ final class PageController extends Controller
             'email' => $email,
             'telefone' => $telefone,
             'valor' => (float) ($pagamento['valor'] ?? 0),
+            'recorrencia_cartao' => $recorrencia,
         ]);
 
         if ($result <= 0) {
@@ -773,10 +778,17 @@ final class PageController extends Controller
 
     public function preInscricao(): void
     {
+        $slug = trim((string) ($_GET['curso_slug'] ?? ''));
         $cursoId = (int) ($_GET['curso_id'] ?? 0);
         $cursoNome = '';
 
-        if ($cursoId > 0) {
+        if ($slug !== '') {
+            $curso = $this->cursoService->findCursoBySlug($slug);
+            if ($curso) {
+                $cursoId = (int) ($curso['id'] ?? 0);
+                $cursoNome = (string) ($curso['nome'] ?? '');
+            }
+        } elseif ($cursoId > 0) {
             $curso = $this->cursoService->findCurso($cursoId);
             if ($curso) {
                 $cursoNome = (string) ($curso['nome'] ?? '');

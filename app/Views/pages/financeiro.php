@@ -229,13 +229,15 @@ $formAction = $ehParcela
               </div>
 
               <?php if (!$ehParcela): ?>
-                <div class="form-check mt-3" id="recorrenciaBox" style="display:none;">
-                  <input class="form-check-input" type="checkbox" name="recorrencia" value="1" id="recorrenciaCheck">
-                  <label class="form-check-label" for="recorrenciaCheck">
-                    <i class="bi bi-arrow-repeat me-1"></i>Autorizar cobrança automática das próximas parcelas
-                    <span class="text-muted">no cartão de crédito</span>
-                  </label>
-                  <div class="form-text">Ao autorizar, as parcelas restantes do acordo serão cobradas automaticamente no seu cartão após a confirmação do pagamento da entrada.</div>
+                <div class="recorrencia-box" id="recorrenciaBox" style="display:none;">
+                  <div class="form-check mb-0">
+                    <input class="form-check-input" type="checkbox" name="recorrencia" value="1" id="recorrenciaCheck">
+                    <label class="form-check-label" for="recorrenciaCheck">
+                      <i class="bi bi-arrow-repeat me-1"></i>Autorizar cobrança automática das próximas parcelas
+                      <span class="text-muted">no cartão de crédito</span>
+                    </label>
+                  </div>
+                  <div class="form-text mb-0">Ao autorizar, as parcelas restantes do acordo serão cobradas automaticamente no seu cartão após a confirmação do pagamento da entrada.</div>
                 </div>
               <?php endif; ?>
 
@@ -261,6 +263,25 @@ $formAction = $ehParcela
     </div>
   </div>
 </section>
+
+<style>
+  .recorrencia-box {
+    border: 2px solid #fd7e14;
+    border-radius: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    margin-top: 0.9rem;
+    background: #fff8ef;
+  }
+
+  .recorrencia-box .form-check-input:checked {
+    background-color: #fd7e14;
+    border-color: #fd7e14;
+  }
+
+  .recorrencia-box .form-check-label {
+    font-weight: 600;
+  }
+</style>
 
 <script>
   function copiarTexto(elementId) {

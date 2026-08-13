@@ -68,6 +68,7 @@ final class MatriculaService
         $matriculaExistente = $this->matriculaRepository->findByPagamento($idInscricao);
         if ($matriculaExistente !== null) {
             $this->criarAssinaturaSeNecessario($inscricao);
+            $this->garantirParcelasRestantesDireta($inscricao);
             return [
                 'message' => 'Pagamento já processado anteriormente',
                 'inscricaoId' => $idInscricao,
@@ -145,6 +146,10 @@ final class MatriculaService
             $inscricao['id_aluno'] = $idAluno;
             $inscricao['id_matricula'] = $idMatricula;
 
+            // Inscrição direta (sem acordo): gera as demais parcelas (30 dias)
+            // assim que a 1ª é paga, para constarem no financeiro do aluno.
+            $this->garantirParcelasRestantesDireta($inscricao);
+
             $this->criarAssinaturaSeNecessario($inscricao);
 
             $this->enviarBoasVindas($idAluno, $nome, $email, $cpf, $idMatricula);
@@ -158,6 +163,129 @@ final class MatriculaService
         } catch (\Throwable $e) {
             $this->parcelaService->atualizarStatus($idInscricao, 'CANCELADO');
             throw $e instanceof RuntimeException ? $e : new RuntimeException($e->getMessage(), 0, $e);
+        }
+    }
+
+    /**
+     * Gera as parcelas restantes (2..N) de uma inscrição direta feita pelo
+     * site (sem acordo de pagamento), com intervalo de 30 dias. Idempotente.
+     * Não faz nada para acordos (o fluxo deles é tratado pela recorrência).
+     *
+     * @param array<string, mixed> $inscricao
+     */
+    private function garantirParcelasRestantesDireta(array $inscricao): void
+    {
+        if ((int) ($inscricao['id_acordo_pagamento'] ?? 0) > 0) {
+            return;
+        }
+
+        if ((int) ($inscricao['total_parcelas'] ?? 1) <= 1) {
+            return;
+        }
+
+        try {
+            $this->parcelaService->gerarParcelasRestantesPorPlano($inscricao);
+        } catch (\Throwable $e) {
+            error_log('[INSCRICAO DIRETA] Erro ao gerar parcelas restantes: ' . $e->getMessage());
+        }
+
+        $this->criarAssinaturaInscricaoDireta($inscricao);
+    }
+
+    /**
+     * Cria a assinatura recorrente de uma inscrição direta (sem acordo) após o
+     * pagamento da 1ª parcela, quando o aluno autorizou recorrencia_cartao.
+     * Idempotente. Nunca é executado para acordos (fluxo separado).
+     *
+     * @param array<string, mixed> $inscricao
+     */
+    private function criarAssinaturaInscricaoDireta(array $inscricao): void
+    {
+        if ((int) ($inscricao['id_acordo_pagamento'] ?? 0) > 0) {
+            return;
+        }
+
+        if ((int) ($inscricao['numero_parcela'] ?? 1) !== 1) {
+            return;
+        }
+
+        if ((int) ($inscricao['recorrencia_cartao'] ?? 0) !== 1) {
+            return;
+        }
+
+        if (trim((string) ($inscricao['asaas_subscription'] ?? '')) !== '') {
+            return;
+        }
+
+        if ((int) ($inscricao['total_parcelas'] ?? 1) <= 1) {
+            return;
+        }
+
+        $idParcelaOrigem = (int) ($inscricao['id'] ?? 0);
+        $customerId = (string) ($inscricao['asaas_customer'] ?? '');
+        if ($idParcelaOrigem <= 0 || $customerId === '') {
+            return;
+        }
+
+        try {
+            $totalParcelas = (int) ($inscricao['total_parcelas'] ?? 1);
+            $parcelas = $this->parcelaService->listarPorInscricao(
+                (int) ($inscricao['id_aluno'] ?? 0),
+                (int) ($inscricao['id_pagamento'] ?? 0),
+                (int) ($inscricao['id_curso'] ?? 0)
+            );
+
+            $dataInicio = '';
+            $dataFim = '';
+            foreach ($parcelas as $parcela) {
+                $numero = (int) ($parcela['numero_parcela'] ?? 0);
+                if ($numero === 2 && $dataInicio === '') {
+                    $dataInicio = (string) ($parcela['data_vencimento'] ?? '');
+                }
+                if ($numero === $totalParcelas && $dataFim === '') {
+                    $dataFim = (string) ($parcela['data_vencimento'] ?? '');
+                }
+            }
+
+            $dataBase = (string) ($inscricao['data_vencimento'] ?? date('Y-m-d'));
+            if ($dataInicio === '') {
+                $dataInicio = date('Y-m-d', strtotime($dataBase . ' + 30 days'));
+            }
+            if ($dataFim === '') {
+                $dataFim = date('Y-m-d', strtotime($dataInicio . ' + ' . (($totalParcelas - 2) * 30) . ' days'));
+            }
+
+            $valor = (float) ($inscricao['valor'] ?? 0);
+            $descricao = (string) ($inscricao['descricao_pagamento'] ?? 'Inscrição');
+
+            $asaas = new \App\Services\AsaasService();
+            $resultado = $asaas->criarAssinatura([
+                'customer_id' => $customerId,
+                'billing_type' => 'CREDIT_CARD',
+                'value' => $valor,
+                'cycle' => 'MONTHLY',
+                'next_due_date' => $dataInicio,
+                'end_date' => $dataFim,
+                'description' => $descricao . ' - recorrência',
+                'external_reference' => (string) $idParcelaOrigem,
+            ]);
+
+            if ($resultado === null) {
+                $this->parcelaService->atualizarRecorrencia($idParcelaOrigem, [
+                    'status_recorrencia' => 'ERRO',
+                ]);
+                error_log('[INSCRICAO DIRETA] Falha ao criar assinatura: ' . ($asaas->getLastError() ?? 'erro desconhecido'));
+                return;
+            }
+
+            $this->parcelaService->atualizarRecorrencia($idParcelaOrigem, [
+                'asaas_subscription' => (string) ($resultado['id'] ?? ''),
+                'status_recorrencia' => 'ATIVA',
+                'data_inicio_recorrencia' => $dataInicio,
+                'data_fim_recorrencia' => $dataFim,
+            ]);
+        } catch (\Throwable $e) {
+            error_log('[INSCRICAO DIRETA] Erro ao criar assinatura: ' . $e->getMessage());
         }
     }
 
@@ -192,6 +320,7 @@ final class MatriculaService
         $matriculaExistente = $this->matriculaRepository->findByPagamento($idInscricao);
         if ($matriculaExistente !== null) {
             $this->criarAssinaturaSeNecessario($inscricao);
+            $this->garantirParcelasRestantesDireta($inscricao);
             return [
                 'id' => $idInscricao,
                 'status' => 'ok',

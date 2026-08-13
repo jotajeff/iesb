@@ -3,6 +3,17 @@
 use App\Support\SessaoMidia;
 
 ?>
+<style>
+  #galeria-eventos .glightbox-item {
+    transition: transform 0.35s ease, box-shadow 0.35s ease;
+    will-change: transform;
+  }
+
+  #galeria-eventos .glightbox-item:hover {
+    transform: translateY(-8px) rotate(1.6deg);
+    box-shadow: 0 14px 26px rgba(0, 0, 0, 0.18);
+  }
+</style>
 <?php if ($sessaoBanner !== null): ?>
   <div class="session-hero session-hero--banner">
     <img src="/<?= htmlspecialchars($sessaoBanner, ENT_QUOTES, 'UTF-8') ?>" alt="Eventos" class="session-hero-img">

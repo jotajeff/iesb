@@ -33,7 +33,7 @@ return static function (Router $router): void {
     $router->get('/cursos', [PageController::class, 'cursos']);
     $router->get('/cursos/{slug}', [PageController::class, 'cursos']);
     $router->get('/curso/{slug}', [PageController::class, 'cursoDetalhe']);
-    $router->get('/curso/{id}/inscricao', [PageController::class, 'inscricao']);
+    $router->get('/curso/{slug}/inscricao', [PageController::class, 'inscricao']);
     $router->post('/inscricao/salvar', [PageController::class, 'salvarInscricao']);
     $router->get('/eventos', [PageController::class, 'eventos']);
     $router->get('/parcerias', [PageController::class, 'parcerias']);

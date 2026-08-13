@@ -270,33 +270,72 @@ final class StudentController extends Controller
     private function marcarRecorrencia(array $parcelas): array
     {
         $cache = [];
+        $origens = [];
 
         foreach ($parcelas as &$parcela) {
             $parcela['recorrencia_ativa'] = false;
             $parcela['status_recorrencia'] = '';
 
             $idAcordo = (int) ($parcela['id_acordo_pagamento'] ?? 0);
-            if ($idAcordo <= 0) {
+            if ($idAcordo > 0) {
+                if (!array_key_exists($idAcordo, $cache)) {
+                    $acordo = $this->acordoService->findById($idAcordo);
+                    $cache[$idAcordo] = is_array($acordo) ? $acordo : false;
+                }
+
+                $acordo = $cache[$idAcordo];
+                if (!is_array($acordo)) {
+                    continue;
+                }
+
+                $status = strtoupper(trim((string) ($acordo['status_recorrencia'] ?? '')));
+                $parcela['status_recorrencia'] = $status;
+                $parcela['recorrencia_ativa'] = $status === 'ATIVA';
                 continue;
             }
 
-            if (!array_key_exists($idAcordo, $cache)) {
-                $acordo = $this->acordoService->findById($idAcordo);
-                $cache[$idAcordo] = is_array($acordo) ? $acordo : false;
+            // Inscrição direta (sem acordo): a parcela 1 é a dona da assinatura.
+            $status = strtoupper(trim((string) ($parcela['status_recorrencia'] ?? '')));
+            if ($status === '' && trim((string) ($parcela['asaas_subscription'] ?? '')) !== '') {
+                $status = 'ATIVA';
             }
-
-            $acordo = $cache[$idAcordo];
-            if (!is_array($acordo)) {
-                continue;
-            }
-
-            $status = strtoupper(trim((string) ($acordo['status_recorrencia'] ?? '')));
             $parcela['status_recorrencia'] = $status;
             $parcela['recorrencia_ativa'] = $status === 'ATIVA';
+
+            if ($parcela['recorrencia_ativa']) {
+                $origens[$this->chaveInscricao($parcela)] = true;
+            }
+        }
+        unset($parcela);
+
+        // Propaga a recorrência ativa para as demais parcelas da mesma inscrição.
+        foreach ($parcelas as &$parcela) {
+            if (!empty($parcela['recorrencia_ativa'])) {
+                continue;
+            }
+            if ((int) ($parcela['id_acordo_pagamento'] ?? 0) > 0) {
+                continue;
+            }
+            if (isset($origens[$this->chaveInscricao($parcela)])) {
+                $parcela['recorrencia_ativa'] = true;
+                $parcela['status_recorrencia'] = 'ATIVA';
+            }
         }
         unset($parcela);
 
         return $parcelas;
+    }
+
+    /**
+     * Chave que identifica uma inscrição direta (sem acordo).
+     *
+     * @param array<string, mixed> $parcela
+     */
+    private function chaveInscricao(array $parcela): string
+    {
+        return (int) ($parcela['id_pagamento'] ?? 0)
+            . ':' . (int) ($parcela['id_curso'] ?? 0)
+            . ':' . (int) ($parcela['id_aluno'] ?? 0);
     }
 
     public function show(): void

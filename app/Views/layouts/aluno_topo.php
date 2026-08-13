@@ -85,4 +85,9 @@
     </div>
   </nav>
 
+  <div class="aluno-preloader" id="alunoPreloader" role="status" aria-label="Carregando página">
+    <div class="aluno-preloader-bar"></div>
+  </div>
+  <script>window.__alunoPreloaderStartedAt = performance.now();</script>
+
   <main class="flex-grow-1 w-100">

@@ -148,17 +148,19 @@ final class VisitTrackerService
 
     private function cursoNomeFromInscricaoPath(PDO $pdo, string $path): ?string
     {
-        if (preg_match('#^/curso/(\d+)/inscricao$#', $path, $m) !== 1) {
+        if (preg_match('#^/curso/([^/]+)/inscricao$#', $path, $m) !== 1) {
             return null;
         }
 
-        $cursoId = (int) $m[1];
-        if ($cursoId <= 0) {
+        $segmento = rawurldecode((string) $m[1]);
+        if ($segmento === '') {
             return null;
         }
 
-        $stmt = $pdo->prepare('SELECT nome FROM cursos WHERE id = :id LIMIT 1');
-        $stmt->execute(['id' => $cursoId]);
+        $stmt = ctype_digit($segmento)
+            ? $pdo->prepare('SELECT nome FROM cursos WHERE id = :id LIMIT 1')
+            : $pdo->prepare('SELECT nome FROM cursos WHERE slug = :slug LIMIT 1');
+        $stmt->execute(ctype_digit($segmento) ? ['id' => (int) $segmento] : ['slug' => $segmento]);
         $nome = $stmt->fetchColumn();
 
         if (!is_string($nome) || trim($nome) === '') {

@@ -84,6 +84,21 @@ $cursoId = (int) ($cursoId ?? $_GET['curso_id'] ?? 0);
               </form>
 
               <script>
+                function formatarTelefone(valor) {
+                  const d = (valor || '').replace(/\D/g, '').slice(0, 11);
+                  if (d.length === 0) return '';
+                  if (d.length <= 2) return '(' + d;
+                  if (d.length <= 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
+                  if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+                  return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+                }
+
+                document.getElementById('whatsapp')?.addEventListener('input', function () {
+                  this.value = formatarTelefone(this.value);
+                });
+                const whatsappEl = document.getElementById('whatsapp');
+                if (whatsappEl) whatsappEl.value = formatarTelefone(whatsappEl.value);
+
                 document.getElementById('formPreInscricao')?.addEventListener('submit', function() {
                   document.getElementById('spinnerPre').classList.remove('d-none');
                   document.getElementById('textoPre').innerHTML = 'Enviando…';

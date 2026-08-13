@@ -312,11 +312,13 @@ $isPos = $nivelSlug === 'pos-graduacao';
               <i class="bi bi-box-arrow-up-right me-1"></i>Inscreva-se
             </a>
           <?php else: ?>
-            <a class="btn-primary-custom w-100 justify-content-center" href="/curso/<?= (int) ($curso['id'] ?? 0) ?>/inscricao<?= (int) ($idTurma ?? 0) > 0 ? '?turma_id=' . (int) $idTurma : '' ?>">
+            <?php $slugCurso = (string) ($curso['slug'] ?? ''); ?>
+            <a class="btn-primary-custom w-100 justify-content-center" href="/curso/<?= htmlspecialchars($slugCurso !== '' ? $slugCurso : (string) ((int) ($curso['id'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>/inscricao<?= (int) ($idTurma ?? 0) > 0 ? '?turma_id=' . (int) $idTurma : '' ?>">
               <i class="bi bi-pencil-square me-1"></i>Garantir minha vaga
             </a>
           <?php endif; ?>
-          <a class="btn btn-outline-primary w-100 justify-content-center d-flex align-items-center gap-2 mt-2" href="/pre-inscricao?curso_id=<?= (int) ($curso['id'] ?? 0) ?>">
+          <?php $slugPre = (string) ($curso['slug'] ?? ''); ?>
+          <a class="btn btn-outline-primary w-100 justify-content-center d-flex align-items-center gap-2 mt-2" href="/pre-inscricao?curso_slug=<?= htmlspecialchars($slugPre !== '' ? $slugPre : (string) ((int) ($curso['id'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>">
             <i class="bi bi-info-circle"></i> Quero mais informações
           </a>
         </div>

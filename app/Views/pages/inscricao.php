@@ -30,8 +30,7 @@ $idCurso = (int) ($curso['id'] ?? 0);
     <div class="row justify-content-center">
       <div class="col-lg-8">
 
-        <?php if ($sucesso): ?>
-          <div class="bg-white border rounded-4 p-5 shadow-sm text-center">
+        <?php if ($sucesso): ?>          <div class="bg-white border rounded-4 p-5 shadow-sm text-center">
             <div class="mb-3 text-success"><i class="bi bi-check-circle-fill" style="font-size:4rem;"></i></div>
             <h3 class="mb-2">Inscrição recebida!</h3>
             <p class="text-muted mb-1">Sua inscrição para o curso <strong><?= htmlspecialchars((string) ($curso['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong> foi registrada com sucesso.</p>
@@ -116,11 +115,11 @@ $idCurso = (int) ($curso['id'] ?? 0);
                 </div>
                 <div class="col-md-6">
                   <label class="form-label">Telefone <span class="text-danger">*</span></label>
-                  <input type="text" name="telefone" class="form-control-custom" value="<?= htmlspecialchars((string) ($dados['telefone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required placeholder="(00) 00000-0000">
+                  <input type="tel" id="inscricaoTelefone" name="telefone" class="form-control-custom" value="<?= htmlspecialchars((string) ($dados['telefone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required placeholder="(00) 00000-0000" maxlength="16" inputmode="tel">
                 </div>
                 <div class="col-12">
                   <label class="form-label">E-mail <span class="text-danger">*</span></label>
-                  <input type="email" name="email" class="form-control-custom" value="<?= htmlspecialchars((string) ($dados['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required>
+                  <input type="email" id="inscricaoEmail" name="email" class="form-control-custom" value="<?= htmlspecialchars((string) ($dados['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" required placeholder="seu@email.com">
                 </div>
               </div>
 
@@ -186,6 +185,17 @@ $idCurso = (int) ($curso['id'] ?? 0);
                 </div>
               </div>
 
+              <div class="recorrencia-box" id="inscricaoRecorrenciaBox" style="display:none;">
+                <div class="form-check mb-0">
+                  <input class="form-check-input" type="checkbox" name="recorrencia" value="1" id="inscricaoRecorrenciaCheck"<?= (int) ($dados['recorrencia'] ?? 0) === 1 ? ' checked' : '' ?>>
+                  <label class="form-check-label" for="inscricaoRecorrenciaCheck">
+                    <i class="bi bi-arrow-repeat me-1"></i>Autorizar cobrança automática das próximas parcelas
+                    <span class="text-muted">no cartão de crédito</span>
+                  </label>
+                </div>
+                <div class="form-text mb-0">Após a confirmação do pagamento da entrada, as parcelas restantes serão cobradas automaticamente no seu cartão.</div>
+              </div>
+
               <div class="mt-4">
                 <button type="submit" class="btn-primary-custom w-100 justify-content-center"><i class="bi bi-check-lg me-1"></i>Finalizar inscrição</button>
               </div>
@@ -197,6 +207,25 @@ $idCurso = (int) ($curso['id'] ?? 0);
     </div>
   </div>
 </section>
+
+<style>
+  .recorrencia-box {
+    border: 2px solid #fd7e14;
+    border-radius: 0.75rem;
+    padding: 0.9rem 1.1rem;
+    margin-top: 0.9rem;
+    background: #fff8ef;
+  }
+
+  .recorrencia-box .form-check-input:checked {
+    background-color: #fd7e14;
+    border-color: #fd7e14;
+  }
+
+  .recorrencia-box .form-check-label {
+    font-weight: 600;
+  }
+</style>
 
 <script>
   function copiarTexto(elementId) {
@@ -212,6 +241,58 @@ $idCurso = (int) ($curso['id'] ?? 0);
     el.select?.();
     document.execCommand('copy');
   }
+
+  function formatarTelefone(valor) {
+    const d = (valor || '').replace(/\D/g, '').slice(0, 11);
+    if (d.length === 0) return '';
+    if (d.length <= 2) return '(' + d;
+    if (d.length <= 6) return '(' + d.slice(0, 2) + ') ' + d.slice(2);
+    if (d.length === 10) return '(' + d.slice(0, 2) + ') ' + d.slice(2, 6) + '-' + d.slice(6);
+    return '(' + d.slice(0, 2) + ') ' + d.slice(2, 7) + '-' + d.slice(7);
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    const telefone = document.getElementById('inscricaoTelefone');
+    if (telefone) {
+      telefone.addEventListener('input', function () {
+        this.value = formatarTelefone(this.value);
+      });
+      telefone.value = formatarTelefone(telefone.value);
+    }
+
+    const email = document.getElementById('inscricaoEmail');
+    const formInsc = document.querySelector('form[action="/inscricao/salvar"]');
+    if (email) {
+      email.addEventListener('input', function () {
+        this.setCustomValidity('');
+      });
+    }
+    if (email && formInsc) {
+      formInsc.addEventListener('submit', function (e) {
+        const valor = (email.value || '').trim();
+        if (valor === '' || valor.indexOf('@') === -1) {
+          e.preventDefault();
+          email.setCustomValidity('Informe um e-mail válido contendo @.');
+          email.reportValidity();
+        }
+      });
+    }
+
+    const recorrenciaBox = document.getElementById('inscricaoRecorrenciaBox');
+    if (recorrenciaBox) {
+      function atualizarRecorrenciaInscricao() {
+        const selecionado = document.querySelector('input[name="forma_pagamento"]:checked');
+        const mostra = selecionado && selecionado.value === 'cartao';
+        recorrenciaBox.style.display = mostra ? 'block' : 'none';
+        const check = document.getElementById('inscricaoRecorrenciaCheck');
+        if (check && !mostra) check.checked = false;
+      }
+      document.querySelectorAll('input[name="forma_pagamento"]').forEach(function (r) {
+        r.addEventListener('change', atualizarRecorrenciaInscricao);
+      });
+      atualizarRecorrenciaInscricao();
+    }
+  });
 </script>
 
 <?php if (!empty($abrirCheckoutNovaAba) && ($invoiceUrl !== '' || $bankSlipUrl !== '')): ?>

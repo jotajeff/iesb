@@ -11,6 +11,28 @@
 
 <script>
 (function(){
+  var preloader = document.getElementById('alunoPreloader');
+  if (preloader) {
+    var preloaderStartedAt = window.__alunoPreloaderStartedAt || performance.now();
+    var ocultarPreloader = function() {
+      var elapsed = performance.now() - preloaderStartedAt;
+      var remaining = Math.max(0, 650 - elapsed);
+      window.setTimeout(function() {
+        preloader.classList.add('aluno-preloader--done');
+        window.setTimeout(function() {
+          if (preloader.parentNode) preloader.remove();
+        }, 400);
+      }, remaining);
+    };
+
+    if (document.readyState === 'complete') {
+      ocultarPreloader();
+    } else {
+      window.addEventListener('load', ocultarPreloader, { once: true });
+      window.setTimeout(ocultarPreloader, 3000);
+    }
+  }
+
   var btn=document.getElementById('alunoScrollTop');
   if(!btn)return;
   window.addEventListener('scroll',function(){

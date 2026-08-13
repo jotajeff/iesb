@@ -185,6 +185,16 @@ final class CursoParcelaService
         return $this->repository->findByExternalReference($id);
     }
 
+    public function findByAsaasSubscription(string $subscription): ?array
+    {
+        return $this->repository->findByAsaasSubscription($subscription);
+    }
+
+    public function atualizarRecorrencia(int $id, array $data): bool
+    {
+        return $this->repository->atualizarRecorrencia($id, $data);
+    }
+
     public function listarPagasSemMatricula(): array
     {
         return $this->repository->listarPagasSemMatricula();

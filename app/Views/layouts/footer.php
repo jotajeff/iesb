@@ -314,6 +314,22 @@
   </div>
 
   <script>
+  (function() {
+    var preloader = document.getElementById('alunoPreloader');
+    if (!preloader) return;
+
+    var startedAt = window.__alunoPreloaderStartedAt || performance.now();
+    var elapsed = performance.now() - startedAt;
+    var remaining = Math.max(0, 650 - elapsed);
+
+    window.setTimeout(function() {
+      preloader.classList.add('aluno-preloader--done');
+      window.setTimeout(function() {
+        if (preloader.parentNode) preloader.remove();
+      }, 400);
+    }, remaining);
+  })();
+
   document.addEventListener('DOMContentLoaded', function() {
     if (localStorage.getItem('cookieConsent') !== null) {
       return;
