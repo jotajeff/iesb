@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 12/08/2026 às 20:38
+-- Tempo de geração: 13/08/2026 às 18:58
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -269,6 +269,11 @@ CREATE TABLE `curso_parcela` (
   `valor` decimal(10,2) DEFAULT NULL,
   `data_vencimento` date DEFAULT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `recorrencia_cartao` tinyint(1) NOT NULL DEFAULT '0',
+  `asaas_subscription` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `status_recorrencia` varchar(20) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `data_inicio_recorrencia` date DEFAULT NULL,
+  `data_fim_recorrencia` date DEFAULT NULL,
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

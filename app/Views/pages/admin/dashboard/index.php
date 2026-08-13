@@ -19,10 +19,22 @@ $dashboardTypeLabel = match ($dashboardType) {
 <section class="container py-4">
   <div class="bg-white border rounded-4 p-4 shadow-sm mb-4">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
-      <div>
-        <div class="text-uppercase text-muted small fw-semibold mb-1">Bem-vindo ao painel</div>
-        <h4 class="mb-1">Olá, <?= htmlspecialchars($dashboardName, ENT_QUOTES, 'UTF-8') ?></h4>
-        <p class="mb-0 text-muted">Seu nível de acesso atual é <strong><?= htmlspecialchars($dashboardTypeLabel, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+      <div class="d-flex align-items-center gap-3">
+        <a href="<?= htmlspecialchars((string) ($fotosUrl ?? '/admin/usuarios'), ENT_QUOTES, 'UTF-8') ?>"
+           class="text-decoration-none d-inline-flex align-items-center justify-content-center rounded-circle overflow-hidden border border-2 border-light-subtle shadow-sm bg-light flex-shrink-0"
+           style="width:64px;height:64px;"
+           title="Foto do perfil">
+          <?php if (!empty($userFoto)): ?>
+            <img src="/<?= htmlspecialchars((string) $userFoto, ENT_QUOTES, 'UTF-8') ?>" alt="Foto do usuário" style="width:100%;height:100%;object-fit:cover;">
+          <?php else: ?>
+            <i class="bi bi-camera" style="font-size:1.6rem;color:#6c757d;"></i>
+          <?php endif; ?>
+        </a>
+        <div>
+          <div class="text-uppercase text-muted small fw-semibold mb-1">Bem-vindo ao painel</div>
+          <h4 class="mb-1">Olá, <?= htmlspecialchars($dashboardName, ENT_QUOTES, 'UTF-8') ?></h4>
+          <p class="mb-0 text-muted">Seu nível de acesso atual é <strong><?= htmlspecialchars($dashboardTypeLabel, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+        </div>
       </div>
       <div class="text-end">
         <span class="badge bg-dark text-uppercase"><?= htmlspecialchars($dashboardTypeLabel, ENT_QUOTES, 'UTF-8') ?></span>

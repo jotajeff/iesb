@@ -176,6 +176,7 @@ final class AcordoPagamentoRepository
         try {
             $sql = 'SELECT ap.id,
                            ap.tipo,
+                           ap.id_pre_inscricao,
                            ap.cpf,
                            ap.valor_entrada,
                            ap.data_vencimento_entrada,
@@ -220,6 +221,29 @@ final class AcordoPagamentoRepository
         } catch (\Throwable $e) {
             error_log('[ACORDO_PAGAMENTO] Erro ao listar acordos: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    public function buscarIdAlunoPorAcordo(int $idAcordo): ?int
+    {
+        if ($idAcordo < 1) {
+            return null;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT MAX(id_aluno) FROM curso_parcela WHERE id_acordo_pagamento = :id AND id_aluno IS NOT NULL');
+            $stmt->bindValue(':id', $idAcordo, PDO::PARAM_INT);
+            $stmt->execute();
+            $value = (int) $stmt->fetchColumn();
+            return $value > 0 ? $value : null;
+        } catch (\Throwable $e) {
+            error_log('[ACORDO_PAGAMENTO] Erro ao buscar aluno do acordo: ' . $e->getMessage());
+            return null;
         }
     }
 

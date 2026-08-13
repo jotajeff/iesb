@@ -131,6 +131,9 @@ return static function (Router $router): void {
     $router->post('/admin/usuarios/salvar', [UsuarioController::class, 'salvar']);
     $router->get('/admin/usuarios/editar', [UsuarioController::class, 'editar']);
     $router->post('/admin/usuarios/atualizar', [UsuarioController::class, 'atualizar']);
+    $router->get('/admin/usuarios/fotos', [UsuarioController::class, 'fotos']);
+    $router->post('/admin/usuarios/upload-foto', [UsuarioController::class, 'uploadFoto']);
+    $router->post('/admin/usuarios/deletar-foto', [UsuarioController::class, 'deletarFoto']);
 
     $router->get('/admin/alunos', [AlunoController::class, 'index']);
     $router->get('/admin/alunos/novo', [AlunoController::class, 'novo']);
@@ -209,6 +212,7 @@ return static function (Router $router): void {
     $router->post('/admin/preinscricao/comentario', [PreInscricaoController::class, 'comentario']);
     $router->post('/admin/preinscricao/atualizar-situacao', [PreInscricaoController::class, 'atualizarSituacao']);
     $router->post('/admin/preinscricao/acordo', [PreInscricaoController::class, 'salvarAcordo']);
+    $router->post('/admin/preinscricao/acordo/enviar-email', [PreInscricaoController::class, 'enviarEmailAcordo']);
 
     $router->get('/admin/sessao', [SessaoController::class, 'index']);
     $router->get('/admin/sessao/novo', [SessaoController::class, 'novo']);

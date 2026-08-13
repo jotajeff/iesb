@@ -13,6 +13,7 @@ use App\Services\CursoService;
 use App\Services\IpLocationService;
 use App\Services\LogService;
 use App\Services\MatriculaService;
+use App\Services\NotificacaoEmailService;
 use App\Services\PreInscricaoService;
 use App\Support\Session;
 
@@ -26,6 +27,7 @@ final class PreInscricaoController extends Controller
     private CommentService $comments;
     private LogService $logService;
     private MatriculaService $matriculaService;
+    private NotificacaoEmailService $notificacaoEmailService;
 
     public function __construct()
     {
@@ -37,6 +39,7 @@ final class PreInscricaoController extends Controller
         $this->comments = new CommentService();
         $this->logService = new LogService();
         $this->matriculaService = new MatriculaService();
+        $this->notificacaoEmailService = new NotificacaoEmailService();
     }
 
     public function index(): void
@@ -273,12 +276,47 @@ final class PreInscricaoController extends Controller
 
         $acordos = $this->acordoService->listarComPreInscrito();
 
+        $enviosPorAcordo = $this->notificacaoEmailService->listarPorAcordos(
+            array_map(static fn (array $acordo): int => (int) ($acordo['id'] ?? 0), $acordos)
+        );
+
         $this->render('pages/admin/preinscricao/acordo', [
             'title' => 'Acordos',
             'currentRoute' => '/admin/preinscricao/acordos',
             'acordos' => $acordos,
             'reprocessados' => $reprocessados,
+            'enviosPorAcordo' => $enviosPorAcordo,
         ], 'admin');
+    }
+
+    public function enviarEmailAcordo(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $id = (int) $this->input('acordo_id', 0);
+        if ($id < 1) {
+            $this->json(['erro' => 'ID do acordo inválido.'], 400);
+        }
+
+        $user = Session::get('user');
+        $idUsuario = is_array($user) ? (int) ($user['id'] ?? 0) : 0;
+
+        $resultado = $this->notificacaoEmailService->enviarEmailAcordo($id, $idUsuario);
+
+        if ($resultado['sucesso']) {
+            $this->logService->log(
+                'criar',
+                'notificacao_email',
+                (int) ($resultado['registro_id'] ?? 0),
+                'E-mail de acordo #' . $id . ' enviado para ' . (string) ($resultado['destinatario'] ?? '')
+            );
+
+            $this->json(['sucesso' => true, 'mensagem' => $resultado['mensagem']]);
+        }
+
+        $this->json(['erro' => $resultado['mensagem']], 400);
     }
 
     public function comentario(): void

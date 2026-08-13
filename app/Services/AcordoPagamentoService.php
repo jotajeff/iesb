@@ -48,6 +48,11 @@ final class AcordoPagamentoService
         return $this->repository->marcarUtilizado($id);
     }
 
+    public function buscarIdAlunoPorAcordo(int $idAcordo): ?int
+    {
+        return $this->repository->buscarIdAlunoPorAcordo($idAcordo);
+    }
+
     public function atualizarRecorrencia(int $id, array $data): bool
     {
         return $this->repository->atualizarRecorrencia($id, $data);

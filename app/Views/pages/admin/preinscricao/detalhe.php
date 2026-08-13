@@ -92,6 +92,7 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
             <h5 class="mb-0"><i class="bi bi-file-earmark-text me-2"></i>Acordos de pagamento</h5>
           </div>
           <div class="card-body pt-0">
+            <div id="acordoEmailFeedback" class="alert d-none"></div>
             <?php if (empty($acordos)): ?>
               <div class="alert alert-light border mb-0">
                 <i class="bi bi-info-circle me-1"></i>Nenhum acordo gerado para esta pré-inscrição.
@@ -140,11 +141,22 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
                         <td><?= htmlspecialchars($acordoData !== '' ? date('d/m/Y H:i', strtotime($acordoData)) : '-', ENT_QUOTES, 'UTF-8') ?></td>
                         <td>
                           <?php if ($acordoToken !== ''): ?>
-                            <button type="button" class="btn btn-sm btn-outline-primary btn-copiar-link"
-                                    data-link="/financeiro/<?= htmlspecialchars($acordoToken, ENT_QUOTES, 'UTF-8') ?>"
-                                    title="Copiar link do Portal Financeiro">
-                              <i class="bi bi-link-45deg me-1"></i>Copiar
-                            </button>
+                            <?php
+                              $linkFinanceiro = '/financeiro/' . $acordoToken;
+                            ?>
+                            <div class="d-flex gap-1 flex-wrap align-items-center">
+                              <button type="button" class="btn btn-sm btn-outline-primary btn-copiar-link"
+                                      data-link="<?= htmlspecialchars($linkFinanceiro, ENT_QUOTES, 'UTF-8') ?>"
+                                      title="Copiar link do Portal Financeiro">
+                                <i class="bi bi-link-45deg me-1"></i>Copiar
+                              </button>
+                              <button type="button" class="btn btn-sm btn-outline-danger btn-enviar-email"
+                                      data-acordo-id="<?= (int) ($acordo['id'] ?? 0) ?>"
+                                      data-pre-id="<?= $preId ?>"
+                                      title="Enviar link por e-mail">
+                                <i class="bi bi-envelope me-1"></i>Email
+                              </button>
+                            </div>
                           <?php else: ?>
                             -
                           <?php endif; ?>
@@ -251,8 +263,7 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
             <div class="col-md-6">
               <label class="form-label">Tipo do acordo</label>
               <select class="form-select" name="tipo">
-                <option value="1" selected>Padrão</option>
-                <option value="2">À vista</option>
+                <option value="2" selected>À vista</option>
                 <option value="3">Entrada + parcelas</option>
               </select>
             </div>
@@ -420,6 +431,50 @@ document.addEventListener('DOMContentLoaded', function () {
           setTimeout(function () { el.innerHTML = original; }, 1500);
         });
       }
+    });
+  });
+
+  var emailFeedback = document.getElementById('acordoEmailFeedback');
+  function showEmailFeedback(mensagem, tipo) {
+    if (!emailFeedback) {
+      return;
+    }
+    emailFeedback.textContent = mensagem;
+    emailFeedback.className = 'alert mb-3 ' + (tipo === 'danger' ? 'alert-danger' : 'alert-success');
+  }
+
+  document.querySelectorAll('.btn-enviar-email').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var acordoId = btn.getAttribute('data-acordo-id');
+      var original = btn.innerHTML;
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span>Enviando...';
+
+      var body = new URLSearchParams();
+      body.set('acordo_id', acordoId);
+
+      fetch('/admin/preinscricao/acordo/enviar-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: body.toString()
+      })
+        .then(function (res) {
+          return res.json().then(function (data) { return { ok: res.ok, data: data }; });
+        })
+        .then(function (result) {
+          btn.disabled = false;
+          btn.innerHTML = original;
+          if (result.ok && result.data.sucesso) {
+            showEmailFeedback(result.data.mensagem || 'E-mail enviado com sucesso.', 'success');
+          } else {
+            showEmailFeedback(result.data.erro || 'O e-mail não foi enviado.', 'danger');
+          }
+        })
+        .catch(function () {
+          btn.disabled = false;
+          btn.innerHTML = original;
+          showEmailFeedback('Erro inesperado ao enviar o e-mail. Tente novamente.', 'danger');
+        });
     });
   });
 });

@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Core\Controller;
 use App\Services\DashboardService;
+use App\Services\ImageService;
 use App\Services\LogService;
 use App\Support\Session;
 
@@ -13,11 +14,13 @@ final class DashboardController extends Controller
 {
     private DashboardService $dashboardService;
     private LogService $logService;
+    private ImageService $imageService;
 
     public function __construct()
     {
         $this->dashboardService = new DashboardService();
         $this->logService = new LogService();
+        $this->imageService = new ImageService();
     }
 
     public function index(): void
@@ -31,12 +34,29 @@ final class DashboardController extends Controller
         $isAdmin = (string) ($authUser['role'] ?? $authUser['type'] ?? '') === 'admin';
         $userId = (int) ($authUser['id'] ?? 0);
 
+        $userFoto = null;
+        if ($userId > 0) {
+            try {
+                $imagens = $this->imageService->listarPorFk('usuarios', $userId);
+                $userFoto = !empty($imagens) ? $imagens[0]['path'] : null;
+            } catch (\Throwable) {
+                $userFoto = null;
+            }
+        }
+
+        $role = (string) ($authUser['role'] ?? $authUser['type'] ?? '');
+        $fotosUrl = $role === 'professor'
+            ? '/admin/professores/fotos?id=' . $userId
+            : '/admin/usuarios/fotos?id=' . $userId;
+
         $this->render('pages/admin/dashboard/index', [
             'title' => 'Painel Admin',
             'currentRoute' => '/admin',
             'indicators' => $this->dashboardService->indicators($userId, $isAdmin),
             'taskIndicators' => $this->dashboardService->taskIndicators($userId, $isAdmin),
             'isAdmin' => $isAdmin,
+            'userFoto' => $userFoto,
+            'fotosUrl' => $fotosUrl,
         ], 'admin');
     }
 

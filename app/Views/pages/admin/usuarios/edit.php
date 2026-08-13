@@ -2,7 +2,10 @@
   <div class="bg-white border rounded-3 p-4 shadow-sm">
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
       <h4 class="mb-0"><i class="bi bi-pencil-square me-2"></i>Editar Usuário #<?= (int) ($usuario['id'] ?? 0) ?></h4>
-      <a class="btn btn-outline-secondary btn-sm" href="/admin/usuarios"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
+      <div class="d-flex gap-2">
+        <a class="btn btn-outline-primary btn-sm" href="/admin/usuarios/fotos?id=<?= (int) ($usuario['id'] ?? 0) ?>"><i class="bi bi-camera me-1"></i>Fotos</a>
+        <a class="btn btn-outline-secondary btn-sm" href="/admin/usuarios"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
+      </div>
     </div>
 
     <form method="post" action="/admin/usuarios/atualizar" class="row g-3">

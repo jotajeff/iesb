@@ -48,7 +48,13 @@
             <?php $userId = (int) ($user['id'] ?? 0); ?>
             <tr>
               <td><?= $userId ?></td>
-              <td><?= htmlspecialchars((string) ($user['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td class="d-flex align-items-center gap-2">
+                <?php $fotoPath = $fotos[$userId] ?? null; ?>
+                <?php if ($fotoPath): ?>
+                  <img src="/<?= htmlspecialchars($fotoPath, ENT_QUOTES, 'UTF-8') ?>" alt="" class="rounded-circle" style="width:32px;height:32px;object-fit:cover;">
+                <?php endif; ?>
+                <?= htmlspecialchars((string) ($user['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+              </td>
               <td><?= htmlspecialchars((string) ($user['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td>
                 <?php $tipo = (string) ($user['tipo'] ?? 'aluno'); ?>
@@ -71,11 +77,16 @@
                 <?php endif; ?>
               </td>
               <td>
-                <?php if ($isAdmin || $userId === $currentUserId): ?>
-                  <a class="btn btn-outline-secondary btn-sm" href="/admin/usuarios/editar?id=<?= $userId ?>">
-                    <i class="bi bi-pencil-square me-1"></i>Editar
+                <div class="d-flex gap-1">
+                  <?php if ($isAdmin || $userId === $currentUserId): ?>
+                    <a class="btn btn-outline-secondary btn-sm" href="/admin/usuarios/editar?id=<?= $userId ?>">
+                      <i class="bi bi-pencil-square me-1"></i>Editar
+                    </a>
+                  <?php endif; ?>
+                  <a class="btn btn-outline-primary btn-sm" href="/admin/usuarios/fotos?id=<?= $userId ?>" title="Fotos do usuário">
+                    <i class="bi bi-camera"></i>
                   </a>
-                <?php endif; ?>
+                </div>
               </td>
             </tr>
           <?php endforeach; ?>

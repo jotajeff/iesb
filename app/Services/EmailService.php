@@ -177,6 +177,30 @@ $this->mail->AltBody = "Nova pré-inscrição\n\nNome: {$nome}\nE-mail: {$email}
         }
     }
 
+    public function enviarHtml(string $destinatario, string $nome, string $assunto, string $corpoHtml, string $corpoTexto = ''): bool
+    {
+        try {
+            if (!$this->configured) {
+                $this->lastError = $this->lastError !== '' ? $this->lastError : 'Serviço de e-mail não configurado.';
+                return false;
+            }
+
+            $this->mail->addAddress($destinatario, $nome);
+            $this->mail->isHTML(true);
+            $this->mail->Subject = $assunto;
+            $this->mail->Body = $corpoHtml;
+            $this->mail->AltBody = $corpoTexto !== ''
+                ? $corpoTexto
+                : html_entity_decode(strip_tags(str_replace(['<br>', '<br/>', '</p>', '</div>'], "\n", $corpoHtml)), ENT_QUOTES, 'UTF-8');
+
+            $this->mail->send();
+            return true;
+        } catch (\Throwable $e) {
+            $this->lastError = $e->getMessage();
+            return false;
+        }
+    }
+
     public function enviarBoasVindasMatricula(string $nome, string $email, string $cpf, string $senha, string $numeroMatricula, string $linkRedefinicao = ''): bool
     {
         try {
