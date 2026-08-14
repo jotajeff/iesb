@@ -240,83 +240,95 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
         </div>
         <div class="modal-body">
           <div class="row g-3">
-            <div class="col-md-6">
-              <label class="form-label">Nome</label>
-              <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">Nome</label>
+                <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">E-mail</label>
+                <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Telefone</label>
+                <input type="text" class="form-control" value="<?= htmlspecialchars(\App\Helpers\WhatsAppHelper::format((string) ($pre['whatsapp'] ?? '')), ENT_QUOTES, 'UTF-8') ?>" readonly>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Curso</label>
+                <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" readonly>
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label">E-mail</label>
-              <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly>
+            <div class="col-md-4">
+              <div class="mb-3">
+                <label class="form-label">CPF <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" id="acordoCpf" name="cpf" maxlength="14" required placeholder="000.000.000-00">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Tipo do acordo</label>
+                <select class="form-select" name="tipo">
+                  <option value="2" selected>À vista</option>
+                  <option value="3">Entrada + parcelas</option>
+                </select>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Plano de pagamento <span class="text-danger">*</span></label>
+                <select class="form-select" id="acordoPlano" name="id_curso_pagamento" required>
+                  <option value="">Selecione...</option>
+                  <?php foreach ($planos as $plano): ?>
+                    <option value="<?= (int) ($plano['id'] ?? 0) ?>"
+                            data-valor="<?= (float) ($plano['valor'] ?? 0) ?>"
+                            data-parcelas="<?= (int) ($plano['parcelas'] ?? 1) ?>">
+                      <?= htmlspecialchars((string) ($plano['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                      — R$ <?= number_format((float) ($plano['valor'] ?? 0), 2, ',', '.') ?>
+                      (<?= (int) ($plano['parcelas'] ?? 1) ?>x)
+                    </option>
+                  <?php endforeach; ?>
+                </select>
+              </div>
+              <div class="row g-2">
+                <div class="col-6">
+                  <label class="form-label">Valor de entrada</label>
+                  <input type="text" class="form-control" id="acordoValorEntrada" name="valor_entrada" required placeholder="0,00">
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Vencimento da entrada</label>
+                  <input type="date" class="form-control" id="acordoVencimentoEntrada" name="data_vencimento_entrada">
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Total de parcelas</label>
+                  <input type="number" class="form-control" id="acordoTotalParcelas" name="total_parcelas" min="1" value="1" required>
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Valor demais parcelas</label>
+                  <input type="text" class="form-control" id="acordoValorDemais" name="valor_demais_parcelas" placeholder="0,00">
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Desconto</label>
+                  <input type="text" class="form-control" id="acordoDesconto" name="desconto" placeholder="0,00" value="0,00">
+                </div>
+                <div class="col-6">
+                  <label class="form-label">Tipo do desconto</label>
+                  <select class="form-select" name="tipo_desconto">
+                    <?php foreach (['ALUNO', 'CONVENIO', 'BOLSA', 'CAMPANHA', 'NEGOCIACAO', 'OUTRO'] as $tipo): ?>
+                      <option value="<?= $tipo ?>" <?= $tipo === 'NEGOCIACAO' ? 'selected' : '' ?>><?= $tipo ?></option>
+                    <?php endforeach; ?>
+                  </select>
+                </div>
+              </div>
             </div>
-            <div class="col-md-6">
-              <label class="form-label">Telefone</label>
-              <input type="text" class="form-control" value="<?= htmlspecialchars(\App\Helpers\WhatsAppHelper::format((string) ($pre['whatsapp'] ?? '')), ENT_QUOTES, 'UTF-8') ?>" readonly>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Curso</label>
-              <input type="text" class="form-control" value="<?= htmlspecialchars((string) ($pre['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" readonly>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">CPF <span class="text-danger">*</span></label>
-              <input type="text" class="form-control" id="acordoCpf" name="cpf" maxlength="14" required placeholder="000.000.000-00">
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Tipo do acordo</label>
-              <select class="form-select" name="tipo">
-                <option value="2" selected>À vista</option>
-                <option value="3">Entrada + parcelas</option>
-              </select>
-            </div>
-            <div class="col-md-6">
-              <label class="form-label">Plano de pagamento <span class="text-danger">*</span></label>
-              <select class="form-select" id="acordoPlano" name="id_curso_pagamento" required>
-                <option value="">Selecione...</option>
-                <?php foreach ($planos as $plano): ?>
-                  <option value="<?= (int) ($plano['id'] ?? 0) ?>"
-                          data-valor="<?= (float) ($plano['valor'] ?? 0) ?>"
-                          data-parcelas="<?= (int) ($plano['parcelas'] ?? 1) ?>">
-                    <?= htmlspecialchars((string) ($plano['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
-                    — R$ <?= number_format((float) ($plano['valor'] ?? 0), 2, ',', '.') ?>
-                    (<?= (int) ($plano['parcelas'] ?? 1) ?>x)
-                  </option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Valor de entrada</label>
-              <input type="text" class="form-control" id="acordoValorEntrada" name="valor_entrada" required placeholder="0,00">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Vencimento da entrada</label>
-              <input type="date" class="form-control" id="acordoVencimentoEntrada" name="data_vencimento_entrada">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Total de parcelas</label>
-              <input type="number" class="form-control" id="acordoTotalParcelas" name="total_parcelas" min="1" value="1" required>
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Valor demais parcelas</label>
-              <input type="text" class="form-control" id="acordoValorDemais" name="valor_demais_parcelas" placeholder="0,00">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Desconto</label>
-              <input type="text" class="form-control" id="acordoDesconto" name="desconto" placeholder="0,00" value="0,00">
-            </div>
-            <div class="col-md-3">
-              <label class="form-label">Tipo do desconto</label>
-              <select class="form-select" name="tipo_desconto">
-                <?php foreach (['ALUNO', 'CONVENIO', 'BOLSA', 'CAMPANHA', 'NEGOCIACAO', 'OUTRO'] as $tipo): ?>
-                  <option value="<?= $tipo ?>" <?= $tipo === 'NEGOCIACAO' ? 'selected' : '' ?>><?= $tipo ?></option>
-                <?php endforeach; ?>
-              </select>
-            </div>
-            <div class="col-md-12">
-              <label class="form-label">Motivo</label>
-              <input type="text" class="form-control" name="motivo" maxlength="150" placeholder="Motivo da negociação">
-            </div>
-            <div class="col-md-12">
-              <label class="form-label">Observação</label>
-              <textarea class="form-control" name="observacao" rows="3" placeholder="Observações adicionais"></textarea>
+            <div class="col-md-4">
+              <label class="form-label">Plano selecionado</label>
+              <div class="border rounded-3 p-3 mb-3" id="acordoPlanoResumo" style="background:#f8f9fa;">
+                <div class="text-muted small">Nenhum plano selecionado.</div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Motivo</label>
+                <input type="text" class="form-control" name="motivo" maxlength="150" placeholder="Motivo da negociação">
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Observação</label>
+                <textarea class="form-control" name="observacao" rows="3" placeholder="Observações adicionais"></textarea>
+              </div>
             </div>
           </div>
         </div>
@@ -346,6 +358,40 @@ document.addEventListener('DOMContentLoaded', function () {
   var msg = document.getElementById('acordoMsg');
   var btn = document.getElementById('acordoBtnSalvar');
 
+  var planosResumo = <?= json_encode(array_map(
+      static fn (array $plano): array => [
+          'id' => (int) ($plano['id'] ?? 0),
+          'descricao' => (string) ($plano['descricao'] ?? ''),
+          'tipo' => (string) ($plano['tipo'] ?? ''),
+          'parcelas' => (int) ($plano['parcelas'] ?? 1),
+          'valor' => (float) ($plano['valor'] ?? 0),
+      ],
+      $planos
+  ), JSON_UNESCAPED_UNICODE) ?>;
+
+  var resumoPlano = document.getElementById('acordoPlanoResumo');
+
+  function atualizarResumoPlano() {
+    if (!resumoPlano) {
+      return;
+    }
+    var id = parseInt(plano.value || '0', 10);
+    var encontrado = null;
+    planosResumo.forEach(function (p) {
+      if (p.id === id) encontrado = p;
+    });
+    if (!encontrado) {
+      resumoPlano.innerHTML = '<div class="text-muted small">Nenhum plano selecionado.</div>';
+      return;
+    }
+    var tipoBadge = encontrado.tipo ? '<span class="badge bg-secondary">' + encontrado.tipo + '</span>' : '';
+    resumoPlano.innerHTML =
+      '<div class="fw-semibold mb-1">' + encontrado.descricao + '</div>'
+      + '<div class="small text-muted mb-1">' + tipoBadge + '</div>'
+      + '<div class="small">Parcelas: <strong>' + encontrado.parcelas + 'x</strong></div>'
+      + '<div class="small">Valor do plano: <strong>R$ ' + encontrado.valor.toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</strong></div>';
+  }
+
   function toFloat(str) {
     if (typeof str !== 'string') {
       return 0;
@@ -360,6 +406,7 @@ document.addEventListener('DOMContentLoaded', function () {
   plano.addEventListener('change', function () {
     var opt = plano.options[plano.selectedIndex];
     if (!opt || opt.value === '') {
+      atualizarResumoPlano();
       return;
     }
     var planoParcelas = parseInt(opt.getAttribute('data-parcelas') || '1', 10) || 1;
@@ -373,7 +420,10 @@ document.addEventListener('DOMContentLoaded', function () {
       valorEntrada.value = toBRL(valorParcela);
       valorDemais.value = toBRL(valorParcela);
     }
+    atualizarResumoPlano();
   });
+
+  atualizarResumoPlano();
 
   form.addEventListener('submit', function (e) {
     e.preventDefault();

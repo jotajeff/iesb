@@ -90,6 +90,7 @@ $isPos = $nivelSlug === 'pos-graduacao';
               <div id="collapseInvestimento" class="accordion-collapse collapse <?= $primeiro ? 'show' : '' ?>" data-bs-parent="#accordionCurso">
                 <div class="accordion-body">
                   <?php foreach ($pagamentos as $p): ?>
+                    <?php $descontoVigente = (bool) ($p['desconto_vigente'] ?? false); ?>
                     <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2">
                       <div>
                         <strong><?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
@@ -97,7 +98,15 @@ $isPos = $nivelSlug === 'pos-graduacao';
                       </div>
                       <div class="text-end">
                         <small class="text-muted"><?= (int) ($p['parcelas'] ?? 1) ?>x</small>
-                        <span class="fw-bold ms-2">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
+                        <?php if ($descontoVigente): ?>
+                          <span class="fw-bold ms-2">R$ <?= number_format((float) ($p['valor_final'] ?? 0), 2, ',', '.') ?></span>
+                          <div class="small">
+                            <span class="text-decoration-line-through text-muted">R$ <?= number_format((float) ($p['valor_original'] ?? 0), 2, ',', '.') ?></span>
+                            <span class="badge bg-danger ms-1"><?= number_format((float) ($p['desconto_percentual'] ?? 0), 2, ',', '.') ?>% de desconto até <?= date('d/m/Y', strtotime((string) ($p['desconto_data_limite'] ?? ''))) ?></span>
+                          </div>
+                        <?php else: ?>
+                          <span class="fw-bold ms-2">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
+                        <?php endif; ?>
                       </div>
                     </div>
                   <?php endforeach; ?>
@@ -293,6 +302,7 @@ $isPos = $nivelSlug === 'pos-graduacao';
             <div class="curso-pagamento-box">
               <h5 class="curso-pagamento-titulo"><i class="bi bi-currency-dollar me-2"></i>Planos de pagamento</h5>
               <?php foreach ($pagamentos as $p): ?>
+                <?php $descontoVigente = (bool) ($p['desconto_vigente'] ?? false); ?>
                 <div class="curso-pagamento-item">
                   <div class="d-flex justify-content-between align-items-center">
                     <strong class="small"><?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?></strong>
@@ -300,8 +310,18 @@ $isPos = $nivelSlug === 'pos-graduacao';
                   </div>
                   <div class="d-flex justify-content-between align-items-center mt-1">
                     <span class="text-muted small"><?= (int) ($p['parcelas'] ?? 1) ?>x</span>
-                    <span class="fw-bold">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
+                    <?php if ($descontoVigente): ?>
+                      <span class="fw-bold">R$ <?= number_format((float) ($p['valor_final'] ?? 0), 2, ',', '.') ?></span>
+                    <?php else: ?>
+                      <span class="fw-bold">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
+                    <?php endif; ?>
                   </div>
+                  <?php if ($descontoVigente): ?>
+                    <div class="small mt-1">
+                      <span class="text-decoration-line-through text-muted">De R$ <?= number_format((float) ($p['valor_original'] ?? 0), 2, ',', '.') ?></span>
+                      <span class="badge bg-danger ms-1"><?= number_format((float) ($p['desconto_percentual'] ?? 0), 2, ',', '.') ?>% de desconto até <?= date('d/m/Y', strtotime((string) ($p['desconto_data_limite'] ?? ''))) ?></span>
+                    </div>
+                  <?php endif; ?>
                 </div>
               <?php endforeach; ?>
             </div>
@@ -317,9 +337,30 @@ $isPos = $nivelSlug === 'pos-graduacao';
               <i class="bi bi-pencil-square me-1"></i>Garantir minha vaga
             </a>
           <?php endif; ?>
+          <?php
+            $descontoDestaque = null;
+            foreach ($pagamentos as $p) {
+              if ((bool) ($p['desconto_vigente'] ?? false)) {
+                $perc = (float) ($p['desconto_percentual'] ?? 0);
+                if ($descontoDestaque === null || $perc > (float) ($descontoDestaque['desconto_percentual'] ?? 0)) {
+                  $descontoDestaque = $p;
+                }
+              }
+            }
+          ?>
+          <?php if ($descontoDestaque !== null): ?>
+            <div class="mt-2">
+              <span class="badge bg-danger text-white w-100 py-2 badge-desconto-pulse" style="font-size:.82rem;font-weight:600;">
+                <i class="bi bi-tag-fill me-1"></i><?= number_format((float) ($descontoDestaque['desconto_percentual'] ?? 0), 2, ',', '.') ?>% de desconto até <?= date('d/m/Y', strtotime((string) ($descontoDestaque['desconto_data_limite'] ?? ''))) ?>
+              </span>
+            </div>
+          <?php endif; ?>
           <?php $slugPre = (string) ($curso['slug'] ?? ''); ?>
           <a class="btn btn-outline-primary w-100 justify-content-center d-flex align-items-center gap-2 mt-2" href="/pre-inscricao?curso_slug=<?= htmlspecialchars($slugPre !== '' ? $slugPre : (string) ((int) ($curso['id'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>">
             <i class="bi bi-info-circle"></i> Quero mais informações
+          </a>
+          <a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer" class="d-block mt-3 grupo-vip-link">
+            <img src="/assets/img/atendente-comunidade-vip.png" alt="Fale com nosso atendimento" class="img-fluid rounded-3 shadow-sm w-100 grupo-vip-img" style="display:block;">
           </a>
         </div>
       </div>
@@ -344,6 +385,29 @@ $isPos = $nivelSlug === 'pos-graduacao';
 <?php endif; ?>
 
 <style>
+.badge-desconto-pulse {
+  position: relative;
+  animation: descontoPulse 2s ease-out infinite;
+}
+@keyframes descontoPulse {
+  0% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.55); }
+  70% { box-shadow: 0 0 0 12px rgba(220, 53, 69, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+.grupo-vip-img {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.grupo-vip-link:hover .grupo-vip-img {
+  animation: grupoVipPulse 1.2s ease-out infinite;
+}
+.grupo-vip-link:hover .grupo-vip-img {
+  transform: scale(1.02);
+}
+@keyframes grupoVipPulse {
+  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+  70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+}
 .ementa-toggle {
   cursor: pointer;
   display: inline-flex;

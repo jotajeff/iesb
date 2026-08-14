@@ -17,7 +17,7 @@ final class CursoPagamentoRepository
                 return [];
             }
 
-            $stmt = $pdo->prepare('SELECT id, id_curso, descricao, tipo, parcelas, valor, ativo FROM cursos_pagamento WHERE id_curso = :id_curso ORDER BY id ASC');
+            $stmt = $pdo->prepare('SELECT id, id_curso, descricao, tipo, parcelas, valor, desconto_percentual, desconto_data_limite, ativo FROM cursos_pagamento WHERE id_curso = :id_curso ORDER BY id ASC');
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
             $stmt->execute();
             $rows = $stmt->fetchAll();
@@ -82,31 +82,37 @@ final class CursoPagamentoRepository
             $id = (int) ($data['id'] ?? 0);
             $idCurso = (int) ($data['id_curso'] ?? 0);
             $descricao = trim((string) ($data['descricao'] ?? ''));
-            $tipo = in_array((string) ($data['tipo'] ?? ''), ['PIX', 'BOLETO', 'CARTAO'], true) ? (string) $data['tipo'] : null;
+            $tipo = in_array((string) ($data['tipo'] ?? ''), ['TODOS', 'PIX', 'BOLETO', 'CARTAO'], true) ? (string) $data['tipo'] : null;
             $parcelas = (int) ($data['parcelas'] ?? 1);
             $valor = (float) ($data['valor'] ?? 0);
+            $descontoPercentual = max(0.0, min(100.0, (float) ($data['desconto_percentual'] ?? 0)));
+            $descontoDataLimite = isset($data['desconto_data_limite']) && $data['desconto_data_limite'] !== '' ? (string) $data['desconto_data_limite'] : null;
             $ativo = $this->normalizarAtivo($data['ativo'] ?? 1);
 
             if ($id > 0) {
-                $sql = 'UPDATE cursos_pagamento SET descricao = :descricao, tipo = :tipo, parcelas = :parcelas, valor = :valor, ativo = :ativo WHERE id = :id';
+                $sql = 'UPDATE cursos_pagamento SET descricao = :descricao, tipo = :tipo, parcelas = :parcelas, valor = :valor, desconto_percentual = :desconto_percentual, desconto_data_limite = :desconto_data_limite, ativo = :ativo WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $id, PDO::PARAM_INT);
                 $stmt->bindValue(':descricao', $descricao);
                 $stmt->bindValue(':tipo', $tipo);
                 $stmt->bindValue(':parcelas', $parcelas, PDO::PARAM_INT);
                 $stmt->bindValue(':valor', $valor);
+                $stmt->bindValue(':desconto_percentual', $descontoPercentual);
+                $stmt->bindValue(':desconto_data_limite', $descontoDataLimite, $descontoDataLimite !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
                 $stmt->bindValue(':ativo', $ativo);
                 $stmt->execute();
                 return $id;
             }
 
-            $sql = 'INSERT INTO cursos_pagamento (id_curso, descricao, tipo, parcelas, valor, ativo) VALUES (:id_curso, :descricao, :tipo, :parcelas, :valor, :ativo)';
+            $sql = 'INSERT INTO cursos_pagamento (id_curso, descricao, tipo, parcelas, valor, desconto_percentual, desconto_data_limite, ativo) VALUES (:id_curso, :descricao, :tipo, :parcelas, :valor, :desconto_percentual, :desconto_data_limite, :ativo)';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
             $stmt->bindValue(':descricao', $descricao);
             $stmt->bindValue(':tipo', $tipo);
             $stmt->bindValue(':parcelas', $parcelas, PDO::PARAM_INT);
             $stmt->bindValue(':valor', $valor);
+            $stmt->bindValue(':desconto_percentual', $descontoPercentual);
+            $stmt->bindValue(':desconto_data_limite', $descontoDataLimite, $descontoDataLimite !== null ? PDO::PARAM_STR : PDO::PARAM_NULL);
             $stmt->bindValue(':ativo', $ativo);
             $stmt->execute();
             return (int) $pdo->lastInsertId();

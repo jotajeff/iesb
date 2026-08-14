@@ -64,6 +64,8 @@ final class PreInscricaoController extends Controller
             $p['pais'] = (string) ($location['country'] ?? '-');
             $p['bandeira'] = (string) ($location['flag'] ?? '🏳️');
 
+            $p['qtd_comentarios'] = $this->comments->countFor('pre_inscricao', (int) ($p['id'] ?? 0));
+
             $cursoId = (int) ($p['curso_id'] ?? 0);
             if ($cursoId > 0) {
                 $curso = $this->cursoService->findCurso($cursoId);

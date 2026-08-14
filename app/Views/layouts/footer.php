@@ -268,22 +268,39 @@
             <img src="/assets/img/emec.png" alt="e-MEC" class="img-fluid" style="max-width: 180px; margin-top: 10px;" />
           </a>
 
+          <div class="mt-4">
+            <h5>Canais</h5>
+            <ul class="footer-links">
+              <?php
+              $sessaoEventos = (new \App\Services\SessaoService())->findBySlug('eventos');
+              $tituloEventos = htmlspecialchars((string) ($sessaoEventos['titulo'] ?? 'Eventos'), ENT_QUOTES, 'UTF-8');
+              ?>
+              <li><a href="/eventos"><i class="bi bi-megaphone-fill me-1"></i><?= $tituloEventos ?></a></li>
+              <li><a href="/parcerias"><i class="bi bi-hand-thumbs-up"></i>Parcerias</a></li>
+              <li><a href="/aluno/login/"><i class="bi bi-person-circle me-1"></i>Área do Aluno</a></li>
+              <li><a href="mailto:atendimento@inteligenciaeducacionalsouzabrazil.com"><i class="bi bi-envelope me-1"></i>atendimento@inteligenciaeducacionalsouzabrazil.com</a></li>
+              <li><a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp me-1"></i>WhatsApp: (51) 99297-5503</a></li>
+              <li><a href="/privacidade"><i class="bi bi-shield-lock me-1"></i>Política de Privacidade</a></li>
+            </ul>
+          </div>
         </div>
 
         <div class="col-lg-4 col-md-6">
-          <h5>Canais</h5>
-          <ul class="footer-links">
-            <?php
-            $sessaoEventos = (new \App\Services\SessaoService())->findBySlug('eventos');
-            $tituloEventos = htmlspecialchars((string) ($sessaoEventos['titulo'] ?? 'Eventos'), ENT_QUOTES, 'UTF-8');
-            ?>
-            <li><a href="/eventos"><i class="bi bi-megaphone-fill me-1"></i><?= $tituloEventos ?></a></li>
-            <li><a href="/parcerias"><i class="bi bi-hand-thumbs-up"></i>Parcerias</a></li>
-            <li><a href="/aluno/login/"><i class="bi bi-person-circle me-1"></i>Área do Aluno</a></li>
-            <li><a href="mailto:atendimento@inteligenciaeducacionalsouzabrazil.com"><i class="bi bi-envelope me-1"></i>atendimento@inteligenciaeducacionalsouzabrazil.com</a></li>
-            <li><a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer"><i class="bi bi-whatsapp me-1"></i>WhatsApp: (51) 99297-5503</a></li>
-            <li><a href="/privacidade"><i class="bi bi-shield-lock me-1"></i>Política de Privacidade</a></li>
-          </ul>
+          <div class="mt-4">
+            <h5>🎓 Grupo VIP IESB</h5>
+            <p style="font-size: 0.9rem; line-height: 1.7; color: #a5aaaa;">
+              Entre para o nosso grupo exclusivo no WhatsApp e fique por dentro de tudo em primeira mão!
+            </p>
+            <ul class="list-unstyled" style="font-size: 0.9rem; color: #c9cece; line-height: 1.9;">
+              <li>✨ <strong>Descontos exclusivos para inscritos</strong></li>
+              <li>📚 Novidades e oportunidades dos cursos</li>
+              <li>📢 Avisos e informações em primeira mão</li>
+            </ul>
+            <p style="font-size: 0.9rem; color: #a5aaaa;">👉 <strong>Entre agora e não perca nenhuma novidade!</strong></p>
+            <a href="https://chat.whatsapp.com/GpvVylDTA1lF1faczodW6M" target="_blank" rel="noopener noreferrer">
+              <img src="/assets/img/iesb-grupo-vip.png" alt="Grupo VIP IESB no WhatsApp" class="img-fluid" style="max-width: 200px; border-radius: 12px; margin-top: 10px;">
+            </a>
+          </div>
         </div>
       </div>
       <div class="footer-bottom text-center">

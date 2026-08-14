@@ -89,8 +89,6 @@ $idCurso = (int) ($curso['id'] ?? 0);
             <?php else: ?>
               <p class="text-muted mb-4">A cobrança foi criada, mas ainda não foi possível recuperar os dados de pagamento. Se o problema persistir, verifique a chave sandbox e os logs do Asaas.</p>
             <?php endif; ?>
-
-            <a class="btn-primary-custom" href="/curso/<?= htmlspecialchars((string) ($curso['slug'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-arrow-left me-1"></i>Voltar ao curso</a>
           </div>
         <?php else: ?>
 
@@ -128,6 +126,7 @@ $idCurso = (int) ($curso['id'] ?? 0);
                 <h5 class="mb-3"><i class="bi bi-currency-dollar me-2"></i>Escolha o plano de pagamento</h5>
                 <div class="row g-2">
                   <?php foreach ($pagamentos as $p): ?>
+                    <?php $descontoVigente = (bool) ($p['desconto_vigente'] ?? false); ?>
                     <div class="col-md-6">
                       <label class="d-block border rounded-3 p-3 cursor-pointer" style="cursor:pointer;transition:all .2s;" onmouseover="this.style.borderColor='var(--primary)'" onmouseout="this.style.borderColor=''">
                         <div class="d-flex align-items-center gap-2 mb-1">
@@ -136,8 +135,18 @@ $idCurso = (int) ($curso['id'] ?? 0);
                         </div>
                         <div class="d-flex justify-content-between ps-4">
                           <span class="text-muted small"><?= (int) ($p['parcelas'] ?? 1) ?>x</span>
-                          <span class="fw-bold">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
+                          <?php if ($descontoVigente): ?>
+                            <span class="fw-bold">R$ <?= number_format((float) ($p['valor_final'] ?? 0), 2, ',', '.') ?></span>
+                          <?php else: ?>
+                            <span class="fw-bold">R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></span>
+                          <?php endif; ?>
                         </div>
+                        <?php if ($descontoVigente): ?>
+                          <div class="small ps-4 mt-1">
+                            <span class="text-decoration-line-through text-muted">De R$ <?= number_format((float) ($p['valor_original'] ?? 0), 2, ',', '.') ?></span>
+                            <span class="badge bg-danger ms-1"><?= number_format((float) ($p['desconto_percentual'] ?? 0), 2, ',', '.') ?>% de desconto até <?= date('d/m/Y', strtotime((string) ($p['desconto_data_limite'] ?? ''))) ?></span>
+                          </div>
+                        <?php endif; ?>
                       </label>
                     </div>
                   <?php endforeach; ?>

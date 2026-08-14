@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 13/08/2026 às 18:58
+-- Tempo de geração: 14/08/2026 às 17:00
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -220,9 +220,11 @@ CREATE TABLE `cursos_pagamento` (
   `id` int(11) NOT NULL,
   `id_curso` int(11) NOT NULL,
   `descricao` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
-  `tipo` enum('PIX','BOLETO','CARTAO') COLLATE utf8_unicode_ci DEFAULT NULL,
+  `tipo` enum('PIX','BOLETO','CARTAO','TODOS') COLLATE utf8_unicode_ci DEFAULT 'TODOS',
   `parcelas` int(11) DEFAULT '1',
   `valor` decimal(10,2) DEFAULT NULL,
+  `desconto_percentual` decimal(5,2) NOT NULL DEFAULT '0.00',
+  `desconto_data_limite` date DEFAULT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
@@ -616,6 +618,33 @@ CREATE TABLE `notificacao` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `notificacao_email`
+--
+
+CREATE TABLE `notificacao_email` (
+  `id` int(11) NOT NULL,
+  `tipo_origem` enum('ACORDO','RENEGOCIACAO','OUTRO') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'ACORDO',
+  `id_origem` int(11) NOT NULL,
+  `id_pre_inscricao` int(11) DEFAULT NULL,
+  `id_acordo_pagamento` int(11) DEFAULT NULL,
+  `id_aluno` int(11) DEFAULT NULL,
+  `nome_destinatario` varchar(150) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `email_destinatario` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `assunto` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `mensagem` text COLLATE utf8_unicode_ci NOT NULL,
+  `link` text COLLATE utf8_unicode_ci,
+  `status` enum('PENDENTE','ENVIADO','ERRO') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'PENDENTE',
+  `data_envio` datetime DEFAULT NULL,
+  `erro` text COLLATE utf8_unicode_ci,
+  `id_usuario_envio` int(11) DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `notificacao_leitura`
 --
 
@@ -673,6 +702,7 @@ CREATE TABLE `pre_inscricao` (
   `ip` varchar(45) COLLATE utf8_unicode_ci DEFAULT NULL,
   `curso_id` int(11) DEFAULT NULL,
   `situacao` varchar(15) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'recebido',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -1145,6 +1175,19 @@ ALTER TABLE `notificacao`
   ADD KEY `id_usuario_origem` (`id_usuario_origem`);
 
 --
+-- Índices de tabela `notificacao_email`
+--
+ALTER TABLE `notificacao_email`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_notificacao_email_origem` (`tipo_origem`,`id_origem`),
+  ADD KEY `idx_notificacao_email_acordo` (`id_acordo_pagamento`),
+  ADD KEY `idx_notificacao_email_pre_inscricao` (`id_pre_inscricao`),
+  ADD KEY `idx_notificacao_email_aluno` (`id_aluno`),
+  ADD KEY `idx_notificacao_email_status` (`status`),
+  ADD KEY `idx_notificacao_email_destinatario` (`email_destinatario`),
+  ADD KEY `fk_notificacao_email_usuario` (`id_usuario_envio`);
+
+--
 -- Índices de tabela `notificacao_leitura`
 --
 ALTER TABLE `notificacao_leitura`
@@ -1457,6 +1500,12 @@ ALTER TABLE `notificacao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `notificacao_email`
+--
+ALTER TABLE `notificacao_email`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `notificacao_leitura`
 --
 ALTER TABLE `notificacao_leitura`
@@ -1625,6 +1674,13 @@ ALTER TABLE `noticia`
 --
 ALTER TABLE `notificacao`
   ADD CONSTRAINT `notificacao_ibfk_1` FOREIGN KEY (`id_usuario_origem`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `notificacao_email`
+--
+ALTER TABLE `notificacao_email`
+  ADD CONSTRAINT `fk_notificacao_email_acordo` FOREIGN KEY (`id_acordo_pagamento`) REFERENCES `acordo_pagamento` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_notificacao_email_usuario` FOREIGN KEY (`id_usuario_envio`) REFERENCES `usuarios` (`id`) ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `notificacao_leitura`

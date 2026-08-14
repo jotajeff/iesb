@@ -276,7 +276,7 @@ final class PageController extends Controller
         $id = (int) ($curso['id'] ?? 0);
 
         $detalhe = $this->cursoService->findDetalheByCurso($id);
-        $pagamentos = $this->pagamentoService->listarPorCurso($id);
+        $pagamentos = $this->pagamentoService->listarPorCursoComDesconto($id);
 
         $turma = null;
         try {
@@ -427,7 +427,7 @@ final class PageController extends Controller
 
         $id = (int) ($curso['id'] ?? 0);
 
-        $pagamentos = $this->pagamentoService->listarPorCurso($id);
+        $pagamentos = $this->pagamentoService->listarPorCursoComDesconto($id);
 
         $idTurma = (int) ($_GET['turma_id'] ?? 0);
         $turmaValida = false;
@@ -475,7 +475,7 @@ final class PageController extends Controller
         $recorrencia = $formaPagamento === 'cartao' && (int) $this->input('recorrencia', 0) === 1 ? 1 : 0;
 
         $curso = $this->cursoService->findCurso($idCurso);
-        $pagamentos = $this->pagamentoService->listarPorCurso($idCurso);
+        $pagamentos = $this->pagamentoService->listarPorCursoComDesconto($idCurso);
         $dados = compact('idCurso', 'idPagamento', 'idTurma', 'nome', 'cpf', 'email', 'telefone');
         $dados['formaPagamento'] = $formaPagamento;
         $dados['recorrencia'] = $recorrencia;
@@ -543,6 +543,7 @@ final class PageController extends Controller
         }
 
         $totalParcelas = max(1, (int) ($pagamento['parcelas'] ?? 1));
+        $valor = $this->pagamentoService->calcularValorEfetivo($pagamento);
 
         $result = $this->parcelaService->criar([
             'id_curso' => $idCurso,
@@ -555,7 +556,7 @@ final class PageController extends Controller
             'cpf' => $cpf,
             'email' => $email,
             'telefone' => $telefone,
-            'valor' => (float) ($pagamento['valor'] ?? 0),
+            'valor' => $valor,
             'recorrencia_cartao' => $recorrencia,
         ]);
 
@@ -592,7 +593,6 @@ final class PageController extends Controller
         }
 
         $clienteId = (string) $cliente['id'];
-        $valor = (float) ($pagamento['valor'] ?? 0);
         $descricao = ($curso['nome'] ?? 'Curso') . ' - ' . ($pagamento['descricao'] ?? '');
 
         if ($idTurma > 0) {

@@ -21,24 +21,38 @@ $idCurso = (int) ($curso['id'] ?? 0);
               <th>Tipo</th>
               <th>Parcelas</th>
               <th>Valor</th>
+              <th>Desconto</th>
               <th>Ativo</th>
               <th>Ações</th>
             </tr>
           </thead>
           <tbody>
             <?php foreach ($pagamentos as $p): ?>
+              <?php
+                $descontoPerc = (float) ($p['desconto_percentual'] ?? 0);
+                $descontoLimite = (string) ($p['desconto_data_limite'] ?? '');
+                $temDesconto = $descontoPerc > 0 && $descontoLimite !== '';
+              ?>
               <tr>
                 <td><?= htmlspecialchars((string) ($p['descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><span class="badge bg-secondary"><?= htmlspecialchars((string) ($p['tipo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span></td>
                 <td><?= (int) ($p['parcelas'] ?? 1) ?>x</td>
                 <td>R$ <?= number_format((float) ($p['valor'] ?? 0), 2, ',', '.') ?></td>
                 <td>
+                  <?php if ($temDesconto): ?>
+                    <span class="badge bg-danger"><?= number_format($descontoPerc, 2, ',', '.') ?>%</span>
+                    <span class="text-muted small d-block">até <?= date('d/m/Y', strtotime($descontoLimite)) ?></span>
+                  <?php else: ?>
+                    <span class="text-muted">—</span>
+                  <?php endif; ?>
+                </td>
+                <td>
                   <span class="badge <?= (int) ($p['ativo'] ?? 1) == 1 ? 'bg-success' : 'bg-secondary' ?>">
                     <?= (int) ($p['ativo'] ?? 1) == 1 ? 'Sim' : 'Não' ?>
                   </span>
                 </td>
                 <td>
-                  <button class="btn btn-sm btn-outline-primary editar-pagamento" data-id="<?= (int) ($p['id'] ?? 0) ?>" data-descricao="<?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-tipo="<?= htmlspecialchars((string) ($p['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-parcelas="<?= (int) ($p['parcelas'] ?? 1) ?>" data-valor="<?= number_format((float) ($p['valor'] ?? 0), 2, '.', '') ?>" data-ativo="<?= htmlspecialchars((string) ($p['ativo'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-outline-primary editar-pagamento" data-id="<?= (int) ($p['id'] ?? 0) ?>" data-descricao="<?= htmlspecialchars((string) ($p['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-tipo="<?= htmlspecialchars((string) ($p['tipo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-parcelas="<?= (int) ($p['parcelas'] ?? 1) ?>" data-valor="<?= number_format((float) ($p['valor'] ?? 0), 2, '.', '') ?>" data-desconto="<?= number_format((float) ($p['desconto_percentual'] ?? 0), 2, '.', '') ?>" data-desconto-data="<?= htmlspecialchars($descontoLimite, ENT_QUOTES, 'UTF-8') ?>" data-ativo="<?= htmlspecialchars((string) ($p['ativo'] ?? '1'), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-pencil"></i></button>
                 </td>
               </tr>
             <?php endforeach; ?>
@@ -63,7 +77,7 @@ $idCurso = (int) ($curso['id'] ?? 0);
         <div class="col-md-2">
           <label class="form-label">Tipo</label>
           <select name="tipo" id="inputTipo" class="form-select">
-            <option value="">Selecione...</option>
+            <option value="TODOS" selected>TODOS</option>
             <option value="PIX">PIX</option>
             <option value="BOLETO">Boleto</option>
             <option value="CARTAO">Cartão</option>
@@ -76,6 +90,14 @@ $idCurso = (int) ($curso['id'] ?? 0);
         <div class="col-md-2">
           <label class="form-label">Valor</label>
           <input type="text" name="valor" id="inputValor" class="form-control" placeholder="0,00" inputmode="decimal">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Desconto (%)</label>
+          <input type="text" name="desconto_percentual" id="inputDesconto" class="form-control" placeholder="0,00" inputmode="decimal" min="0" max="100">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">Válido até</label>
+          <input type="date" name="desconto_data_limite" id="inputDescontoData" class="form-control">
         </div>
         <div class="col-md-2">
           <label class="form-label">Ativo</label>
@@ -104,6 +126,8 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('inputTipo').value = this.dataset.tipo || '';
       document.getElementById('inputParcelas').value = this.dataset.parcelas;
       document.getElementById('inputValor').value = this.dataset.valor;
+      document.getElementById('inputDesconto').value = this.dataset.desconto || '0,00';
+      document.getElementById('inputDescontoData').value = this.dataset.descontoData || '';
       document.getElementById('inputAtivo').value = this.dataset.ativo;
       document.getElementById('formTitulo').textContent = 'Editar forma de pagamento';
       btnCancelar.classList.remove('d-none');
@@ -116,6 +140,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('inputTipo').value = '';
     document.getElementById('inputParcelas').value = '1';
     document.getElementById('inputValor').value = '';
+    document.getElementById('inputDesconto').value = '0,00';
+    document.getElementById('inputDescontoData').value = '';
     document.getElementById('inputAtivo').value = '1';
     document.getElementById('formTitulo').textContent = 'Nova forma de pagamento';
     btnCancelar.classList.add('d-none');

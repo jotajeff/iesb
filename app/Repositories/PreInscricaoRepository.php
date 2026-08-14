@@ -23,6 +23,7 @@ final class PreInscricaoRepository
                     FROM pre_inscricao p
                     LEFT JOIN cursos c ON c.id = p.curso_id
                     WHERE p.situacao = :situacao
+                      AND p.ativo = 1
                     ORDER BY p.created_at DESC';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':situacao', $situacao);
@@ -47,11 +48,12 @@ final class PreInscricaoRepository
                            COALESCE(c.nome, \'-\') AS curso_nome,
                            p.situacao, p.created_at
                     FROM pre_inscricao p
-                    LEFT JOIN cursos c ON c.id = p.curso_id';
+                    LEFT JOIN cursos c ON c.id = p.curso_id
+                    WHERE p.ativo = 1';
             $params = [];
 
             if ($situacao !== null && $situacao !== '') {
-                $sql .= ' WHERE p.situacao = :situacao';
+                $sql .= ' AND p.situacao = :situacao';
                 $params[':situacao'] = $situacao;
             }
 

@@ -54,7 +54,7 @@
               ?>
               <tr>
                 <td><a href="/admin/preinscricao/detalhe?id=<?= (int) ($p['id'] ?? 0) ?>" class="text-decoration-none">#<?= (int) ($p['id'] ?? 0) ?></a></td>
-                <td><a href="/admin/preinscricao/detalhe?id=<?= (int) ($p['id'] ?? 0) ?>" class="text-decoration-none fw-semibold"><?= htmlspecialchars((string) ($p['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></a></td>
+                <td><a href="/admin/preinscricao/detalhe?id=<?= (int) ($p['id'] ?? 0) ?>" class="text-decoration-none fw-semibold"><?= htmlspecialchars((string) ($p['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><?php if ((int) ($p['qtd_comentarios'] ?? 0) > 0): ?> <i class="bi bi-chat-dots text-secondary" title="<?= (int) ($p['qtd_comentarios'] ?? 0) ?> comentário(s)"></i><?php endif; ?></a></td>
                 <td><?= htmlspecialchars((string) ($p['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <?php $wa = \App\Helpers\WhatsAppHelper::onlyDigits((string) ($p['whatsapp'] ?? '')); ?>
                 <td>

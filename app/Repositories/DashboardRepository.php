@@ -25,7 +25,7 @@ final class DashboardRepository
             return [
                 'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos WHERE ativo = 1'),
                 'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos'),
-                'total_matricula' => $this->count($pdo, 'SELECT COUNT(*) FROM matricula'),
+                'total_matricula' => $this->count($pdo, 'SELECT COUNT(*) FROM matricula WHERE ativo = 1'),
                 'total_pre_inscricoes' => $this->count($pdo, "SELECT COUNT(*) FROM pre_inscricao WHERE situacao = 'recebido'"),
             ];
         }
@@ -40,7 +40,7 @@ final class DashboardRepository
         $stmt->execute();
         $totalAlunos = (int) $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM matricula m JOIN turma_professor tp ON tp.id_turma = m.id_turma WHERE tp.id_usuario = :userId');
+        $stmt = $pdo->prepare('SELECT COUNT(*) FROM matricula m JOIN turma_professor tp ON tp.id_turma = m.id_turma WHERE tp.id_usuario = :userId AND m.ativo = 1');
         $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
         $stmt->execute();
         $totalMatriculas = (int) $stmt->fetchColumn();

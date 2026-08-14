@@ -1099,7 +1099,13 @@ final class CursoController extends Controller
         $tipo = (string) $this->input('tipo', '');
         $parcelas = max(1, (int) $this->input('parcelas', 1));
         $valor = (float) str_replace(',', '.', (string) $this->input('valor', '0'));
+        $descontoPercentual = max(0.0, min(100.0, (float) str_replace(',', '.', (string) $this->input('desconto_percentual', '0'))));
+        $descontoDataLimite = trim((string) $this->input('desconto_data_limite', ''));
         $ativo = (string) $this->input('ativo', '1');
+
+        if ($descontoDataLimite !== '' && \DateTime::createFromFormat('Y-m-d', $descontoDataLimite) === false) {
+            $descontoDataLimite = '';
+        }
 
         if ($descricao === '') {
             Session::setFlash('flash', 'Informe a descrição.');
@@ -1113,6 +1119,8 @@ final class CursoController extends Controller
             'tipo' => $tipo,
             'parcelas' => $parcelas,
             'valor' => $valor,
+            'desconto_percentual' => $descontoPercentual,
+            'desconto_data_limite' => $descontoDataLimite !== '' ? $descontoDataLimite : null,
             'ativo' => $ativo,
         ]);
 
