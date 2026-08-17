@@ -190,7 +190,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT a.id, a.nome, a.cpf, a.email, a.telefone, m.status, m.data_matricula'
+            $sql = 'SELECT a.id, a.nome, a.cpf, a.email, a.telefone, m.status, m.data_matricula, m.id AS id_matricula'
                  . ' FROM matricula m'
                  . ' INNER JOIN alunos a ON m.id_aluno = a.id'
                  . ' WHERE m.id_turma = :id_turma'

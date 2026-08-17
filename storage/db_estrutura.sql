@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 17/08/2026 às 15:30
+-- Tempo de geração: 17/08/2026 às 19:54
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -402,6 +402,59 @@ CREATE TABLE `endereco` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `estrutura_curricular`
+--
+
+CREATE TABLE `estrutura_curricular` (
+  `id` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `nome` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `descricao` text COLLATE utf8_unicode_ci,
+  `carga_horaria` smallint(6) DEFAULT NULL,
+  `versao` varchar(20) COLLATE utf8_unicode_ci NOT NULL DEFAULT '1.0',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `estrutura_disciplina`
+--
+
+CREATE TABLE `estrutura_disciplina` (
+  `id` int(11) NOT NULL,
+  `id_modulo` int(11) NOT NULL,
+  `id_disciplina` int(11) NOT NULL,
+  `ordem` int(11) NOT NULL DEFAULT '0',
+  `obrigatoria` tinyint(1) NOT NULL DEFAULT '1',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `estrutura_modulo`
+--
+
+CREATE TABLE `estrutura_modulo` (
+  `id` int(11) NOT NULL,
+  `id_estrutura` int(11) NOT NULL,
+  `nome` varchar(150) COLLATE utf8_unicode_ci NOT NULL,
+  `descricao` text COLLATE utf8_unicode_ci,
+  `ordem` int(11) NOT NULL DEFAULT '0',
+  `carga_horaria` smallint(6) DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `funcoes_docente`
 --
 
@@ -535,6 +588,25 @@ CREATE TABLE `matricula` (
   `origem` varchar(20) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'SITE',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `matricula_disciplina`
+--
+
+CREATE TABLE `matricula_disciplina` (
+  `id` int(11) NOT NULL,
+  `id_matricula` int(11) NOT NULL,
+  `id_turma_disciplina` int(11) NOT NULL,
+  `situacao` enum('MATRICULADO','CURSANDO','APROVADO','REPROVADO','DISPENSADO','TRANCADO','CANCELADO') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'MATRICULADO',
+  `nota` decimal(5,2) DEFAULT NULL,
+  `frequencia` decimal(5,2) DEFAULT NULL,
+  `data_conclusao` date DEFAULT NULL,
+  `observacao` text COLLATE utf8_unicode_ci,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -847,6 +919,25 @@ CREATE TABLE `turmas` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `turma_disciplina`
+--
+
+CREATE TABLE `turma_disciplina` (
+  `id` int(11) NOT NULL,
+  `id_turma` int(11) NOT NULL,
+  `id_disciplina` int(11) NOT NULL,
+  `id_usuario_professor` int(11) DEFAULT NULL,
+  `data_inicio` date DEFAULT NULL,
+  `data_fim` date DEFAULT NULL,
+  `status` enum('PLANEJADA','EM_ANDAMENTO','CONCLUIDA','CANCELADA') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'PLANEJADA',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `turma_professor`
 --
 
@@ -1095,6 +1186,28 @@ ALTER TABLE `endereco`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `estrutura_curricular`
+--
+ALTER TABLE `estrutura_curricular`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_estrutura_curricular_curso` (`id_curso`);
+
+--
+-- Índices de tabela `estrutura_disciplina`
+--
+ALTER TABLE `estrutura_disciplina`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_estrutura_disciplina` (`id_modulo`,`id_disciplina`),
+  ADD KEY `idx_estrutura_disciplina_disciplina` (`id_disciplina`);
+
+--
+-- Índices de tabela `estrutura_modulo`
+--
+ALTER TABLE `estrutura_modulo`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_estrutura_modulo_estrutura` (`id_estrutura`);
+
+--
 -- Índices de tabela `funcoes_docente`
 --
 ALTER TABLE `funcoes_docente`
@@ -1142,6 +1255,15 @@ ALTER TABLE `material`
 --
 ALTER TABLE `matricula`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `matricula_disciplina`
+--
+ALTER TABLE `matricula_disciplina`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_matricula_turma_disciplina` (`id_matricula`,`id_turma_disciplina`),
+  ADD KEY `idx_matricula_disciplina_matricula` (`id_matricula`),
+  ADD KEY `idx_matricula_disciplina_turma` (`id_turma_disciplina`);
 
 --
 -- Índices de tabela `modalidade`
@@ -1267,6 +1389,15 @@ ALTER TABLE `tipo_curso`
 ALTER TABLE `turmas`
   ADD PRIMARY KEY (`id`),
   ADD KEY `id_curso` (`id_curso`);
+
+--
+-- Índices de tabela `turma_disciplina`
+--
+ALTER TABLE `turma_disciplina`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_turma_disciplina` (`id_turma`,`id_disciplina`),
+  ADD KEY `idx_turma_disciplina_professor` (`id_usuario_professor`),
+  ADD KEY `fk_turma_disciplina_disciplina` (`id_disciplina`);
 
 --
 -- Índices de tabela `turma_professor`
@@ -1434,6 +1565,24 @@ ALTER TABLE `endereco`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `estrutura_curricular`
+--
+ALTER TABLE `estrutura_curricular`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `estrutura_disciplina`
+--
+ALTER TABLE `estrutura_disciplina`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `estrutura_modulo`
+--
+ALTER TABLE `estrutura_modulo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `funcoes_docente`
 --
 ALTER TABLE `funcoes_docente`
@@ -1473,6 +1622,12 @@ ALTER TABLE `material`
 -- AUTO_INCREMENT de tabela `matricula`
 --
 ALTER TABLE `matricula`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `matricula_disciplina`
+--
+ALTER TABLE `matricula_disciplina`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
@@ -1578,6 +1733,12 @@ ALTER TABLE `turmas`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `turma_disciplina`
+--
+ALTER TABLE `turma_disciplina`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `turma_troca`
 --
 ALTER TABLE `turma_troca`
@@ -1664,6 +1825,32 @@ ALTER TABLE `documento_tipo`
   ADD CONSTRAINT `fk_documento_tipo_grupo` FOREIGN KEY (`id_grupo`) REFERENCES `documento_grupo` (`id`);
 
 --
+-- Restrições para tabelas `estrutura_curricular`
+--
+ALTER TABLE `estrutura_curricular`
+  ADD CONSTRAINT `fk_estrutura_curricular_curso` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`) ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `estrutura_disciplina`
+--
+ALTER TABLE `estrutura_disciplina`
+  ADD CONSTRAINT `fk_estrutura_disciplina_disciplina` FOREIGN KEY (`id_disciplina`) REFERENCES `disciplina` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_estrutura_disciplina_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `estrutura_modulo` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `estrutura_modulo`
+--
+ALTER TABLE `estrutura_modulo`
+  ADD CONSTRAINT `fk_estrutura_modulo_estrutura` FOREIGN KEY (`id_estrutura`) REFERENCES `estrutura_curricular` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `matricula_disciplina`
+--
+ALTER TABLE `matricula_disciplina`
+  ADD CONSTRAINT `fk_matricula_disciplina_matricula` FOREIGN KEY (`id_matricula`) REFERENCES `matricula` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_matricula_disciplina_turma_disciplina` FOREIGN KEY (`id_turma_disciplina`) REFERENCES `turma_disciplina` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
 -- Restrições para tabelas `noticia`
 --
 ALTER TABLE `noticia`
@@ -1700,6 +1887,14 @@ ALTER TABLE `storage_drive`
 --
 ALTER TABLE `turmas`
   ADD CONSTRAINT `turmas_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`);
+
+--
+-- Restrições para tabelas `turma_disciplina`
+--
+ALTER TABLE `turma_disciplina`
+  ADD CONSTRAINT `fk_turma_disciplina_disciplina` FOREIGN KEY (`id_disciplina`) REFERENCES `disciplina` (`id`) ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_turma_disciplina_professor` FOREIGN KEY (`id_usuario_professor`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_turma_disciplina_turma` FOREIGN KEY (`id_turma`) REFERENCES `turmas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `turma_professor`

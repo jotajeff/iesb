@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Core\Database;
 use App\Services\TurmaService;
 use App\Services\CursoService;
+use App\Services\EstruturaCurricularService;
 use App\Services\LogService;
 use App\Support\Session;
 
@@ -15,12 +16,14 @@ final class TurmaController extends Controller
 {
     private TurmaService $turmaService;
     private CursoService $cursoService;
+    private EstruturaCurricularService $estruturaService;
     private LogService $logService;
 
     public function __construct()
     {
         $this->turmaService = new TurmaService();
         $this->cursoService = new CursoService();
+        $this->estruturaService = new EstruturaCurricularService();
         $this->logService = new LogService();
     }
 
@@ -74,14 +77,148 @@ final class TurmaController extends Controller
             return;
         }
 
+        $inscritos = $this->turmaService->inscritosPorTurma($id);
+
+        $disciplinasMatriculadas = [];
+        foreach ($inscritos as &$inscrito) {
+            $idMatricula = (int) ($inscrito['id_matricula'] ?? 0);
+            $disciplinasMatriculadas[$idMatricula] = $this->estruturaService->listarIdsDisciplinasDaMatricula($idMatricula);
+        }
+        unset($inscrito);
+
         $this->render('pages/admin/turmas/show', [
             'title' => 'Turma: ' . ($turma['nome'] ?? ''),
             'currentRoute' => '/admin/turmas/show',
             'turma' => $turma,
-            'inscritos' => $this->turmaService->inscritosPorTurma($id),
+            'inscritos' => $inscritos,
             'professores' => $this->professoresDaTurma($id),
             'materiais' => $this->materiaisDaTurma($id),
+            'disciplinasTurma' => $this->estruturaService->listarDisciplinasDaTurma($id),
+            'disciplinasDoCurso' => $this->estruturaService->listarDisciplinasDoCurso((int) ($turma['id_curso'] ?? 0)),
+            'professoresDaTurma' => $this->estruturaService->listarProfessoresDaTurma($id),
+            'disciplinasMatriculadas' => $disciplinasMatriculadas,
         ], 'admin');
+    }
+
+    public function salvarDisciplinasMatricula(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $idMatricula = (int) $this->input('id_matricula', 0);
+        $idTurma = (int) $this->input('id_turma', 0);
+        $ids = array_values(array_filter(array_map('intval', (array) ($this->input('disciplinas', []) ?: [])), static fn (int $v): bool => $v > 0));
+
+        if ($idMatricula <= 0 || $idTurma <= 0) {
+            $this->json(['erro' => 'Parâmetros inválidos.'], 400);
+        }
+
+        // Valida a matrícula e que ela pertence à turma.
+        $matricula = $this->turmaService->findMatricula($idMatricula);
+        if ($matricula === null || (int) ($matricula['id_turma'] ?? 0) !== $idTurma) {
+            $this->json(['erro' => 'Matrícula não encontrada ou não pertence a esta turma.'], 400);
+        }
+
+        // Disciplinas da turma
+        $disciplinasTurma = $this->estruturaService->listarDisciplinasDaTurma($idTurma);
+        $idsValidos = array_map(static fn (array $d): int => (int) ($d['id'] ?? 0), $disciplinasTurma);
+        $idsValidos = array_flip($idsValidos);
+
+        $atuais = $this->estruturaService->listarIdsDisciplinasDaMatricula($idMatricula);
+        $novoConjunto = [];
+        foreach ($ids as $id) {
+            if (isset($idsValidos[$id])) {
+                $novoConjunto[] = $id;
+            }
+        }
+
+        // Remove os que não estão mais selecionados
+        foreach ($atuais as $idAtual) {
+            if (!in_array($idAtual, $novoConjunto, true)) {
+                $this->estruturaService->desvincularDisciplinaDaMatricula($idMatricula, $idAtual);
+            }
+        }
+
+        // Adiciona os novos
+        foreach ($novoConjunto as $idNovo) {
+            if (!in_array($idNovo, $atuais, true)) {
+                $this->estruturaService->vincularDisciplinaDaMatricula($idMatricula, $idNovo);
+            }
+        }
+
+        $this->logService->log('atualizar', 'matricula_disciplina', $idMatricula, 'Disciplinas da matrícula #' . $idMatricula . ' atualizadas (' . count($novoConjunto) . ' disciplina(s))');
+        $this->json(['sucesso' => true]);
+    }
+
+    public function salvarDisciplinaTurma(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $id = (int) $this->input('id', 0);
+        $idTurma = (int) $this->input('id_turma', 0);
+        $idDisciplina = (int) $this->input('id_disciplina', 0);
+        $idProfessor = (int) $this->input('id_usuario_professor', 0);
+        $dataInicio = trim((string) $this->input('data_inicio', ''));
+        $dataFim = trim((string) $this->input('data_fim', ''));
+        $status = trim((string) $this->input('status', 'PLANEJADA'));
+        $ativo = (int) $this->input('ativo', 1);
+
+        $turma = $this->turmaService->findTurma($idTurma);
+        if ($turma === null) {
+            $this->json(['erro' => 'Turma não encontrada.'], 400);
+        }
+
+        if ($idDisciplina <= 0) {
+            $this->json(['erro' => 'Selecione uma disciplina.'], 400);
+        }
+
+        if ($dataInicio !== '' && \DateTime::createFromFormat('Y-m-d', $dataInicio) === false) {
+            $dataInicio = '';
+        }
+        if ($dataFim !== '' && \DateTime::createFromFormat('Y-m-d', $dataFim) === false) {
+            $dataFim = '';
+        }
+
+        $result = $this->estruturaService->salvarDisciplinaDaTurma([
+            'id' => $id,
+            'id_turma' => $idTurma,
+            'id_disciplina' => $idDisciplina,
+            'id_usuario_professor' => $idProfessor > 0 ? $idProfessor : null,
+            'data_inicio' => $dataInicio,
+            'data_fim' => $dataFim,
+            'status' => $status,
+            'ativo' => $ativo,
+        ]);
+
+        if ($result === -1) {
+            $this->json(['erro' => 'Esta disciplina já está vinculada a esta turma.'], 400);
+        }
+
+        if ($result <= 0) {
+            $this->json(['erro' => 'Erro ao salvar a disciplina da turma.'], 500);
+        }
+
+        $this->logService->log($id > 0 ? 'atualizar' : 'criar', 'turma_disciplina', $result, ($id > 0 ? 'Disciplina da turma atualizada' : 'Disciplina da turma criada') . ' na turma #' . $idTurma);
+        $this->json(['sucesso' => true, 'id' => $result]);
+    }
+
+    public function desativarDisciplinaTurma(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $id = (int) $this->input('id', 0);
+        if ($id < 1) {
+            $this->json(['erro' => 'ID inválido.'], 400);
+        }
+
+        $this->estruturaService->desativarDisciplinaDaTurma($id);
+        $this->logService->log('desativar', 'turma_disciplina', $id, 'Disciplina da turma desativada');
+        $this->json(['sucesso' => true]);
     }
 
     private function professoresDaTurma(int $idTurma): array

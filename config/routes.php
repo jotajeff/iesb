@@ -18,6 +18,7 @@ use App\Controllers\Admin\PreInscricaoController;
 use App\Controllers\Admin\SessaoController;
 use App\Controllers\Admin\TipoDocumentoController;
 use App\Controllers\Admin\StorageController;
+use App\Controllers\Admin\AcademicoController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -94,6 +95,18 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/salvar-pagamento', [CursoController::class, 'salvarPagamento']);
     $router->get('/admin/cursos/cursos-turma', [CursoController::class, 'cursosTurma']);
 
+    $router->get('/admin/academico/matrizes', [AcademicoController::class, 'matrizes']);
+    $router->get('/admin/academico/matrizes/form', [AcademicoController::class, 'matrizForm']);
+    $router->post('/admin/academico/matrizes/salvar', [AcademicoController::class, 'salvarMatriz']);
+    $router->get('/admin/academico/matrizes/detalhe', [AcademicoController::class, 'matrizDetalhe']);
+    $router->post('/admin/academico/matrizes/desativar', [AcademicoController::class, 'desativarMatriz']);
+    $router->post('/admin/academico/modulos/salvar', [AcademicoController::class, 'salvarModulo']);
+    $router->post('/admin/academico/modulos/desativar', [AcademicoController::class, 'desativarModulo']);
+    $router->post('/admin/academico/disciplinas/salvar', [AcademicoController::class, 'salvarDisciplinaDaMatriz']);
+    $router->post('/admin/academico/disciplinas/desativar', [AcademicoController::class, 'desativarDisciplinaDaMatriz']);
+    $router->get('/admin/academico/situacao', [AcademicoController::class, 'situacaoAcademica']);
+    $router->post('/admin/academico/situacao/salvar', [AcademicoController::class, 'salvarSituacaoDisciplina']);
+
     $router->get('/admin/professores', [ProfessorController::class, 'index']);
     $router->get('/admin/professores/novo', [ProfessorController::class, 'novo']);
     $router->post('/admin/professores/salvar', [ProfessorController::class, 'salvar']);
@@ -168,6 +181,9 @@ return static function (Router $router): void {
     $router->post('/admin/turmas/atualizar', [TurmaController::class, 'atualizar']);
     $router->get('/admin/turmas/ver-video', [TurmaController::class, 'verVideo']);
     $router->get('/admin/turmas/ver-drive', [TurmaController::class, 'verDrive']);
+    $router->post('/admin/turmas/disciplinas/salvar', [TurmaController::class, 'salvarDisciplinaTurma']);
+    $router->post('/admin/turmas/disciplinas/desativar', [TurmaController::class, 'desativarDisciplinaTurma']);
+    $router->post('/admin/turmas/disciplinas-matricula/salvar', [TurmaController::class, 'salvarDisciplinasMatricula']);
 
     $router->get('/admin/modalidade', [ConfigController::class, 'modalidade']);
     $router->get('/admin/modalidade/edit', [ConfigController::class, 'editModalidade']);

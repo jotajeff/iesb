@@ -37,6 +37,15 @@ final class TurmaService
         return $this->repository->findById($id);
     }
 
+    public function findMatricula(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        return $this->repository->findMatriculaById($id);
+    }
+
     public function criarTurma(string $nome, int $curso, string $dataInicio, int $ativo = 0): int
     {
         $payload = [
