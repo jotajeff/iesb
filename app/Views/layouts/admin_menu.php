@@ -72,21 +72,30 @@
             </ul>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/usuarios') === 0) || (($currentRoute ?? '') === '/admin/logs')) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-shield-lock me-1"></i>Acesso</a>
+            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-book me-1"></i>Acadêmico</a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/admin/usuarios"><i class="bi bi-people me-1"></i>Usuários</a></li>
-              <li><a class="dropdown-item" href="/admin/logs"><i class="bi bi-clipboard-data me-1"></i>Logs</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-diagram-3 me-1"></i>Matrizes Curriculares</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-grid-3x3-gap me-1"></i>Módulos</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-journal-text me-1"></i>Disciplinas</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-people me-1"></i>Turmas</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-person-workspace me-1"></i>Professores</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-calendar-event me-1"></i>Calendário</a></li>
+              <li><a class="dropdown-item" href="#"><i class="bi bi-clipboard-check me-1"></i>Situação Acadêmica</a></li>
             </ul>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= (strpos((string) ($currentRoute ?? ''), '/admin/visitas') === 0) ? 'active' : '' ?>" href="/admin/visitas" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-eye me-1"></i>Visitas</a>
+            <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/usuarios') === 0) || (($currentRoute ?? '') === '/admin/logs') || (strpos((string) ($currentRoute ?? ''), '/admin/visitas') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-shield-lock me-1"></i>Acesso</a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/admin/visitas"><i class="bi bi-list-ul me-1"></i>Lista</a></li>
-              <li><a class="dropdown-item" href="/admin/visitas/mensal"><i class="bi bi-calendar-month me-1"></i>Por mes</a></li>
+              <li><a class="dropdown-item" href="/admin/usuarios"><i class="bi bi-people me-1"></i>Usuários</a></li>
+              <li><a class="dropdown-item" href="/admin/logs"><i class="bi bi-clipboard-data me-1"></i>Logs</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" href="/admin/visitas"><i class="bi bi-eye me-1"></i>Visitas</a></li>
+              <li><a class="dropdown-item" href="/admin/visitas/mensal"><i class="bi bi-calendar-month me-1"></i>Por mês</a></li>
               <li><a class="dropdown-item" href="/admin/visitas/analytics"><i class="bi bi-graph-up me-1"></i>Analytics</a></li>
-              <li><a class="dropdown-item" href="/admin/visitas/paginas"><i class="bi bi-file-earmark-text me-1"></i>Por pagina</a></li>
+              <li><a class="dropdown-item" href="/admin/visitas/paginas"><i class="bi bi-file-earmark-text me-1"></i>Por página</a></li>
               <li><a class="dropdown-item" href="/admin/visitas/cursos"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
-              <li><a class="dropdown-item" href="/admin/visitas/referer"><i class="bi bi-link-45deg me-1"></i>Referer & UTM</a></li>
+              <li><a class="dropdown-item" href="/admin/visitas/referer"><i class="bi bi-link-45deg me-1"></i>Referer &amp; UTM</a></li>
             </ul>
           </li>
           <li class="nav-item dropdown">

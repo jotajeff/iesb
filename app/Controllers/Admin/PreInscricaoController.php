@@ -51,8 +51,10 @@ final class PreInscricaoController extends Controller
 
         $situacao = trim((string) ($_GET['situacao'] ?? ''));
         $situacoesValidas = ['recebido', 'atendimento', 'finalizado'];
-        if (!in_array($situacao, $situacoesValidas, true)) {
+        if ($situacao === 'todas') {
             $situacao = '';
+        } elseif (!in_array($situacao, $situacoesValidas, true)) {
+            $situacao = 'recebido';
         }
 
         $preInscricoes = $this->preService->listarTodos($situacao !== '' ? $situacao : null);
