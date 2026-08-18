@@ -77,15 +77,19 @@ final class StudentController extends Controller
             try {
                 $stmt = $pdo->prepare(
                     'SELECT COUNT(*) AS total FROM notificacao n'
-                    . ' WHERE (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id)'
+                    . ' WHERE ('
+                    . ' (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id)'
                     . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
-                    . '   SELECT m.id_turma FROM matricula m WHERE m.id_aluno = :aluno_id2 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
+                    . '   SELECT m.id_turma FROM matricula m WHERE m.id_aluno = :aluno_id2 AND m.status NOT IN (\'cancelado\',\'concluido\')'
                     . ' ))'
+                    . ' )'
+                    . ' AND n.ativo = :ativo'
                     . ' AND n.id NOT IN (SELECT nl.id_notificacao FROM notificacao_leitura_aluno nl WHERE nl.id_aluno = :aluno_id3)'
                 );
                 $stmt->bindValue(':aluno_id', $studentId, \PDO::PARAM_INT);
                 $stmt->bindValue(':aluno_id2', $studentId, \PDO::PARAM_INT);
                 $stmt->bindValue(':aluno_id3', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $notificacaoCount = (int) ($stmt->fetch()['total'] ?? 0);
             } catch (\Throwable) {
@@ -1082,16 +1086,20 @@ final class StudentController extends Controller
                     . ' LEFT JOIN usuarios u ON n.id_usuario_origem = u.id'
                     . ' LEFT JOIN turmas t ON n.tipo_destino = \'turma\' AND n.id_destino = t.id'
                     . ' LEFT JOIN notificacao_leitura_aluno nl ON nl.id_notificacao = n.id AND nl.id_aluno = :aluno_id'
-                    . ' WHERE (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id2)'
+                    . ' WHERE ('
+                    . ' (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id2)'
                     . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
-                    . '   SELECT m.id_turma FROM matricula m WHERE m.id_aluno = :aluno_id3 AND m.status IN (\'inscrito\',\'matriculado\',\'ativo\')'
+                    . '   SELECT m.id_turma FROM matricula m WHERE m.id_aluno = :aluno_id3 AND m.status NOT IN (\'cancelado\',\'concluido\')'
                     . ' ))'
+                    . ' )'
+                    . ' AND n.ativo = :ativo'
                     . ' ORDER BY n.created_at DESC'
                     . ' LIMIT 200'
                 );
                 $stmt->bindValue(':aluno_id', $studentId, \PDO::PARAM_INT);
                 $stmt->bindValue(':aluno_id2', $studentId, \PDO::PARAM_INT);
                 $stmt->bindValue(':aluno_id3', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $notificacoes = $stmt->fetchAll() ?: [];
             } catch (\Throwable $e) {
@@ -1128,13 +1136,33 @@ final class StudentController extends Controller
 
         try {
             $stmt = $pdo->prepare(
+                'SELECT n.id FROM notificacao n'
+                . ' WHERE n.ativo = :ativo AND ('
+                . ' (n.tipo_destino = \'aluno\' AND n.id_destino = :aluno_id)'
+                . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
+                . '   SELECT m.id_turma FROM matricula m WHERE m.id_aluno = :aluno_id2 AND m.status NOT IN (\'cancelado\',\'concluido\')'
+                . ' ))'
+                . ' )'
+                . ' AND n.id = :id'
+            );
+            $stmt->bindValue(':id', $notificacaoId, \PDO::PARAM_INT);
+            $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
+            $stmt->bindValue(':aluno_id', $studentId, \PDO::PARAM_INT);
+            $stmt->bindValue(':aluno_id2', $studentId, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            if (!$stmt->fetch()) {
+                $this->json(['erro' => 'Notificação não encontrada para este aluno.'], 404);
+            }
+
+            $stmt = $pdo->prepare(
                 'INSERT IGNORE INTO notificacao_leitura_aluno (id_notificacao, id_aluno) VALUES (:id_notificacao, :id_aluno)'
             );
             $stmt->bindValue(':id_notificacao', $notificacaoId, \PDO::PARAM_INT);
             $stmt->bindValue(':id_aluno', $studentId, \PDO::PARAM_INT);
             $stmt->execute();
 
-            $this->logService->log('ler', 'notificacao', $notificacaoId, 'Notificação marcada como lida');
+            $this->logService->log('ler', 'notificacao', $notificacaoId, 'Notificação marcada como lida pelo aluno');
 
             $this->json(['sucesso' => true]);
         } catch (\Throwable $e) {

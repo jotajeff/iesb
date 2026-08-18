@@ -15,6 +15,7 @@
               <option value="0" <?= ($filtroAtivo ?? -1) === 0 ? 'selected' : '' ?>>Inativas</option>
             </select>
           </form>
+          <a class="btn btn-outline-secondary btn-sm" href="/admin/alunos/troca-historico"><i class="bi bi-arrow-left-right me-1"></i>Troca de Turmas</a>
           <a class="btn btn-primary btn-sm" href="/admin/turmas/novo"><i class="bi bi-plus-circle me-1"></i>Nova turma</a>
         </div>
       </div>

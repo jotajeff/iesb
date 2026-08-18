@@ -34,11 +34,8 @@
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle <?= ((strpos(($currentRoute ?? ''), '/admin/turmas') === 0) || (strpos(($currentRoute ?? ''), '/admin/matriculas') === 0) || (strpos(($currentRoute ?? ''), '/admin/alunos') === 0) || (strpos(($currentRoute ?? ''), '/admin/professores') === 0) || (strpos(($currentRoute ?? ''), '/admin/preinscricao') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-journal-bookmark-fill me-1"></i>Cadastros</a>
             <ul class="dropdown-menu">
-              <li><a class="dropdown-item" href="/admin/turmas"><i class="bi bi-people me-1"></i>Turmas</a></li>
               <li><a class="dropdown-item" href="/admin/matriculas"><i class="bi bi-card-checklist me-1"></i>Matrículas</a></li>
               <li><a class="dropdown-item" href="/admin/alunos"><i class="bi bi-person-badge me-1"></i>Alunos</a></li>
-              <li><a class="dropdown-item" href="/admin/professores"><i class="bi bi-person-workspace me-1"></i>Professores</a></li>
-              <li><a class="dropdown-item" href="/admin/alunos/troca-historico"><i class="bi bi-arrow-left-right me-1"></i>Troca de Turmas</a></li>
               <li><a class="dropdown-item" href="/admin/preinscricao"><i class="bi bi-inbox me-1"></i>Pré-inscrições</a></li>
             </ul>
           </li>

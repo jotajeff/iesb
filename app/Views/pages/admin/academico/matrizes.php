@@ -3,6 +3,34 @@ $matrizes = $matrizes ?? [];
 $cursos = $cursos ?? [];
 $idCursoFiltro = (int) ($idCursoFiltro ?? 0);
 $statusFiltro = (string) ($statusFiltro ?? '');
+
+$cursosAtivos = array_values(array_filter(
+    $cursos,
+    static fn (array $c): bool => (int) ($c['ativo'] ?? 0) === 1
+));
+
+usort($cursosAtivos, static function (array $a, array $b): int {
+    $ta = (int) ($a['nivel_id'] ?? 0);
+    $tb = (int) ($b['nivel_id'] ?? 0);
+    if ($ta !== $tb) {
+        return $ta <=> $tb;
+    }
+    return strcasecmp((string) ($a['nome'] ?? ''), (string) ($b['nome'] ?? ''));
+});
+
+$cursosPorTipo = [];
+foreach ($cursosAtivos as $curso) {
+    $tipoId = (int) ($curso['nivel_id'] ?? 0);
+    $tipoNome = trim((string) ($curso['nivel_nome'] ?? ''));
+    if ($tipoId <= 0) {
+        $tipoId = 0;
+        $tipoNome = $tipoNome !== '' ? $tipoNome : 'Outros';
+    }
+    if (!isset($cursosPorTipo[$tipoId])) {
+        $cursosPorTipo[$tipoId] = ['nome' => $tipoNome, 'cursos' => []];
+    }
+    $cursosPorTipo[$tipoId]['cursos'][] = $curso;
+}
 ?>
 <section class="container py-4">
   <div class="bg-white border rounded-3 p-4 shadow-sm">
@@ -20,8 +48,12 @@ $statusFiltro = (string) ($statusFiltro ?? '');
         <label class="form-label small text-muted mb-1">Curso</label>
         <select name="id_curso" class="form-select form-select-sm">
           <option value="">Todos os cursos</option>
-          <?php foreach ($cursos as $curso): ?>
-            <option value="<?= (int) ($curso['id'] ?? 0) ?>" <?= $idCursoFiltro === (int) ($curso['id'] ?? 0) ? 'selected' : '' ?>><?= htmlspecialchars((string) ($curso['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
+          <?php foreach ($cursosPorTipo as $grupo): ?>
+            <optgroup label="<?= htmlspecialchars((string) ($grupo['nome'] ?? 'Outros'), ENT_QUOTES, 'UTF-8') ?>">
+              <?php foreach ($grupo['cursos'] as $curso): ?>
+                <option value="<?= (int) ($curso['id'] ?? 0) ?>" <?= $idCursoFiltro === (int) ($curso['id'] ?? 0) ? 'selected' : '' ?>><?= htmlspecialchars((string) ($curso['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
+              <?php endforeach; ?>
+            </optgroup>
           <?php endforeach; ?>
         </select>
       </div>
