@@ -173,6 +173,100 @@ final class EstruturaCurricularRepository
         }
     }
 
+    public function listarModulosDaTurma(int $idTurma): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idTurma < 1) {
+            return [];
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT em.*, ec.nome AS estrutura_nome, ec.versao AS estrutura_versao,
+                                          COUNT(DISTINCT ed.id) AS total_disciplinas
+                                   FROM turmas t
+                                   INNER JOIN estrutura_curricular ec ON ec.id = t.id_estrutura
+                                   INNER JOIN estrutura_modulo em ON em.id_estrutura = ec.id
+                                   LEFT JOIN estrutura_disciplina ed ON ed.id_modulo = em.id AND ed.ativo = 1
+                                   WHERE t.id = :id_turma
+                                   GROUP BY em.id, ec.id
+                                   ORDER BY em.ordem ASC, em.id ASC');
+            $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao listar módulos da turma: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listarModulosComContexto(?int $idEstrutura = null, ?int $idTurma = null): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT em.id, em.nome, em.descricao, em.ordem, em.carga_horaria, em.ativo,
+                           ec.id AS id_estrutura, ec.nome AS estrutura_nome, ec.versao AS estrutura_versao,
+                           c.nome AS curso_nome, t.id AS id_turma, t.nome AS turma_nome,
+                           COUNT(DISTINCT ed.id) AS total_disciplinas
+                    FROM estrutura_modulo em
+                    INNER JOIN estrutura_curricular ec ON ec.id = em.id_estrutura
+                    INNER JOIN cursos c ON c.id = ec.id_curso
+                    LEFT JOIN turmas t ON t.id_estrutura = ec.id AND t.ativo = 1
+                    LEFT JOIN estrutura_disciplina ed ON ed.id_modulo = em.id AND ed.ativo = 1
+                    WHERE 1 = 1';
+            $params = [];
+
+            if ($idEstrutura !== null && $idEstrutura > 0) {
+                $sql .= ' AND ec.id = :id_estrutura';
+                $params[':id_estrutura'] = $idEstrutura;
+            }
+            if ($idTurma !== null && $idTurma > 0) {
+                $sql .= ' AND t.id = :id_turma';
+                $params[':id_turma'] = $idTurma;
+            }
+
+            $sql .= ' GROUP BY em.id, ec.id, c.id, t.id ORDER BY c.nome ASC, ec.nome ASC, em.ordem ASC, em.id ASC';
+            $stmt = $pdo->prepare($sql);
+            foreach ($params as $key => $value) {
+                $stmt->bindValue($key, $value, PDO::PARAM_INT);
+            }
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao listar módulos com contexto: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function listarDisciplinasDaMatriz(int $idEstrutura): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idEstrutura < 1) {
+            return [];
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT DISTINCT d.id, d.nome, d.carga_horaria, d.ordem, d.ativo
+                                   FROM estrutura_modulo em
+                                   INNER JOIN estrutura_disciplina ed ON ed.id_modulo = em.id AND ed.ativo = 1
+                                   INNER JOIN disciplina d ON d.id = ed.id_disciplina AND d.ativo = 1
+                                   WHERE em.id_estrutura = :id_estrutura AND em.ativo = 1
+                                   ORDER BY d.ordem ASC, d.nome ASC');
+            $stmt->bindValue(':id_estrutura', $idEstrutura, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao listar disciplinas da matriz: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function findModulo(int $id): ?array
     {
         if ($id < 1) {

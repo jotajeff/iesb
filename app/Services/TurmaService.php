@@ -46,23 +46,25 @@ final class TurmaService
         return $this->repository->findMatriculaById($id);
     }
 
-    public function criarTurma(string $nome, int $curso, string $dataInicio, int $ativo = 0): int
+    public function criarTurma(string $nome, int $curso, string $dataInicio, int $ativo = 0, ?int $idEstrutura = null): int
     {
         $payload = [
             'nome' => trim($nome),
             'id_curso' => $curso > 0 ? $curso : null,
+            'id_estrutura' => $idEstrutura,
             'data_inicio' => $dataInicio,
             'ativo' => $ativo ? 1 : 0,
         ];
         return $this->repository->save($payload);
     }
 
-    public function atualizarTurma(int $id, string $nome, int $curso, string $dataInicio, int $ativo = 0): void
+    public function atualizarTurma(int $id, string $nome, int $curso, string $dataInicio, int $ativo = 0, ?int $idEstrutura = null): void
     {
         $payload = [
             'id' => $id,
             'nome' => trim($nome),
             'id_curso' => $curso > 0 ? $curso : null,
+            'id_estrutura' => $idEstrutura,
             'data_inicio' => $dataInicio,
             'ativo' => $ativo ? 1 : 0,
         ];

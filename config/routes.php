@@ -96,6 +96,7 @@ return static function (Router $router): void {
     $router->get('/admin/cursos/cursos-turma', [CursoController::class, 'cursosTurma']);
 
     $router->get('/admin/academico/matrizes', [AcademicoController::class, 'matrizes']);
+    $router->get('/admin/academico/modulos', [AcademicoController::class, 'modulos']);
     $router->get('/admin/academico/matrizes/form', [AcademicoController::class, 'matrizForm']);
     $router->post('/admin/academico/matrizes/salvar', [AcademicoController::class, 'salvarMatriz']);
     $router->get('/admin/academico/matrizes/detalhe', [AcademicoController::class, 'matrizDetalhe']);

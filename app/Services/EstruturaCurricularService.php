@@ -43,6 +43,16 @@ final class EstruturaCurricularService
         return $this->repository->listarModulos($idEstrutura);
     }
 
+    public function listarModulosDaTurma(int $idTurma): array
+    {
+        return $this->repository->listarModulosDaTurma($idTurma);
+    }
+
+    public function listarModulosComContexto(?int $idEstrutura = null, ?int $idTurma = null): array
+    {
+        return $this->repository->listarModulosComContexto($idEstrutura, $idTurma);
+    }
+
     public function findModulo(int $id): ?array
     {
         return $this->repository->findModulo($id);
@@ -196,5 +206,10 @@ final class EstruturaCurricularService
             error_log('[ESTRUTURA] Erro ao listar disciplinas do curso: ' . $e->getMessage());
             return [];
         }
+    }
+
+    public function listarDisciplinasDaMatriz(int $idEstrutura): array
+    {
+        return $this->repository->listarDisciplinasDaMatriz($idEstrutura);
     }
 }

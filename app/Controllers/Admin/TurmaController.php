@@ -94,7 +94,10 @@ final class TurmaController extends Controller
             'professores' => $this->professoresDaTurma($id),
             'materiais' => $this->materiaisDaTurma($id),
             'disciplinasTurma' => $this->estruturaService->listarDisciplinasDaTurma($id),
-            'disciplinasDoCurso' => $this->estruturaService->listarDisciplinasDoCurso((int) ($turma['id_curso'] ?? 0)),
+            'modulosDaTurma' => $this->estruturaService->listarModulosDaTurma($id),
+            'disciplinasDoCurso' => (int) ($turma['id_estrutura'] ?? 0) > 0
+                ? $this->estruturaService->listarDisciplinasDaMatriz((int) $turma['id_estrutura'])
+                : $this->estruturaService->listarDisciplinasDoCurso((int) ($turma['id_curso'] ?? 0)),
             'professoresDaTurma' => $this->estruturaService->listarProfessoresDaTurma($id),
             'disciplinasMatriculadas' => $disciplinasMatriculadas,
         ], 'admin');
@@ -173,6 +176,15 @@ final class TurmaController extends Controller
 
         if ($idDisciplina <= 0) {
             $this->json(['erro' => 'Selecione uma disciplina.'], 400);
+        }
+
+        $idEstruturaTurma = (int) ($turma['id_estrutura'] ?? 0);
+        if ($idEstruturaTurma > 0) {
+            $disciplinasDaMatriz = $this->estruturaService->listarDisciplinasDaMatriz($idEstruturaTurma);
+            $idsDaMatriz = array_map(static fn (array $disciplina): int => (int) ($disciplina['id'] ?? 0), $disciplinasDaMatriz);
+            if (!in_array($idDisciplina, $idsDaMatriz, true)) {
+                $this->json(['erro' => 'A disciplina selecionada não pertence à matriz desta turma.'], 400);
+            }
         }
 
         if ($dataInicio !== '' && \DateTime::createFromFormat('Y-m-d', $dataInicio) === false) {
@@ -257,6 +269,7 @@ final class TurmaController extends Controller
             'title' => 'Nova Turma',
             'currentRoute' => '/admin/turmas/novo',
             'cursos' => $this->cursoService->cursos('asc', 500),
+            'matrizes' => $this->estruturaService->listarMatrizes(null, 1),
         ], 'admin');
     }
 
@@ -286,6 +299,7 @@ final class TurmaController extends Controller
             'currentRoute' => '/admin/turmas/editar',
             'turma' => $turma,
             'cursos' => $this->cursoService->cursos('asc', 500),
+            'matrizes' => $this->estruturaService->listarMatrizes(null, 1),
         ], 'admin');
     }
 
@@ -298,18 +312,25 @@ final class TurmaController extends Controller
 
         $nome = trim((string) $this->input('nome', ''));
         $curso = (int) $this->input('curso', 0);
+        $idEstrutura = (int) $this->input('id_estrutura', 0);
         $dataInicio = (string) $this->input('data_inicio', '');
         $ativo = intval($this->input('ativo', 0));
 
-        if ($nome === '' || $curso <= 0) {
-            Session::setFlash('flash', 'Informe o nome da turma e selecione o curso.');
+        if ($nome === '' || $curso <= 0 || $idEstrutura <= 0) {
+            Session::setFlash('flash', 'Informe o nome, o curso e a matriz curricular da turma.');
+            $this->redirect('/admin/turmas/novo');
+            return;
+        }
+
+        if (!$this->matrizPertenceAoCurso($idEstrutura, $curso)) {
+            Session::setFlash('flash', 'A matriz selecionada não pertence ao curso informado.');
             $this->redirect('/admin/turmas/novo');
             return;
         }
 
         $ativo = intval($ativo) ? 1 : 0;
 
-        $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativo);
+        $turmaId = $this->turmaService->criarTurma($nome, $curso, $dataInicio, $ativo, $idEstrutura > 0 ? $idEstrutura : null);
 
         if ($turmaId > 0) {
             $this->logService->log('criar', 'turma', $turmaId, "Turma criada: $nome");
@@ -331,6 +352,7 @@ final class TurmaController extends Controller
         $id = (int) $this->input('id', 0);
         $nome = trim((string) $this->input('nome', ''));
         $curso = (int) $this->input('curso', 0);
+        $idEstrutura = (int) $this->input('id_estrutura', 0);
         $dataInicio = (string) $this->input('data_inicio', '');
         $ativo = intval($this->input('ativo', 0));
 
@@ -340,13 +362,29 @@ final class TurmaController extends Controller
             return;
         }
 
+        if (!$this->matrizPertenceAoCurso($idEstrutura, $curso)) {
+            Session::setFlash('flash', 'A matriz selecionada não pertence ao curso informado.');
+            $this->redirect('/admin/turmas/editar?id=' . $id);
+            return;
+        }
+
         $ativo = intval($ativo) ? 1 : 0;
 
-        $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativo);
+        $this->turmaService->atualizarTurma($id, $nome, $curso, $dataInicio, $ativo, $idEstrutura > 0 ? $idEstrutura : null);
 
         $this->logService->log('atualizar', 'turma', $id, "Turma atualizada: $nome");
         Session::setFlash('flash', 'Turma atualizada com sucesso.');
         $this->redirect('/admin/turmas');
+    }
+
+    private function matrizPertenceAoCurso(int $idEstrutura, int $idCurso): bool
+    {
+        if ($idEstrutura <= 0) {
+            return true;
+        }
+
+        $matriz = $this->estruturaService->findMatriz($idEstrutura);
+        return $matriz !== null && (int) ($matriz['id_curso'] ?? 0) === $idCurso;
     }
 
     public function verVideo(): void

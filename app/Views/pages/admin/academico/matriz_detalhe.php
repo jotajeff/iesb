@@ -60,7 +60,7 @@ $idMatriz = (int) ($matriz['id'] ?? 0);
       <?php foreach ($modulos as $modulo): ?>
         <?php $idModulo = (int) ($modulo['id'] ?? 0); ?>
         <?php $moduloAtivo = (int) ($modulo['ativo'] ?? 1) === 1; ?>
-        <div class="card border mb-3 <?= $moduloAtivo ? '' : 'opacity-50' ?>">
+        <div id="modulo-<?= $idModulo ?>" class="card border mb-3 <?= $moduloAtivo ? '' : 'opacity-50' ?>">
           <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
               <strong><?= htmlspecialchars((string) ($modulo['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong>

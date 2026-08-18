@@ -77,6 +77,30 @@ final class AcademicoController extends Controller
         ], 'admin');
     }
 
+    public function modulos(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $idEstrutura = (int) ($_GET['id_estrutura'] ?? 0);
+        $idTurma = (int) ($_GET['id_turma'] ?? 0);
+
+        $this->render('pages/admin/academico/modulos', [
+            'title' => 'Módulos Acadêmicos',
+            'currentRoute' => '/admin/academico/modulos',
+            'modulos' => $this->estruturaService->listarModulosComContexto(
+                $idEstrutura > 0 ? $idEstrutura : null,
+                $idTurma > 0 ? $idTurma : null
+            ),
+            'matrizes' => $this->estruturaService->listarMatrizes(null, 1),
+            'turmas' => $this->turmaService->turmas(500, 1),
+            'idEstrutura' => $idEstrutura,
+            'idTurma' => $idTurma,
+        ], 'admin');
+    }
+
     public function salvarMatriz(): void
     {
         if (!$this->isStaff()) {
@@ -240,6 +264,12 @@ final class AcademicoController extends Controller
 
         if ($idDisciplina <= 0) {
             $this->json(['erro' => 'Selecione uma disciplina.'], 400);
+        }
+
+        $disciplinasDoCurso = $this->estruturaService->listarDisciplinasDoCurso((int) ($modulo['id_estrutura'] ?? 0));
+        $idsDisciplinasDoCurso = array_map(static fn (array $disciplina): int => (int) ($disciplina['id'] ?? 0), $disciplinasDoCurso);
+        if (!in_array($idDisciplina, $idsDisciplinasDoCurso, true)) {
+            $this->json(['erro' => 'A disciplina selecionada não pertence ao curso desta matriz.'], 400);
         }
 
         $result = $this->estruturaService->salvarDisciplinaDaMatriz([

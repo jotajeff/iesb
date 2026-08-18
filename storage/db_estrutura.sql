@@ -908,6 +908,7 @@ CREATE TABLE `tipo_curso` (
 CREATE TABLE `turmas` (
   `id` int(11) NOT NULL,
   `id_curso` int(11) NOT NULL,
+  `id_estrutura` int(11) DEFAULT NULL,
   `nome` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `data_inicio` date DEFAULT NULL,
   `data_fim` date DEFAULT NULL,
@@ -1388,7 +1389,8 @@ ALTER TABLE `tipo_curso`
 --
 ALTER TABLE `turmas`
   ADD PRIMARY KEY (`id`),
-  ADD KEY `id_curso` (`id_curso`);
+  ADD KEY `id_curso` (`id_curso`),
+  ADD KEY `idx_turmas_estrutura` (`id_estrutura`);
 
 --
 -- Índices de tabela `turma_disciplina`
@@ -1886,7 +1888,8 @@ ALTER TABLE `storage_drive`
 -- Restrições para tabelas `turmas`
 --
 ALTER TABLE `turmas`
-  ADD CONSTRAINT `turmas_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`);
+  ADD CONSTRAINT `turmas_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`),
+  ADD CONSTRAINT `fk_turmas_estrutura` FOREIGN KEY (`id_estrutura`) REFERENCES `estrutura_curricular` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `turma_disciplina`

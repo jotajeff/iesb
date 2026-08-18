@@ -17,7 +17,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT t.id, t.nome, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
+            $sql = 'SELECT t.id, t.nome, t.id_estrutura, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
                  . ' (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos c ON t.id_curso = c.id'
@@ -54,11 +54,12 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT t.id, t.nome, t.id_curso, t.data_inicio, t.ativo, '
-                 . 'c.nome AS curso_nome, n.nome AS nivel_nome'
+            $sql = 'SELECT t.id, t.nome, t.id_curso, t.id_estrutura, t.data_inicio, t.ativo, '
+                 . 'c.nome AS curso_nome, n.nome AS nivel_nome, ec.nome AS estrutura_nome'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos c ON t.id_curso = c.id'
                  . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
+                 . ' LEFT JOIN estrutura_curricular ec ON ec.id = t.id_estrutura'
                  . ' WHERE t.id = :id'
                  . ' LIMIT 1';
 
@@ -83,16 +84,18 @@ final class TurmaRepository
 
         try {
             if (!empty($payload['id'])) {
-                $sql = 'UPDATE turmas SET nome = :nome, id_curso = :id_curso, data_inicio = :data_inicio, ativo = :ativo WHERE id = :id';
+                $sql = 'UPDATE turmas SET nome = :nome, id_curso = :id_curso, id_estrutura = :id_estrutura, data_inicio = :data_inicio, ativo = :ativo WHERE id = :id';
                 $stmt = $pdo->prepare($sql);
                 $stmt->bindValue(':id', $payload['id'], PDO::PARAM_INT);
             } else {
-                $sql = 'INSERT INTO turmas (nome, id_curso, data_inicio, ativo) VALUES (:nome, :id_curso, :data_inicio, :ativo)';
+                $sql = 'INSERT INTO turmas (nome, id_curso, id_estrutura, data_inicio, ativo) VALUES (:nome, :id_curso, :id_estrutura, :data_inicio, :ativo)';
                 $stmt = $pdo->prepare($sql);
             }
 
             $stmt->bindValue(':nome', trim($payload['nome'] ?? ''), PDO::PARAM_STR);
             $stmt->bindValue(':id_curso', $payload['id_curso'], PDO::PARAM_INT);
+            $idEstrutura = (int) ($payload['id_estrutura'] ?? 0);
+            $stmt->bindValue(':id_estrutura', $idEstrutura > 0 ? $idEstrutura : null, $idEstrutura > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->bindValue(':data_inicio', $payload['data_inicio'], PDO::PARAM_STR);
             $stmt->bindValue(':ativo', intval($payload['ativo'] ?? 0) ? 1 : 0, PDO::PARAM_INT);
             $stmt->execute();

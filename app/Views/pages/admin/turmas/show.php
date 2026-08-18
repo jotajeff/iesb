@@ -6,6 +6,7 @@
   $totalInscritos = count($inscritosLista);
   $professoresLista = is_array($professores ?? null) ? $professores : [];
   $materiaisLista = is_array($materiais ?? null) ? $materiais : [];
+  $modulosDaTurma = is_array($modulosDaTurma ?? null) ? $modulosDaTurma : [];
   $currentUserRole = (string) ($authUser['role'] ?? $authUser['tipo'] ?? '');
   $isProfessor = $currentUserRole === 'professor';
 ?>
@@ -51,6 +52,10 @@
                     <td><?= htmlspecialchars((string) ($turmaSelecionada['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                   </tr>
                   <tr>
+                    <th class="bg-light">Matriz curricular</th>
+                    <td><?= htmlspecialchars((string) ($turmaSelecionada['estrutura_nome'] ?? 'Sem matriz definida'), ENT_QUOTES, 'UTF-8') ?></td>
+                  </tr>
+                  <tr>
                     <th class="bg-light">Nível</th>
                     <td><?= htmlspecialchars((string) ($turmaSelecionada['nivel_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                   </tr>
@@ -78,6 +83,38 @@
                   </tr>
                 </tbody>
               </table>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modulosTurma" aria-expanded="false" aria-controls="modulosTurma">
+              <i class="bi bi-grid-3x3-gap me-2"></i>Módulos da matriz (<?= count($modulosDaTurma) ?>)
+            </button>
+          </h2>
+          <div id="modulosTurma" class="accordion-collapse collapse" data-bs-parent="#turmaAccordion">
+            <div class="accordion-body p-0">
+              <?php if (empty($modulosDaTurma)): ?>
+                <div class="alert alert-light border text-muted m-3"><i class="bi bi-info-circle me-1"></i>Esta turma não possui matriz curricular vinculada ou a matriz ainda não possui módulos.</div>
+              <?php else: ?>
+                <div class="table-responsive">
+                  <table class="table table-striped table-sm align-middle mb-0">
+                    <thead><tr><th>Ordem</th><th>Módulo</th><th>Carga horária</th><th>Disciplinas</th><th>Status</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($modulosDaTurma as $modulo): ?>
+                      <tr>
+                        <td><?= (int) ($modulo['ordem'] ?? 0) ?></td>
+                        <td><?= htmlspecialchars((string) ($modulo['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= (int) ($modulo['carga_horaria'] ?? 0) > 0 ? (int) $modulo['carga_horaria'] . 'h' : '-' ?></td>
+                        <td><span class="badge bg-primary"><?= (int) ($modulo['total_disciplinas'] ?? 0) ?></span></td>
+                        <td><?= (int) ($modulo['ativo'] ?? 0) === 1 ? '<span class="badge bg-success">Ativo</span>' : '<span class="badge bg-secondary">Inativo</span>' ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
+              <?php endif; ?>
             </div>
           </div>
         </div>

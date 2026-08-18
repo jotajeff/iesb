@@ -68,15 +68,13 @@
             </ul>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/cursos') === 0) || (strpos($currentRoute ?? '', '/admin/academico') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-book me-1"></i>Acadêmico</a>
+            <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/cursos') === 0) || (strpos($currentRoute ?? '', '/admin/academico') === 0) || (strpos($currentRoute ?? '', '/admin/turmas') === 0) || (strpos($currentRoute ?? '', '/admin/professores') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-book me-1"></i>Acadêmico</a>
             <ul class="dropdown-menu">
               <li><a class="dropdown-item" href="/admin/cursos"><i class="bi bi-journal-bookmark-fill me-1"></i>Cursos</a></li>
               <li><a class="dropdown-item" href="/admin/academico/matrizes"><i class="bi bi-diagram-3 me-1"></i>Matrizes Curriculares</a></li>
-              <li><a class="dropdown-item" href="/admin/academico/matrizes"><i class="bi bi-grid-3x3-gap me-1"></i>Módulos</a></li>
-              <li><a class="dropdown-item" href="/admin/academico/matrizes"><i class="bi bi-journal-text me-1"></i>Disciplinas</a></li>
+              <li><a class="dropdown-item" href="/admin/academico/modulos"><i class="bi bi-grid-3x3-gap me-1"></i>Módulos</a></li>
               <li><a class="dropdown-item" href="/admin/turmas"><i class="bi bi-people me-1"></i>Turmas</a></li>
               <li><a class="dropdown-item" href="/admin/professores"><i class="bi bi-person-workspace me-1"></i>Professores</a></li>
-              <li><a class="dropdown-item" href="#"><i class="bi bi-calendar-event me-1"></i>Calendário</a></li>
               <li><a class="dropdown-item" href="/admin/academico/situacao"><i class="bi bi-clipboard-check me-1"></i>Situação Acadêmica</a></li>
             </ul>
           </li>

@@ -1,6 +1,7 @@
 <?php
   $turmaSelecionada = is_array($turma ?? null) ? $turma : null;
   $cursosLista = is_array($cursos ?? null) ? $cursos : [];
+  $matrizesLista = is_array($matrizes ?? null) ? $matrizes : [];
 ?>
 
 <section class="container py-4">
@@ -39,6 +40,17 @@
             <?php endforeach; ?>
           </select>
           <div class="invalid-feedback">Por favor, selecione um curso.</div>
+        </div>
+
+        <div class="mb-3">
+          <label for="id_estrutura" class="form-label">Matriz curricular</label>
+          <select class="form-select" id="id_estrutura" name="id_estrutura">
+            <option value="">Sem matriz definida</option>
+            <?php foreach ($matrizesLista as $matriz): ?>
+              <option value="<?= (int) ($matriz['id'] ?? 0) ?>" data-curso="<?= (int) ($matriz['id_curso'] ?? 0) ?>"<?= (int) ($matriz['id'] ?? 0) === (int) ($turmaSelecionada['id_estrutura'] ?? 0) ? ' selected' : '' ?>><?= htmlspecialchars((string) ($matriz['curso_nome'] ?? '') . ' — ' . (string) ($matriz['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?></option>
+            <?php endforeach; ?>
+          </select>
+          <div class="form-text">A turma utilizará os módulos e disciplinas desta matriz.</div>
         </div>
 
         <div class="mb-3">
