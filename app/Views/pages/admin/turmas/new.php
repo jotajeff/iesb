@@ -36,9 +36,9 @@
       <div class="mb-3">
         <label for="id_estrutura" class="form-label">Matriz curricular</label>
         <select class="form-select" id="id_estrutura" name="id_estrutura" required>
-          <option value="">Sem matriz definida</option>
+          <option value="">Selecione a matriz curricular</option>
           <?php foreach ($matrizesLista as $matriz): ?>
-            <option value="<?= (int) ($matriz['id'] ?? 0) ?>" data-curso="<?= (int) ($matriz['id_curso'] ?? 0) ?>"><?= htmlspecialchars((string) ($matriz['curso_nome'] ?? '') . ' — ' . (string) ($matriz['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?></option>
+            <option value="<?= (int) ($matriz['id'] ?? 0) ?>" data-curso="<?= (int) ($matriz['id_curso'] ?? 0) ?>"><?= htmlspecialchars((string) ($matriz['nome'] ?? '') . ' (v' . (string) ($matriz['versao'] ?? '1.0') . ')', ENT_QUOTES, 'UTF-8') ?></option>
           <?php endforeach; ?>
         </select>
         <div class="form-text">A turma utilizará os módulos e disciplinas desta matriz.</div>
@@ -60,6 +60,34 @@
     </form>
   </div>
 </section>
+
+<script>
+// Filtra as opções de matriz pelo curso selecionado
+(function () {
+  'use strict'
+  var curso = document.getElementById('curso')
+  var matriz = document.getElementById('id_estrutura')
+  if (!curso || !matriz) return
+  var cursoAnterior = curso.value
+
+  function filtrarMatrizes () {
+    var idCurso = curso.value
+    Array.prototype.forEach.call(matriz.options, function (opt) {
+      opt.hidden = opt.value !== '' && (idCurso === '' || opt.getAttribute('data-curso') !== idCurso)
+    })
+  }
+
+  curso.addEventListener('change', function () {
+    if (curso.value !== cursoAnterior) {
+      matriz.value = ''
+    }
+    cursoAnterior = curso.value
+    filtrarMatrizes()
+  })
+
+  filtrarMatrizes()
+})()
+</script>
 
 <script>
 // Example JavaScript for disabling form submissions if there are invalid fields

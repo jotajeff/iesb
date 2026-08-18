@@ -184,6 +184,7 @@ return static function (Router $router): void {
     $router->get('/admin/turmas/ver-drive', [TurmaController::class, 'verDrive']);
     $router->post('/admin/turmas/disciplinas/salvar', [TurmaController::class, 'salvarDisciplinaTurma']);
     $router->post('/admin/turmas/disciplinas/desativar', [TurmaController::class, 'desativarDisciplinaTurma']);
+    $router->post('/admin/turmas/modulos/professor', [TurmaController::class, 'vincularProfessorModulo']);
     $router->post('/admin/turmas/disciplinas-matricula/salvar', [TurmaController::class, 'salvarDisciplinasMatricula']);
 
     $router->get('/admin/modalidade', [ConfigController::class, 'modalidade']);

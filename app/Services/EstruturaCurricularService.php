@@ -26,6 +26,11 @@ final class EstruturaCurricularService
         return $this->repository->findMatriz($id);
     }
 
+    public function validarMatrizParaCurso(int $idEstrutura, int $idCurso): bool
+    {
+        return $this->repository->validarMatrizParaCurso($idEstrutura, $idCurso);
+    }
+
     public function salvarMatriz(array $data): int
     {
         return $this->repository->salvarMatriz($data);
@@ -110,6 +115,28 @@ final class EstruturaCurricularService
     public function desativarDisciplinaDaTurma(int $id): bool
     {
         return $this->repository->desativarDisciplinaDaTurma($id);
+    }
+
+    public function vincularProfessorDaDisciplina(int $idTurma, int $idDisciplina, ?int $idProfessor): bool
+    {
+        return $this->repository->vincularProfessorDaDisciplina($idTurma, $idDisciplina, $idProfessor);
+    }
+
+    public function vincularProfessorDoModulo(int $idTurma, int $idModulo, ?int $idProfessor): int
+    {
+        $disciplinas = $this->repository->listarDisciplinasDoModulo($idModulo);
+        if (empty($disciplinas)) {
+            return 0;
+        }
+
+        $vinculadas = 0;
+        foreach ($disciplinas as $disciplina) {
+            $idDisciplina = (int) ($disciplina['id_disciplina'] ?? 0);
+            if ($idDisciplina > 0 && $this->repository->vincularProfessorDaDisciplina($idTurma, $idDisciplina, $idProfessor)) {
+                $vinculadas++;
+            }
+        }
+        return $vinculadas;
     }
 
     // ==================== DISCIPLINAS DA MATRÍCULA ====================

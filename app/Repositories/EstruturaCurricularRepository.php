@@ -77,6 +77,34 @@ final class EstruturaCurricularRepository
         }
     }
 
+    public function validarMatrizParaCurso(int $idEstrutura, int $idCurso): bool
+    {
+        if ($idEstrutura < 1 || $idCurso < 1) {
+            return false;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return false;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT id
+                                   FROM estrutura_curricular
+                                   WHERE id = :id_estrutura
+                                     AND id_curso = :id_curso
+                                     AND ativo = 1
+                                   LIMIT 1');
+            $stmt->bindValue(':id_estrutura', $idEstrutura, PDO::PARAM_INT);
+            $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
+            $stmt->execute();
+            return $stmt->fetch() !== false;
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao validar matriz para curso: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function salvarMatriz(array $data): int
     {
         $pdo = Database::connection();
@@ -625,6 +653,40 @@ final class EstruturaCurricularRepository
             return $stmt->rowCount() > 0;
         } catch (\Throwable $e) {
             error_log('[ESTRUTURA] Erro ao desativar disciplina da turma: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function vincularProfessorDaDisciplina(int $idTurma, int $idDisciplina, ?int $idProfessor): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idTurma < 1 || $idDisciplina < 1) {
+            return false;
+        }
+
+        try {
+            $check = $pdo->prepare('SELECT id FROM turma_disciplina WHERE id_turma = :id_turma AND id_disciplina = :id_disciplina LIMIT 1');
+            $check->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
+            $check->bindValue(':id_disciplina', $idDisciplina, PDO::PARAM_INT);
+            $check->execute();
+            $idTurmaDisciplina = (int) $check->fetchColumn();
+
+            if ($idTurmaDisciplina > 0) {
+                $stmt = $pdo->prepare('UPDATE turma_disciplina SET id_usuario_professor = :id_professor WHERE id = :id');
+                $stmt->bindValue(':id', $idTurmaDisciplina, PDO::PARAM_INT);
+            } else {
+                $stmt = $pdo->prepare('INSERT INTO turma_disciplina (id_turma, id_disciplina, id_usuario_professor, status, ativo)
+                                       VALUES (:id_turma, :id_disciplina, :id_professor, :status, :ativo)');
+                $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
+                $stmt->bindValue(':id_disciplina', $idDisciplina, PDO::PARAM_INT);
+                $stmt->bindValue(':status', 'PLANEJADA');
+                $stmt->bindValue(':ativo', 1, PDO::PARAM_INT);
+            }
+            $stmt->bindValue(':id_professor', $idProfessor, $idProfessor !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmt->execute();
+            return true;
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao vincular professor à disciplina da turma: ' . $e->getMessage());
             return false;
         }
     }

@@ -86,6 +86,37 @@ final class TurmaController extends Controller
         }
         unset($inscrito);
 
+        $disciplinasTurma = $this->estruturaService->listarDisciplinasDaTurma($id);
+
+        $disciplinasDaTurmaPorDisciplina = [];
+        foreach ($disciplinasTurma as $disciplinaDaTurma) {
+            $disciplinasDaTurmaPorDisciplina[(int) ($disciplinaDaTurma['id_disciplina'] ?? 0)] = $disciplinaDaTurma;
+        }
+
+        $modulosDaTurma = $this->estruturaService->listarModulosDaTurma($id);
+
+        $disciplinasDosModulos = [];
+        foreach ($modulosDaTurma as $modulo) {
+            $disciplinas = $this->estruturaService->listarDisciplinasDoModulo((int) ($modulo['id'] ?? 0));
+            foreach ($disciplinas as &$disciplina) {
+                $idDisciplina = (int) ($disciplina['id_disciplina'] ?? 0);
+                $vinculo = $disciplinasDaTurmaPorDisciplina[$idDisciplina] ?? null;
+                $disciplina['professor_nome'] = $vinculo['professor_nome'] ?? null;
+                $disciplina['vinculada'] = $vinculo !== null;
+                $disciplina['turma_disciplina_id'] = (int) ($vinculo['id'] ?? 0);
+                $disciplina['professor_id'] = (int) ($vinculo['id_usuario_professor'] ?? 0);
+                $disciplina['data_inicio_turma'] = (string) ($vinculo['data_inicio'] ?? '');
+                $disciplina['data_fim_turma'] = (string) ($vinculo['data_fim'] ?? '');
+                $disciplina['status_turma'] = (string) ($vinculo['status'] ?? 'PLANEJADA');
+                $disciplina['ativo_turma'] = (int) ($vinculo['ativo'] ?? 1);
+            }
+            unset($disciplina);
+            $disciplinasDosModulos[] = [
+                'modulo' => $modulo,
+                'disciplinas' => $disciplinas,
+            ];
+        }
+
         $this->render('pages/admin/turmas/show', [
             'title' => 'Turma: ' . ($turma['nome'] ?? ''),
             'currentRoute' => '/admin/turmas/show',
@@ -93,8 +124,9 @@ final class TurmaController extends Controller
             'inscritos' => $inscritos,
             'professores' => $this->professoresDaTurma($id),
             'materiais' => $this->materiaisDaTurma($id),
-            'disciplinasTurma' => $this->estruturaService->listarDisciplinasDaTurma($id),
-            'modulosDaTurma' => $this->estruturaService->listarModulosDaTurma($id),
+            'disciplinasTurma' => $disciplinasTurma,
+            'modulosDaTurma' => $modulosDaTurma,
+            'disciplinasDosModulos' => $disciplinasDosModulos,
             'disciplinasDoCurso' => (int) ($turma['id_estrutura'] ?? 0) > 0
                 ? $this->estruturaService->listarDisciplinasDaMatriz((int) $turma['id_estrutura'])
                 : $this->estruturaService->listarDisciplinasDoCurso((int) ($turma['id_curso'] ?? 0)),
@@ -178,6 +210,21 @@ final class TurmaController extends Controller
             $this->json(['erro' => 'Selecione uma disciplina.'], 400);
         }
 
+        if ($idProfessor > 0) {
+            $professoresDaTurma = $this->estruturaService->listarProfessoresDaTurma($idTurma);
+            $professorVinculado = false;
+            foreach ($professoresDaTurma as $professor) {
+                if ((int) ($professor['id'] ?? 0) === $idProfessor) {
+                    $professorVinculado = true;
+                    break;
+                }
+            }
+
+            if (!$professorVinculado) {
+                $this->json(['erro' => 'O professor selecionado não está vinculado a esta turma.'], 400);
+            }
+        }
+
         $idEstruturaTurma = (int) ($turma['id_estrutura'] ?? 0);
         if ($idEstruturaTurma > 0) {
             $disciplinasDaMatriz = $this->estruturaService->listarDisciplinasDaMatriz($idEstruturaTurma);
@@ -231,6 +278,39 @@ final class TurmaController extends Controller
         $this->estruturaService->desativarDisciplinaDaTurma($id);
         $this->logService->log('desativar', 'turma_disciplina', $id, 'Disciplina da turma desativada');
         $this->json(['sucesso' => true]);
+    }
+
+    public function vincularProfessorModulo(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $idTurma = (int) $this->input('id_turma', 0);
+        $idModulo = (int) $this->input('id_modulo', 0);
+        $idProfessor = (int) $this->input('id_usuario_professor', 0);
+
+        if ($idTurma <= 0 || $idModulo <= 0) {
+            $this->json(['erro' => 'Parâmetros inválidos.'], 400);
+        }
+
+        $turma = $this->turmaService->findTurma($idTurma);
+        if ($turma === null) {
+            $this->json(['erro' => 'Turma não encontrada.'], 400);
+        }
+
+        $modulo = $this->estruturaService->findModulo($idModulo);
+        if ($modulo === null || (int) ($modulo['id_estrutura'] ?? 0) !== (int) ($turma['id_estrutura'] ?? 0)) {
+            $this->json(['erro' => 'O módulo selecionado não pertence à matriz desta turma.'], 400);
+        }
+
+        $total = $this->estruturaService->vincularProfessorDoModulo($idTurma, $idModulo, $idProfessor > 0 ? $idProfessor : null);
+        if ($total <= 0) {
+            $this->json(['erro' => 'Nenhuma disciplina do módulo foi vinculada ao professor.'], 400);
+        }
+
+        $this->logService->log('atualizar', 'turma_disciplina', $idTurma, 'Professor vinculado em lote a ' . $total . ' disciplina(s) do módulo #' . $idModulo . ' da turma #' . $idTurma);
+        $this->json(['sucesso' => true, 'total' => $total]);
     }
 
     private function professoresDaTurma(int $idTurma): array
@@ -294,12 +374,30 @@ final class TurmaController extends Controller
             return;
         }
 
+        $matrizes = $this->estruturaService->listarMatrizes(null, 1);
+        $idEstruturaAtual = (int) ($turma['id_estrutura'] ?? 0);
+        if ($idEstruturaAtual > 0) {
+            $presente = false;
+            foreach ($matrizes as $matriz) {
+                if ((int) ($matriz['id'] ?? 0) === $idEstruturaAtual) {
+                    $presente = true;
+                    break;
+                }
+            }
+            if (!$presente) {
+                $matrizAtual = $this->estruturaService->findMatriz($idEstruturaAtual);
+                if ($matrizAtual !== null) {
+                    $matrizes[] = $matrizAtual;
+                }
+            }
+        }
+
         $this->render('pages/admin/turmas/edit', [
             'title' => 'Editar Turma',
             'currentRoute' => '/admin/turmas/editar',
             'turma' => $turma,
             'cursos' => $this->cursoService->cursos('asc', 500),
-            'matrizes' => $this->estruturaService->listarMatrizes(null, 1),
+            'matrizes' => $matrizes,
         ], 'admin');
     }
 
@@ -383,8 +481,7 @@ final class TurmaController extends Controller
             return true;
         }
 
-        $matriz = $this->estruturaService->findMatriz($idEstrutura);
-        return $matriz !== null && (int) ($matriz['id_curso'] ?? 0) === $idCurso;
+        return $this->estruturaService->validarMatrizParaCurso($idEstrutura, $idCurso);
     }
 
     public function verVideo(): void

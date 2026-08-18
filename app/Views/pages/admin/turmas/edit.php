@@ -70,6 +70,34 @@
 </section>
 
 <script>
+// Filtra as opções de matriz pelo curso selecionado
+(function () {
+  'use strict'
+  var curso = document.getElementById('curso')
+  var matriz = document.getElementById('id_estrutura')
+  if (!curso || !matriz) return
+  var cursoAnterior = curso.value
+
+  function filtrarMatrizes () {
+    var idCurso = curso.value
+    Array.prototype.forEach.call(matriz.options, function (opt) {
+      opt.hidden = opt.value !== '' && (idCurso === '' || opt.getAttribute('data-curso') !== idCurso)
+    })
+  }
+
+  curso.addEventListener('change', function () {
+    if (curso.value !== cursoAnterior) {
+      matriz.value = ''
+    }
+    cursoAnterior = curso.value
+    filtrarMatrizes()
+  })
+
+  filtrarMatrizes()
+})()
+</script>
+
+<script>
 // Example JavaScript for disabling form submissions if there are invalid fields
 (function () {
   'use strict'

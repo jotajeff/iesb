@@ -53,7 +53,15 @@
                   </tr>
                   <tr>
                     <th class="bg-light">Matriz curricular</th>
-                    <td><?= htmlspecialchars((string) ($turmaSelecionada['estrutura_nome'] ?? 'Sem matriz definida'), ENT_QUOTES, 'UTF-8') ?></td>
+                    <td>
+                      <?php if ((int) ($turmaSelecionada['id_estrutura'] ?? 0) > 0): ?>
+                        <span class="fw-medium"><?= htmlspecialchars((string) ($turmaSelecionada['estrutura_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <span class="text-muted small">(v<?= htmlspecialchars((string) ($turmaSelecionada['estrutura_versao'] ?? '1.0'), ENT_QUOTES, 'UTF-8') ?>)</span>
+                        <a class="btn btn-sm btn-outline-secondary ms-2" href="/admin/academico/matrizes/detalhe?id=<?= (int) ($turmaSelecionada['id_estrutura'] ?? 0) ?>" title="Ver matriz curricular"><i class="bi bi-diagram-3 me-1"></i>Ver matriz</a>
+                      <?php else: ?>
+                        <span class="text-muted">Sem matriz definida</span>
+                      <?php endif; ?>
+                    </td>
                   </tr>
                   <tr>
                     <th class="bg-light">Nível</th>
@@ -83,38 +91,6 @@
                   </tr>
                 </tbody>
               </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="accordion-item">
-          <h2 class="accordion-header">
-            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modulosTurma" aria-expanded="false" aria-controls="modulosTurma">
-              <i class="bi bi-grid-3x3-gap me-2"></i>Módulos da matriz (<?= count($modulosDaTurma) ?>)
-            </button>
-          </h2>
-          <div id="modulosTurma" class="accordion-collapse collapse" data-bs-parent="#turmaAccordion">
-            <div class="accordion-body p-0">
-              <?php if (empty($modulosDaTurma)): ?>
-                <div class="alert alert-light border text-muted m-3"><i class="bi bi-info-circle me-1"></i>Esta turma não possui matriz curricular vinculada ou a matriz ainda não possui módulos.</div>
-              <?php else: ?>
-                <div class="table-responsive">
-                  <table class="table table-striped table-sm align-middle mb-0">
-                    <thead><tr><th>Ordem</th><th>Módulo</th><th>Carga horária</th><th>Disciplinas</th><th>Status</th></tr></thead>
-                    <tbody>
-                    <?php foreach ($modulosDaTurma as $modulo): ?>
-                      <tr>
-                        <td><?= (int) ($modulo['ordem'] ?? 0) ?></td>
-                        <td><?= htmlspecialchars((string) ($modulo['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                        <td><?= (int) ($modulo['carga_horaria'] ?? 0) > 0 ? (int) $modulo['carga_horaria'] . 'h' : '-' ?></td>
-                        <td><span class="badge bg-primary"><?= (int) ($modulo['total_disciplinas'] ?? 0) ?></span></td>
-                        <td><?= (int) ($modulo['ativo'] ?? 0) === 1 ? '<span class="badge bg-success">Ativo</span>' : '<span class="badge bg-secondary">Inativo</span>' ?></td>
-                      </tr>
-                    <?php endforeach; ?>
-                    </tbody>
-                  </table>
-                </div>
-              <?php endif; ?>
             </div>
           </div>
         </div>
@@ -159,8 +135,41 @@
 
         <div class="accordion-item">
           <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#modulosTurma" aria-expanded="false" aria-controls="modulosTurma">
+              <i class="bi bi-grid-3x3-gap me-2"></i>Módulos da matriz (<?= count($modulosDaTurma) ?>)
+            </button>
+          </h2>
+          <div id="modulosTurma" class="accordion-collapse collapse" data-bs-parent="#turmaAccordion">
+            <div class="accordion-body p-0">
+              <?php if (empty($modulosDaTurma)): ?>
+                <div class="alert alert-light border text-muted m-3"><i class="bi bi-info-circle me-1"></i>Esta turma não possui matriz curricular vinculada ou a matriz ainda não possui módulos.</div>
+              <?php else: ?>
+                <div class="table-responsive">
+                  <table class="table table-striped table-sm align-middle mb-0">
+                    <thead><tr><th>Ordem</th><th>Módulo</th><th>Carga horária</th><th>Disciplinas</th><th>Status</th></tr></thead>
+                    <tbody>
+                    <?php foreach ($modulosDaTurma as $modulo): ?>
+                      <tr>
+                        <td><?= (int) ($modulo['ordem'] ?? 0) ?></td>
+                        <td><?= htmlspecialchars((string) ($modulo['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                        <td><?= (int) ($modulo['carga_horaria'] ?? 0) > 0 ? (int) $modulo['carga_horaria'] . 'h' : '-' ?></td>
+                        <td><span class="badge bg-primary"><?= (int) ($modulo['total_disciplinas'] ?? 0) ?></span></td>
+                        <td><?= (int) ($modulo['ativo'] ?? 0) === 1 ? '<span class="badge bg-success">Ativo</span>' : '<span class="badge bg-secondary">Inativo</span>' ?></td>
+                      </tr>
+                    <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#disciplinasTurma" aria-expanded="false" aria-controls="disciplinasTurma">
-              <i class="bi bi-journal-text me-2"></i>Disciplinas (<?= count($disciplinasTurma ?? []) ?>)
+              <?php $totalDisciplinasModulosHeader = 0; foreach (($disciplinasDosModulos ?? []) as $grupo) { $totalDisciplinasModulosHeader += count($grupo['disciplinas'] ?? []); } ?>
+              <i class="bi bi-journal-text me-2"></i>Disciplinas (<?= $totalDisciplinasModulosHeader > 0 ? $totalDisciplinasModulosHeader : count($disciplinasTurma ?? []) ?>)
             </button>
           </h2>
           <div id="disciplinasTurma" class="accordion-collapse collapse" data-bs-parent="#turmaAccordion">
@@ -173,71 +182,153 @@
                   <i class="bi bi-plus-circle me-1"></i>Adicionar disciplina
                 </button>
               </div>
-              <?php if (empty($disciplinasTurma)): ?>
-                <div class="alert alert-light border text-muted m-3">
-                  <i class="bi bi-inbox me-1"></i>Nenhuma disciplina vinculada a esta turma.
-                </div>
-              <?php else: ?>
-                <div class="table-responsive">
-                  <table class="table table-striped table-sm align-middle mb-0">
-                    <thead>
-                      <tr>
-                        <th>#</th>
-                        <th>Disciplina</th>
-                        <th>Professor</th>
-                        <th>Início</th>
-                        <th>Fim</th>
-                        <th>Status</th>
-                        <th>Ativo</th>
-                        <th>Ações</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php foreach ($disciplinasTurma as $td): ?>
-                        <?php
-                          $tdAtivo = (int) ($td['ativo'] ?? 1) === 1;
-                          $tdStatus = (string) ($td['status'] ?? 'PLANEJADA');
-                          $statusLabel = match ($tdStatus) {
-                            'PLANEJADA' => 'Planejada',
-                            'EM_ANDAMENTO' => 'Em andamento',
-                            'CONCLUIDA' => 'Concluída',
-                            'CANCELADA' => 'Cancelada',
-                            default => $tdStatus,
-                          };
-                        ?>
+              <?php $disciplinasDosModulos = $disciplinasDosModulos ?? []; ?>
+              <?php $totalDisciplinasModulos = 0; foreach ($disciplinasDosModulos as $grupo) { $totalDisciplinasModulos += count($grupo['disciplinas'] ?? []); } ?>
+              <?php if (empty($disciplinasDosModulos)): ?>
+                <?php if (empty($disciplinasTurma)): ?>
+                  <div class="alert alert-light border text-muted m-3">
+                    <i class="bi bi-inbox me-1"></i>Esta turma não possui matriz curricular vinculada nem disciplinas cadastradas.
+                  </div>
+                <?php else: ?>
+                  <div class="table-responsive">
+                    <table class="table table-striped table-sm align-middle mb-0">
+                      <thead>
                         <tr>
-                          <td><?= (int) ($td['id'] ?? 0) ?></td>
-                          <td><?= htmlspecialchars((string) ($td['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                          <td><?= htmlspecialchars((string) ($td['professor_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                          <td><?= !empty($td['data_inicio']) ? date('d/m/Y', strtotime((string) $td['data_inicio'])) : '-' ?></td>
-                          <td><?= !empty($td['data_fim']) ? date('d/m/Y', strtotime((string) $td['data_fim'])) : '-' ?></td>
-                          <td><span class="badge bg-info text-dark"><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></span></td>
-                          <td>
-                            <?php if ($tdAtivo): ?>
-                              <span class="badge bg-success">Sim</span>
-                            <?php else: ?>
-                              <span class="badge bg-secondary">Não</span>
-                            <?php endif; ?>
-                          </td>
-                          <td>
-                            <div class="d-flex gap-1">
-                              <button type="button" class="btn btn-sm btn-outline-secondary btn-editar-disciplina-turma"
-                                      data-id="<?= (int) ($td['id'] ?? 0) ?>"
-                                      data-disciplina="<?= (int) ($td['id_disciplina'] ?? 0) ?>"
-                                      data-professor="<?= (int) ($td['id_usuario_professor'] ?? 0) ?>"
-                                      data-inicio="<?= htmlspecialchars((string) ($td['data_inicio'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                                      data-fim="<?= htmlspecialchars((string) ($td['data_fim'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
-                                      data-status="<?= htmlspecialchars($tdStatus, ENT_QUOTES, 'UTF-8') ?>"
-                                      data-ativo="<?= (int) ($td['ativo'] ?? 1) ?>"><i class="bi bi-pencil"></i></button>
-                              <?php if ($tdAtivo): ?>
-                                <button type="button" class="btn btn-sm btn-outline-danger btn-desativar-disciplina-turma" data-id="<?= (int) ($td['id'] ?? 0) ?>"><i class="bi bi-toggle-off"></i></button>
-                              <?php endif; ?>
-                            </div>
-                          </td>
+                          <th>#</th>
+                          <th>Disciplina</th>
+                          <th>Professor</th>
+                          <th>Início</th>
+                          <th>Fim</th>
+                          <th>Status</th>
+                          <th>Ativo</th>
+                          <th>Ações</th>
                         </tr>
-                      <?php endforeach; ?>
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        <?php foreach ($disciplinasTurma as $td): ?>
+                          <?php
+                            $tdAtivo = (int) ($td['ativo'] ?? 1) === 1;
+                            $tdStatus = (string) ($td['status'] ?? 'PLANEJADA');
+                            $statusLabel = match ($tdStatus) {
+                              'PLANEJADA' => 'Planejada',
+                              'EM_ANDAMENTO' => 'Em andamento',
+                              'CONCLUIDA' => 'Concluída',
+                              'CANCELADA' => 'Cancelada',
+                              default => $tdStatus,
+                            };
+                          ?>
+                          <tr>
+                            <td><?= (int) ($td['id'] ?? 0) ?></td>
+                            <td><?= htmlspecialchars((string) ($td['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td><?= htmlspecialchars((string) ($td['professor_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            <td><?= !empty($td['data_inicio']) ? date('d/m/Y', strtotime((string) $td['data_inicio'])) : '-' ?></td>
+                            <td><?= !empty($td['data_fim']) ? date('d/m/Y', strtotime((string) $td['data_fim'])) : '-' ?></td>
+                            <td><span class="badge bg-info text-dark"><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></span></td>
+                            <td>
+                              <?php if ($tdAtivo): ?>
+                                <span class="badge bg-success">Sim</span>
+                              <?php else: ?>
+                                <span class="badge bg-secondary">Não</span>
+                              <?php endif; ?>
+                            </td>
+                            <td>
+                              <div class="d-flex gap-1">
+                                <button type="button" class="btn btn-sm btn-outline-secondary btn-editar-disciplina-turma"
+                                        data-id="<?= (int) ($td['id'] ?? 0) ?>"
+                                        data-disciplina="<?= (int) ($td['id_disciplina'] ?? 0) ?>"
+                                        data-professor="<?= (int) ($td['id_usuario_professor'] ?? 0) ?>"
+                                        data-inicio="<?= htmlspecialchars((string) ($td['data_inicio'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                        data-fim="<?= htmlspecialchars((string) ($td['data_fim'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                        data-status="<?= htmlspecialchars($tdStatus, ENT_QUOTES, 'UTF-8') ?>"
+                                        data-ativo="<?= (int) ($td['ativo'] ?? 1) ?>"><i class="bi bi-pencil"></i></button>
+                                <?php if ($tdAtivo): ?>
+                                  <button type="button" class="btn btn-sm btn-outline-danger btn-desativar-disciplina-turma" data-id="<?= (int) ($td['id'] ?? 0) ?>"><i class="bi bi-toggle-off"></i></button>
+                                <?php endif; ?>
+                              </div>
+                            </td>
+                          </tr>
+                        <?php endforeach; ?>
+                      </tbody>
+                    </table>
+                  </div>
+                <?php endif; ?>
+              <?php else: ?>
+                <div class="p-3">
+                  <?php foreach ($disciplinasDosModulos as $grupo): ?>
+                    <?php $modulo = $grupo['modulo'] ?? []; ?>
+                    <?php $disciplinasModulo = $grupo['disciplinas'] ?? []; ?>
+                    <div class="mb-4">
+                      <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-2">
+                        <h6 class="mb-0">
+                          <span class="badge bg-secondary">Módulo <?= (int) ($modulo['ordem'] ?? 0) ?></span>
+                          <?= htmlspecialchars((string) ($modulo['nome'] ?? 'Módulo'), ENT_QUOTES, 'UTF-8') ?>
+                          <?php if ((int) ($modulo['carga_horaria'] ?? 0) > 0): ?>
+                            <span class="text-muted small fw-normal">· <?= (int) $modulo['carga_horaria'] ?>h</span>
+                          <?php endif; ?>
+                        </h6>
+                        <?php if (!$isProfessor && !empty($disciplinasModulo)): ?>
+                          <button type="button"
+                                  class="btn btn-sm btn-outline-primary btn-vincular-professor-modulo"
+                                  data-modulo="<?= (int) ($modulo['id'] ?? 0) ?>"
+                                  data-modulo-nome="<?= htmlspecialchars((string) ($modulo['nome'] ?? 'Módulo'), ENT_QUOTES, 'UTF-8') ?>"
+                                  title="Vincular todas as disciplinas deste módulo a um professor">
+                            <i class="bi bi-people me-1"></i>Vincular professor em lote
+                          </button>
+                        <?php endif; ?>
+                      </div>
+                      <?php if (empty($disciplinasModulo)): ?>
+                        <div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Nenhuma disciplina neste módulo.</div>
+                      <?php else: ?>
+                        <ul class="list-group list-group-flush border rounded-2 overflow-hidden">
+                          <?php foreach ($disciplinasModulo as $d): ?>
+                            <?php $dAtiva = (int) ($d['ativo'] ?? 1) === 1; ?>
+                            <?php $dVinculada = (int) ($d['vinculada'] ?? 0) === 1; ?>
+                            <li class="list-group-item px-3 py-2">
+                              <div class="d-flex justify-content-between align-items-center gap-2">
+                                <div>
+                                  <?= htmlspecialchars((string) ($d['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                                  <?php if ((int) ($d['obrigatoria'] ?? 1) === 0): ?>
+                                    <span class="badge bg-light text-secondary">Opcional</span>
+                                  <?php endif; ?>
+                                  <?php if (!$dAtiva): ?>
+                                    <span class="badge bg-secondary">Inativa</span>
+                                  <?php endif; ?>
+                                </div>
+                                <?php if ($dVinculada): ?>
+                                  <span class="badge bg-success"><i class="bi bi-check-lg me-1"></i>Vinculada à turma</span>
+                                <?php else: ?>
+                                  <span class="badge bg-light text-secondary">Não vinculada</span>
+                                <?php endif; ?>
+                              </div>
+                              <div class="text-muted small mt-1">
+                                <i class="bi bi-person me-1"></i>Professor:
+                                <?php if (!empty($d['professor_nome'])): ?>
+                                  <?= htmlspecialchars((string) $d['professor_nome'], ENT_QUOTES, 'UTF-8') ?>
+                                <?php else: ?>
+                                  <span class="text-muted">Não vinculado</span>
+                                <?php endif; ?>
+                              </div>
+                              <?php if (!$isProfessor): ?>
+                                <div class="mt-2">
+                                  <button type="button"
+                                          class="btn btn-sm <?= $dVinculada ? 'btn-outline-secondary btn-editar-disciplina-modulo' : 'btn-outline-primary btn-vincular-disciplina-modulo' ?>"
+                                          data-id="<?= (int) ($d['turma_disciplina_id'] ?? 0) ?>"
+                                          data-disciplina="<?= (int) ($d['id_disciplina'] ?? 0) ?>"
+                                          data-professor="<?= (int) ($d['professor_id'] ?? 0) ?>"
+                                          data-inicio="<?= htmlspecialchars((string) ($d['data_inicio_turma'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                          data-fim="<?= htmlspecialchars((string) ($d['data_fim_turma'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
+                                          data-status="<?= htmlspecialchars((string) ($d['status_turma'] ?? 'PLANEJADA'), ENT_QUOTES, 'UTF-8') ?>"
+                                          data-ativo="<?= (int) ($d['ativo_turma'] ?? 1) ?>">
+                                    <i class="bi bi-person-plus me-1"></i><?= $dVinculada ? 'Alterar professor' : 'Vincular professor' ?>
+                                  </button>
+                                </div>
+                              <?php endif; ?>
+                            </li>
+                          <?php endforeach; ?>
+                        </ul>
+                      <?php endif; ?>
+                    </div>
+                  <?php endforeach; ?>
                 </div>
               <?php endif; ?>
             </div>
@@ -493,6 +584,39 @@
   </div>
 </div>
 
+<div class="modal fade" id="modalVincularProfessorModulo" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form id="formVincularProfessorModulo">
+        <input type="hidden" name="id_turma" value="<?= (int) ($turmaSelecionada['id'] ?? 0) ?>">
+        <input type="hidden" name="id_modulo" id="vpModuloId" value="0">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-people me-1"></i>Vincular professor em lote</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">Módulo: <strong id="vpModuloNome"></strong></p>
+          <p class="text-muted small mb-3">O professor selecionado será vinculado a todas as disciplinas deste módulo na turma. Disciplinas já vinculadas terão o professor atualizado; as demais serão cadastradas.</p>
+          <div class="mb-3">
+            <label class="form-label">Professor</label>
+            <select name="id_usuario_professor" id="vpProfessor" class="form-select">
+              <option value="">Sem professor (desvincular)</option>
+              <?php foreach ($professoresDaTurma as $prof): ?>
+                <option value="<?= (int) ($prof['id'] ?? 0) ?>"><?= htmlspecialchars((string) ($prof['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
+              <?php endforeach; ?>
+            </select>
+            <div class="form-text">Apenas professores vinculados à turma.</div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Vincular</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
 var disciplinasMatriculadasPorMatricula = <?= json_encode($disciplinasMatriculadas ?? [], JSON_NUMERIC_CHECK) ?>;
 
@@ -512,17 +636,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.querySelectorAll('.btn-editar-disciplina-turma').forEach(function (btn) {
     btn.addEventListener('click', function () {
-      document.getElementById('tdId').value = btn.dataset.id;
-      document.getElementById('tdDisciplina').value = btn.dataset.disciplina;
-      document.getElementById('tdProfessor').value = btn.dataset.professor || '';
-      document.getElementById('tdInicio').value = btn.dataset.inicio || '';
-      document.getElementById('tdFim').value = btn.dataset.fim || '';
-      document.getElementById('tdStatus').value = btn.dataset.status || 'PLANEJADA';
-      document.getElementById('tdAtivo').value = btn.dataset.ativo || '1';
-      document.getElementById('modalDisciplinaTurmaTitulo').textContent = 'Editar disciplina';
-      bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDisciplinaTurma')).show();
+      abrirModalDisciplinaTurma(btn, 'Editar disciplina');
     });
   });
+
+  document.querySelectorAll('.btn-editar-disciplina-modulo, .btn-vincular-disciplina-modulo').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      abrirModalDisciplinaTurma(btn, btn.classList.contains('btn-vincular-disciplina-modulo') ? 'Vincular professor à disciplina' : 'Alterar professor da disciplina');
+    });
+  });
+
+  function abrirModalDisciplinaTurma(btn, titulo) {
+    document.getElementById('tdId').value = btn.dataset.id || '0';
+    document.getElementById('tdDisciplina').value = btn.dataset.disciplina || '';
+    document.getElementById('tdProfessor').value = btn.dataset.professor || '';
+    document.getElementById('tdInicio').value = btn.dataset.inicio || '';
+    document.getElementById('tdFim').value = btn.dataset.fim || '';
+    document.getElementById('tdStatus').value = btn.dataset.status || 'PLANEJADA';
+    document.getElementById('tdAtivo').value = btn.dataset.ativo || '1';
+    document.getElementById('modalDisciplinaTurmaTitulo').textContent = titulo;
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalDisciplinaTurma')).show();
+  }
 
   document.querySelectorAll('.btn-desativar-disciplina-turma').forEach(function (btn) {
     btn.addEventListener('click', function () {
@@ -576,6 +710,32 @@ document.addEventListener('DOMContentLoaded', function () {
           else alert(res.erro || 'Erro ao salvar disciplinas da matrícula.');
         })
         .catch(function () { alert('Erro ao salvar disciplinas da matrícula.'); });
+    });
+  }
+
+  var formVp = document.getElementById('formVincularProfessorModulo');
+  var modalVp = document.getElementById('modalVincularProfessorModulo');
+
+  document.querySelectorAll('.btn-vincular-professor-modulo').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('vpModuloId').value = btn.dataset.modulo || '0';
+      document.getElementById('vpModuloNome').textContent = btn.dataset.moduloNome || 'Módulo';
+      document.getElementById('vpProfessor').value = '';
+      bootstrap.Modal.getOrCreateInstance(modalVp).show();
+    });
+  });
+
+  if (formVp) {
+    formVp.addEventListener('submit', function (e) {
+      e.preventDefault();
+      var data = new URLSearchParams(new FormData(formVp));
+      fetch('/admin/turmas/modulos/professor', { method: 'POST', body: data })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+          if (res.sucesso) { bootstrap.Modal.getInstance(modalVp).hide(); location.reload(); }
+          else alert(res.erro || 'Erro ao vincular professor em lote.');
+        })
+        .catch(function () { alert('Erro ao vincular professor em lote.'); });
     });
   }
 });

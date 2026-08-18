@@ -26,6 +26,7 @@
               <th><i class="bi bi-hash"></i></th>
               <th>Nome</th>
               <th>Curso</th>
+              <th>Matriz curricular</th>
               <th>Nível</th>
               <th>Data Início</th>
               <th>Inscritos</th>
@@ -35,7 +36,7 @@
           </thead>
           <tbody>
             <?php if (empty($turmasView)): ?>
-              <tr><td colspan="8" class="text-muted">Sem registro.</td></tr>
+              <tr><td colspan="9" class="text-muted">Sem registro.</td></tr>
             <?php endif; ?>
 
             <?php foreach ($turmasView as $turma): ?>
@@ -43,6 +44,7 @@
                 <td><a class="text-decoration-none fw-medium" href="/admin/turmas/show?id=<?= (int) ($turma['id'] ?? 0) ?>">#<?= (int) ($turma['id'] ?? 0) ?></a></td>
                 <td><?= htmlspecialchars((string) ($turma['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?= htmlspecialchars((string) ($turma['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?php if ((int) ($turma['id_estrutura'] ?? 0) > 0): ?><?= htmlspecialchars((string) ($turma['estrutura_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?><span class="text-muted small"> (v<?= htmlspecialchars((string) ($turma['estrutura_versao'] ?? '1.0'), ENT_QUOTES, 'UTF-8') ?>)</span><?php else: ?><span class="text-muted">Sem matriz definida</span><?php endif; ?></td>
                 <td><?= htmlspecialchars((string) ($turma['nivel_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                 <td><?php
                   $rawDate = (string) ($turma['data_inicio'] ?? '');

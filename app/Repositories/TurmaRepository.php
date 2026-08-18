@@ -18,10 +18,12 @@ final class TurmaRepository
 
         try {
             $sql = 'SELECT t.id, t.nome, t.id_estrutura, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
+                 . ' ec.nome AS estrutura_nome, ec.versao AS estrutura_versao,'
                  . ' (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos c ON t.id_curso = c.id'
-                 . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id';
+                 . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
+                 . ' LEFT JOIN estrutura_curricular ec ON ec.id = t.id_estrutura';
 
             $params = [];
             if ($ativo !== null) {
@@ -55,7 +57,7 @@ final class TurmaRepository
 
         try {
             $sql = 'SELECT t.id, t.nome, t.id_curso, t.id_estrutura, t.data_inicio, t.ativo, '
-                 . 'c.nome AS curso_nome, n.nome AS nivel_nome, ec.nome AS estrutura_nome'
+                 . 'c.nome AS curso_nome, n.nome AS nivel_nome, ec.nome AS estrutura_nome, ec.versao AS estrutura_versao'
                  . ' FROM turmas t'
                  . ' LEFT JOIN cursos c ON t.id_curso = c.id'
                  . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'

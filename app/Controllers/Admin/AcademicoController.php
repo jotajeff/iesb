@@ -266,7 +266,14 @@ final class AcademicoController extends Controller
             $this->json(['erro' => 'Selecione uma disciplina.'], 400);
         }
 
-        $disciplinasDoCurso = $this->estruturaService->listarDisciplinasDoCurso((int) ($modulo['id_estrutura'] ?? 0));
+        // id_estrutura identifica a matriz, não o curso. A lista de disciplinas
+        // precisa ser validada usando estrutura_curricular.id_curso.
+        $matriz = $this->estruturaService->findMatriz((int) ($modulo['id_estrutura'] ?? 0));
+        if ($matriz === null || (int) ($matriz['id_curso'] ?? 0) <= 0) {
+            $this->json(['erro' => 'A matriz vinculada ao módulo não foi encontrada ou não possui curso válido.'], 400);
+        }
+
+        $disciplinasDoCurso = $this->estruturaService->listarDisciplinasDoCurso((int) $matriz['id_curso']);
         $idsDisciplinasDoCurso = array_map(static fn (array $disciplina): int => (int) ($disciplina['id'] ?? 0), $disciplinasDoCurso);
         if (!in_array($idDisciplina, $idsDisciplinasDoCurso, true)) {
             $this->json(['erro' => 'A disciplina selecionada não pertence ao curso desta matriz.'], 400);
