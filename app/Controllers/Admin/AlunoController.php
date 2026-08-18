@@ -570,6 +570,171 @@ final class AlunoController extends Controller
         $this->redirect('/admin/alunos/show?id=' . $alunoId);
     }
 
+    public function uploadDocumento(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $alunoId = (int) $this->input('aluno_id', 0);
+        $tipoId = (int) $this->input('id_tipo', 0);
+        $file = $_FILES['arquivo'] ?? null;
+
+        if ($alunoId <= 0 || $tipoId <= 0 || !$file) {
+            Session::setFlash('flash', 'Selecione o tipo de documento e o arquivo.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            Session::setFlash('flash', 'Erro no upload do arquivo.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        $originalName = (string) ($file['name'] ?? '');
+        $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+        $allowed = ['pdf', 'png', 'jpg', 'jpeg'];
+
+        if (!in_array($extension, $allowed, true)) {
+            Session::setFlash('flash', 'Formato não permitido. Use PDF, PNG, JPG ou JPEG.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        if ((int) ($file['size'] ?? 0) > 20 * 1024 * 1024) {
+            Session::setFlash('flash', 'O arquivo deve ter no máximo 20MB.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        $aluno = $this->alunoService->findAluno($alunoId);
+        if (!$aluno) {
+            Session::setFlash('flash', 'Aluno não encontrado.');
+            $this->redirect('/admin/alunos');
+            return;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            Session::setFlash('flash', 'Erro de conexão com o banco de dados.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        $grupoAlunos = \App\Services\Storage\StorageService::GROUP_ALUNOS;
+
+        $tipo = null;
+        try {
+            $stmt = $pdo->prepare('SELECT id, descricao FROM documento_tipo WHERE id = :id AND id_grupo = :id_grupo AND ativo = 1 LIMIT 1');
+            $stmt->bindValue(':id', $tipoId, \PDO::PARAM_INT);
+            $stmt->bindValue(':id_grupo', $grupoAlunos, \PDO::PARAM_INT);
+            $stmt->execute();
+            $tipo = $stmt->fetch() ?: null;
+        } catch (\Throwable $e) {
+            error_log('[ALUNO UPLOAD DOC] Erro: ' . $e->getMessage());
+        }
+
+        if (!$tipo) {
+            Session::setFlash('flash', 'Tipo de documento inválido.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        $storageDriveRepo = new \App\Repositories\StorageDriveRepository();
+        $pasta = $storageDriveRepo->findByRegistro($grupoAlunos, $alunoId);
+
+        $storage = new \App\Services\Storage\StorageService();
+
+        if ($pasta === null) {
+            if (!$storage->isConnected()) {
+                Session::setFlash('flash', 'Storage não conectado. Tente novamente mais tarde.');
+                $this->redirect('/admin/alunos/show?id=' . $alunoId);
+                return;
+            }
+            try {
+                $nomeAluno = (string) ($aluno['nome'] ?? '');
+                $folderId = $storage->ensureRegistroFolder($grupoAlunos, (string) $alunoId, $nomeAluno);
+                if ($folderId === '') {
+                    throw new \RuntimeException('Pasta não criada no Drive.');
+                }
+                $storageDriveRepo->create([
+                    'id_grupo' => $grupoAlunos,
+                    'id_registro' => $alunoId,
+                    'folder_id' => $folderId,
+                    'folder_name' => sprintf('%06d-%s', $alunoId, $nomeAluno),
+                    'folder_link' => $storage->generateViewLinkByFileId($folderId),
+                    'tipo' => 'registro',
+                    'nivel' => 2,
+                ]);
+                $pasta = $storageDriveRepo->findByRegistro($grupoAlunos, $alunoId);
+            } catch (\Throwable $e) {
+                error_log('[ALUNO UPLOAD DOC] Erro ao criar pasta: ' . $e->getMessage());
+                Session::setFlash('flash', 'Pasta do aluno no Drive não encontrada. Verifique a conexão do Storage.');
+                $this->redirect('/admin/alunos/show?id=' . $alunoId);
+                return;
+            }
+        }
+
+        if (!$storage->isConnected()) {
+            Session::setFlash('flash', 'Storage não conectado. Tente novamente mais tarde.');
+            $this->redirect('/admin/alunos/show?id=' . $alunoId);
+            return;
+        }
+
+        $documentoAtual = null;
+        try {
+            $stmt = $pdo->prepare('SELECT id, versao, status FROM documento WHERE id_tipo = :id_tipo AND id_registro = :id_registro AND ativo = 1 ORDER BY versao DESC, id DESC LIMIT 1');
+            $stmt->bindValue(':id_tipo', $tipoId, \PDO::PARAM_INT);
+            $stmt->bindValue(':id_registro', $alunoId, \PDO::PARAM_INT);
+            $stmt->execute();
+            $documentoAtual = $stmt->fetch() ?: null;
+        } catch (\Throwable $e) {
+            error_log('[ALUNO UPLOAD DOC] Erro: ' . $e->getMessage());
+        }
+
+        $versao = $documentoAtual !== null ? ((int) ($documentoAtual['versao'] ?? 1)) + 1 : 1;
+        $timestamp = date('YmdHis');
+        $tipoSigla = $this->tipoSigla((string) $tipo['descricao']);
+        $nomeDrive = sprintf('%s_%s.%s', $tipoSigla, $timestamp, $extension);
+
+        try {
+            if ($documentoAtual !== null) {
+                $documentoRepository = new \App\Repositories\DocumentoRepository();
+                $documentoRepository->markSubstituido((int) $documentoAtual['id']);
+            }
+
+            $result = $storage->upload(
+                $file,
+                $grupoAlunos,
+                $alunoId,
+                $tipoId,
+                (string) ($pasta['folder_id'] ?? ''),
+                $nomeDrive,
+                'aprovado'
+            );
+
+            $this->logService->log('upload', 'documento', (int) $result['id'], "Secretaria registrou documento {$tipo['descricao']} para o aluno {$aluno['nome']} (v{$versao})");
+            Session::setFlash('flash', 'Documento registrado com sucesso.');
+        } catch (\App\Services\Storage\StorageException $e) {
+            error_log('[ALUNO UPLOAD DOC] Storage: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao registrar o documento: ' . $e->getMessage());
+        } catch (\Throwable $e) {
+            error_log('[ALUNO UPLOAD DOC] Erro: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao registrar o documento.');
+        }
+
+        $this->redirect('/admin/alunos/show?id=' . $alunoId);
+    }
+
+    private function tipoSigla(string $descricao): string
+    {
+        $sigla = preg_replace('/[^A-Za-z0-9]/', '', $descricao);
+        $sigla = strtoupper((string) $sigla);
+        return $sigla !== '' ? $sigla : 'DOC';
+    }
+
     private function isStaff(): bool
     {
         return (new \App\Services\AuthService())->isStaff();

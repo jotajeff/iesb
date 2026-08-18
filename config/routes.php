@@ -162,6 +162,7 @@ return static function (Router $router): void {
     $router->post('/admin/alunos/trocar', [AlunoController::class, 'trocar']);
     $router->post('/admin/alunos/restaurar-senha', [AlunoController::class, 'restaurarSenha']);
     $router->post('/admin/alunos/compartilhar-documento', [AlunoController::class, 'compartilharDocumento']);
+    $router->post('/admin/alunos/upload-documento', [AlunoController::class, 'uploadDocumento']);
     $router->post('/admin/alunos/liberar-documentos', [AlunoController::class, 'liberarDocumentosPublicos']);
 
     $router->get('/admin/tarefas', [TarefaController::class, 'index']);
@@ -277,6 +278,7 @@ return static function (Router $router): void {
     $router->get('/aluno/cursos', [StudentController::class, 'cursos']);
     $router->get('/aluno/financeiro', [StudentController::class, 'financeiro']);
     $router->get('/aluno/show', [StudentController::class, 'show']);
+    $router->get('/aluno/professor', [StudentController::class, 'professor']);
     $router->get('/aluno/video', [StudentController::class, 'video']);
     $router->get('/aluno/drive', [StudentController::class, 'drive']);
     $router->get('/aluno/detalhes', [StudentController::class, 'detalhes']);

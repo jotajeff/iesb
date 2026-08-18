@@ -19,6 +19,7 @@
               <div class="row g-3">
                 <div class="col-md-6">
                   <p class="mb-1"><strong><i class="bi bi-people me-1"></i>Turma:</strong> <?= htmlspecialchars($matricula['turma_nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
+                  <p class="mb-1"><strong><i class="bi bi-diagram-3 me-1"></i>Matriz curricular:</strong> <?= htmlspecialchars($matricula['estrutura_nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
                   <p class="mb-1"><strong><i class="bi bi-calendar me-1"></i>Início:</strong> <?= htmlspecialchars($matricula['data_inicio'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
                   <p class="mb-1"><strong><i class="bi bi-calendar me-1"></i>Término:</strong> <?= htmlspecialchars($matricula['data_fim'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
                 </div>
@@ -69,12 +70,17 @@
                         </div>
                         <div>
                           <h6 class="mb-1"><?= htmlspecialchars($prof['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></h6>
-                          <p class="mb-0 small text-muted">
+                          <p class="mb-1 small text-muted">
                             <i class="bi bi-envelope me-1"></i><?= htmlspecialchars($prof['email'] ?? '-', ENT_QUOTES, 'UTF-8') ?><br>
                             <?php if (!empty($prof['telefone'])): ?>
                               <i class="bi bi-telephone me-1"></i><?= htmlspecialchars($prof['telefone'], ENT_QUOTES, 'UTF-8') ?>
                             <?php endif; ?>
                           </p>
+                          <?php if (!empty($prof['curriculo_id'])): ?>
+                            <a class="btn btn-sm btn-outline-primary" href="/aluno/professor?id=<?= (int) ($prof['id'] ?? 0) ?>">
+                              <i class="bi bi-file-earmark-text me-1"></i>Ver currículo
+                            </a>
+                          <?php endif; ?>
                         </div>
                       </div>
                     </div>
@@ -149,7 +155,53 @@
           </h2>
           <div id="collapseDisciplina" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
             <div class="accordion-body">
-              <?php if (empty($disciplinas ?? [])): ?>
+              <?php $modulosDisciplinas = $modulosDisciplinas ?? []; ?>
+              <?php if (!empty($modulosDisciplinas)): ?>
+                <?php foreach ($modulosDisciplinas as $grupo): ?>
+                  <?php $modulo = $grupo['modulo'] ?? []; ?>
+                  <?php $disciplinasModulo = $grupo['disciplinas'] ?? []; ?>
+                  <div class="mb-4">
+                    <h6 class="mb-2">
+                      <span class="badge bg-secondary me-1">Módulo <?= (int) ($modulo['ordem'] ?? 0) ?></span>
+                      <?= htmlspecialchars((string) ($modulo['nome'] ?? 'Módulo'), ENT_QUOTES, 'UTF-8') ?>
+                      <?php if ((int) ($modulo['carga_horaria'] ?? 0) > 0): ?>
+                        <span class="text-muted small fw-normal ms-1"><i class="bi bi-clock me-1"></i><?= (int) $modulo['carga_horaria'] ?>h</span>
+                      <?php endif; ?>
+                    </h6>
+                    <?php if (empty($disciplinasModulo)): ?>
+                      <p class="text-muted small mb-0"><i class="bi bi-inbox me-1"></i>Nenhuma disciplina neste módulo.</p>
+                    <?php else: ?>
+                      <div class="list-group">
+                        <?php foreach ($disciplinasModulo as $i => $disciplina): ?>
+                          <div class="list-group-item py-3 <?= $i % 2 === 0 ? '' : 'list-group-item-light' ?>" style="cursor: default;">
+                            <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                              <div>
+                                <span class="badge bg-primary-subtle text-primary-emphasis me-2"><?= (int) ($disciplina['ordem'] ?? 0) ?></span>
+                                <strong><?= htmlspecialchars($disciplina['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></strong>
+                                <?php if ((int) ($disciplina['carga_horaria'] ?? 0) > 0): ?>
+                                  <span class="text-muted small ms-2">
+                                    <i class="bi bi-clock me-1"></i><?= (int) $disciplina['carga_horaria'] ?>h
+                                  </span>
+                                <?php endif; ?>
+                              </div>
+                            </div>
+                            <?php if (!empty($disciplina['ementa'])): ?>
+                              <div class="mt-2 ps-4 border-start border-2 border-primary-subtle">
+                                <p class="mb-0 small text-muted"><i class="bi bi-journal-text me-1"></i><?= nl2br(htmlspecialchars((string) $disciplina['ementa'], ENT_QUOTES, 'UTF-8')) ?></p>
+                              </div>
+                            <?php endif; ?>
+                            <?php if (!empty($disciplina['professor_nome'])): ?>
+                              <div class="mt-2 ps-4">
+                                <span class="small"><i class="bi bi-person-badge me-1"></i><?= htmlspecialchars((string) $disciplina['professor_nome'], ENT_QUOTES, 'UTF-8') ?></span>
+                              </div>
+                            <?php endif; ?>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
+                    <?php endif; ?>
+                  </div>
+                <?php endforeach; ?>
+              <?php elseif (empty($disciplinas ?? [])): ?>
                 <p class="text-muted mb-0"><i class="bi bi-inbox me-1"></i>Nenhuma disciplina disponível.</p>
               <?php else: ?>
                 <div class="list-group">

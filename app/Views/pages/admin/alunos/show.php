@@ -194,6 +194,44 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                   <i class="bi bi-inbox me-1"></i>Nenhum documento definido para o grupo Alunos.
                 </div>
               <?php else: ?>
+                <div class="d-flex justify-content-between align-items-center p-3 pb-2 gap-2">
+                  <button class="btn btn-outline-primary btn-sm" type="button" data-bs-toggle="collapse" data-bs-target="#formRegistrarDocumento" aria-expanded="false" aria-controls="formRegistrarDocumento">
+                    <i class="bi bi-upload me-1"></i>Registrar documento recebido por e-mail
+                  </button>
+                </div>
+                <div class="collapse p-3 pb-0" id="formRegistrarDocumento">
+                  <div class="border rounded-3 p-3 bg-light">
+                    <form method="post" action="/admin/alunos/upload-documento" enctype="multipart/form-data" id="formUploadDocumento">
+                      <input type="hidden" name="aluno_id" value="<?= (int) ($alunoData['id'] ?? 0) ?>">
+                      <div class="row g-2 align-items-end">
+                        <div class="col-md-4">
+                          <label class="form-label small fw-semibold mb-1">Tipo de documento</label>
+                          <select name="id_tipo" class="form-select form-select-sm" required>
+                            <option value="">Selecione...</option>
+                            <?php foreach ($documentos as $docTipo): ?>
+                              <?php if ((int) ($docTipo['tipo_id'] ?? 0) > 0): ?>
+                                <option value="<?= (int) $docTipo['tipo_id'] ?>">
+                                  <?= htmlspecialchars((string) ($docTipo['tipo_descricao'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                                  <?= ((int) ($docTipo['obrigatorio'] ?? 0) === 1) ? ' (obrigatório)' : '' ?>
+                                </option>
+                              <?php endif; ?>
+                            <?php endforeach; ?>
+                          </select>
+                        </div>
+                        <div class="col-md-5">
+                          <label class="form-label small fw-semibold mb-1">Arquivo</label>
+                          <input type="file" name="arquivo" class="form-control form-control-sm" accept=".pdf,.png,.jpg,.jpeg" required>
+                        </div>
+                        <div class="col-md-3">
+                          <button type="submit" class="btn btn-success btn-sm w-100"><i class="bi bi-upload me-1"></i>Registrar</button>
+                        </div>
+                      </div>
+                      <div class="form-text small mt-2">
+                        Registra o documento no Drive do aluno como <strong>Aprovado</strong>. Use para documentos recebidos por e-mail.
+                      </div>
+                    </form>
+                  </div>
+                </div>
                 <div class="table-responsive">
                   <table class="table table-striped table-sm align-middle mb-0">
                     <thead>
@@ -507,6 +545,15 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
   </div>
 </div>
 
+<div id="documentoLoader" class="d-none" style="position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
+  <div class="d-flex flex-column align-items-center text-white px-3">
+    <div class="spinner-border mb-3" style="width:3rem;height:3rem;" role="status">
+      <span class="visually-hidden">Carregando...</span>
+    </div>
+    <p class="mb-0 fw-semibold">Enviando documento... Aguarde.</p>
+  </div>
+</div>
+
 <script>
   function visualizarDocumento(id, titulo, fileId) {
     if (!fileId) {
@@ -570,5 +617,15 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
       .catch(function() {
         alert('Erro de rede ao tentar restaurar a senha.');
       });
+  }
+
+  var uploadForm = document.getElementById('formUploadDocumento');
+  if (uploadForm) {
+    uploadForm.addEventListener('submit', function() {
+      var overlay = document.getElementById('documentoLoader');
+      if (overlay) overlay.classList.remove('d-none');
+      var btn = uploadForm.querySelector('button[type="submit"]');
+      if (btn) btn.disabled = true;
+    });
   }
 </script>

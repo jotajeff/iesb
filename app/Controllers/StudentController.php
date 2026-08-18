@@ -400,11 +400,13 @@ final class StudentController extends Controller
             try {
                 $stmt = $pdo->prepare(
                     'SELECT m.id AS matricula_id, m.status, m.data_matricula,'
-                    . ' t.id AS turma_id, t.nome AS turma_nome, t.data_inicio, t.data_fim,'
-                    . ' c.id AS curso_id, c.nome AS curso_nome, c.local_curso, c.horario, c.imagem_card'
+                    . ' t.id AS turma_id, t.nome AS turma_nome, t.data_inicio, t.data_fim, t.id_estrutura AS estrutura_id,'
+                    . ' c.id AS curso_id, c.nome AS curso_nome, c.local_curso, c.horario, c.imagem_card,'
+                    . ' ec.nome AS estrutura_nome'
                     . ' FROM matricula m'
                     . ' JOIN turmas t ON m.id_turma = t.id'
                     . ' LEFT JOIN cursos c ON t.id_curso = c.id'
+                    . ' LEFT JOIN estrutura_curricular ec ON ec.id = t.id_estrutura'
                     . ' WHERE m.id = :id AND m.id_aluno = :id_aluno'
                 );
                 $stmt->bindValue(':id', $matriculaId, \PDO::PARAM_INT);
@@ -425,13 +427,16 @@ final class StudentController extends Controller
 
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT u.id, u.nome, u.email, u.telefone, u.foto'
+                    'SELECT u.id, u.nome, u.email, u.telefone, u.foto, cr.id AS curriculo_id'
                     . ' FROM turma_professor tp'
                     . ' JOIN usuarios u ON tp.id_usuario = u.id'
+                    . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
                     . ' WHERE tp.id_turma = :id_turma AND tp.status = :status'
                 );
                 $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
                 $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
+                $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
                 $stmt->execute();
                 $professores = $stmt->fetchAll() ?: [];
             } catch (\Throwable $e) {
@@ -456,9 +461,60 @@ final class StudentController extends Controller
             }
 
             $cursoId = (int) ($matricula['curso_id'] ?? 0);
+            $idEstrutura = (int) ($matricula['estrutura_id'] ?? 0);
             $disciplinas = [];
+            $modulosDisciplinas = [];
 
-            if ($cursoId > 0) {
+            if ($idEstrutura > 0) {
+                $modulos = [];
+                try {
+                    $stmt = $pdo->prepare(
+                        'SELECT em.id, em.nome, em.descricao, em.ordem, em.carga_horaria'
+                        . ' FROM estrutura_modulo em'
+                        . ' WHERE em.id_estrutura = :id_estrutura AND em.ativo = :modulo_ativo'
+                        . ' ORDER BY em.ordem ASC, em.id ASC'
+                    );
+                    $stmt->bindValue(':id_estrutura', $idEstrutura, \PDO::PARAM_INT);
+                    $stmt->bindValue(':modulo_ativo', 1, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $modulos = $stmt->fetchAll() ?: [];
+                } catch (\Throwable $e) {
+                    error_log('[STUDENT SHOW] Erro ao buscar módulos: ' . $e->getMessage());
+                    $modulos = [];
+                }
+
+                foreach ($modulos as $modulo) {
+                    $disciplinasDoModulo = [];
+                    try {
+                        $stmt = $pdo->prepare(
+                            'SELECT d.id, d.nome, d.carga_horaria, ed.ordem,'
+                            . ' e.ementa, u.nome AS professor_nome'
+                            . ' FROM estrutura_disciplina ed'
+                            . ' INNER JOIN disciplina d ON d.id = ed.id_disciplina AND d.ativo = :disciplina_ativo'
+                            . ' LEFT JOIN ementa e ON e.id_disciplina = d.id AND e.ativo = :ementa_ativo'
+                            . ' LEFT JOIN turma_disciplina td ON td.id_turma = :id_turma AND td.id_disciplina = d.id AND td.ativo = :td_ativo'
+                            . ' LEFT JOIN usuarios u ON u.id = td.id_usuario_professor'
+                            . ' WHERE ed.id_modulo = :id_modulo AND ed.ativo = :ed_ativo'
+                            . ' ORDER BY ed.ordem ASC, d.nome ASC'
+                        );
+                        $stmt->bindValue(':id_modulo', (int) ($modulo['id'] ?? 0), \PDO::PARAM_INT);
+                        $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
+                        $stmt->bindValue(':disciplina_ativo', 1, \PDO::PARAM_INT);
+                        $stmt->bindValue(':ementa_ativo', 1, \PDO::PARAM_INT);
+                        $stmt->bindValue(':td_ativo', 1, \PDO::PARAM_INT);
+                        $stmt->bindValue(':ed_ativo', 1, \PDO::PARAM_INT);
+                        $stmt->execute();
+                        $disciplinasDoModulo = $stmt->fetchAll() ?: [];
+                    } catch (\Throwable $e) {
+                        error_log('[STUDENT SHOW] Erro ao buscar disciplinas do módulo: ' . $e->getMessage());
+                        $disciplinasDoModulo = [];
+                    }
+                    $modulosDisciplinas[] = [
+                        'modulo' => $modulo,
+                        'disciplinas' => $disciplinasDoModulo,
+                    ];
+                }
+            } elseif ($cursoId > 0) {
                 try {
                     $stmt = $pdo->prepare(
                         'SELECT d.id, d.nome, d.carga_horaria, d.ordem,'
@@ -487,6 +543,63 @@ final class StudentController extends Controller
             'professores' => $professores,
             'materiais' => $materiais,
             'disciplinas' => $disciplinas,
+            'modulosDisciplinas' => $modulosDisciplinas,
+        ], 'aluno');
+    }
+
+    public function professor(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $professorId = (int) ($_GET['id'] ?? 0);
+
+        $pdo = Database::connection();
+        $professor = null;
+        $curriculo = null;
+
+        if ($professorId > 0 && $pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT u.id, u.nome, u.email, u.telefone, u.foto,'
+                    . ' cr.id AS curriculo_id, cr.resumo AS curriculo_resumo, cr.conteudo AS curriculo_conteudo'
+                    . ' FROM usuarios u'
+                    . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
+                    . ' WHERE u.id = :id AND u.tipo = :tipo_usuario AND u.ativo = :ativo_usuario'
+                );
+                $stmt->bindValue(':id', $professorId, \PDO::PARAM_INT);
+                $stmt->bindValue(':tipo_usuario', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo_usuario', 1, \PDO::PARAM_INT);
+                $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
+                $stmt->execute();
+                $professor = $stmt->fetch() ?: null;
+
+                if ($professor && !empty($professor['curriculo_id'])) {
+                    $curriculo = [
+                        'resumo' => (string) ($professor['curriculo_resumo'] ?? ''),
+                        'conteudo' => (string) ($professor['curriculo_conteudo'] ?? ''),
+                    ];
+                }
+            } catch (\Throwable $e) {
+                error_log('[STUDENT PROFESSOR] Erro ao buscar professor: ' . $e->getMessage());
+                $professor = null;
+            }
+        }
+
+        if (!$professor) {
+            Session::setFlash('flash', 'Professor não encontrado.');
+            $this->redirect('/aluno/cursos');
+            return;
+        }
+
+        $this->render('pages/aluno/professor', [
+            'title' => $professor['nome'] ?? 'Professor',
+            'currentRoute' => '/aluno/cursos',
+            'professor' => $professor,
+            'curriculo' => $curriculo,
         ], 'aluno');
     }
 
