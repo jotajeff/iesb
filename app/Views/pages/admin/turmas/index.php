@@ -16,6 +16,7 @@
             </select>
           </form>
           <a class="btn btn-outline-secondary btn-sm" href="/admin/alunos/troca-historico"><i class="bi bi-arrow-left-right me-1"></i>Troca de Turmas</a>
+          <a class="btn btn-outline-primary btn-sm" href="/admin/turmas/geracao"><i class="bi bi-magic me-1"></i>Geração de turmas</a>
           <a class="btn btn-primary btn-sm" href="/admin/turmas/novo"><i class="bi bi-plus-circle me-1"></i>Nova turma</a>
         </div>
       </div>

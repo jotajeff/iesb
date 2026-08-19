@@ -46,6 +46,162 @@ final class TurmaController extends Controller
         ], 'admin');
     }
 
+    public function geracao(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as turmas.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursos = [];
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT c.id, c.nome, c.tipo_curso AS nivel_id,'
+                    . ' COALESCE(n.nome, \'Outros\') AS nivel_nome, n.slug AS nivel_slug'
+                    . ' FROM cursos c'
+                    . ' LEFT JOIN tipo_curso n ON n.id = c.tipo_curso'
+                    . ' WHERE c.ativo = 1'
+                    . ' ORDER BY c.tipo_curso ASC, c.nome ASC'
+                );
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+                $cursos = is_array($rows) ? $rows : [];
+            } catch (\Throwable $e) {
+                error_log('[TURMA GERACAO] Erro: ' . $e->getMessage());
+                $cursos = [];
+            }
+        }
+
+        $cursosPorTipo = [];
+        $pdo2 = Database::connection();
+        $turmasPorCurso = [];
+        if ($pdo2 instanceof \PDO) {
+            try {
+                $stmt = $pdo2->query('SELECT id_curso, nome FROM turmas WHERE ativo = 1 ORDER BY nome ASC');
+                $rows = $stmt->fetchAll();
+                if (is_array($rows)) {
+                    foreach ($rows as $row) {
+                        $idCurso = (int) ($row['id_curso'] ?? 0);
+                        if (!isset($turmasPorCurso[$idCurso])) {
+                            $turmasPorCurso[$idCurso] = [];
+                        }
+                        $turmasPorCurso[$idCurso][] = (string) ($row['nome'] ?? '');
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('[TURMA GERACAO] Erro ao buscar turmas: ' . $e->getMessage());
+            }
+        }
+
+        foreach ($cursos as $curso) {
+            $tipoId = (int) ($curso['nivel_id'] ?? 0);
+            $tipoNome = trim((string) ($curso['nivel_nome'] ?? ''));
+            if ($tipoId <= 0) {
+                $tipoId = 0;
+                $tipoNome = $tipoNome !== '' ? $tipoNome : 'Outros';
+            }
+            if (!isset($cursosPorTipo[$tipoId])) {
+                $cursosPorTipo[$tipoId] = ['nome' => $tipoNome, 'cursos' => []];
+            }
+            $idCurso = (int) ($curso['id'] ?? 0);
+            $cursosPorTipo[$tipoId]['cursos'][] = [
+                'id' => $idCurso,
+                'nome' => (string) ($curso['nome'] ?? ''),
+                'nome_turma' => $this->nomeTurmaGerada((string) ($curso['nome'] ?? '')),
+                'tem_turma' => !empty($turmasPorCurso[$idCurso]),
+                'turmas_existentes' => $turmasPorCurso[$idCurso] ?? [],
+            ];
+        }
+
+        $this->render('pages/admin/turmas/geracao', [
+            'title' => 'Geração de Turmas',
+            'currentRoute' => '/admin/turmas',
+            'cursosPorTipo' => $cursosPorTipo,
+        ], 'admin');
+    }
+
+    public function geracaoConfirmar(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as turmas.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) $this->input('curso_id', 0);
+        $nome = trim((string) $this->input('nome', ''));
+
+        if ($cursoId <= 0 || $nome === '') {
+            Session::setFlash('flash', 'Selecione um curso e informe o nome da turma.');
+            $this->redirect('/admin/turmas/geracao');
+            return;
+        }
+
+        $pdo = Database::connection();
+        $curso = null;
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT c.id, c.nome, c.tipo_curso AS nivel_id, n.slug AS nivel_slug'
+                    . ' FROM cursos c'
+                    . ' LEFT JOIN tipo_curso n ON n.id = c.tipo_curso'
+                    . ' WHERE c.id = :id AND c.ativo = 1'
+                    . ' LIMIT 1'
+                );
+                $stmt->bindValue(':id', $cursoId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $curso = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[TURMA GERACAO CONFIRMAR] Erro ao buscar curso: ' . $e->getMessage());
+            }
+        }
+
+        if (!$curso) {
+            Session::setFlash('flash', 'Curso não encontrado ou inativo.');
+            $this->redirect('/admin/turmas/geracao');
+            return;
+        }
+
+        $existe = false;
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare('SELECT id FROM turmas WHERE id_curso = :id_curso AND nome = :nome AND ativo = 1 LIMIT 1');
+                $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                $stmt->bindValue(':nome', $nome, \PDO::PARAM_STR);
+                $stmt->execute();
+                $existe = (bool) $stmt->fetch();
+            } catch (\Throwable $e) {
+                error_log('[TURMA GERACAO CONFIRMAR] Erro ao verificar duplicidade: ' . $e->getMessage());
+            }
+        }
+
+        if ($existe) {
+            Session::setFlash('flash', 'Já existe uma turma ativa com este nome para este curso.');
+            $this->redirect('/admin/turmas/geracao');
+            return;
+        }
+
+        $idEstrutura = null;
+        if (strtolower(trim((string) ($curso['nivel_slug'] ?? ''))) !== 'cursos-livres') {
+            $matrizes = $this->estruturaService->listarMatrizes($cursoId, 1);
+            if (!empty($matrizes)) {
+                $idEstrutura = (int) ($matrizes[0]['id'] ?? 0);
+            }
+        }
+
+        $turmaId = $this->turmaService->criarTurma($nome, $cursoId, '', 1, $idEstrutura > 0 ? $idEstrutura : null);
+
+        if ($turmaId > 0) {
+            $this->logService->log('criar', 'turma', $turmaId, "Turma gerada: $nome (curso {$curso['nome']})");
+            Session::setFlash('flash', "Turma \"$nome\" criada com sucesso.");
+            $this->redirect('/admin/turmas');
+        } else {
+            Session::setFlash('flash', 'Erro ao criar a turma. Tente novamente.');
+            $this->redirect('/admin/turmas/geracao');
+        }
+    }
+
     public function matriculas(): void
     {
         if (!$this->isStaff()) {
@@ -575,6 +731,15 @@ final class TurmaController extends Controller
         } catch (\Throwable) {
             return [];
         }
+    }
+
+    private function nomeTurmaGerada(string $nomeCurso): string
+    {
+        $palavras = array_values(array_filter(
+            preg_split('/\s+/', trim($nomeCurso)) ?: [],
+            static fn (string $palavra): bool => $palavra !== ''
+        ));
+        return 'T. ' . implode(' ', array_slice($palavras, 0, 5));
     }
 
     private function isStaff(): bool

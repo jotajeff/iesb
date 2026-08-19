@@ -175,6 +175,8 @@ return static function (Router $router): void {
     $router->post('/admin/tarefas/comentario', [TarefaController::class, 'comentario']);
 
     $router->get('/admin/turmas', [TurmaController::class, 'index']);
+    $router->get('/admin/turmas/geracao', [TurmaController::class, 'geracao']);
+    $router->post('/admin/turmas/geracao/confirmar', [TurmaController::class, 'geracaoConfirmar']);
     $router->get('/admin/matriculas', [TurmaController::class, 'matriculas']);
     $router->get('/admin/turmas/show', [TurmaController::class, 'show']);
     $router->get('/admin/turmas/novo', [TurmaController::class, 'novo']);
