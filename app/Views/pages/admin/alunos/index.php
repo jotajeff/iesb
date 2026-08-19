@@ -66,6 +66,9 @@
                 </td>
                 <td>
                   <div class="d-flex gap-1">
+                  <a class="btn btn-outline-success btn-sm" href="/admin/alunos/matricula?id=<?= (int) ($aluno['id'] ?? 0) ?>" title="Matricular aluno">
+                    <i class="bi bi-journal-plus"></i>
+                  </a>
                   <a class="btn btn-outline-secondary btn-sm" href="/admin/alunos/editar?id=<?= (int) ($aluno['id'] ?? 0) ?>">
                     <i class="bi bi-pencil-square"></i>
                   </a>

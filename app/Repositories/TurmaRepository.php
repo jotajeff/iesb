@@ -17,7 +17,7 @@ final class TurmaRepository
         }
 
         try {
-            $sql = 'SELECT t.id, t.nome, t.id_estrutura, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
+            $sql = 'SELECT t.id, t.nome, t.id_curso, t.id_estrutura, c.nome AS curso_nome, n.nome AS nivel_nome, t.data_inicio, t.ativo,'
                  . ' ec.nome AS estrutura_nome, ec.versao AS estrutura_versao,'
                  . ' (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos'
                  . ' FROM turmas t'
@@ -246,7 +246,7 @@ final class TurmaRepository
             $stmt->bindValue(':id_aluno', $idAluno, PDO::PARAM_INT);
             $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
             $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
-            $stmt->bindValue(':id_pagamento', 0, PDO::PARAM_INT);
+            $stmt->bindValue(':id_pagamento', (int) ($payload['id_pagamento'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':origem', 'ADMIN', PDO::PARAM_STR);
             $stmt->bindValue(':status', $payload['status'] ?? 'matriculado', PDO::PARAM_STR);
             $stmt->bindValue(':data_matricula', date('Y-m-d H:i:s'), PDO::PARAM_STR);

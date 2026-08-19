@@ -60,6 +60,8 @@ $idMatriz = (int) ($matriz['id'] ?? 0);
       <?php foreach ($modulos as $modulo): ?>
         <?php $idModulo = (int) ($modulo['id'] ?? 0); ?>
         <?php $moduloAtivo = (int) ($modulo['ativo'] ?? 1) === 1; ?>
+        <?php $disciplinas = $modulo['disciplinas'] ?? []; ?>
+        <?php $idsVinculados = array_column($disciplinas, 'id_disciplina'); ?>
         <div id="modulo-<?= $idModulo ?>" class="card border mb-3 <?= $moduloAtivo ? '' : 'opacity-50' ?>">
           <div class="card-header bg-light d-flex flex-wrap justify-content-between align-items-center gap-2">
             <div>
@@ -79,12 +81,12 @@ $idMatriz = (int) ($matriz['id'] ?? 0);
             <div class="d-flex gap-1">
               <button type="button" class="btn btn-sm btn-outline-secondary btn-editar-modulo" data-id="<?= $idModulo ?>" data-nome="<?= htmlspecialchars((string) ($modulo['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-descricao="<?= htmlspecialchars((string) ($modulo['descricao'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-ordem="<?= (int) ($modulo['ordem'] ?? 0) ?>" data-carga="<?= (int) ($modulo['carga_horaria'] ?? 0) ?>" data-ativo="<?= (int) ($modulo['ativo'] ?? 1) ?>"><i class="bi bi-pencil"></i></button>
               <button type="button" class="btn btn-sm btn-outline-primary btn-add-disciplina" data-modulo-id="<?= $idModulo ?>" data-modulo-nome="<?= htmlspecialchars((string) ($modulo['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-plus-circle me-1"></i>Disciplinas</button>
+              <button type="button" class="btn btn-sm btn-outline-primary btn-lote-disciplinas" data-modulo-id="<?= $idModulo ?>" data-modulo-nome="<?= htmlspecialchars((string) ($modulo['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-ja-vinculadas="<?= htmlspecialchars(implode(',', $idsVinculados), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-collection me-1"></i>Lote</button>
               <?php if ($moduloAtivo): ?>
                 <button type="button" class="btn btn-sm btn-outline-danger btn-desativar-modulo" data-id="<?= $idModulo ?>"><i class="bi bi-toggle-off"></i></button>
               <?php endif; ?>
             </div>
           </div>
-          <?php $disciplinas = $modulo['disciplinas'] ?? []; ?>
           <?php if (!empty($disciplinas)): ?>
             <div class="card-body p-0">
               <table class="table table-sm align-middle mb-0">
@@ -228,7 +230,41 @@ $idMatriz = (int) ($matriz['id'] ?? 0);
   </div>
 </div>
 
+<div class="modal fade" id="modalDisciplinasLote" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <form id="formDisciplinasLote">
+        <input type="hidden" name="id_modulo" id="loteModuloId" value="0">
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="bi bi-collection me-2"></i>Disciplinas em Lote</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p class="text-muted small mb-3">Módulo: <strong id="loteModuloNome"></strong></p>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="loteSelecionarTodos" checked>
+            <label class="form-check-label" for="loteSelecionarTodos">Selecionar todos</label>
+          </div>
+          <div id="loteLista" class="border rounded-3 p-2" style="max-height: 320px; overflow-y: auto;"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>Vincular selecionadas</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <script>
+window.loteDisciplinasDoCurso = <?= json_encode(array_values(array_map(static function ($d) {
+  return [
+    'id' => (int) ($d['id'] ?? 0),
+    'nome' => (string) ($d['nome'] ?? ''),
+    'ordem' => (int) ($d['ordem'] ?? 0),
+    'carga_horaria' => (int) ($d['carga_horaria'] ?? 0),
+  ];
+}, $disciplinasDoCurso)), JSON_UNESCAPED_UNICODE) ?>;
 document.addEventListener('DOMContentLoaded', function () {
   var modalModulo = document.getElementById('modalModulo');
   var formModulo = document.getElementById('formModulo');
@@ -312,6 +348,71 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(function (r) { return r.json(); })
         .then(function (data) { if (data.sucesso) location.reload(); else alert(data.erro || 'Erro.'); });
     });
+  });
+
+  var modalLote = document.getElementById('modalDisciplinasLote');
+  var formLote = document.getElementById('formDisciplinasLote');
+  var loteLista = document.getElementById('loteLista');
+  var loteSelecionarTodos = document.getElementById('loteSelecionarTodos');
+
+  function montarListaLote(jaVinculadas) {
+    var ja = {};
+    jaVinculadas.forEach(function (id) { ja[id] = true; });
+    loteLista.innerHTML = '';
+    (window.loteDisciplinasDoCurso || []).forEach(function (d) {
+      var jaVinculada = !!ja[d.id];
+      var item = document.createElement('div');
+      item.className = 'form-check d-flex align-items-center gap-2 mb-1 px-3 py-1 ' + (jaVinculada ? 'bg-light rounded' : '');
+      var input = document.createElement('input');
+      input.type = 'checkbox';
+      input.className = 'form-check-input lote-item';
+      input.value = d.id;
+      input.name = 'ids[]';
+      input.disabled = jaVinculada;
+      input.checked = !jaVinculada;
+      var label = document.createElement('label');
+      label.className = 'form-check-label w-100';
+      label.innerHTML = '<span class="text-muted me-2">' + (d.ordem || 0) + '.</span>' +
+        document.createTextNode(d.nome).textContent +
+        (d.carga_horaria > 0 ? ' <span class="badge bg-info text-dark ms-1">' + d.carga_horaria + 'h</span>' : '') +
+        (jaVinculada ? ' <span class="badge bg-secondary ms-1">Já vinculada</span>' : '');
+      item.appendChild(input);
+      item.appendChild(label);
+      loteLista.appendChild(item);
+    });
+  }
+
+  document.querySelectorAll('.btn-lote-disciplinas').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('loteModuloId').value = btn.dataset.moduloId;
+      document.getElementById('loteModuloNome').textContent = btn.dataset.moduloNome;
+      var jaVinculadas = (btn.dataset.jaVinculadas || '').split(',').map(function (v) { return parseInt(v, 10); }).filter(function (v) { return v > 0; });
+      montarListaLote(jaVinculadas);
+      loteSelecionarTodos.checked = true;
+      bootstrap.Modal.getOrCreateInstance(modalLote).show();
+    });
+  });
+
+  loteSelecionarTodos.addEventListener('change', function () {
+    loteLista.querySelectorAll('.lote-item:not(:disabled)').forEach(function (input) {
+      input.checked = loteSelecionarTodos.checked;
+    });
+  });
+
+  formLote.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var data = new URLSearchParams(new FormData(formLote));
+    fetch('/admin/academico/disciplinas/salvar-lote', { method: 'POST', body: data })
+      .then(function (r) { return r.json(); })
+      .then(function (res) {
+        if (res.sucesso) {
+          bootstrap.Modal.getInstance(modalLote).hide();
+          location.reload();
+        } else {
+          alert(res.erro || 'Erro ao vincular disciplinas.');
+        }
+      })
+      .catch(function () { alert('Erro ao vincular disciplinas.'); });
   });
 });
 </script>

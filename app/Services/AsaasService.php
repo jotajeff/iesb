@@ -28,6 +28,7 @@ final class AsaasService
 
         $existing = $this->buscarClientePorCpf($cpf);
         if ($existing) {
+            $this->configurarNotificacoesCliente((string) ($existing['id'] ?? ''));
             return $existing;
         }
 
@@ -42,10 +43,12 @@ final class AsaasService
         $response = $this->request('POST', '/customers', $body);
 
         if ($response && isset($response['id'])) {
-            return [
+            $cliente = [
                 'id' => $response['id'],
                 'cpfCnpj' => $cpf,
             ];
+            $this->configurarNotificacoesCliente((string) $response['id']);
+            return $cliente;
         }
 
         return null;
@@ -158,6 +161,57 @@ final class AsaasService
         ];
     }
 
+    /**
+     * Mantém somente as notificações de cobrança solicitadas para o cliente:
+     * 10 dias antes, no vencimento e um dia após o vencimento.
+     */
+    public function configurarNotificacoesCliente(string $customerId): bool
+    {
+        $customerId = trim($customerId);
+        if ($customerId === '') {
+            return false;
+        }
+
+        $response = $this->request('GET', '/customers/' . rawurlencode($customerId) . '/notifications');
+        $notifications = is_array($response['data'] ?? null) ? $response['data'] : [];
+        if ($notifications === []) {
+            return false;
+        }
+
+        $desejadas = [
+            'PAYMENT_DUEDATE_WARNING:10' => true,
+            'PAYMENT_DUEDATE_WARNING:0' => true,
+            'PAYMENT_OVERDUE:1' => true,
+        ];
+        $sucesso = true;
+
+        foreach ($notifications as $notification) {
+            $id = trim((string) ($notification['id'] ?? ''));
+            if ($id === '') {
+                continue;
+            }
+
+            $event = (string) ($notification['event'] ?? '');
+            $offset = (int) ($notification['scheduleOffset'] ?? 0);
+            $chave = $event . ':' . $offset;
+            $ativa = isset($desejadas[$chave]);
+
+            $ok = $this->request('PUT', '/notifications/' . rawurlencode($id), [
+                'enabled' => $ativa,
+                'emailEnabledForProvider' => false,
+                'smsEnabledForProvider' => false,
+                'emailEnabledForCustomer' => $ativa,
+                'smsEnabledForCustomer' => $ativa,
+                'phoneCallEnabledForCustomer' => false,
+                'whatsappEnabledForCustomer' => false,
+                'scheduleOffset' => $offset,
+            ]) !== null;
+            $sucesso = $sucesso && $ok;
+        }
+
+        return $sucesso;
+    }
+
     public function getLastError(): ?string
     {
         return $this->lastError;
@@ -197,6 +251,9 @@ final class AsaasService
 
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+        } elseif ($method === 'PUT') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
         }
 

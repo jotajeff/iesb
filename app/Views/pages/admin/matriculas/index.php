@@ -20,6 +20,7 @@
             </tbody>
             </table>
           </div>
+          <div class="my-4"></div>
           <?php endif; ?>
 
           <?php $cursoAtual = $cursoNome; ?>

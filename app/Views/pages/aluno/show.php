@@ -156,6 +156,20 @@
           <div id="collapseDisciplina" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
             <div class="accordion-body">
               <?php $modulosDisciplinas = $modulosDisciplinas ?? []; ?>
+              <?php
+                $totalHoras = 0;
+                if (!empty($modulosDisciplinas)) {
+                  foreach ($modulosDisciplinas as $grupo) {
+                    foreach ($grupo['disciplinas'] ?? [] as $disciplina) {
+                      $totalHoras += (int) ($disciplina['carga_horaria'] ?? 0);
+                    }
+                  }
+                } else {
+                  foreach ($disciplinas ?? [] as $disciplina) {
+                    $totalHoras += (int) ($disciplina['carga_horaria'] ?? 0);
+                  }
+                }
+              ?>
               <?php if (!empty($modulosDisciplinas)): ?>
                 <?php foreach ($modulosDisciplinas as $grupo): ?>
                   <?php $modulo = $grupo['modulo'] ?? []; ?>
@@ -225,6 +239,14 @@
                       <?php endif; ?>
                     </div>
                   <?php endforeach; ?>
+                </div>
+              <?php endif; ?>
+
+              <?php if ($totalHoras > 0): ?>
+                <div class="d-flex justify-content-end mt-3">
+                  <div class="alert alert-info py-2 px-3 mb-0">
+                    <strong><i class="bi bi-clock me-1"></i>Carga horária total do curso: <?= $totalHoras ?>h</strong>
+                  </div>
                 </div>
               <?php endif; ?>
             </div>

@@ -121,7 +121,7 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
                         $acordoUtilizado = (int) ($acordo['utilizado'] ?? 0) === 1;
                         $acordoData = (string) ($acordo['created_at'] ?? '');
                         $acordoTipo = (int) ($acordo['tipo'] ?? 1);
-                        $acordoTipos = [1 => 'Padrão', 2 => 'À vista', 3 => 'Entrada + parcelas'];
+                        $acordoTipos = [1 => 'Padrão', 2 => 'À vista', 3 => 'Entrada + parcelas', 4 => 'Somente parcelas'];
                       ?>
                       <tr>
                         <td><?= (int) ($acordo['id'] ?? 0) ?></td>
@@ -265,9 +265,10 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
               </div>
               <div class="mb-3">
                 <label class="form-label">Tipo do acordo</label>
-                <select class="form-select" name="tipo">
+                <select class="form-select" id="acordoTipo" name="tipo">
                   <option value="2" selected>À vista</option>
                   <option value="3">Entrada + parcelas</option>
+                  <option value="4">Somente parcelas</option>
                 </select>
               </div>
               <div class="mb-3">
@@ -287,7 +288,7 @@ $criadoEmFormatado = $criadoEm !== '' ? date('d/m/Y H:i', strtotime($criadoEm)) 
               </div>
               <div class="row g-2">
                 <div class="col-6">
-                  <label class="form-label">Valor de entrada</label>
+                  <label class="form-label" id="acordoValorEntradaLabel">Valor de entrada</label>
                   <input type="text" class="form-control" id="acordoValorEntrada" name="valor_entrada" required placeholder="0,00">
                 </div>
                 <div class="col-6">
@@ -354,6 +355,8 @@ document.addEventListener('DOMContentLoaded', function () {
   var valorEntrada = document.getElementById('acordoValorEntrada');
   var totalParcelas = document.getElementById('acordoTotalParcelas');
   var valorDemais = document.getElementById('acordoValorDemais');
+  var tipoAcordo = document.getElementById('acordoTipo');
+  var valorEntradaLabel = document.getElementById('acordoValorEntradaLabel');
   var desconto = document.getElementById('acordoDesconto');
   var msg = document.getElementById('acordoMsg');
   var btn = document.getElementById('acordoBtnSalvar');
@@ -403,6 +406,16 @@ document.addEventListener('DOMContentLoaded', function () {
     return num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   }
 
+  function atualizarTipo() {
+    var somenteParcelas = tipoAcordo && tipoAcordo.value === '4';
+    if (valorEntradaLabel) valorEntradaLabel.textContent = somenteParcelas ? 'Entrada (não utilizada)' : 'Valor de entrada';
+    if (valorEntrada) {
+      valorEntrada.required = !somenteParcelas;
+      valorEntrada.disabled = somenteParcelas;
+      if (somenteParcelas) valorEntrada.value = '0,00';
+    }
+  }
+
   plano.addEventListener('change', function () {
     var opt = plano.options[plano.selectedIndex];
     if (!opt || opt.value === '') {
@@ -422,6 +435,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     atualizarResumoPlano();
   });
+
+  if (tipoAcordo) tipoAcordo.addEventListener('change', atualizarTipo);
+  atualizarTipo();
 
   atualizarResumoPlano();
 
@@ -455,7 +471,7 @@ document.addEventListener('DOMContentLoaded', function () {
           setTimeout(function () { window.location.reload(); }, 600);
         } else {
           if (msg) {
-            msg.textContent = res.erro || 'Erro ao salvar acordo.';
+            msg.textContent = res.erro === 'CPF é obrigatório para gerar o acordo e as cobranças.' ? 'CPF faltando' : (res.erro || 'Erro ao salvar acordo.');
             msg.className = 'text-danger small me-auto';
           }
         }

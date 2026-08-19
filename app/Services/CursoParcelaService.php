@@ -82,7 +82,7 @@ final class CursoParcelaService
                 continue;
             }
 
-            $dataVenc = date('Y-m-d', strtotime($dataBase . ' + ' . (($n - 1) * 30) . ' days'));
+            $dataVenc = (new \DateTimeImmutable($dataBase))->modify('+' . ($n - 1) . ' month')->format('Y-m-d');
 
             $id = $this->criar([
                 'id_curso' => $idCurso,

@@ -316,6 +316,77 @@ final class AcademicoController extends Controller
         $this->json(['sucesso' => true]);
     }
 
+    public function salvarDisciplinasEmLote(): void
+    {
+        if (!$this->isStaff()) {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $idModulo = (int) $this->input('id_modulo', 0);
+        $ids = $_POST['ids'] ?? [];
+        $ids = is_array($ids) ? array_values(array_filter(array_map('intval', $ids), static fn (int $id): bool => $id > 0)) : [];
+
+        if ($idModulo <= 0) {
+            $this->json(['erro' => 'Módulo inválido.'], 400);
+        }
+
+        if (empty($ids)) {
+            $this->json(['erro' => 'Selecione ao menos uma disciplina.'], 400);
+        }
+
+        $modulo = $this->estruturaService->findModulo($idModulo);
+        if ($modulo === null) {
+            $this->json(['erro' => 'Módulo não encontrado.'], 400);
+        }
+
+        $matriz = $this->estruturaService->findMatriz((int) ($modulo['id_estrutura'] ?? 0));
+        if ($matriz === null || (int) ($matriz['id_curso'] ?? 0) <= 0) {
+            $this->json(['erro' => 'A matriz vinculada ao módulo não foi encontrada ou não possui curso válido.'], 400);
+        }
+
+        $disciplinasDoCurso = $this->estruturaService->listarDisciplinasDoCurso((int) $matriz['id_curso']);
+        $ordens = [];
+        foreach ($disciplinasDoCurso as $disciplina) {
+            $ordens[(int) ($disciplina['id'] ?? 0)] = (int) ($disciplina['ordem'] ?? 0);
+        }
+
+        $vinculadas = 0;
+        $duplicadas = 0;
+        $invalidas = 0;
+
+        foreach ($ids as $idDisciplina) {
+            if (!isset($ordens[$idDisciplina])) {
+                $invalidas++;
+                continue;
+            }
+
+            $result = $this->estruturaService->salvarDisciplinaDaMatriz([
+                'id' => 0,
+                'id_modulo' => $idModulo,
+                'id_disciplina' => $idDisciplina,
+                'ordem' => $ordens[$idDisciplina],
+                'obrigatoria' => 1,
+                'ativo' => 1,
+            ]);
+
+            if ($result === -1) {
+                $duplicadas++;
+            } elseif ($result > 0) {
+                $vinculadas++;
+                $this->logService->log('criar', 'estrutura_disciplina', $result, 'Disciplina da matriz criada em lote no módulo #' . $idModulo);
+            } else {
+                $invalidas++;
+            }
+        }
+
+        $this->json([
+            'sucesso' => true,
+            'vinculadas' => $vinculadas,
+            'duplicadas' => $duplicadas,
+            'invalidas' => $invalidas,
+        ]);
+    }
+
     // ==================== SITUAÇÃO ACADÊMICA ====================
 
     public function situacaoAcademica(): void

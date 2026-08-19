@@ -10,6 +10,8 @@ use App\Services\AlunoService;
 use App\Services\CursoParcelaService;
 use App\Services\TurmaService;
 use App\Services\CursoService;
+use App\Services\CursoPagamentoService;
+use App\Services\AsaasService;
 use App\Services\LogService;
 use App\Services\PlanilhaService;
 use App\Services\IpLocationService;
@@ -22,6 +24,7 @@ final class AlunoController extends Controller
     private CursoService $cursoService;
     private LogService $logService;
     private CursoParcelaService $parcelaService;
+    private CursoPagamentoService $pagamentoService;
 
     public function __construct()
     {
@@ -30,6 +33,7 @@ final class AlunoController extends Controller
         $this->cursoService = new CursoService();
         $this->logService = new LogService();
         $this->parcelaService = new CursoParcelaService();
+        $this->pagamentoService = new CursoPagamentoService();
     }
 
     public function index(): void
@@ -357,9 +361,10 @@ final class AlunoController extends Controller
             'title' => 'Matricular Aluno',
             'currentRoute' => '/admin/alunos/matricula',
             'aluno' => $aluno,
-            'turmas' => $this->turmaService->turmas(500),
+            'turmas' => $this->turmaService->turmasAtivas(500),
             'matricula' => $matricula,
             'turmasMatriculadas' => $turmasMatriculadas,
+            'planos' => $this->planosDasTurmas($this->turmaService->turmasAtivas(500)),
         ], 'admin');
     }
 
@@ -373,6 +378,11 @@ final class AlunoController extends Controller
         $idAluno = (int) $this->input('id_aluno', 0);
         $idTurma = (int) $this->input('id_turma', 0);
         $status = (string) $this->input('status', 'matriculado');
+        $idPlano = (int) $this->input('id_curso_pagamento', 0);
+        $valorPrimeira = $this->valorBrasileiro((string) $this->input('valor_primeira', '0'));
+        $totalParcelas = max(1, min(120, (int) $this->input('total_parcelas', 1)));
+        $valorDemais = $this->valorBrasileiro((string) $this->input('valor_demais', '0'));
+        $vencimento = trim((string) $this->input('data_vencimento', ''));
 
         if ($idAluno <= 0 || $idTurma <= 0) {
             Session::setFlash('flash', 'Selecione o aluno e a turma.');
@@ -387,23 +397,109 @@ final class AlunoController extends Controller
             return;
         }
 
+        if (preg_replace('/\D/', '', (string) ($aluno['cpf'] ?? '')) === '') {
+            Session::setFlash('flash', 'CPF faltando');
+            $this->redirect('/admin/alunos/editar?id=' . $idAluno);
+            return;
+        }
+
+        $turma = $this->turmaService->findTurma($idTurma);
+        $plano = $idPlano > 0 ? $this->pagamentoService->find($idPlano) : null;
+        if (!$turma || (int) ($turma['ativo'] ?? 0) !== 1 || !$plano || (int) ($plano['id_curso'] ?? 0) !== (int) ($turma['id_curso'] ?? 0)) {
+            Session::setFlash('flash', 'Selecione uma turma e um plano de pagamento válidos.');
+            $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
+            return;
+        }
+        $totalParcelas = $totalParcelas > 1 ? $totalParcelas : max(1, (int) ($plano['parcelas'] ?? 1));
+        $valorPrimeira = $valorPrimeira > 0 ? $valorPrimeira : round((float) ($plano['valor'] ?? 0) / $totalParcelas, 2);
+        $valorDemais = $valorDemais > 0 ? $valorDemais : $valorPrimeira;
+        if ($valorPrimeira <= 0 || ($totalParcelas > 1 && $valorDemais <= 0)) {
+            Session::setFlash('flash', 'Informe valores válidos para as parcelas.');
+            $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
+            return;
+        }
+        if ($vencimento === '' || strtotime($vencimento) === false) $vencimento = date('Y-m-d');
+
         if ($this->alunoService->matriculaJaExiste($idAluno, $idTurma)) {
             Session::setFlash('flash', 'Aluno já está matriculado nesta turma.');
             $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
             return;
         }
 
-        $matriculaId = $this->alunoService->criarMatricula($idAluno, $idTurma, $status);
+        $parcelaId = $this->parcelaService->criar([
+            'id_curso' => (int) $turma['id_curso'], 'id_pagamento' => $idPlano, 'id_turma' => $idTurma,
+            'numero_parcela' => 1, 'total_parcelas' => $totalParcelas,
+            'descricao_pagamento' => (string) ($plano['descricao'] ?? 'Matrícula'),
+            'nome' => (string) ($aluno['nome'] ?? ''), 'cpf' => (string) ($aluno['cpf'] ?? ''),
+            'email' => (string) ($aluno['email'] ?? ''), 'telefone' => (string) ($aluno['telefone'] ?? ''),
+            'valor' => $valorPrimeira, 'data_vencimento' => $vencimento,
+        ]);
+        if ($parcelaId <= 0) {
+            Session::setFlash('flash', 'Não foi possível registrar a primeira parcela.');
+            $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
+            return;
+        }
+        $matriculaId = $this->alunoService->criarMatricula($idAluno, $idTurma, $status, $parcelaId);
 
         if ($matriculaId > 0) {
+            $this->parcelaService->atualizarStatus($parcelaId, 'CONFIRMADO', $idAluno, $matriculaId);
+            $financeiro = ' Primeira parcela registrada como paga.';
+            if ($totalParcelas > 1) {
+                $origem = $this->parcelaService->buscar($parcelaId) ?? [];
+                $origem['id_aluno'] = $idAluno; $origem['id_matricula'] = $matriculaId; $origem['valor'] = $valorDemais;
+                $this->parcelaService->gerarParcelasRestantesPorPlano($origem);
+                $asaas = new AsaasService();
+                $cliente = $asaas->criarCliente(['nome' => $aluno['nome'] ?? '', 'cpf' => $aluno['cpf'] ?? '', 'email' => $aluno['email'] ?? '', 'telefone' => $aluno['telefone'] ?? '']);
+                if ($cliente) {
+                    $parcelas = $this->parcelaService->listarPorInscricao($idAluno, $idPlano, (int) $turma['id_curso']);
+                    $cobrancasCriadas = 0;
+                    $cobrancasFalhas = 0;
+                    foreach ($parcelas as $parcela) {
+                        $numero = (int) ($parcela['numero_parcela'] ?? 0);
+                        if ($numero < 2) continue;
+                        $cobranca = $asaas->criarCobranca([
+                            'customer_id' => (string) $cliente['id'],
+                            'billing_type' => 'UNDEFINED',
+                            'value' => (float) ($parcela['valor'] ?? $valorDemais),
+                            'due_date' => (string) ($parcela['data_vencimento'] ?? date('Y-m-d')),
+                            'description' => (string) ($plano['descricao'] ?? 'Parcelas') . ' - ' . $numero . 'ª parcela',
+                            'external_reference' => (string) ($parcela['id'] ?? 0),
+                        ]);
+                        if (!$cobranca) { $cobrancasFalhas++; continue; }
+                        $this->parcelaService->atualizarAsaasInfo((int) $parcela['id'], [
+                            'asaas_customer' => (string) $cliente['id'], 'asaas_payment' => (string) ($cobranca['id'] ?? ''),
+                            'invoice_url' => (string) ($cobranca['invoiceUrl'] ?? $cobranca['paymentLink'] ?? $cobranca['bankSlipUrl'] ?? ''),
+                            'bank_slip_url' => ($cobranca['bankSlipUrl'] ?? '') !== '' ? (string) $cobranca['bankSlipUrl'] : null,
+                            'status' => (string) ($cobranca['status'] ?? 'PENDING'),
+                        ]);
+                        $cobrancasCriadas++;
+                    }
+                    $financeiro .= ' ' . $cobrancasCriadas . ' cobrança(s) restante(s) gerada(s) no Asaas; o aluno escolherá a forma de pagamento.';
+                    if ($cobrancasFalhas > 0) $financeiro .= ' Falhas: ' . $cobrancasFalhas . '. ' . ($asaas->getLastError() ?? '');
+                } else $financeiro .= ' Demais parcelas criadas, mas não foi possível criar o cliente no Asaas: ' . ($asaas->getLastError() ?? 'erro desconhecido');
+            }
             $nomeAluno = (string) ($aluno['nome'] ?? '');
             $this->logService->log('criar', 'matricula', $matriculaId, "Matrícula criada: $nomeAluno");
-            Session::setFlash('flash', 'Matrícula realizada com sucesso.');
+            Session::setFlash('flash', 'Matrícula realizada com sucesso.' . $financeiro);
         } else {
             Session::setFlash('flash', 'Erro ao realizar matrícula. Tente novamente.');
         }
 
         $this->redirect('/admin/alunos/matricula?id=' . $idAluno);
+    }
+
+    private function valorBrasileiro(string $valor): float
+    {
+        return $valor === '' ? 0.0 : (float) str_replace(',', '.', str_replace('.', '', trim($valor)));
+    }
+
+    private function planosDasTurmas(array $turmas): array
+    {
+        $ids = [];
+        foreach ($turmas as $turma) $ids[(int) ($turma['id_curso'] ?? 0)] = true;
+        $planos = [];
+        foreach (array_keys($ids) as $idCurso) foreach ($this->pagamentoService->listarPorCurso((int) $idCurso) as $plano) if ((int) ($plano['ativo'] ?? 0) === 1) $planos[] = $plano;
+        return $planos;
     }
 
     public function trocaHistorico(): void

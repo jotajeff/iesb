@@ -75,8 +75,13 @@ $formAction = $ehParcela
               <p class="text-muted mb-1"><?= $numeroParcela ?>ª parcela (de <?= $totalParcelas ?>) para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
               <p class="mb-4">Valor da parcela: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong></p>
             <?php else: ?>
-              <p class="text-muted mb-1">Primeira parcela (entrada) do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
-              <p class="mb-4">Valor da entrada: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
+              <?php if ((int) ($acordo['tipo'] ?? 0) === 4): ?>
+                <p class="text-muted mb-1">Primeira parcela do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+                <p class="mb-4">Valor da parcela: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
+              <?php else: ?>
+                <p class="text-muted mb-1">Primeira parcela (entrada) do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+                <p class="mb-4">Valor da entrada: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
+              <?php endif; ?>
             <?php endif; ?>
             <?php if ($asaasError): ?>
               <div class="alert alert-warning text-start mt-4 mb-4">
@@ -144,8 +149,8 @@ $formAction = $ehParcela
                   <div class="fw-semibold"><?= $totalParcelas ?>x</div>
                 </div>
                 <div class="col-md-4">
-                  <div class="text-muted small text-uppercase">Entrada e demais parcelas</div>
-                  <div class="fw-semibold">1ª (entrada) + <?= max(0, $totalParcelas - 1) ?> demais</div>
+                  <div class="text-muted small text-uppercase"><?= (int) ($acordo['tipo'] ?? 0) === 4 ? 'Parcelas' : 'Entrada e demais parcelas' ?></div>
+                  <div class="fw-semibold"><?= (int) ($acordo['tipo'] ?? 0) === 4 ? $totalParcelas . ' parcelas' : '1ª (entrada) + ' . max(0, $totalParcelas - 1) . ' demais' ?></div>
                 </div>
                 <div class="col-md-4">
                   <div class="text-muted small text-uppercase">Parcela atual</div>

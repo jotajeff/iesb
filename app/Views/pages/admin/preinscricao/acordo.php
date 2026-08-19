@@ -59,7 +59,7 @@
             <tr><td colspan="10" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum acordo encontrado.</td></tr>
           <?php else: ?>
             <?php
-              $tiposAcordo = [1 => 'Padrão', 2 => 'À vista', 3 => 'Entrada + parcelas'];
+              $tiposAcordo = [1 => 'Padrão', 2 => 'À vista', 3 => 'Entrada + parcelas', 4 => 'Somente parcelas'];
             ?>
             <?php foreach ($acordos as $acordo): ?>
               <?php

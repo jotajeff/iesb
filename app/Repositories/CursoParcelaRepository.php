@@ -88,6 +88,11 @@ final class CursoParcelaRepository
                 $params[':asaas_customer'] = $data['asaas_customer'] !== null ? (string) $data['asaas_customer'] : null;
             }
 
+            if (array_key_exists('asaas_subscription', $data)) {
+                $fields[] = 'asaas_subscription = :asaas_subscription';
+                $params[':asaas_subscription'] = $data['asaas_subscription'] !== null ? (string) $data['asaas_subscription'] : null;
+            }
+
             if (array_key_exists('asaas_payment', $data)) {
                 $fields[] = 'asaas_payment = :asaas_payment';
                 $params[':asaas_payment'] = $data['asaas_payment'] !== null ? (string) $data['asaas_payment'] : null;

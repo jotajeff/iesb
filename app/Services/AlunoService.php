@@ -77,12 +77,13 @@ final class AlunoService
         return $this->repository->listCursosByAluno($idAluno);
     }
 
-    public function criarMatricula(int $idAluno, int $idTurma, string $status = 'matriculado'): int
+    public function criarMatricula(int $idAluno, int $idTurma, string $status = 'matriculado', int $idPagamento = 0): int
     {
         return $this->turmaRepository->saveMatricula([
             'id_aluno' => $idAluno,
             'id_turma' => $idTurma,
             'status' => $status,
+            'id_pagamento' => $idPagamento,
         ]);
     }
 

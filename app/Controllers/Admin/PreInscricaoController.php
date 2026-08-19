@@ -203,20 +203,32 @@ final class PreInscricaoController extends Controller
         }
 
         if ($cpf === '') {
-            $this->json(['erro' => 'CPF é obrigatório.'], 400);
+            Session::setFlash('flash', 'CPF faltando');
+            $this->json(['erro' => 'CPF é obrigatório para gerar o acordo e as cobranças.'], 400);
         }
 
         if ($totalParcelas < 1) {
             $totalParcelas = max(1, (int) ($plano['parcelas'] ?? 1));
         }
-        if ($valorEntrada <= 0) {
+        if ($tipo === 4) {
+            $valorEntrada = 0.0;
+        } elseif ($valorEntrada <= 0) {
             $valorEntrada = (float) ($plano['valor'] ?? 0);
         }
-        if ($valorEntrada <= 0) {
+        if ($tipo !== 4 && $valorEntrada <= 0) {
             $this->json(['erro' => 'Valor de entrada inválido.'], 400);
+        }
+        if ($tipo === 4 && $totalParcelas < 2) {
+            $totalParcelas = max(2, (int) ($plano['parcelas'] ?? 2));
         }
         if ($totalParcelas > 1 && $valorDemaisParcelas <= 0) {
             $valorDemaisParcelas = $valorEntrada;
+        }
+        if ($tipo === 4 && $valorDemaisParcelas <= 0) {
+            $valorDemaisParcelas = (float) ($plano['valor'] ?? 0) / max(1, $totalParcelas);
+        }
+        if ($tipo === 4 && $valorDemaisParcelas <= 0) {
+            $this->json(['erro' => 'Valor das parcelas inválido.'], 400);
         }
         if ($dataVencimentoEntrada !== '' && strtotime($dataVencimentoEntrada) === false) {
             $dataVencimentoEntrada = '';

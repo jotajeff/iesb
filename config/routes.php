@@ -104,6 +104,7 @@ return static function (Router $router): void {
     $router->post('/admin/academico/modulos/salvar', [AcademicoController::class, 'salvarModulo']);
     $router->post('/admin/academico/modulos/desativar', [AcademicoController::class, 'desativarModulo']);
     $router->post('/admin/academico/disciplinas/salvar', [AcademicoController::class, 'salvarDisciplinaDaMatriz']);
+    $router->post('/admin/academico/disciplinas/salvar-lote', [AcademicoController::class, 'salvarDisciplinasEmLote']);
     $router->post('/admin/academico/disciplinas/desativar', [AcademicoController::class, 'desativarDisciplinaDaMatriz']);
     $router->get('/admin/academico/situacao', [AcademicoController::class, 'situacaoAcademica']);
     $router->post('/admin/academico/situacao/salvar', [AcademicoController::class, 'salvarSituacaoDisciplina']);
