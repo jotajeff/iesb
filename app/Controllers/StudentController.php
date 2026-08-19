@@ -405,7 +405,7 @@ final class StudentController extends Controller
                 $stmt = $pdo->prepare(
                     'SELECT m.id AS matricula_id, m.status, m.data_matricula,'
                     . ' t.id AS turma_id, t.nome AS turma_nome, t.data_inicio, t.data_fim, t.id_estrutura AS estrutura_id,'
-                    . ' c.id AS curso_id, c.nome AS curso_nome, c.local_curso, c.horario, c.imagem_card,'
+                    . ' c.id AS curso_id, c.nome AS curso_nome, c.local_curso, c.horario, c.imagem_card, c.tipo_curso AS curso_tipo,'
                     . ' ec.nome AS estrutura_nome'
                     . ' FROM matricula m'
                     . ' JOIN turmas t ON m.id_turma = t.id'
@@ -428,24 +428,48 @@ final class StudentController extends Controller
             }
 
             $turmaId = (int) ($matricula['turma_id'] ?? 0);
+            $cursoId = (int) ($matricula['curso_id'] ?? 0);
+            $cursoTipo = (int) ($matricula['curso_tipo'] ?? 0);
 
-            try {
-                $stmt = $pdo->prepare(
-                    'SELECT u.id, u.nome, u.email, u.telefone, u.foto, cr.id AS curriculo_id'
-                    . ' FROM turma_professor tp'
-                    . ' JOIN usuarios u ON tp.id_usuario = u.id'
-                    . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
-                    . ' WHERE tp.id_turma = :id_turma AND tp.status = :status'
-                );
-                $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
-                $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
-                $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
-                $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
-                $stmt->execute();
-                $professores = $stmt->fetchAll() ?: [];
-            } catch (\Throwable $e) {
-                error_log('[STUDENT SHOW] Erro ao buscar professores: ' . $e->getMessage());
-                $professores = [];
+            if ($cursoTipo === 3) {
+                try {
+                    $stmt = $pdo->prepare(
+                        'SELECT u.id, u.nome, u.email, u.telefone, u.foto, cr.id AS curriculo_id'
+                        . ' FROM corpo_docente cd'
+                        . ' JOIN usuarios u ON cd.id_usuario = u.id'
+                        . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
+                        . ' WHERE cd.id_curso = :id_curso AND cd.ativo = :ativo'
+                        . ' ORDER BY u.nome ASC'
+                    );
+                    $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
+                    $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
+                    $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $professores = $stmt->fetchAll() ?: [];
+                } catch (\Throwable $e) {
+                    error_log('[STUDENT SHOW] Erro ao buscar professores (corpo_docente): ' . $e->getMessage());
+                    $professores = [];
+                }
+            } else {
+                try {
+                    $stmt = $pdo->prepare(
+                        'SELECT u.id, u.nome, u.email, u.telefone, u.foto, cr.id AS curriculo_id'
+                        . ' FROM turma_professor tp'
+                        . ' JOIN usuarios u ON tp.id_usuario = u.id'
+                        . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
+                        . ' WHERE tp.id_turma = :id_turma AND tp.status = :status'
+                    );
+                    $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
+                    $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
+                    $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
+                    $stmt->execute();
+                    $professores = $stmt->fetchAll() ?: [];
+                } catch (\Throwable $e) {
+                    error_log('[STUDENT SHOW] Erro ao buscar professores: ' . $e->getMessage());
+                    $professores = [];
+                }
             }
 
             try {
@@ -464,7 +488,6 @@ final class StudentController extends Controller
                 $materiais = [];
             }
 
-            $cursoId = (int) ($matricula['curso_id'] ?? 0);
             $idEstrutura = (int) ($matricula['estrutura_id'] ?? 0);
             $disciplinas = [];
             $modulosDisciplinas = [];

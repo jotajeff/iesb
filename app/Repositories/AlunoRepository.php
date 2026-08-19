@@ -9,7 +9,7 @@ use PDO;
 
 final class AlunoRepository
 {
-    public function list(int $limit = 200, ?int $ativo = null): array
+    public function list(int $limit = 200, int $offset = 0, ?int $ativo = null): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -25,10 +25,11 @@ final class AlunoRepository
                 $sql .= ' WHERE ativo = ' . ($ativo === 1 ? '1' : '0');
             }
 
-            $sql .= ' ORDER BY nome ASC LIMIT :limit';
+            $sql .= ' ORDER BY nome ASC LIMIT :limit OFFSET :offset';
 
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
             $stmt->execute();
 
             $rows = $stmt->fetchAll();
@@ -36,6 +37,29 @@ final class AlunoRepository
         } catch (\Throwable $e) {
             error_log('[ALUNOS] Erro em list: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    public function countAll(?int $ativo = null): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return 0;
+        }
+
+        try {
+            $sql = 'SELECT COUNT(*) FROM alunos';
+
+            if ($ativo !== null) {
+                $sql .= ' WHERE ativo = ' . ($ativo === 1 ? '1' : '0');
+            }
+
+            $stmt = $pdo->query($sql);
+            $count = $stmt ? $stmt->fetchColumn() : 0;
+            return (int) $count;
+        } catch (\Throwable $e) {
+            error_log('[ALUNOS] Erro em countAll: ' . $e->getMessage());
+            return 0;
         }
     }
 

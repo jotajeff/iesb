@@ -48,11 +48,25 @@ final class AlunoController extends Controller
             $filtroAtivo = 1;
         }
 
+        $perPage = 25;
+        $total = $this->alunoService->contarAlunos($filtroAtivo);
+        $totalPages = (int) ceil($total / $perPage);
+        if ($totalPages < 1) {
+            $totalPages = 1;
+        }
+        $page = max(1, (int) ($_GET['page'] ?? 1));
+        $page = min($page, $totalPages);
+        $offset = ($page - 1) * $perPage;
+
         $this->render('pages/admin/alunos/index', [
             'title' => 'Alunos',
             'currentRoute' => '/admin/alunos',
-            'alunos' => $this->alunoService->alunos(200, $filtroAtivo),
+            'alunos' => $this->alunoService->alunos($perPage, $filtroAtivo, $offset),
             'filtroAtivo' => $filtroAtivo,
+            'page' => $page,
+            'totalPages' => $totalPages,
+            'total' => $total,
+            'perPage' => $perPage,
         ], 'admin');
     }
 

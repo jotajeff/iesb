@@ -20,7 +20,7 @@
       </div>
 
       <div class="table-responsive">
-        <table class="table table-striped table-sm align-middle">
+        <table class="table table-striped table-hover table-sm align-middle">
           <thead>
             <tr>
               <th><i class="bi bi-hash"></i></th>
@@ -79,5 +79,35 @@
           </tbody>
         </table>
       </div>
+
+      <?php
+        $page = max(1, (int) ($page ?? 1));
+        $totalPages = max(1, (int) ($totalPages ?? 1));
+        $total = max(0, (int) ($total ?? 0));
+        $perPage = max(1, (int) ($perPage ?? 25));
+        $filtroAtivo = (int) ($filtroAtivo ?? 1);
+        $deRegistro = $total === 0 ? 0 : (($page - 1) * $perPage) + 1;
+        $ateRegistro = min($page * $perPage, $total);
+        $baseUrl = '/admin/alunos?ativo=' . $filtroAtivo . '&page=';
+      ?>
+      <nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
+        <div class="text-muted small">
+          Mostrando <strong><?= $deRegistro ?></strong>&ndash;<strong><?= $ateRegistro ?></strong> de <strong><?= $total ?></strong> aluno(s)
+        </div>
+        <ul class="pagination pagination-sm mb-0">
+          <li class="page-item <?= $page <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link" href="<?= $baseUrl . ($page - 1) ?>" aria-label="Anterior"><span aria-hidden="true">&laquo;</span></a>
+          </li>
+          <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+            <li class="page-item <?= $i === $page ? 'active' : '' ?>">
+              <a class="page-link" href="<?= $baseUrl . $i ?>"><?= $i ?></a>
+            </li>
+          <?php endfor; ?>
+          <li class="page-item <?= $page >= $totalPages ? 'disabled' : '' ?>">
+            <a class="page-link" href="<?= $baseUrl . ($page + 1) ?>" aria-label="Próxima"><span aria-hidden="true">&raquo;</span></a>
+          </li>
+        </ul>
+      </nav>
     </div>
+  </div>
 </section>
