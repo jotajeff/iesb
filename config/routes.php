@@ -154,6 +154,8 @@ return static function (Router $router): void {
     $router->get('/admin/alunos/editar', [AlunoController::class, 'editar']);
     $router->post('/admin/alunos/salvar', [AlunoController::class, 'salvar']);
     $router->post('/admin/alunos/atualizar', [AlunoController::class, 'atualizar']);
+    $router->get('/admin/alunos/lote', [AlunoController::class, 'lote']);
+    $router->post('/admin/alunos/lote/importar', [AlunoController::class, 'importarLote']);
     $router->get('/admin/alunos/show', [AlunoController::class, 'show']);
     $router->get('/admin/alunos/matricula', [AlunoController::class, 'matricula']);
     $router->post('/admin/alunos/matricular', [AlunoController::class, 'matricular']);

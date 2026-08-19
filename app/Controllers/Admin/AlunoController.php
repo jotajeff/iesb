@@ -11,6 +11,7 @@ use App\Services\CursoParcelaService;
 use App\Services\TurmaService;
 use App\Services\CursoService;
 use App\Services\LogService;
+use App\Services\PlanilhaService;
 use App\Services\IpLocationService;
 use App\Support\Session;
 
@@ -48,6 +49,101 @@ final class AlunoController extends Controller
             'currentRoute' => '/admin/alunos',
             'alunos' => $this->alunoService->alunos(200, $filtroAtivo),
             'filtroAtivo' => $filtroAtivo,
+        ], 'admin');
+    }
+
+    public function lote(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/alunos/lote', [
+            'title' => 'Importação em Lote',
+            'currentRoute' => '/admin/alunos/lote',
+        ], 'admin');
+    }
+
+    public function importarLote(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $resultado = [
+            'total' => 0,
+            'importados' => 0,
+            'ignorados' => 0,
+            'erros' => [],
+        ];
+
+        $arquivo = $_FILES['planilha'] ?? null;
+        if (!$arquivo || !is_array($arquivo) || (int) ($arquivo['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            $resultado['erros'][] = 'Selecione um arquivo .xlsx ou .csv para importar.';
+            $this->renderLote($resultado);
+            return;
+        }
+
+        $extensao = strtolower(pathinfo((string) ($arquivo['name'] ?? ''), PATHINFO_EXTENSION));
+
+        try {
+            $planilhaService = new PlanilhaService();
+            $linhas = $planilhaService->ler((string) $arquivo['tmp_name'], $extensao);
+        } catch (\Throwable $e) {
+            $resultado['erros'][] = $e->getMessage();
+            $this->renderLote($resultado);
+            return;
+        }
+
+        if (empty($linhas)) {
+            $resultado['erros'][] = 'Nenhuma linha com dados encontrada na planilha.';
+            $this->renderLote($resultado);
+            return;
+        }
+
+        $resultado['total'] = count($linhas);
+        $emailsVistos = [];
+
+        foreach ($linhas as $linha) {
+            $nome = trim((string) ($linha['nome'] ?? ''));
+            $telefone = trim((string) ($linha['telefone'] ?? ''));
+            $email = strtolower(trim((string) ($linha['email'] ?? '')));
+
+            if ($nome === '' || $email === '') {
+                $resultado['ignorados']++;
+                $resultado['erros'][] = "Linha ignorada (sem nome ou email): \"$nome\" <$email>";
+                continue;
+            }
+
+            if (isset($emailsVistos[$email]) || $this->alunoService->existeEmail($email)) {
+                $resultado['ignorados']++;
+                $resultado['erros'][] = "Email já cadastrado: $email";
+                continue;
+            }
+            $emailsVistos[$email] = true;
+
+            $alunoId = $this->alunoService->criarAluno($nome, '', '', $telefone, $email, 1);
+
+            if ($alunoId > 0) {
+                $resultado['importados']++;
+                $this->logService->log('criar', 'aluno', $alunoId, "Aluno criado via lote: $nome");
+            } else {
+                $resultado['ignorados']++;
+                $resultado['erros'][] = "Falha ao cadastrar: $nome <$email>";
+            }
+        }
+
+        $this->renderLote($resultado);
+    }
+
+    private function renderLote(array $resultado): void
+    {
+        $this->render('pages/admin/alunos/lote', [
+            'title' => 'Importação em Lote',
+            'currentRoute' => '/admin/alunos/lote',
+            'resultado' => $resultado,
         ], 'admin');
     }
 

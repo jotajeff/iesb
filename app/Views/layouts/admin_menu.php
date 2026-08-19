@@ -47,7 +47,7 @@
               <li><a class="dropdown-item" href="/admin/config/noticias"><i class="bi bi-newspaper me-1"></i>Notícias</a></li>
             </ul>
           </li>
-          <?php if ($userRole === 'admin'): ?>
+          <?php if ($userRole === 'admin' || in_array((int) ($authUser['id'] ?? 0), [7, 17], true)): ?>
           <li class="nav-item dropdown">
             <a class="nav-link dropdown-toggle <?= (strpos((string) ($currentRoute ?? ''), '/admin/asaas') === 0) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-currency-dollar me-1"></i>Asaas</a>
             <ul class="dropdown-menu">

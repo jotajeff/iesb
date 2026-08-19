@@ -29,6 +29,11 @@ final class AlunoService
         return $this->repository->findById($id);
     }
 
+    public function existeEmail(string $email): bool
+    {
+        return $this->repository->findByEmail($email) !== null;
+    }
+
     public function criarAluno(string $nome, string $cpf, string $dataNascimento, string $telefone, string $email, int $ativo = 1): int
     {
         $prefix = explode('@', $email)[0] ?? '';

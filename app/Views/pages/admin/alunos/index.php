@@ -14,6 +14,7 @@
               <option value="0" <?= ($filtroAtivo ?? 1) === 0 ? 'selected' : '' ?>>Inativos</option>
             </select>
           </form>
+          <a class="btn btn-outline-primary btn-sm" href="/admin/alunos/lote"><i class="bi bi-file-earmark-excel me-1"></i>Lote</a>
           <a class="btn btn-primary btn-sm" href="/admin/alunos/novo"><i class="bi bi-plus-circle me-1"></i>Novo aluno</a>
         </div>
       </div>
