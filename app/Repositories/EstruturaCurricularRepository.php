@@ -657,11 +657,11 @@ final class EstruturaCurricularRepository
         }
     }
 
-    public function vincularProfessorDaDisciplina(int $idTurma, int $idDisciplina, ?int $idProfessor): bool
+    public function vincularProfessorDaDisciplina(int $idTurma, int $idDisciplina, ?int $idProfessor): int
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO || $idTurma < 1 || $idDisciplina < 1) {
-            return false;
+            return 0;
         }
 
         try {
@@ -684,10 +684,111 @@ final class EstruturaCurricularRepository
             }
             $stmt->bindValue(':id_professor', $idProfessor, $idProfessor !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->execute();
-            return true;
+
+            if ($idTurmaDisciplina < 1) {
+                $idTurmaDisciplina = (int) $pdo->lastInsertId();
+            }
+
+            $this->salvarProfessoresDaDisciplina($idTurmaDisciplina, $idProfessor !== null ? [$idProfessor] : []);
+
+            return $idTurmaDisciplina;
         } catch (\Throwable $e) {
             error_log('[ESTRUTURA] Erro ao vincular professor à disciplina da turma: ' . $e->getMessage());
-            return false;
+            return 0;
+        }
+    }
+
+    private function ensureTabelaProfessoresDisciplina(): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        try {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS turma_disciplina_professor (' .
+                ' id INT(11) NOT NULL AUTO_INCREMENT,' .
+                ' id_turma_disciplina INT(11) NOT NULL,' .
+                ' id_usuario_professor INT(11) NOT NULL,' .
+                ' ativo TINYINT(1) NOT NULL DEFAULT 1,' .
+                ' created_at DATETIME DEFAULT CURRENT_TIMESTAMP,' .
+                ' PRIMARY KEY (id),' .
+                ' UNIQUE KEY uk_tdp_turma_disciplina_professor (id_turma_disciplina, id_usuario_professor),' .
+                ' KEY idx_tdp_turma_disciplina (id_turma_disciplina)' .
+                ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci'
+            );
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao criar tabela turma_disciplina_professor: ' . $e->getMessage());
+        }
+    }
+
+    public function listarProfessoresDaDisciplina(int $idTurmaDisciplina): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return [];
+        }
+
+        try {
+            $this->ensureTabelaProfessoresDisciplina();
+            $stmt = $pdo->prepare(
+                'SELECT tdp.id_usuario_professor AS id, u.nome AS nome' .
+                ' FROM turma_disciplina_professor tdp' .
+                ' LEFT JOIN usuarios u ON u.id = tdp.id_usuario_professor' .
+                ' WHERE tdp.id_turma_disciplina = :id AND tdp.ativo = :ativo' .
+                ' ORDER BY u.nome ASC'
+            );
+            $stmt->bindValue(':id', $idTurmaDisciplina, PDO::PARAM_INT);
+            $stmt->bindValue(':ativo', 1, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao listar professores da disciplina: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function salvarProfessoresDaDisciplina(int $idTurmaDisciplina, array $idsProfessores): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idTurmaDisciplina < 1) {
+            return;
+        }
+
+        try {
+            $this->ensureTabelaProfessoresDisciplina();
+            $ids = array_values(array_filter(array_map('intval', $idsProfessores), static fn (int $v): bool => $v > 0));
+
+            if (!empty($ids)) {
+                $placeholders = implode(',', array_fill(0, count($ids), '?'));
+                $stmt = $pdo->prepare('DELETE FROM turma_disciplina_professor WHERE id_turma_disciplina = ? AND id_usuario_professor NOT IN (' . $placeholders . ')');
+                $stmt->bindValue(1, $idTurmaDisciplina, PDO::PARAM_INT);
+                foreach ($ids as $i => $id) {
+                    $stmt->bindValue($i + 2, $id, PDO::PARAM_INT);
+                }
+                $stmt->execute();
+
+                $stmtIns = $pdo->prepare('INSERT IGNORE INTO turma_disciplina_professor (id_turma_disciplina, id_usuario_professor, ativo) VALUES (?, ?, 1)');
+                foreach ($ids as $id) {
+                    $stmtIns->bindValue(1, $idTurmaDisciplina, PDO::PARAM_INT);
+                    $stmtIns->bindValue(2, $id, PDO::PARAM_INT);
+                    $stmtIns->execute();
+                }
+            } else {
+                $stmt = $pdo->prepare('DELETE FROM turma_disciplina_professor WHERE id_turma_disciplina = ?');
+                $stmt->bindValue(1, $idTurmaDisciplina, PDO::PARAM_INT);
+                $stmt->execute();
+            }
+
+            $legacy = $ids[0] ?? null;
+            $stmtUpd = $pdo->prepare('UPDATE turma_disciplina SET id_usuario_professor = :prof WHERE id = :id');
+            $stmtUpd->bindValue(':prof', $legacy, $legacy !== null ? PDO::PARAM_INT : PDO::PARAM_NULL);
+            $stmtUpd->bindValue(':id', $idTurmaDisciplina, PDO::PARAM_INT);
+            $stmtUpd->execute();
+        } catch (\Throwable $e) {
+            error_log('[ESTRUTURA] Erro ao salvar professores da disciplina: ' . $e->getMessage());
         }
     }
 

@@ -286,9 +286,35 @@ final class TurmaController extends Controller
             'disciplinasDoCurso' => (int) ($turma['id_estrutura'] ?? 0) > 0
                 ? $this->estruturaService->listarDisciplinasDaMatriz((int) $turma['id_estrutura'])
                 : $this->estruturaService->listarDisciplinasDoCurso((int) ($turma['id_curso'] ?? 0)),
-            'professoresDaTurma' => $this->estruturaService->listarProfessoresDaTurma($id),
+            'professoresDaTurma' => $this->estruturaService->listarProfessoresDaTurma($id, (int) ($turma['id_curso'] ?? 0)),
             'disciplinasMatriculadas' => $disciplinasMatriculadas,
+            'professoresPorDisciplina' => $this->mapaProfessoresPorDisciplina($disciplinasTurma, $disciplinasDosModulos),
         ], 'admin');
+    }
+
+    /**
+     * @param array<int, array<string, mixed>> $disciplinasTurma
+     * @param array<int, array<string, mixed>> $disciplinasDosModulos
+     * @return array<int, array<string, mixed>>
+     */
+    private function mapaProfessoresPorDisciplina(array $disciplinasTurma, array $disciplinasDosModulos): array
+    {
+        $idsTd = [];
+        foreach ($disciplinasTurma as $td) {
+            $idsTd[] = (int) ($td['id'] ?? 0);
+        }
+        foreach ($disciplinasDosModulos as $grupo) {
+            foreach (($grupo['disciplinas'] ?? []) as $d) {
+                $idsTd[] = (int) ($d['turma_disciplina_id'] ?? 0);
+            }
+        }
+        $idsTd = array_values(array_filter(array_unique($idsTd), static fn (int $v): bool => $v > 0));
+
+        $mapa = [];
+        foreach ($idsTd as $idTd) {
+            $mapa[$idTd] = $this->estruturaService->listarProfessoresDaDisciplina($idTd);
+        }
+        return $mapa;
     }
 
     public function salvarDisciplinasMatricula(): void
@@ -351,7 +377,8 @@ final class TurmaController extends Controller
         $id = (int) $this->input('id', 0);
         $idTurma = (int) $this->input('id_turma', 0);
         $idDisciplina = (int) $this->input('id_disciplina', 0);
-        $idProfessor = (int) $this->input('id_usuario_professor', 0);
+        $idsProfessores = array_values(array_filter(array_map('intval', (array) ($this->input('professores', []) ?: [])), static fn (int $v): bool => $v > 0));
+        $idProfessor = $idsProfessores[0] ?? 0;
         $dataInicio = trim((string) $this->input('data_inicio', ''));
         $dataFim = trim((string) $this->input('data_fim', ''));
         $status = trim((string) $this->input('status', 'PLANEJADA'));
@@ -366,18 +393,14 @@ final class TurmaController extends Controller
             $this->json(['erro' => 'Selecione uma disciplina.'], 400);
         }
 
-        if ($idProfessor > 0) {
-            $professoresDaTurma = $this->estruturaService->listarProfessoresDaTurma($idTurma);
-            $professorVinculado = false;
-            foreach ($professoresDaTurma as $professor) {
-                if ((int) ($professor['id'] ?? 0) === $idProfessor) {
-                    $professorVinculado = true;
-                    break;
+        if (!empty($idsProfessores)) {
+            $professoresDaTurma = $this->estruturaService->listarProfessoresDaTurma($idTurma, (int) ($turma['id_curso'] ?? 0));
+            $idsValidos = array_flip(array_map(static fn (array $professor): int => (int) ($professor['id'] ?? 0), $professoresDaTurma));
+            foreach ($idsProfessores as $pid) {
+                if (!isset($idsValidos[$pid])) {
+                    $this->json(['erro' => 'Um dos professores selecionados não pertence ao corpo docente deste curso.'], 400);
+                    return;
                 }
-            }
-
-            if (!$professorVinculado) {
-                $this->json(['erro' => 'O professor selecionado não está vinculado a esta turma.'], 400);
             }
         }
 
@@ -401,12 +424,12 @@ final class TurmaController extends Controller
             'id' => $id,
             'id_turma' => $idTurma,
             'id_disciplina' => $idDisciplina,
-            'id_usuario_professor' => $idProfessor > 0 ? $idProfessor : null,
-            'data_inicio' => $dataInicio,
-            'data_fim' => $dataFim,
-            'status' => $status,
-            'ativo' => $ativo,
-        ]);
+'id_usuario_professor' => $idsProfessores !== [] ? $idsProfessores[0] : null,
+             'data_inicio' => $dataInicio,
+             'data_fim' => $dataFim,
+             'status' => $status,
+             'ativo' => $ativo,
+         ]);
 
         if ($result === -1) {
             $this->json(['erro' => 'Esta disciplina já está vinculada a esta turma.'], 400);
@@ -415,6 +438,8 @@ final class TurmaController extends Controller
         if ($result <= 0) {
             $this->json(['erro' => 'Erro ao salvar a disciplina da turma.'], 500);
         }
+
+        $this->estruturaService->salvarProfessoresDaDisciplina($result, $idsProfessores);
 
         $this->logService->log($id > 0 ? 'atualizar' : 'criar', 'turma_disciplina', $result, ($id > 0 ? 'Disciplina da turma atualizada' : 'Disciplina da turma criada') . ' na turma #' . $idTurma);
         $this->json(['sucesso' => true, 'id' => $result]);
@@ -444,7 +469,7 @@ final class TurmaController extends Controller
 
         $idTurma = (int) $this->input('id_turma', 0);
         $idModulo = (int) $this->input('id_modulo', 0);
-        $idProfessor = (int) $this->input('id_usuario_professor', 0);
+        $idsProfessores = array_values(array_filter(array_map('intval', (array) ($this->input('professores', []) ?: [])), static fn (int $v): bool => $v > 0));
 
         if ($idTurma <= 0 || $idModulo <= 0) {
             $this->json(['erro' => 'Parâmetros inválidos.'], 400);
@@ -460,7 +485,7 @@ final class TurmaController extends Controller
             $this->json(['erro' => 'O módulo selecionado não pertence à matriz desta turma.'], 400);
         }
 
-        $total = $this->estruturaService->vincularProfessorDoModulo($idTurma, $idModulo, $idProfessor > 0 ? $idProfessor : null);
+        $total = $this->estruturaService->vincularProfessorDoModulo($idTurma, $idModulo, $idsProfessores);
         if ($total <= 0) {
             $this->json(['erro' => 'Nenhuma disciplina do módulo foi vinculada ao professor.'], 400);
         }

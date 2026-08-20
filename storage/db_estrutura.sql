@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 17/08/2026 às 19:54
+-- Tempo de geração: 20/08/2026 às 11:23
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -939,6 +939,20 @@ CREATE TABLE `turma_disciplina` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `turma_disciplina_professor`
+--
+
+CREATE TABLE `turma_disciplina_professor` (
+  `id` int(11) NOT NULL,
+  `id_turma_disciplina` int(11) NOT NULL,
+  `id_usuario_professor` int(11) NOT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `turma_professor`
 --
 
@@ -1402,6 +1416,14 @@ ALTER TABLE `turma_disciplina`
   ADD KEY `fk_turma_disciplina_disciplina` (`id_disciplina`);
 
 --
+-- Índices de tabela `turma_disciplina_professor`
+--
+ALTER TABLE `turma_disciplina_professor`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_tdp_turma_disciplina_professor` (`id_turma_disciplina`,`id_usuario_professor`),
+  ADD KEY `idx_tdp_turma_disciplina` (`id_turma_disciplina`);
+
+--
 -- Índices de tabela `turma_professor`
 --
 ALTER TABLE `turma_professor`
@@ -1741,6 +1763,12 @@ ALTER TABLE `turma_disciplina`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `turma_disciplina_professor`
+--
+ALTER TABLE `turma_disciplina_professor`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `turma_troca`
 --
 ALTER TABLE `turma_troca`
@@ -1888,8 +1916,8 @@ ALTER TABLE `storage_drive`
 -- Restrições para tabelas `turmas`
 --
 ALTER TABLE `turmas`
-  ADD CONSTRAINT `turmas_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`),
-  ADD CONSTRAINT `fk_turmas_estrutura` FOREIGN KEY (`id_estrutura`) REFERENCES `estrutura_curricular` (`id`) ON DELETE SET NULL ON UPDATE CASCADE;
+  ADD CONSTRAINT `fk_turmas_estrutura` FOREIGN KEY (`id_estrutura`) REFERENCES `estrutura_curricular` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `turmas_ibfk_1` FOREIGN KEY (`id_curso`) REFERENCES `cursos` (`id`);
 
 --
 -- Restrições para tabelas `turma_disciplina`

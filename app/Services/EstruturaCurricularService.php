@@ -117,22 +117,39 @@ final class EstruturaCurricularService
         return $this->repository->desativarDisciplinaDaTurma($id);
     }
 
-    public function vincularProfessorDaDisciplina(int $idTurma, int $idDisciplina, ?int $idProfessor): bool
+    public function vincularProfessorDaDisciplina(int $idTurma, int $idDisciplina, ?int $idProfessor): int
     {
         return $this->repository->vincularProfessorDaDisciplina($idTurma, $idDisciplina, $idProfessor);
     }
 
-    public function vincularProfessorDoModulo(int $idTurma, int $idModulo, ?int $idProfessor): int
+    public function listarProfessoresDaDisciplina(int $idTurmaDisciplina): array
+    {
+        return $this->repository->listarProfessoresDaDisciplina($idTurmaDisciplina);
+    }
+
+    public function salvarProfessoresDaDisciplina(int $idTurmaDisciplina, array $idsProfessores): void
+    {
+        $this->repository->salvarProfessoresDaDisciplina($idTurmaDisciplina, $idsProfessores);
+    }
+
+    public function vincularProfessorDoModulo(int $idTurma, int $idModulo, ?array $idsProfessores): int
     {
         $disciplinas = $this->repository->listarDisciplinasDoModulo($idModulo);
         if (empty($disciplinas)) {
             return 0;
         }
 
+        $ids = array_values(array_filter(array_map('intval', $idsProfessores ?? []), static fn (int $v): bool => $v > 0));
+
         $vinculadas = 0;
         foreach ($disciplinas as $disciplina) {
             $idDisciplina = (int) ($disciplina['id_disciplina'] ?? 0);
-            if ($idDisciplina > 0 && $this->repository->vincularProfessorDaDisciplina($idTurma, $idDisciplina, $idProfessor)) {
+            if ($idDisciplina <= 0) {
+                continue;
+            }
+            $idTurmaDisciplina = $this->repository->vincularProfessorDaDisciplina($idTurma, $idDisciplina, $ids[0] ?? null);
+            if ($idTurmaDisciplina > 0) {
+                $this->repository->salvarProfessoresDaDisciplina($idTurmaDisciplina, $ids);
                 $vinculadas++;
             }
         }
@@ -181,7 +198,7 @@ final class EstruturaCurricularService
     /**
      * Lista os professores vinculados à turma (para atribuir a disciplinas).
      */
-    public function listarProfessoresDaTurma(int $idTurma): array
+    public function listarProfessoresDaTurma(int $idTurma, int $idCurso = 0): array
     {
         $pdo = \App\Core\Database::connection();
         if (!$pdo instanceof \PDO) {
@@ -189,6 +206,23 @@ final class EstruturaCurricularService
         }
 
         try {
+            // Professores disponíveis são os do corpo docente do curso da turma.
+            if ($idCurso > 0) {
+                $stmt = $pdo->prepare('SELECT u.id, u.nome, u.email
+                                       FROM corpo_docente cd
+                                       JOIN usuarios u ON u.id = cd.id_usuario
+                                       WHERE cd.id_curso = :id_curso AND cd.ativo = :ativo
+                                       ORDER BY u.nome ASC');
+                $stmt->bindValue(':id_curso', $idCurso, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
+                $stmt->execute();
+                $rows = $stmt->fetchAll();
+                if (is_array($rows) && count($rows) > 0) {
+                    return $rows;
+                }
+            }
+
+            // Fallback: professores vinculados diretamente à turma.
             $stmt = $pdo->prepare('SELECT u.id, u.nome, u.email
                                    FROM turma_professor tp
                                    JOIN usuarios u ON tp.id_usuario = u.id

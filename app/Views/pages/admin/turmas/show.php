@@ -206,6 +206,7 @@
                       </thead>
                       <tbody>
                         <?php foreach ($disciplinasTurma as $td): ?>
+                          <?php $profTd = $professoresPorDisciplina[((int) ($td['id'] ?? 0))] ?? []; ?>
                           <?php
                             $tdAtivo = (int) ($td['ativo'] ?? 1) === 1;
                             $tdStatus = (string) ($td['status'] ?? 'PLANEJADA');
@@ -219,8 +220,16 @@
                           ?>
                           <tr>
                             <td><?= (int) ($td['id'] ?? 0) ?></td>
-                            <td><?= htmlspecialchars((string) ($td['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                            <td><?= htmlspecialchars((string) ($td['professor_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+<td><?= htmlspecialchars((string) ($td['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                             <td>
+                               <?php if (!empty($profTd)): ?>
+                                 <?php foreach ($profTd as $profT): ?>
+                                   <span class="badge bg-light text-dark border me-1"><?= htmlspecialchars((string) ($profT['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                                 <?php endforeach; ?>
+                               <?php else: ?>
+                                 <span class="text-muted">Não vinculado</span>
+                               <?php endif; ?>
+                             </td>
                             <td><?= !empty($td['data_inicio']) ? date('d/m/Y', strtotime((string) $td['data_inicio'])) : '-' ?></td>
                             <td><?= !empty($td['data_fim']) ? date('d/m/Y', strtotime((string) $td['data_fim'])) : '-' ?></td>
                             <td><span class="badge bg-info text-dark"><?= htmlspecialchars($statusLabel, ENT_QUOTES, 'UTF-8') ?></span></td>
@@ -237,6 +246,7 @@
                                         data-id="<?= (int) ($td['id'] ?? 0) ?>"
                                         data-disciplina="<?= (int) ($td['id_disciplina'] ?? 0) ?>"
                                         data-professor="<?= (int) ($td['id_usuario_professor'] ?? 0) ?>"
+                                        data-professores="<?= htmlspecialchars(implode(',', array_column($profTd, 'id')), ENT_QUOTES, 'UTF-8') ?>"
                                         data-inicio="<?= htmlspecialchars((string) ($td['data_inicio'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                         data-fim="<?= htmlspecialchars((string) ($td['data_fim'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                         data-status="<?= htmlspecialchars($tdStatus, ENT_QUOTES, 'UTF-8') ?>"
@@ -280,8 +290,9 @@
                         <div class="text-muted small"><i class="bi bi-info-circle me-1"></i>Nenhuma disciplina neste módulo.</div>
                       <?php else: ?>
                         <ul class="list-group list-group-flush border rounded-2 overflow-hidden">
-                          <?php foreach ($disciplinasModulo as $d): ?>
-                            <?php $dAtiva = (int) ($d['ativo'] ?? 1) === 1; ?>
+<?php foreach ($disciplinasModulo as $d): ?>
+                             <?php $dAtiva = (int) ($d['ativo'] ?? 1) === 1; ?>
+                             <?php $profD = $professoresPorDisciplina[((int) ($d['turma_disciplina_id'] ?? 0))] ?? []; ?>
                             <?php $dVinculada = (int) ($d['vinculada'] ?? 0) === 1; ?>
                             <li class="list-group-item px-3 py-2">
                               <div class="d-flex justify-content-between align-items-center gap-2">
@@ -301,20 +312,23 @@
                                 <?php endif; ?>
                               </div>
                               <div class="text-muted small mt-1">
-                                <i class="bi bi-person me-1"></i>Professor:
-                                <?php if (!empty($d['professor_nome'])): ?>
-                                  <?= htmlspecialchars((string) $d['professor_nome'], ENT_QUOTES, 'UTF-8') ?>
+                                <i class="bi bi-people me-1"></i>Professor(es):
+                                <?php if (!empty($profD)): ?>
+                                  <?php foreach ($profD as $profDItem): ?>
+                                    <span class="badge bg-light text-dark border me-1"><?= htmlspecialchars((string) ($profDItem['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                                  <?php endforeach; ?>
                                 <?php else: ?>
                                   <span class="text-muted">Não vinculado</span>
                                 <?php endif; ?>
                               </div>
                               <?php if (!$isProfessor): ?>
                                 <div class="mt-2">
-                                  <button type="button"
-                                          class="btn btn-sm <?= $dVinculada ? 'btn-outline-secondary btn-editar-disciplina-modulo' : 'btn-outline-primary btn-vincular-disciplina-modulo' ?>"
-                                          data-id="<?= (int) ($d['turma_disciplina_id'] ?? 0) ?>"
-                                          data-disciplina="<?= (int) ($d['id_disciplina'] ?? 0) ?>"
-                                          data-professor="<?= (int) ($d['professor_id'] ?? 0) ?>"
+<button type="button"
+                                           class="btn btn-sm <?= $dVinculada ? 'btn-outline-secondary btn-editar-disciplina-modulo' : 'btn-outline-primary btn-vincular-disciplina-modulo' ?>"
+                                           data-id="<?= (int) ($d['turma_disciplina_id'] ?? 0) ?>"
+                                           data-disciplina="<?= (int) ($d['id_disciplina'] ?? 0) ?>"
+                                           data-professor="<?= (int) ($d['professor_id'] ?? 0) ?>"
+                                           data-professores="<?= htmlspecialchars(implode(',', array_column($profD, 'id')), ENT_QUOTES, 'UTF-8') ?>"
                                           data-inicio="<?= htmlspecialchars((string) ($d['data_inicio_turma'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                           data-fim="<?= htmlspecialchars((string) ($d['data_fim_turma'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"
                                           data-status="<?= htmlspecialchars((string) ($d['status_turma'] ?? 'PLANEJADA'), ENT_QUOTES, 'UTF-8') ?>"
@@ -502,14 +516,13 @@
             <div class="form-text">Somente disciplinas do curso desta turma.</div>
           </div>
           <div class="mb-3">
-            <label class="form-label">Professor</label>
-            <select name="id_usuario_professor" id="tdProfessor" class="form-select">
-              <option value="">Sem professor</option>
+            <label class="form-label">Professor(es)</label>
+            <select name="professores[]" id="tdProfessor" class="form-select" multiple size="5">
               <?php foreach ($professoresDaTurma as $prof): ?>
                 <option value="<?= (int) ($prof['id'] ?? 0) ?>"><?= htmlspecialchars((string) ($prof['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
               <?php endforeach; ?>
             </select>
-            <div class="form-text">Apenas professores vinculados à turma.</div>
+            <div class="form-text">Professores do corpo docente do curso. Segure Ctrl/Cmd para selecionar mais de um.</div>
           </div>
           <div class="row g-3">
             <div class="col-6">
@@ -598,14 +611,13 @@
           <p class="text-muted small mb-3">Módulo: <strong id="vpModuloNome"></strong></p>
           <p class="text-muted small mb-3">O professor selecionado será vinculado a todas as disciplinas deste módulo na turma. Disciplinas já vinculadas terão o professor atualizado; as demais serão cadastradas.</p>
           <div class="mb-3">
-            <label class="form-label">Professor</label>
-            <select name="id_usuario_professor" id="vpProfessor" class="form-select">
-              <option value="">Sem professor (desvincular)</option>
+            <label class="form-label">Professor(es)</label>
+            <select name="professores[]" id="vpProfessor" class="form-select" multiple size="5">
               <?php foreach ($professoresDaTurma as $prof): ?>
                 <option value="<?= (int) ($prof['id'] ?? 0) ?>"><?= htmlspecialchars((string) ($prof['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
               <?php endforeach; ?>
             </select>
-            <div class="form-text">Apenas professores vinculados à turma.</div>
+            <div class="form-text">Professores do corpo docente do curso. Segure Ctrl/Cmd para selecionar mais de um.</div>
           </div>
         </div>
         <div class="modal-footer">
@@ -623,12 +635,20 @@ var disciplinasMatriculadasPorMatricula = <?= json_encode($disciplinasMatriculad
 function resetModalDisciplinaTurma() {
   document.getElementById('tdId').value = '0';
   document.getElementById('tdDisciplina').value = '';
-  document.getElementById('tdProfessor').value = '';
+  var tdProfessorSel = document.getElementById('tdProfessor');
+  if (tdProfessorSel) Array.prototype.forEach.call(tdProfessorSel.options, function (o) { o.selected = false; });
   document.getElementById('tdInicio').value = '';
   document.getElementById('tdFim').value = '';
   document.getElementById('tdStatus').value = 'PLANEJADA';
   document.getElementById('tdAtivo').value = '1';
   document.getElementById('modalDisciplinaTurmaTitulo').textContent = 'Adicionar disciplina';
+}
+
+function selecionarProfessores(select, valor) {
+  var profIds = String(valor || '').split(',').map(function (v) { return parseInt(v, 10); }).filter(function (v) { return v > 0; });
+  Array.prototype.forEach.call(select.options, function (opt) {
+    opt.selected = profIds.indexOf(parseInt(opt.value, 10)) !== -1;
+  });
 }
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -649,7 +669,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function abrirModalDisciplinaTurma(btn, titulo) {
     document.getElementById('tdId').value = btn.dataset.id || '0';
     document.getElementById('tdDisciplina').value = btn.dataset.disciplina || '';
-    document.getElementById('tdProfessor').value = btn.dataset.professor || '';
+    selecionarProfessores(document.getElementById('tdProfessor'), btn.dataset.professores || '');
     document.getElementById('tdInicio').value = btn.dataset.inicio || '';
     document.getElementById('tdFim').value = btn.dataset.fim || '';
     document.getElementById('tdStatus').value = btn.dataset.status || 'PLANEJADA';
@@ -720,7 +740,8 @@ document.addEventListener('DOMContentLoaded', function () {
     btn.addEventListener('click', function () {
       document.getElementById('vpModuloId').value = btn.dataset.modulo || '0';
       document.getElementById('vpModuloNome').textContent = btn.dataset.moduloNome || 'Módulo';
-      document.getElementById('vpProfessor').value = '';
+      var vpProfessorSel = document.getElementById('vpProfessor');
+      if (vpProfessorSel) Array.prototype.forEach.call(vpProfessorSel.options, function (o) { o.selected = false; });
       bootstrap.Modal.getOrCreateInstance(modalVp).show();
     });
   });
