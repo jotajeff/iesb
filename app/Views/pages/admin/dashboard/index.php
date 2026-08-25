@@ -8,6 +8,7 @@ $taskIndicators = $taskIndicators ?? [
   'tarefas_finalizadas' => 0,
 ];
 $isAdmin = (bool) ($isAdmin ?? ($dashboardType === 'admin'));
+$canViewCourseEnrollmentCards = in_array($dashboardType, ['admin', 'operador'], true);
 
 $dashboardTypeLabel = match ($dashboardType) {
   'admin' => 'Administrador',
@@ -57,6 +58,40 @@ $dashboardTypeLabel = match ($dashboardType) {
             </div>
           </div>
           <div class="task-card-footer">Aguardando contato</div>
+        </div>
+      </a>
+    </div>
+    <?php endif; ?>
+    <?php if ($canViewCourseEnrollmentCards): ?>
+    <div class="col-md-4">
+      <a href="/admin/matriculas" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-matricula h-100">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label">Matriculados</small>
+              <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_matricula'] ?? 0) ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-matricula">
+              <i class="bi bi-person-check"></i>
+            </div>
+          </div>
+          <div class="task-card-footer">Matrículas ativas</div>
+        </div>
+      </a>
+    </div>
+    <div class="col-md-4">
+      <a href="/admin/cursos" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-cursos h-100">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label">Cursos</small>
+              <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_cursos'] ?? 0) ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-cursos">
+              <i class="bi bi-journal-bookmark-fill"></i>
+            </div>
+          </div>
+          <div class="task-card-footer">Cursos cadastrados</div>
         </div>
       </a>
     </div>
@@ -154,6 +189,14 @@ $dashboardTypeLabel = match ($dashboardType) {
 
 .task-card-alunos::before {
   background: var(--info, #0dcaf0);
+}
+
+.task-card-matricula::before {
+  background: #fd7e14;
+}
+
+.task-card-cursos::before {
+  background: #6f42c1;
 }
 
 .task-card-preinscricao::before {
