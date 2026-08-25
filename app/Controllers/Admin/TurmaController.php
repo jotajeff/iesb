@@ -10,6 +10,7 @@ use App\Services\TurmaService;
 use App\Services\CursoService;
 use App\Services\EstruturaCurricularService;
 use App\Services\LogService;
+use App\Services\NotificacaoMatriculaService;
 use App\Support\Session;
 
 final class TurmaController extends Controller
@@ -34,9 +35,13 @@ final class TurmaController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $authUser = Session::get('user');
+        $isProfessor = (string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor';
         $filtroAtivo = (int) ($_GET['ativo'] ?? 1);
         $ativo = $filtroAtivo >= 0 ? $filtroAtivo : null;
-        $turmas = $this->turmaService->turmas(200, $ativo);
+        $turmas = $isProfessor
+            ? $this->turmaService->turmasDoProfessor((int) ($authUser['id'] ?? 0), 200, $ativo)
+            : $this->turmaService->turmas(200, $ativo);
 
         $this->render('pages/admin/turmas/index', [
             'title' => 'Turmas',
@@ -51,6 +56,9 @@ final class TurmaController extends Controller
         if (!$this->isStaff()) {
             Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as turmas.');
             $this->redirect('/admin/login');
+        }
+        if ($this->bloquearProfessor()) {
+            return;
         }
 
         $cursos = [];
@@ -127,6 +135,9 @@ final class TurmaController extends Controller
         if (!$this->isStaff()) {
             Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as turmas.');
             $this->redirect('/admin/login');
+        }
+        if ($this->bloquearProfessor()) {
+            return;
         }
 
         $cursoId = (int) $this->input('curso_id', 0);
@@ -210,10 +221,37 @@ final class TurmaController extends Controller
             return;
         }
 
+        $authUser = Session::get('user');
+        $isProfessor = (string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor';
+        $matriculas = $isProfessor
+            ? $this->turmaService->matriculasAtivasDoProfessor((int) ($authUser['id'] ?? 0))
+            : $this->turmaService->matriculasAtivas();
+
+        $emailStatus = (new NotificacaoMatriculaService())->mapaStatus();
+
         $this->render('pages/admin/matriculas/index', [
             'title' => 'Matrículas',
             'currentRoute' => '/admin/matriculas',
-            'matriculas' => $this->turmaService->matriculasAtivas(),
+            'matriculas' => $matriculas,
+            'emailStatus' => $emailStatus,
+        ], 'admin');
+    }
+
+    public function matriculasNotificacao(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar as notificações de matrícula.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $service = new NotificacaoMatriculaService();
+        $notificacoes = $service->listar();
+
+        $this->render('pages/admin/matriculas/notificacao', [
+            'title' => 'Email Matrículas',
+            'currentRoute' => '/admin/matriculas/notificacao',
+            'notificacoes' => $notificacoes,
         ], 'admin');
     }
 
@@ -225,6 +263,13 @@ final class TurmaController extends Controller
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
+        $authUser = Session::get('user');
+        if ((string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor'
+            && !$this->turmaService->professorPodeAcessarTurma((int) ($authUser['id'] ?? 0), $id)) {
+            Session::setFlash('flash', 'Você não possui vínculo com esta turma.');
+            $this->redirect('/admin/professores/turmas');
+            return;
+        }
         $turma = $this->turmaService->findTurma($id);
 
         if (!$turma) {
@@ -322,6 +367,9 @@ final class TurmaController extends Controller
         if (!$this->isStaff()) {
             $this->json(['erro' => 'Acesso negado.'], 403);
         }
+        if ($this->bloquearProfessor(true)) {
+            return;
+        }
 
         $idMatricula = (int) $this->input('id_matricula', 0);
         $idTurma = (int) $this->input('id_turma', 0);
@@ -372,6 +420,9 @@ final class TurmaController extends Controller
     {
         if (!$this->isStaff()) {
             $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+        if ($this->bloquearProfessor(true)) {
+            return;
         }
 
         $id = (int) $this->input('id', 0);
@@ -450,6 +501,9 @@ final class TurmaController extends Controller
         if (!$this->isStaff()) {
             $this->json(['erro' => 'Acesso negado.'], 403);
         }
+        if ($this->bloquearProfessor(true)) {
+            return;
+        }
 
         $id = (int) $this->input('id', 0);
         if ($id < 1) {
@@ -465,6 +519,9 @@ final class TurmaController extends Controller
     {
         if (!$this->isStaff()) {
             $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+        if ($this->bloquearProfessor(true)) {
+            return;
         }
 
         $idTurma = (int) $this->input('id_turma', 0);
@@ -525,6 +582,9 @@ final class TurmaController extends Controller
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
+        if ($this->bloquearProfessor()) {
+            return;
+        }
 
         $this->render('pages/admin/turmas/new', [
             'title' => 'Nova Turma',
@@ -539,6 +599,9 @@ final class TurmaController extends Controller
         if (!$this->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
+        }
+        if ($this->bloquearProfessor()) {
+            return;
         }
 
         $id = (int) ($this->input('id', 0) ?: ($_GET['id'] ?? 0));
@@ -588,6 +651,9 @@ final class TurmaController extends Controller
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
         }
+        if ($this->bloquearProfessor()) {
+            return;
+        }
 
         $nome = trim((string) $this->input('nome', ''));
         $curso = (int) $this->input('curso', 0);
@@ -626,6 +692,9 @@ final class TurmaController extends Controller
         if (!$this->isStaff()) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/login');
+        }
+        if ($this->bloquearProfessor()) {
+            return;
         }
 
         $id = (int) $this->input('id', 0);
@@ -770,5 +839,22 @@ final class TurmaController extends Controller
     private function isStaff(): bool
     {
         return (new \App\Services\AuthService())->isStaff();
+    }
+
+    private function bloquearProfessor(bool $json = false): bool
+    {
+        $authUser = Session::get('user');
+        $isProfessor = is_array($authUser)
+            && (string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor';
+        if (!$isProfessor) {
+            return false;
+        }
+
+        if ($json) {
+            $this->json(['erro' => 'Professores possuem acesso somente para visualização.'], 403);
+        }
+        Session::setFlash('flash', 'Professores possuem acesso somente para visualização.');
+        $this->redirect('/admin/professores/turmas');
+        return true;
     }
 }

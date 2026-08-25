@@ -1,5 +1,6 @@
 <?php
-  $turmasView = is_array($turmas ?? null) ? $turmas : [];
+$turmasView = is_array($turmas ?? null) ? $turmas : [];
+$isProfessor = (string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor';
 ?>
 
 <section class="container py-4">
@@ -15,9 +16,11 @@
               <option value="0" <?= ($filtroAtivo ?? -1) === 0 ? 'selected' : '' ?>>Inativas</option>
             </select>
           </form>
-          <a class="btn btn-outline-secondary btn-sm" href="/admin/alunos/troca-historico"><i class="bi bi-arrow-left-right me-1"></i>Troca de Turmas</a>
-          <a class="btn btn-outline-primary btn-sm" href="/admin/turmas/geracao"><i class="bi bi-magic me-1"></i>Geração de turmas</a>
-          <a class="btn btn-primary btn-sm" href="/admin/turmas/novo"><i class="bi bi-plus-circle me-1"></i>Nova turma</a>
+          <?php if (!$isProfessor): ?>
+            <a class="btn btn-outline-secondary btn-sm" href="/admin/alunos/troca-historico"><i class="bi bi-arrow-left-right me-1"></i>Troca de Turmas</a>
+            <a class="btn btn-outline-primary btn-sm" href="/admin/turmas/geracao"><i class="bi bi-magic me-1"></i>Geração de turmas</a>
+            <a class="btn btn-primary btn-sm" href="/admin/turmas/novo"><i class="bi bi-plus-circle me-1"></i>Nova turma</a>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -62,9 +65,14 @@
                   <?php endif; ?>
                 </td>
                 <td>
-                  <a class="btn btn-outline-secondary btn-sm" href="/admin/turmas/editar?id=<?= (int) ($turma['id'] ?? 0) ?>">
-                    <i class="bi bi-pencil-square me-1"></i>Editar
+                  <a class="btn btn-outline-info btn-sm" href="/admin/turmas/show?id=<?= (int) ($turma['id'] ?? 0) ?>">
+                    <i class="bi bi-eye me-1"></i>Visualizar
                   </a>
+                  <?php if (!$isProfessor): ?>
+                    <a class="btn btn-outline-secondary btn-sm" href="/admin/turmas/editar?id=<?= (int) ($turma['id'] ?? 0) ?>">
+                      <i class="bi bi-pencil-square me-1"></i>Editar
+                    </a>
+                  <?php endif; ?>
                 </td>
               </tr>
             <?php endforeach; ?>

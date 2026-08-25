@@ -19,6 +19,7 @@ use App\Controllers\Admin\SessaoController;
 use App\Controllers\Admin\TipoDocumentoController;
 use App\Controllers\Admin\StorageController;
 use App\Controllers\Admin\AcademicoController;
+use App\Controllers\Admin\PermissaoController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -61,6 +62,10 @@ return static function (Router $router): void {
     $router->get('/admin/dashboard', [DashboardController::class, 'index']);
     $router->get('/admin/logs', [DashboardController::class, 'logs']);
     $router->get('/admin/dbase', [DashboardController::class, 'dbase']);
+    $router->get('/admin/permissoes', [PermissaoController::class, 'index']);
+    $router->post('/admin/permissoes/modulo/salvar', [PermissaoController::class, 'salvarModulo']);
+    $router->post('/admin/permissoes/funcao/salvar', [PermissaoController::class, 'salvarFuncao']);
+    $router->post('/admin/permissoes/salvar', [PermissaoController::class, 'salvarPermissoes']);
     $router->get('/admin/asaas', [AsaasController::class, 'index']);
     $router->get('/admin/asaas/webhook-test', [AsaasController::class, 'webhookTest']);
     $router->get('/admin/asaas/webhook-logs', [AsaasController::class, 'webhookLogs']);
@@ -181,6 +186,7 @@ return static function (Router $router): void {
     $router->get('/admin/turmas/geracao', [TurmaController::class, 'geracao']);
     $router->post('/admin/turmas/geracao/confirmar', [TurmaController::class, 'geracaoConfirmar']);
     $router->get('/admin/matriculas', [TurmaController::class, 'matriculas']);
+    $router->get('/admin/matriculas/notificacao', [TurmaController::class, 'matriculasNotificacao']);
     $router->get('/admin/turmas/show', [TurmaController::class, 'show']);
     $router->get('/admin/turmas/novo', [TurmaController::class, 'novo']);
     $router->get('/admin/turmas/editar', [TurmaController::class, 'editar']);
@@ -260,6 +266,9 @@ return static function (Router $router): void {
     $router->get('/admin/config/cliente', [ConfigController::class, 'cliente']);
     $router->get('/admin/config/cliente/editar', [ConfigController::class, 'editCliente']);
     $router->post('/admin/config/cliente/atualizar', [ConfigController::class, 'updateCliente']);
+
+    $router->get('/admin/config/email', [ConfigController::class, 'email']);
+    $router->post('/admin/config/email/enviar', [ConfigController::class, 'emailEnviar']);
 
     $router->get('/admin/visitas', [VisitaController::class, 'index']);
     $router->get('/admin/visitas/mensal', [VisitaController::class, 'mensal']);

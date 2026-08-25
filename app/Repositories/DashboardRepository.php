@@ -21,7 +21,7 @@ final class DashboardRepository
             ];
         }
 
-        if ($isAdmin || !$userId) {
+        if ($isAdmin) {
             return [
                 'total_alunos' => $this->count($pdo, 'SELECT COUNT(*) FROM alunos WHERE ativo = 1'),
                 'total_cursos' => $this->count($pdo, 'SELECT COUNT(*) FROM cursos'),
@@ -30,18 +30,39 @@ final class DashboardRepository
             ];
         }
 
-        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT c.id) FROM cursos c JOIN turmas t ON t.id_curso = c.id JOIN turma_professor tp ON tp.id_turma = t.id WHERE tp.id_usuario = :userId');
-        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        if (!$userId) {
+            return [
+                'total_alunos' => 0,
+                'total_cursos' => 0,
+                'total_matricula' => 0,
+                'total_pre_inscricoes' => 0,
+            ];
+        }
+
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(DISTINCT t.id) FROM turmas t
+             WHERE ' . $this->turmaProfessorCondition()
+        );
+        $this->bindProfessorCondition($stmt, $userId);
         $stmt->execute();
         $totalCursos = (int) $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare('SELECT COUNT(DISTINCT a.id) FROM alunos a JOIN matricula m ON m.id_aluno = a.id JOIN turmas t ON t.id = m.id_turma JOIN turma_professor tp ON tp.id_turma = t.id WHERE a.ativo = 1 AND tp.id_usuario = :userId');
-        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(DISTINCT a.id) FROM alunos a
+             JOIN matricula m ON m.id_aluno = a.id
+             JOIN turmas t ON t.id = m.id_turma
+             WHERE a.ativo = 1 AND ' . $this->turmaProfessorCondition()
+        );
+        $this->bindProfessorCondition($stmt, $userId);
         $stmt->execute();
         $totalAlunos = (int) $stmt->fetchColumn();
 
-        $stmt = $pdo->prepare('SELECT COUNT(*) FROM matricula m JOIN turma_professor tp ON tp.id_turma = m.id_turma WHERE tp.id_usuario = :userId AND m.ativo = 1');
-        $stmt->bindValue(':userId', $userId, PDO::PARAM_INT);
+        $stmt = $pdo->prepare(
+            'SELECT COUNT(*) FROM matricula m
+             JOIN turmas t ON t.id = m.id_turma
+             WHERE m.ativo = 1 AND ' . $this->turmaProfessorCondition()
+        );
+        $this->bindProfessorCondition($stmt, $userId);
         $stmt->execute();
         $totalMatriculas = (int) $stmt->fetchColumn();
 
@@ -49,7 +70,30 @@ final class DashboardRepository
             'total_alunos' => $totalAlunos,
             'total_cursos' => $totalCursos,
             'total_matricula' => $totalMatriculas,
+            'total_pre_inscricoes' => 0,
         ];
+    }
+
+    private function turmaProfessorCondition(): string
+    {
+        return '(EXISTS (
+                    SELECT 1 FROM turma_professor tp
+                    WHERE tp.id_turma = t.id AND tp.id_usuario = :userId_direct AND tp.status = "A"
+                ) OR EXISTS (
+                    SELECT 1 FROM turma_disciplina td
+                    WHERE td.id_turma = t.id AND td.id_usuario_professor = :userId_legacy AND td.ativo = 1
+                ) OR EXISTS (
+                    SELECT 1 FROM turma_disciplina td
+                    JOIN turma_disciplina_professor tdp ON tdp.id_turma_disciplina = td.id
+                    WHERE td.id_turma = t.id AND tdp.id_usuario_professor = :userId_discipline AND tdp.ativo = 1 AND td.ativo = 1
+                ))';
+    }
+
+    private function bindProfessorCondition(\PDOStatement $stmt, int $userId): void
+    {
+        $stmt->bindValue(':userId_direct', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':userId_legacy', $userId, PDO::PARAM_INT);
+        $stmt->bindValue(':userId_discipline', $userId, PDO::PARAM_INT);
     }
 
     public function taskIndicators(int $userId, bool $isAdmin): array

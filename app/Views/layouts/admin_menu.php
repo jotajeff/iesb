@@ -44,12 +44,16 @@
               </ul>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle <?= (strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0 ? 'active' : '') ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-folder2-open me-1"></i>Secretaria</a>
+              <a class="nav-link dropdown-toggle <?= ((strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/matriculas/notificacao') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-folder2-open me-1"></i>Secretaria</a>
               <ul class="dropdown-menu">
                 <li><span class="dropdown-item-text fw-bold"><i class="bi bi-kanban me-1"></i>Tarefas</span></li>
                 <li><a class="dropdown-item" href="/admin/tarefas" style="padding-left:2.2rem;"><i class="bi bi-kanban me-1"></i>Kanban</a></li>
                 <li><a class="dropdown-item" href="/admin/tarefas/lista" style="padding-left:2.2rem;"><i class="bi bi-list-ul me-1"></i>Lista</a></li>
                 <li><a class="dropdown-item" href="/admin/notificacoes"><i class="bi bi-bell me-1"></i>Notificações</a></li>
+                <li>
+                  <hr class="dropdown-divider">
+                </li>
+                <li><a class="dropdown-item" href="/admin/matriculas/notificacao"><i class="bi bi-envelope-paper me-1"></i>Email Matrículas</a></li>
               </ul>
             </li>
             <li class="nav-item dropdown">
@@ -116,7 +120,7 @@
               </ul>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/modalidade') === 0) || (strpos($currentRoute ?? '', '/admin/segmento') === 0) || (strpos($currentRoute ?? '', '/admin/setor') === 0) || (strpos($currentRoute ?? '', '/admin/nivel') === 0) || (strpos($currentRoute ?? '', '/admin/config/categoria') === 0) || (strpos($currentRoute ?? '', '/admin/config/cliente') === 0) || (strpos($currentRoute ?? '', '/admin/funcoes-docente') === 0) || (strpos($currentRoute ?? '', '/admin/storage') === 0) || (($currentRoute ?? '') === '/admin/dbase')) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear me-1"></i>Setup</a>
+              <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/modalidade') === 0) || (strpos($currentRoute ?? '', '/admin/segmento') === 0) || (strpos($currentRoute ?? '', '/admin/setor') === 0) || (strpos($currentRoute ?? '', '/admin/nivel') === 0) || (strpos($currentRoute ?? '', '/admin/config/categoria') === 0) || (strpos($currentRoute ?? '', '/admin/config/cliente') === 0) || (strpos($currentRoute ?? '', '/admin/config/email') === 0) || (strpos($currentRoute ?? '', '/admin/funcoes-docente') === 0) || (strpos($currentRoute ?? '', '/admin/storage') === 0) || (($currentRoute ?? '') === '/admin/dbase') || (strpos($currentRoute ?? '', '/admin/permissoes') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-gear me-1"></i>Setup</a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="/admin/modalidade"><i class="bi bi-journal-bookmark-fill me-1"></i>Modalidade</a></li>
                 <li><a class="dropdown-item" href="/admin/segmento"><i class="bi bi-diagram-3 me-1"></i>Segmento</a></li>
@@ -124,6 +128,7 @@
                 <li><a class="dropdown-item" href="/admin/nivel"><i class="bi bi-bar-chart-steps me-1"></i>Nível</a></li>
                 <li><a class="dropdown-item" href="/admin/tipos-documentos"><i class="bi bi-file-earmark-text me-1"></i>Tipos documentos</a></li>
                 <li><a class="dropdown-item" href="/admin/storage"><i class="bi bi-google me-1"></i>Storage</a></li>
+                <li><a class="dropdown-item" href="/admin/config/email"><i class="bi bi-envelope me-1"></i>Email</a></li>
                 <li><a class="dropdown-item" href="/admin/config/categoria"><i class="bi bi-newspaper me-1"></i>Categoria</a></li>
                 <li><a class="dropdown-item" href="/admin/funcoes-docente"><i class="bi bi-person-workspace me-1"></i>Funções Docente</a></li>
                 <?php if (in_array((int) ($authUser['id'] ?? 0), [1, 6, 7], true)): ?>
@@ -132,6 +137,7 @@
                 <?php if ((int) ($authUser['id'] ?? 0) === 1): ?>
                   <li><a class="dropdown-item" href="/admin/dbase"><i class="bi bi-database me-1"></i>DB</a></li>
                 <?php endif; ?>
+                <li><a class="dropdown-item" href="/admin/permissoes"><i class="bi bi-shield-check me-1"></i>Permissões</a></li>
               </ul>
             </li>
           <?php endif; ?>

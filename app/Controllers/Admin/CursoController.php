@@ -36,6 +36,12 @@ final class CursoController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $authUser = Session::get('user');
+        if ((string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor') {
+            $this->redirect('/admin/professores/turmas');
+            return;
+        }
+
         $order = strtolower(trim((string) ($_GET['order'] ?? 'desc')));
         if ($order !== 'asc') {
             $order = 'desc';

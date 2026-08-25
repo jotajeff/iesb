@@ -1,5 +1,6 @@
 <?php
   $matriculasView = is_array($matriculas ?? null) ? $matriculas : [];
+  $emailStatus = is_array($emailStatus ?? null) ? $emailStatus : [];
   $cursoAtual = null;
 ?>
 
@@ -35,6 +36,7 @@
                     <th>Aluno</th>
                     <th>Turma</th>
                     <th>Data de matrícula</th>
+                    <th><i class="bi bi-envelope me-1"></i>Email</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -52,6 +54,17 @@
                     $date = $rawDate !== '' ? date_create($rawDate) : false;
                     echo htmlspecialchars($date ? $date->format('d/m/Y') : ($rawDate ?: '-'), ENT_QUOTES, 'UTF-8');
                   ?></td>
+                  <td>
+                    <?php
+                      $chaveEmail = ((int) ($matricula['id_aluno'] ?? 0)) . ':' . ((int) ($matricula['id_curso'] ?? 0));
+                      $emailEnviado = isset($emailStatus[$chaveEmail]) && $emailStatus[$chaveEmail];
+                    ?>
+                    <?php if ($emailEnviado): ?>
+                      <span class="badge bg-success"><i class="bi bi-envelope-check me-1"></i>Enviado</span>
+                    <?php else: ?>
+                      <span class="badge bg-danger"><i class="bi bi-envelope-x me-1"></i>Não enviado</span>
+                    <?php endif; ?>
+                  </td>
                 </tr>
       <?php endforeach; ?>
               </tbody>

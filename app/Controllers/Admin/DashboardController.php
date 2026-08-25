@@ -31,7 +31,8 @@ final class DashboardController extends Controller
         }
 
         $authUser = $this->authUser();
-        $isAdmin = (string) ($authUser['role'] ?? $authUser['type'] ?? '') === 'admin';
+        $role = (string) ($authUser['role'] ?? $authUser['type'] ?? '');
+        $isAdmin = in_array($role, ['admin', 'operador'], true);
         $userId = (int) ($authUser['id'] ?? 0);
 
         $userFoto = null;
@@ -44,7 +45,6 @@ final class DashboardController extends Controller
             }
         }
 
-        $role = (string) ($authUser['role'] ?? $authUser['type'] ?? '');
         $fotosUrl = $role === 'professor'
             ? '/admin/professores/fotos?id=' . $userId
             : '/admin/usuarios/fotos?id=' . $userId;

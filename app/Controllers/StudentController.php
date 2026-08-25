@@ -429,47 +429,51 @@ final class StudentController extends Controller
 
             $turmaId = (int) ($matricula['turma_id'] ?? 0);
             $cursoId = (int) ($matricula['curso_id'] ?? 0);
-            $cursoTipo = (int) ($matricula['curso_tipo'] ?? 0);
 
-            if ($cursoTipo === 3) {
-                try {
-                    $stmt = $pdo->prepare(
-                        'SELECT u.id, u.nome, u.email, u.telefone, u.foto, cr.id AS curriculo_id'
-                        . ' FROM corpo_docente cd'
-                        . ' JOIN usuarios u ON cd.id_usuario = u.id'
-                        . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
-                        . ' WHERE cd.id_curso = :id_curso AND cd.ativo = :ativo'
-                        . ' ORDER BY u.nome ASC'
-                    );
-                    $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
-                    $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
-                    $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
-                    $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
-                    $stmt->execute();
-                    $professores = $stmt->fetchAll() ?: [];
-                } catch (\Throwable $e) {
-                    error_log('[STUDENT SHOW] Erro ao buscar professores (corpo_docente): ' . $e->getMessage());
-                    $professores = [];
+            $temJunction = false;
+            try {
+                $check = $pdo->query("SHOW TABLES LIKE 'turma_disciplina_professor'");
+                $temJunction = $check->fetchColumn() !== false;
+            } catch (\Throwable) {
+                $temJunction = false;
+            }
+
+            try {
+                $vinculos = 'SELECT td.id_turma, td.id_disciplina, td.id_usuario_professor AS id_professor'
+                    . ' FROM turma_disciplina td'
+                    . ' WHERE td.id_turma = :id_turma_direto AND td.ativo = 1'
+                    . ' AND td.id_usuario_professor IS NOT NULL';
+                if ($temJunction) {
+                    $vinculos .= ' UNION SELECT td.id_turma, td.id_disciplina, tdp.id_usuario_professor AS id_professor'
+                        . ' FROM turma_disciplina_professor tdp'
+                        . ' INNER JOIN turma_disciplina td ON td.id = tdp.id_turma_disciplina'
+                        . ' WHERE td.id_turma = :id_turma_junction AND td.ativo = 1 AND tdp.ativo = 1';
                 }
-            } else {
-                try {
-                    $stmt = $pdo->prepare(
-                        'SELECT u.id, u.nome, u.email, u.telefone, u.foto, cr.id AS curriculo_id'
-                        . ' FROM turma_professor tp'
-                        . ' JOIN usuarios u ON tp.id_usuario = u.id'
-                        . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
-                        . ' WHERE tp.id_turma = :id_turma AND tp.status = :status'
-                    );
-                    $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
-                    $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
-                    $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
-                    $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
-                    $stmt->execute();
-                    $professores = $stmt->fetchAll() ?: [];
-                } catch (\Throwable $e) {
-                    error_log('[STUDENT SHOW] Erro ao buscar professores: ' . $e->getMessage());
-                    $professores = [];
+
+                $stmt = $pdo->prepare(
+                    'SELECT u.id, u.nome, u.email, u.telefone, cr.id AS curriculo_id,'
+                    . ' COALESCE((SELECT img.path FROM imagem img'
+                    . ' WHERE img.tabela_fk = \'usuarios\' AND img.id_fk = u.id AND img.ativo = 1'
+                    . ' ORDER BY img.id DESC LIMIT 1), u.foto) AS foto,'
+                    . ' GROUP_CONCAT(DISTINCT d.nome ORDER BY d.nome SEPARATOR \'||\') AS disciplinas_nomes'
+                    . ' FROM (' . $vinculos . ') vinculo'
+                    . ' INNER JOIN usuarios u ON u.id = vinculo.id_professor AND u.tipo = \'professor\' AND u.ativo = 1'
+                    . ' INNER JOIN disciplina d ON d.id = vinculo.id_disciplina AND d.ativo = 1'
+                    . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'
+                    . ' GROUP BY u.id, u.nome, u.email, u.telefone, cr.id, foto'
+                    . ' ORDER BY u.nome ASC'
+                );
+                $stmt->bindValue(':id_turma_direto', $turmaId, \PDO::PARAM_INT);
+                if ($temJunction) {
+                    $stmt->bindValue(':id_turma_junction', $turmaId, \PDO::PARAM_INT);
                 }
+                $stmt->bindValue(':tipo_curriculo', 'professor', \PDO::PARAM_STR);
+                $stmt->bindValue(':ativo_curriculo', 1, \PDO::PARAM_INT);
+                $stmt->execute();
+                $professores = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT SHOW] Erro ao buscar professores/disciplinas da turma: ' . $e->getMessage());
+                $professores = [];
             }
 
             try {
@@ -515,12 +519,18 @@ final class StudentController extends Controller
                     try {
                         $stmt = $pdo->prepare(
                             'SELECT d.id, d.nome, d.carga_horaria, ed.ordem,'
-                            . ' e.ementa, u.nome AS professor_nome'
+                            . ' e.ementa,'
+                            . ' (SELECT GROUP_CONCAT(DISTINCT u2.nome ORDER BY u2.nome SEPARATOR \'||\')'
+                            . ' FROM usuarios u2 WHERE u2.id IN ('
+                            . ' SELECT tdp.id_usuario_professor FROM turma_disciplina_professor tdp'
+                            . ' WHERE tdp.id_turma_disciplina = td.id AND tdp.ativo = 1'
+                            . ' UNION SELECT td2.id_usuario_professor FROM turma_disciplina td2'
+                            . ' WHERE td2.id = td.id AND td2.id_usuario_professor IS NOT NULL'
+                            . ' )) AS professores_nomes'
                             . ' FROM estrutura_disciplina ed'
                             . ' INNER JOIN disciplina d ON d.id = ed.id_disciplina AND d.ativo = :disciplina_ativo'
                             . ' LEFT JOIN ementa e ON e.id_disciplina = d.id AND e.ativo = :ementa_ativo'
                             . ' LEFT JOIN turma_disciplina td ON td.id_turma = :id_turma AND td.id_disciplina = d.id AND td.ativo = :td_ativo'
-                            . ' LEFT JOIN usuarios u ON u.id = td.id_usuario_professor'
                             . ' WHERE ed.id_modulo = :id_modulo AND ed.ativo = :ed_ativo'
                             . ' ORDER BY ed.ordem ASC, d.nome ASC'
                         );
@@ -545,15 +555,25 @@ final class StudentController extends Controller
                 try {
                     $stmt = $pdo->prepare(
                         'SELECT d.id, d.nome, d.carga_horaria, d.ordem,'
-                        . ' e.id AS ementa_id, e.ementa'
+                        . ' e.id AS ementa_id, e.ementa,'
+                        . ' (SELECT GROUP_CONCAT(DISTINCT u2.nome ORDER BY u2.nome SEPARATOR \'||\')'
+                        . ' FROM usuarios u2 WHERE u2.id IN ('
+                        . ' SELECT tdp.id_usuario_professor FROM turma_disciplina_professor tdp'
+                        . ' WHERE tdp.id_turma_disciplina = td.id AND tdp.ativo = 1'
+                        . ' UNION SELECT td2.id_usuario_professor FROM turma_disciplina td2'
+                        . ' WHERE td2.id = td.id AND td2.id_usuario_professor IS NOT NULL'
+                        . ' )) AS professores_nomes'
                         . ' FROM disciplina d'
                         . ' LEFT JOIN ementa e ON e.id_disciplina = d.id AND e.ativo = :ementa_ativo'
+                        . ' LEFT JOIN turma_disciplina td ON td.id_turma = :id_turma AND td.id_disciplina = d.id AND td.ativo = :td_ativo'
                         . ' WHERE d.id_curso = :id_curso AND d.ativo = :disciplina_ativo'
                         . ' ORDER BY d.ordem ASC, d.nome ASC'
                     );
                     $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
                     $stmt->bindValue(':disciplina_ativo', 1, \PDO::PARAM_INT);
                     $stmt->bindValue(':ementa_ativo', 1, \PDO::PARAM_INT);
+                    $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
+                    $stmt->bindValue(':td_ativo', 1, \PDO::PARAM_INT);
                     $stmt->execute();
                     $disciplinas = $stmt->fetchAll() ?: [];
                 } catch (\Throwable $e) {
@@ -590,7 +610,10 @@ final class StudentController extends Controller
         if ($professorId > 0 && $pdo instanceof \PDO) {
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT u.id, u.nome, u.email, u.telefone, u.foto,'
+                    'SELECT u.id, u.nome, u.email, u.telefone,'
+                    . ' COALESCE((SELECT img.path FROM imagem img'
+                    . ' WHERE img.tabela_fk = \'usuarios\' AND img.id_fk = u.id AND img.ativo = 1'
+                    . ' ORDER BY img.id DESC LIMIT 1), u.foto) AS foto,'
                     . ' cr.id AS curriculo_id, cr.resumo AS curriculo_resumo, cr.conteudo AS curriculo_conteudo'
                     . ' FROM usuarios u'
                     . ' LEFT JOIN curriculo cr ON cr.id_fk = u.id AND cr.tipo = :tipo_curriculo AND cr.ativo = :ativo_curriculo'

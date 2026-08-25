@@ -503,30 +503,9 @@ final class ProfessorController extends Controller
             $this->redirect('/admin/login');
         }
 
-        $pdo = Database::connection();
-        $turmas = [];
-        if ($pdo instanceof \PDO) {
-            try {
-                $sql = 'SELECT t.id, t.nome, t.data_inicio, t.data_fim, t.ativo,'
-                     . ' c.nome AS curso_nome, n.nome AS nivel_nome,'
-                     . ' (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos'
-                     . ' FROM turma_professor tp'
-                     . ' JOIN turmas t ON tp.id_turma = t.id'
-                     . ' LEFT JOIN cursos c ON t.id_curso = c.id'
-                     . ' LEFT JOIN tipo_curso n ON c.tipo_curso = n.id'
-                     . ' WHERE tp.id_usuario = :id_usuario AND tp.status = :status'
-                     . ' ORDER BY t.nome ASC';
-
-                $stmt = $pdo->prepare($sql);
-                $stmt->bindValue(':id_usuario', $userId, \PDO::PARAM_INT);
-                $stmt->bindValue(':status', 'A', \PDO::PARAM_STR);
-                $stmt->execute();
-                $turmas = $stmt->fetchAll() ?: [];
-            } catch (\Throwable $e) {
-                error_log('[PROFESSOR TURMAS] Erro: ' . $e->getMessage());
-                $turmas = [];
-            }
-        }
+        // Inclui vínculo geral da turma e vínculo específico por disciplina
+        // (turma_disciplina_professor), usado em graduação e pós-graduação.
+        $turmas = $this->turmaService->turmasDoProfessor($userId, 200, null);
 
         $this->render('pages/admin/professores/turmas', [
             'title' => 'Minhas Turmas',

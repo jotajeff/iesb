@@ -61,38 +61,6 @@ $dashboardTypeLabel = match ($dashboardType) {
       </a>
     </div>
     <?php endif; ?>
-    <div class="col-md-3">
-      <a href="/admin/cursos" class="text-decoration-none d-block h-100">
-        <div class="dashboard-task-card task-card-cursos h-100">
-          <div class="task-card-top">
-            <div>
-              <small class="task-card-label">Total de Cursos</small>
-              <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_cursos'] ?? 0) ?></h2>
-            </div>
-            <div class="task-card-icon task-card-icon-cursos">
-              <i class="bi bi-book-fill"></i>
-            </div>
-          </div>
-          <div class="task-card-footer">Ofertas disponíveis</div>
-        </div>
-      </a>
-    </div>
-    <div class="col-md-3">
-      <a href="/admin/matriculas" class="text-decoration-none d-block h-100">
-        <div class="dashboard-task-card task-card-matricula h-100">
-          <div class="task-card-top">
-            <div>
-              <small class="task-card-label">Total de Matrículas</small>
-              <h2 class="task-card-value mb-0"><?= (int) ($indicators['total_matricula'] ?? 0) ?></h2>
-            </div>
-            <div class="task-card-icon task-card-icon-matricula">
-              <i class="bi bi-card-checklist"></i>
-            </div>
-          </div>
-          <div class="task-card-footer">Matrículas realizadas</div>
-        </div>
-      </a>
-    </div>
   </div>
 
   <div class="row g-3 mb-4">
@@ -186,14 +154,6 @@ $dashboardTypeLabel = match ($dashboardType) {
 
 .task-card-alunos::before {
   background: var(--info, #0dcaf0);
-}
-
-.task-card-cursos::before {
-  background: var(--purple, #6f42c1);
-}
-
-.task-card-matricula::before {
-  background: var(--orange, #fd7e14);
 }
 
 .task-card-preinscricao::before {

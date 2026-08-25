@@ -57,11 +57,20 @@
               <?php else: ?>
                 <div class="row g-3">
                   <?php foreach ($professores as $prof): ?>
+                    <?php
+                      $profFoto = trim((string) ($prof['foto'] ?? ''));
+                      $profFotoSrc = '';
+                      if ($profFoto !== '') {
+                        $profFotoSrc = (str_starts_with($profFoto, 'http') || str_starts_with($profFoto, '/'))
+                          ? $profFoto
+                          : '/' . $profFoto;
+                      }
+                    ?>
                     <div class="col-md-6">
                       <div class="d-flex align-items-center gap-3 p-3 border rounded-3">
                         <div class="flex-shrink-0">
-                          <?php if (!empty($prof['foto'])): ?>
-                            <img src="<?= htmlspecialchars($prof['foto'], ENT_QUOTES, 'UTF-8') ?>" alt="Foto" class="rounded-circle" width="64" height="64" style="object-fit: cover;">
+                          <?php if ($profFotoSrc !== ''): ?>
+                            <img src="<?= htmlspecialchars($profFotoSrc, ENT_QUOTES, 'UTF-8') ?>" alt="Foto de <?= htmlspecialchars((string) ($prof['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" class="rounded-circle" width="64" height="64" style="object-fit: cover;">
                           <?php else: ?>
                             <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width:64px;height:64px;font-size:1.5rem;">
                               <i class="bi bi-person"></i>
@@ -77,7 +86,7 @@
                             <?php endif; ?>
                           </p>
                           <?php if (!empty($prof['curriculo_id'])): ?>
-                            <a class="btn btn-sm btn-outline-primary" href="/aluno/professor?id=<?= (int) ($prof['id'] ?? 0) ?>">
+                            <a class="btn btn-sm btn-outline-primary mt-2" href="/aluno/professor?id=<?= (int) ($prof['id'] ?? 0) ?>">
                               <i class="bi bi-file-earmark-text me-1"></i>Ver currículo
                             </a>
                           <?php endif; ?>
@@ -187,6 +196,7 @@
                     <?php else: ?>
                       <div class="list-group">
                         <?php foreach ($disciplinasModulo as $i => $disciplina): ?>
+                          <?php $professoresDisciplina = array_values(array_filter(array_map('trim', explode('||', (string) ($disciplina['professores_nomes'] ?? ''))))); ?>
                           <div class="list-group-item py-3 <?= $i % 2 === 0 ? '' : 'list-group-item-light' ?>" style="cursor: default;">
                             <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                               <div>
@@ -204,9 +214,12 @@
                                 <p class="mb-0 small text-muted"><i class="bi bi-journal-text me-1"></i><?= nl2br(htmlspecialchars((string) $disciplina['ementa'], ENT_QUOTES, 'UTF-8')) ?></p>
                               </div>
                             <?php endif; ?>
-                            <?php if (!empty($disciplina['professor_nome'])): ?>
+                            <?php if (!empty($professoresDisciplina)): ?>
                               <div class="mt-2 ps-4">
-                                <span class="small"><i class="bi bi-person-badge me-1"></i><?= htmlspecialchars((string) $disciplina['professor_nome'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="small"><i class="bi bi-person-badge me-1"></i>Professor(es):</span>
+                                <?php foreach ($professoresDisciplina as $professorNome): ?>
+                                  <span class="badge bg-light text-dark border ms-1"><?= htmlspecialchars($professorNome, ENT_QUOTES, 'UTF-8') ?></span>
+                                <?php endforeach; ?>
                               </div>
                             <?php endif; ?>
                           </div>
@@ -220,6 +233,7 @@
               <?php else: ?>
                 <div class="list-group">
                   <?php foreach ($disciplinas as $i => $disciplina): ?>
+                    <?php $professoresDisciplina = array_values(array_filter(array_map('trim', explode('||', (string) ($disciplina['professores_nomes'] ?? ''))))); ?>
                     <div class="list-group-item py-3 <?= $i % 2 === 0 ? '' : 'list-group-item-light' ?>" style="cursor: default;">
                       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
                         <div>
@@ -235,6 +249,14 @@
                       <?php if (!empty($disciplina['ementa'])): ?>
                         <div class="mt-2 ps-4 border-start border-2 border-primary-subtle">
                           <p class="mb-0 small text-muted"><i class="bi bi-journal-text me-1"></i><?= nl2br(htmlspecialchars((string) $disciplina['ementa'], ENT_QUOTES, 'UTF-8')) ?></p>
+                        </div>
+                      <?php endif; ?>
+                      <?php if (!empty($professoresDisciplina)): ?>
+                        <div class="mt-2 ps-4">
+                          <span class="small"><i class="bi bi-person-badge me-1"></i>Professor(es):</span>
+                          <?php foreach ($professoresDisciplina as $professorNome): ?>
+                            <span class="badge bg-light text-dark border ms-1"><?= htmlspecialchars($professorNome, ENT_QUOTES, 'UTF-8') ?></span>
+                          <?php endforeach; ?>
                         </div>
                       <?php endif; ?>
                     </div>

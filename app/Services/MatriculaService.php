@@ -13,7 +13,7 @@ final class MatriculaService
         private readonly AlunoService $alunoService = new AlunoService(),
         private readonly TurmaService $turmaService = new TurmaService(),
         private readonly \App\Repositories\MatriculaRepository $matriculaRepository = new \App\Repositories\MatriculaRepository(),
-        private readonly EmailService $emailService = new EmailService(),
+        private readonly NotificacaoMatriculaService $notificacaoMatriculaService = new NotificacaoMatriculaService(),
         private readonly RecorrenciaService $recorrenciaService = new RecorrenciaService(),
     ) {
     }
@@ -69,6 +69,14 @@ final class MatriculaService
         if ($matriculaExistente !== null) {
             $this->criarAssinaturaSeNecessario($inscricao);
             $this->garantirParcelasRestantesDireta($inscricao);
+            $this->notificacaoMatriculaService->enviar(
+                (int) ($matriculaExistente['id_aluno'] ?? $inscricao['id_aluno'] ?? 0),
+                (int) ($matriculaExistente['id_curso'] ?? $inscricao['id_curso'] ?? 0),
+                (string) ($inscricao['nome'] ?? ''),
+                (string) ($inscricao['email'] ?? ''),
+                (string) ($inscricao['cpf'] ?? ''),
+                (int) ($matriculaExistente['id'] ?? 0)
+            );
             return [
                 'message' => 'Pagamento já processado anteriormente',
                 'inscricaoId' => $idInscricao,
@@ -152,7 +160,14 @@ final class MatriculaService
 
             $this->criarAssinaturaSeNecessario($inscricao);
 
-            $this->enviarBoasVindas($idAluno, $nome, $email, $cpf, $idMatricula);
+            $this->notificacaoMatriculaService->enviar(
+                $idAluno,
+                $idCurso,
+                $nome,
+                $email,
+                $cpf,
+                $idMatricula
+            );
 
             return [
                 'message' => 'Matrícula realizada com sucesso',
@@ -441,32 +456,6 @@ final class MatriculaService
         }
 
         return $idMatricula;
-    }
-
-    private function enviarBoasVindas(int $idAluno, string $nome, string $email, string $cpf, int $idMatricula): void
-    {
-        if ($email === '') {
-            return;
-        }
-
-        try {
-            $senha = explode('@', $email)[0] . '#' . date('Y');
-
-            $linkRedefinicao = '';
-            if ($idAluno > 0) {
-                $token = bin2hex(random_bytes(32));
-                $expires = date('Y-m-d H:i:s', strtotime('+1 hour'));
-                $this->alunoService->salvarResetToken($idAluno, $token, $expires);
-
-                $scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
-                $host = (string) ($_SERVER['HTTP_HOST'] ?? 'inteligenciaeducacionalsouzabrazil.com');
-                $linkRedefinicao = "{$scheme}://{$host}/aluno/redefinir-senha?token={$token}";
-            }
-
-            $this->emailService->enviarBoasVindasMatricula($nome, $email, $cpf, $senha, (string) $idMatricula, $linkRedefinicao);
-        } catch (\Throwable $e) {
-            error_log('[MATRICULA] Erro ao enviar boas-vindas: ' . $e->getMessage());
-        }
     }
 
     /**

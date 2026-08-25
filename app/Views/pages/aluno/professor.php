@@ -8,8 +8,17 @@
 
       <div class="d-flex align-items-center gap-3 mb-4">
         <div class="flex-shrink-0">
-          <?php if (!empty($professor['foto'])): ?>
-            <img src="<?= htmlspecialchars($professor['foto'], ENT_QUOTES, 'UTF-8') ?>" alt="Foto" class="rounded-circle border shadow-sm" width="96" height="96" style="object-fit: cover;">
+          <?php
+            $professorFoto = trim((string) ($professor['foto'] ?? ''));
+            $professorFotoSrc = '';
+            if ($professorFoto !== '') {
+              $professorFotoSrc = (str_starts_with($professorFoto, 'http') || str_starts_with($professorFoto, '/'))
+                ? $professorFoto
+                : '/' . $professorFoto;
+            }
+          ?>
+          <?php if ($professorFotoSrc !== ''): ?>
+            <img src="<?= htmlspecialchars($professorFotoSrc, ENT_QUOTES, 'UTF-8') ?>" alt="Foto de <?= htmlspecialchars((string) ($professor['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" class="rounded-circle border shadow-sm" width="96" height="96" style="object-fit: cover;">
           <?php else: ?>
             <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center text-white" style="width:96px;height:96px;font-size:2rem;">
               <i class="bi bi-person"></i>

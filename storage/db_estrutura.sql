@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 20/08/2026 às 11:23
+-- Tempo de geração: 25/08/2026 às 15:15
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -747,6 +747,21 @@ CREATE TABLE `notificacao_leitura_aluno` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `notificacao_matricula`
+--
+
+CREATE TABLE `notificacao_matricula` (
+  `id` int(11) NOT NULL,
+  `id_aluno` int(11) NOT NULL,
+  `id_curso` int(11) NOT NULL,
+  `email` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
+  `status` tinyint(1) NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `paginas`
 --
 
@@ -1341,6 +1356,12 @@ ALTER TABLE `notificacao_leitura_aluno`
   ADD KEY `id_aluno` (`id_aluno`);
 
 --
+-- Índices de tabela `notificacao_matricula`
+--
+ALTER TABLE `notificacao_matricula`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `paginas`
 --
 ALTER TABLE `paginas`
@@ -1421,7 +1442,8 @@ ALTER TABLE `turma_disciplina`
 ALTER TABLE `turma_disciplina_professor`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `uk_tdp_turma_disciplina_professor` (`id_turma_disciplina`,`id_usuario_professor`),
-  ADD KEY `idx_tdp_turma_disciplina` (`id_turma_disciplina`);
+  ADD KEY `idx_tdp_turma_disciplina` (`id_turma_disciplina`),
+  ADD KEY `idx_tdp_professor` (`id_usuario_professor`);
 
 --
 -- Índices de tabela `turma_professor`
@@ -1697,6 +1719,12 @@ ALTER TABLE `notificacao_leitura_aluno`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `notificacao_matricula`
+--
+ALTER TABLE `notificacao_matricula`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `paginas`
 --
 ALTER TABLE `paginas`
@@ -1926,6 +1954,13 @@ ALTER TABLE `turma_disciplina`
   ADD CONSTRAINT `fk_turma_disciplina_disciplina` FOREIGN KEY (`id_disciplina`) REFERENCES `disciplina` (`id`) ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_turma_disciplina_professor` FOREIGN KEY (`id_usuario_professor`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
   ADD CONSTRAINT `fk_turma_disciplina_turma` FOREIGN KEY (`id_turma`) REFERENCES `turmas` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `turma_disciplina_professor`
+--
+ALTER TABLE `turma_disciplina_professor`
+  ADD CONSTRAINT `fk_tdp_professor` FOREIGN KEY (`id_usuario_professor`) REFERENCES `usuarios` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_tdp_turma_disciplina` FOREIGN KEY (`id_turma_disciplina`) REFERENCES `turma_disciplina` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `turma_professor`

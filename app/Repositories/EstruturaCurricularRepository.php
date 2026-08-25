@@ -525,6 +525,7 @@ final class EstruturaCurricularRepository
         }
 
         try {
+            $this->ensureTabelaProfessoresDisciplina();
             $stmt = $pdo->prepare('SELECT td.*, d.nome AS disciplina_nome, d.carga_horaria AS disciplina_carga_horaria,
                                           u.nome AS professor_nome
                                    FROM turma_disciplina td
@@ -715,8 +716,17 @@ final class EstruturaCurricularRepository
                 ' created_at DATETIME DEFAULT CURRENT_TIMESTAMP,' .
                 ' PRIMARY KEY (id),' .
                 ' UNIQUE KEY uk_tdp_turma_disciplina_professor (id_turma_disciplina, id_usuario_professor),' .
-                ' KEY idx_tdp_turma_disciplina (id_turma_disciplina)' .
+                ' KEY idx_tdp_turma_disciplina (id_turma_disciplina),' .
+                ' KEY idx_tdp_professor (id_usuario_professor)' .
                 ') ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci'
+            );
+
+            // Compatibilidade: preserva o professor que estava na coluna legada
+            // enquanto os vínculos passam a ser mantidos na tabela N:N.
+            $pdo->exec(
+                'INSERT IGNORE INTO turma_disciplina_professor (id_turma_disciplina, id_usuario_professor, ativo) '
+                . 'SELECT td.id, td.id_usuario_professor, 1 FROM turma_disciplina td '
+                . 'WHERE td.id_usuario_professor IS NOT NULL'
             );
         } catch (\Throwable $e) {
             error_log('[ESTRUTURA] Erro ao criar tabela turma_disciplina_professor: ' . $e->getMessage());
@@ -763,7 +773,7 @@ final class EstruturaCurricularRepository
 
             if (!empty($ids)) {
                 $placeholders = implode(',', array_fill(0, count($ids), '?'));
-                $stmt = $pdo->prepare('DELETE FROM turma_disciplina_professor WHERE id_turma_disciplina = ? AND id_usuario_professor NOT IN (' . $placeholders . ')');
+                $stmt = $pdo->prepare('UPDATE turma_disciplina_professor SET ativo = 0 WHERE id_turma_disciplina = ? AND id_usuario_professor NOT IN (' . $placeholders . ')');
                 $stmt->bindValue(1, $idTurmaDisciplina, PDO::PARAM_INT);
                 foreach ($ids as $i => $id) {
                     $stmt->bindValue($i + 2, $id, PDO::PARAM_INT);
@@ -771,13 +781,17 @@ final class EstruturaCurricularRepository
                 $stmt->execute();
 
                 $stmtIns = $pdo->prepare('INSERT IGNORE INTO turma_disciplina_professor (id_turma_disciplina, id_usuario_professor, ativo) VALUES (?, ?, 1)');
+                $stmtAtiva = $pdo->prepare('UPDATE turma_disciplina_professor SET ativo = 1 WHERE id_turma_disciplina = ? AND id_usuario_professor = ?');
                 foreach ($ids as $id) {
+                    $stmtAtiva->bindValue(1, $idTurmaDisciplina, PDO::PARAM_INT);
+                    $stmtAtiva->bindValue(2, $id, PDO::PARAM_INT);
+                    $stmtAtiva->execute();
                     $stmtIns->bindValue(1, $idTurmaDisciplina, PDO::PARAM_INT);
                     $stmtIns->bindValue(2, $id, PDO::PARAM_INT);
                     $stmtIns->execute();
                 }
             } else {
-                $stmt = $pdo->prepare('DELETE FROM turma_disciplina_professor WHERE id_turma_disciplina = ?');
+                $stmt = $pdo->prepare('UPDATE turma_disciplina_professor SET ativo = 0 WHERE id_turma_disciplina = ?');
                 $stmt->bindValue(1, $idTurmaDisciplina, PDO::PARAM_INT);
                 $stmt->execute();
             }

@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Services\AuthService;
 use App\Services\ConfigService;
+use App\Services\EmailService;
 use App\Services\CarouselService;
 use App\Services\LogService;
 use App\Services\TarefaService;
@@ -629,6 +630,65 @@ final class ConfigController extends Controller
         $this->logService->log($id > 0 ? 'atualizar' : 'criar', 'funcoes_docente', $id > 0 ? $id : 0, "Função docente " . ($id > 0 ? 'atualizada' : 'criada') . ": $nome");
         Session::setFlash('flash', 'Função docente salva com sucesso.');
         $this->redirect('/admin/funcoes-docente');
+    }
+
+    public function email(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $this->render('pages/admin/config/email/index', [
+            'title' => 'Enviar E-mail',
+            'currentRoute' => '/admin/config/email',
+        ], 'admin');
+    }
+
+    public function emailEnviar(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $destinatario = trim((string) $this->input('destinatario', ''));
+        $assunto = trim((string) $this->input('assunto', ''));
+        $mensagem = trim((string) $this->input('mensagem', ''));
+
+        if ($destinatario === '' || !filter_var($destinatario, FILTER_VALIDATE_EMAIL)) {
+            Session::setFlash('flash', 'Informe um e-mail válido.');
+            $this->redirect('/admin/config/email');
+            return;
+        }
+
+        if ($mensagem === '') {
+            Session::setFlash('flash', 'Informe a mensagem.');
+            $this->redirect('/admin/config/email');
+            return;
+        }
+
+        $assunto = $assunto !== '' ? $assunto : 'Mensagem do site - IESB';
+
+        $nome = $destinatario;
+        $corpoHtml = nl2br(htmlspecialchars($mensagem, ENT_QUOTES, 'UTF-8'));
+        $corpoTexto = $mensagem;
+
+        $email = new EmailService();
+        if (!$email->isConfigured()) {
+            Session::setFlash('flash', 'Serviço de e-mail não configurado: ' . $email->getLastError());
+            $this->redirect('/admin/config/email');
+            return;
+        }
+
+        if ($email->enviarHtml($destinatario, $nome, $assunto, $corpoHtml, $corpoTexto)) {
+            $this->logService->log('enviar', 'email', 0, "E-mail enviado para $destinatario");
+            Session::setFlash('flash', 'E-mail enviado com sucesso para ' . $destinatario . '.');
+        } else {
+            Session::setFlash('flash', 'Falha ao enviar o e-mail: ' . $email->getLastError());
+        }
+
+        $this->redirect('/admin/config/email');
     }
 
     private function canAccessConfig(): bool

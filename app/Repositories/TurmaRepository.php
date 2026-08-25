@@ -48,6 +48,43 @@ final class TurmaRepository
         }
     }
 
+    public function listForProfessor(int $professorId, int $limit = 200, ?int $ativo = null): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $professorId <= 0) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT t.id, t.nome, t.id_curso, t.id_estrutura, c.nome AS curso_nome,
+                           n.nome AS nivel_nome, t.data_inicio, t.ativo,
+                           ec.nome AS estrutura_nome, ec.versao AS estrutura_versao,
+                           (SELECT COUNT(*) FROM matricula WHERE id_turma = t.id) AS total_inscritos
+                    FROM turmas t
+                    LEFT JOIN cursos c ON t.id_curso = c.id
+                    LEFT JOIN tipo_curso n ON c.tipo_curso = n.id
+                    LEFT JOIN estrutura_curricular ec ON ec.id = t.id_estrutura
+                    WHERE ' . $this->professorAccessCondition();
+            if ($ativo !== null) {
+                $sql .= ' AND t.ativo = :ativo';
+            }
+            $sql .= ' ORDER BY t.id DESC LIMIT :limit';
+
+            $stmt = $pdo->prepare($sql);
+            $this->bindProfessorCondition($stmt, $professorId);
+            if ($ativo !== null) {
+                $stmt->bindValue(':ativo', $ativo === 1 ? 1 : 0, PDO::PARAM_INT);
+            }
+            $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em listForProfessor: ' . $e->getMessage());
+            return [];
+        }
+    }
+
     public function findById(int $id): ?array
     {
         $pdo = Database::connection();
@@ -164,6 +201,74 @@ final class TurmaRepository
             error_log('[MATRICULAS] Erro em listMatriculasAtivas: ' . $e->getMessage());
             return [];
         }
+    }
+
+    public function listMatriculasAtivasForProfessor(int $professorId): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $professorId <= 0) {
+            return [];
+        }
+
+        try {
+            $sql = 'SELECT m.id, m.id_aluno, m.id_curso, m.id_turma, m.data_matricula,
+                           a.nome AS aluno_nome, t.nome AS turma_nome, c.nome AS curso_nome
+                    FROM matricula m
+                    INNER JOIN alunos a ON a.id = m.id_aluno
+                    INNER JOIN turmas t ON t.id = m.id_turma
+                    INNER JOIN cursos c ON c.id = m.id_curso
+                    WHERE m.ativo = 1 AND ' . $this->professorAccessCondition() . '
+                    ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
+            $stmt = $pdo->prepare($sql);
+            $this->bindProfessorCondition($stmt, $professorId);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[MATRICULAS] Erro em listMatriculasAtivasForProfessor: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function professorCanAccessTurma(int $professorId, int $turmaId): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $professorId <= 0 || $turmaId <= 0) {
+            return false;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT 1 FROM turmas t WHERE t.id = :turma_id AND ' . $this->professorAccessCondition() . ' LIMIT 1');
+            $stmt->bindValue(':turma_id', $turmaId, PDO::PARAM_INT);
+            $this->bindProfessorCondition($stmt, $professorId);
+            $stmt->execute();
+            return (bool) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            error_log('[TURMAS] Erro em professorCanAccessTurma: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    private function professorAccessCondition(): string
+    {
+        return '(EXISTS (
+                    SELECT 1 FROM turma_professor tp
+                    WHERE tp.id_turma = t.id AND tp.id_usuario = :professor_id_direct AND tp.status = "A"
+                ) OR EXISTS (
+                    SELECT 1 FROM turma_disciplina td
+                    WHERE td.id_turma = t.id AND td.id_usuario_professor = :professor_id_legacy AND td.ativo = 1
+                ) OR EXISTS (
+                    SELECT 1 FROM turma_disciplina td
+                    JOIN turma_disciplina_professor tdp ON tdp.id_turma_disciplina = td.id
+                    WHERE td.id_turma = t.id AND tdp.id_usuario_professor = :professor_id_discipline AND tdp.ativo = 1 AND td.ativo = 1
+                ))';
+    }
+
+    private function bindProfessorCondition(\PDOStatement $stmt, int $professorId): void
+    {
+        $stmt->bindValue(':professor_id_direct', $professorId, PDO::PARAM_INT);
+        $stmt->bindValue(':professor_id_legacy', $professorId, PDO::PARAM_INT);
+        $stmt->bindValue(':professor_id_discipline', $professorId, PDO::PARAM_INT);
     }
 
     public function listByCurso(int $idCurso): array

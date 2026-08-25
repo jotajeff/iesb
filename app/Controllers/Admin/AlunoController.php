@@ -13,6 +13,7 @@ use App\Services\CursoService;
 use App\Services\CursoPagamentoService;
 use App\Services\AsaasService;
 use App\Services\LogService;
+use App\Services\NotificacaoMatriculaService;
 use App\Services\PlanilhaService;
 use App\Services\IpLocationService;
 use App\Support\Session;
@@ -25,6 +26,7 @@ final class AlunoController extends Controller
     private LogService $logService;
     private CursoParcelaService $parcelaService;
     private CursoPagamentoService $pagamentoService;
+    private NotificacaoMatriculaService $notificacaoMatriculaService;
 
     public function __construct()
     {
@@ -34,6 +36,7 @@ final class AlunoController extends Controller
         $this->logService = new LogService();
         $this->parcelaService = new CursoParcelaService();
         $this->pagamentoService = new CursoPagamentoService();
+        $this->notificacaoMatriculaService = new NotificacaoMatriculaService();
     }
 
     public function index(): void
@@ -457,6 +460,14 @@ final class AlunoController extends Controller
 
         if ($matriculaId > 0) {
             $this->parcelaService->atualizarStatus($parcelaId, 'CONFIRMADO', $idAluno, $matriculaId);
+            $this->notificacaoMatriculaService->enviar(
+                $idAluno,
+                (int) ($turma['id_curso'] ?? 0),
+                (string) ($aluno['nome'] ?? ''),
+                (string) ($aluno['email'] ?? ''),
+                (string) ($aluno['cpf'] ?? ''),
+                $matriculaId
+            );
             $financeiro = ' Primeira parcela registrada como paga.';
             if ($totalParcelas > 1) {
                 $origem = $this->parcelaService->buscar($parcelaId) ?? [];
