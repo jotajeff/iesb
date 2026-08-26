@@ -29,7 +29,7 @@
         Aluno: <strong><?= htmlspecialchars((string) ($alunoSelecionado['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong>
       </div>
 
-      <form action="/admin/alunos/matricular" method="post" class="needs-validation" novalidate>
+      <form action="/admin/alunos/matricular" method="post" class="needs-validation" id="formMatricula" novalidate>
         <input type="hidden" name="id_aluno" value="<?= (int) ($alunoSelecionado['id'] ?? 0) ?>">
 
         <div class="row g-3">
@@ -138,6 +138,42 @@
   </div>
 </section>
 
+<div class="modal fade" id="modalConfirmarMatricula" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-warning-subtle">
+        <h5 class="modal-title"><i class="bi bi-exclamation-triangle me-2"></i>Confirmar matrícula</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Revise os dados abaixo antes de efetivar a matrícula:</p>
+        <dl class="row mb-0">
+          <dt class="col-sm-5 text-muted">Aluno</dt>
+          <dd class="col-sm-7" id="cfAluno">-</dd>
+          <dt class="col-sm-5 text-muted">Turma</dt>
+          <dd class="col-sm-7" id="cfTurma">-</dd>
+          <dt class="col-sm-5 text-muted">Status</dt>
+          <dd class="col-sm-7" id="cfStatus">-</dd>
+          <dt class="col-sm-5 text-muted">Plano de pagamento</dt>
+          <dd class="col-sm-7" id="cfPlano">-</dd>
+          <dt class="col-sm-5 text-muted">Data da 1ª parcela</dt>
+          <dd class="col-sm-7" id="cfData">-</dd>
+          <dt class="col-sm-5 text-muted">Total de parcelas</dt>
+          <dd class="col-sm-7" id="cfTotal">-</dd>
+          <dt class="col-sm-5 text-muted">1ª parcela (paga)</dt>
+          <dd class="col-sm-7" id="cfPrimeira">-</dd>
+          <dt class="col-sm-5 text-muted">Demais parcelas</dt>
+          <dd class="col-sm-7" id="cfDemais">-</dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i>Cancelar</button>
+        <button type="button" class="btn btn-success" id="btnConfirmarMatricula"><i class="bi bi-check-lg me-1"></i>Confirmar matrícula</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 (function () {
   'use strict'
@@ -178,6 +214,42 @@ document.addEventListener('DOMContentLoaded', function () {
     var mensal = parcelas > 0 ? valor / parcelas : valor;
     primeira.value = mensal.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     demais.value = primeira.value;
+  });
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var form = document.getElementById('formMatricula');
+  if (!form) return;
+  var confirmado = false;
+
+  form.addEventListener('submit', function (event) {
+    if (confirmado) return;
+    if (!form.checkValidity()) return;
+    event.preventDefault();
+
+    var sTurma = document.getElementById('id_turma');
+    var sStatus = document.getElementById('status');
+    var sPlano = document.getElementById('id_curso_pagamento');
+    var sAluno = document.querySelector('.alert-info strong');
+
+    document.getElementById('cfAluno').textContent = sAluno ? sAluno.textContent.trim() : '-';
+    document.getElementById('cfTurma').textContent = (sTurma && sTurma.selectedIndex >= 0) ? sTurma.options[sTurma.selectedIndex].textContent.trim() : '-';
+    document.getElementById('cfStatus').textContent = (sStatus && sStatus.selectedIndex >= 0) ? sStatus.options[sStatus.selectedIndex].textContent.trim() : '-';
+    document.getElementById('cfPlano').textContent = (sPlano && sPlano.selectedIndex >= 0) ? sPlano.options[sPlano.selectedIndex].textContent.trim() : '-';
+    document.getElementById('cfData').textContent = (document.getElementById('data_vencimento') ? document.getElementById('data_vencimento').value : '') || '-';
+    document.getElementById('cfTotal').textContent = (document.getElementById('total_parcelas') ? document.getElementById('total_parcelas').value : '') || '-';
+    document.getElementById('cfPrimeira').textContent = (document.getElementById('valor_primeira') ? document.getElementById('valor_primeira').value : '') || '-';
+    document.getElementById('cfDemais').textContent = (document.getElementById('valor_demais') ? document.getElementById('valor_demais').value : '') || '-';
+
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalConfirmarMatricula')).show();
+  });
+
+  document.getElementById('btnConfirmarMatricula').addEventListener('click', function () {
+    confirmado = true;
+    var modal = bootstrap.Modal.getInstance(document.getElementById('modalConfirmarMatricula'));
+    if (modal) modal.hide();
+    form.submit();
   });
 });
 </script>
