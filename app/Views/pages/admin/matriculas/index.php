@@ -2,6 +2,7 @@
   $matriculasView = is_array($matriculas ?? null) ? $matriculas : [];
   $emailStatus = is_array($emailStatus ?? null) ? $emailStatus : [];
   $cursoAtual = null;
+  $seqMatricula = 0;
 ?>
 
 <section class="container py-4">
@@ -41,12 +42,13 @@
                 </thead>
                 <tbody>
         <?php endif; ?>
+                <?php $seqMatricula++; ?>
                 <tr>
                   <td>
-                    <a class="text-decoration-none fw-medium me-2" href="/admin/alunos/show?id=<?= (int) ($matricula['id_aluno'] ?? 0) ?>">
-                      #<?= (int) ($matricula['id_aluno'] ?? 0) ?>
+                    <a class="text-decoration-none fw-medium" href="/admin/alunos/show?id=<?= (int) ($matricula['id_aluno'] ?? 0) ?>">
+                      <span class="badge bg-dark"><?= $seqMatricula ?></span>
                     </a>
-                    <?= htmlspecialchars((string) ($matricula['aluno_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                    <span class="ms-2"><?= htmlspecialchars((string) ($matricula['aluno_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
                   </td>
                   <td><?= htmlspecialchars((string) ($matricula['turma_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                   <td><?php

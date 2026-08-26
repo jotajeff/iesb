@@ -33,7 +33,7 @@ final class UsuarioService
         return $this->repository->findById($id);
     }
 
-    public function criarUsuario(string $nome, string $email, string $senha, string $tipo = 'aluno', string $ativo = '1', string $telefone = ''): int
+    public function criarUsuario(string $nome, string $email, string $senha, string $tipo = 'aluno', string $ativo = '1', string $telefone = '', string $titulacao = ''): int
     {
         return $this->repository->create([
             'nome' => trim($nome),
@@ -41,11 +41,12 @@ final class UsuarioService
             'senha' => password_hash($senha, PASSWORD_DEFAULT),
             'tipo' => $tipo,
             'telefone' => $telefone ?: null,
+            'titulacao' => trim($titulacao) !== '' ? trim($titulacao) : null,
             'ativo' => $ativo,
         ]);
     }
 
-    public function atualizarUsuario(int $id, string $senha = '', string $ativo = '1', string $nome = '', string $email = '', string $tipo = '', string $telefone = ''): void
+    public function atualizarUsuario(int $id, string $senha = '', string $ativo = '1', string $nome = '', string $email = '', string $tipo = '', string $telefone = '', string $titulacao = ''): void
     {
         $payload = [];
         if ($nome !== '') {
@@ -62,6 +63,9 @@ final class UsuarioService
         }
         if ($telefone !== '') {
             $payload['telefone'] = $telefone;
+        }
+        if ($titulacao !== '') {
+            $payload['titulacao'] = $titulacao;
         }
         $payload['ativo'] = $ativo;
 

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 25/08/2026 às 15:15
+-- Tempo de geração: 26/08/2026 às 15:56
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -1002,6 +1002,7 @@ CREATE TABLE `turma_troca` (
 
 CREATE TABLE `usuarios` (
   `id` int(11) NOT NULL,
+  `titulacao` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `nome` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `senha` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,

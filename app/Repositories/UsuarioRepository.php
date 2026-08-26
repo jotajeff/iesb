@@ -87,7 +87,7 @@ final class UsuarioRepository
             return null;
         }
 
-        $sql = 'SELECT id, nome, email, telefone, tipo, ativo, created_at, updated_at
+        $sql = 'SELECT id, nome, email, telefone, titulacao, tipo, ativo, created_at, updated_at
                 FROM usuarios
                 WHERE id = :id';
         $stmt = $pdo->prepare($sql);
@@ -105,14 +105,15 @@ final class UsuarioRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO usuarios (nome, email, senha, tipo, telefone, ativo)
-                VALUES (:nome, :email, :senha, :tipo, :telefone, :ativo)';
+        $sql = 'INSERT INTO usuarios (nome, email, senha, tipo, telefone, titulacao, ativo)
+                VALUES (:nome, :email, :senha, :tipo, :telefone, :titulacao, :ativo)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
         $stmt->bindValue(':email', $payload['email']);
         $stmt->bindValue(':senha', $payload['senha']);
         $stmt->bindValue(':tipo', $payload['tipo']);
         $stmt->bindValue(':telefone', $payload['telefone'] ?? null, PDO::PARAM_STR);
+        $stmt->bindValue(':titulacao', $payload['titulacao'] ?? null, PDO::PARAM_STR);
         $stmt->bindValue(':ativo', (int) $payload['ativo'], PDO::PARAM_INT);
         $stmt->execute();
 
@@ -152,6 +153,10 @@ final class UsuarioRepository
         if (array_key_exists('telefone', $payload)) {
             $sets[] = 'telefone = :telefone';
             $params[':telefone'] = $payload['telefone'];
+        }
+        if (array_key_exists('titulacao', $payload)) {
+            $sets[] = 'titulacao = :titulacao';
+            $params[':titulacao'] = $payload['titulacao'];
         }
 
         if (empty($sets)) {

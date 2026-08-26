@@ -156,6 +156,7 @@ final class ProfessorController extends Controller
         $email = trim((string) $this->input('email', ''));
         $senha = (string) $this->input('senha', '');
         $telefone = trim((string) $this->input('telefone', ''));
+        $titulacao = trim((string) $this->input('titulacao', ''));
         $ativo = (string) $this->input('ativo', '1');
 
         if ($nome === '' || $email === '' || $senha === '') {
@@ -164,7 +165,7 @@ final class ProfessorController extends Controller
             return;
         }
 
-        $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, 'professor', $ativo, $telefone);
+        $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, 'professor', $ativo, $telefone, $titulacao);
         $this->logService->log('criar', 'usuario', $usuarioId, "Professor criado: $nome");
         Session::setFlash('flash', 'Professor criado com sucesso.');
         $this->redirect('/admin/professores');
@@ -211,6 +212,7 @@ final class ProfessorController extends Controller
         $id = (int) $this->input('id', 0);
         $nome = trim((string) $this->input('nome', ''));
         $telefone = trim((string) $this->input('telefone', ''));
+        $titulacao = trim((string) $this->input('titulacao', ''));
         $ativo = (string) $this->input('ativo', '1');
 
         if ($id <= 0 || $nome === '') {
@@ -226,7 +228,7 @@ final class ProfessorController extends Controller
             return;
         }
 
-        $this->usuarioService->atualizarUsuario($id, '', $ativo, $nome, '', '', $telefone);
+        $this->usuarioService->atualizarUsuario($id, '', $ativo, $nome, '', '', $telefone, $titulacao);
         $this->logService->log('atualizar', 'usuario', $id, "Professor atualizado: $nome");
         Session::setFlash('flash', 'Professor atualizado com sucesso.');
         $this->redirect($redirectBase);

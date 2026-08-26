@@ -27,6 +27,10 @@
         <label class="form-label">Telefone</label>
         <input class="form-control" type="text" name="telefone" placeholder="(61) 99999-9999">
       </div>
+      <div class="col-md-6">
+        <label class="form-label">Titulação</label>
+        <input class="form-control" type="text" name="titulacao" placeholder="Especialista, Mestre, Doutor...">
+      </div>
       <div class="col-md-3">
         <label class="form-label">Ativo</label>
         <select class="form-select" name="ativo">

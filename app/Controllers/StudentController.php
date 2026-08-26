@@ -451,7 +451,7 @@ final class StudentController extends Controller
                 }
 
                 $stmt = $pdo->prepare(
-                    'SELECT u.id, u.nome, u.email, u.telefone, cr.id AS curriculo_id,'
+                    'SELECT u.id, u.nome, u.email, u.telefone, u.titulacao, cr.id AS curriculo_id,'
                     . ' COALESCE((SELECT img.path FROM imagem img'
                     . ' WHERE img.tabela_fk = \'usuarios\' AND img.id_fk = u.id AND img.ativo = 1'
                     . ' ORDER BY img.id DESC LIMIT 1), u.foto) AS foto,'

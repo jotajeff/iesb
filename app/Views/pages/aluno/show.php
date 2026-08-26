@@ -78,17 +78,9 @@
                           <?php endif; ?>
                         </div>
                         <div>
-                          <h6 class="mb-1"><?= htmlspecialchars($prof['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></h6>
-                          <p class="mb-1 small text-muted">
-                            <i class="bi bi-envelope me-1"></i><?= htmlspecialchars($prof['email'] ?? '-', ENT_QUOTES, 'UTF-8') ?><br>
-                            <?php if (!empty($prof['telefone'])): ?>
-                              <i class="bi bi-telephone me-1"></i><?= htmlspecialchars($prof['telefone'], ENT_QUOTES, 'UTF-8') ?>
-                            <?php endif; ?>
-                          </p>
-                          <?php if (!empty($prof['curriculo_id'])): ?>
-                            <a class="btn btn-sm btn-outline-primary mt-2" href="/aluno/professor?id=<?= (int) ($prof['id'] ?? 0) ?>">
-                              <i class="bi bi-file-earmark-text me-1"></i>Ver currículo
-                            </a>
+                          <h6 class="mb-0"><?= htmlspecialchars($prof['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></h6>
+                          <?php if (trim((string) ($prof['titulacao'] ?? '')) !== ''): ?>
+                            <p class="mb-0 small text-muted"><?= htmlspecialchars((string) $prof['titulacao'], ENT_QUOTES, 'UTF-8') ?></p>
                           <?php endif; ?>
                         </div>
                       </div>

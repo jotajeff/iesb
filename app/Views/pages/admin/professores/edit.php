@@ -20,6 +20,10 @@
         <label class="form-label">Telefone</label>
         <input class="form-control" type="text" name="telefone" value="<?= htmlspecialchars((string) ($professor['telefone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
       </div>
+      <div class="col-md-6">
+        <label class="form-label">Titulação</label>
+        <input class="form-control" type="text" name="titulacao" value="<?= htmlspecialchars((string) ($professor['titulacao'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" placeholder="Especialista, Mestre, Doutor...">
+      </div>
       <div class="col-md-3">
         <label class="form-label">Ativo</label>
         <select class="form-select" name="ativo">

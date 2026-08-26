@@ -90,6 +90,7 @@ return static function (Router $router): void {
     $router->post('/admin/cursos/importar-disciplinas', [CursoController::class, 'processarImportarDisciplinas']);
     $router->get('/admin/cursos/ementa', [CursoController::class, 'ementa']);
     $router->post('/admin/cursos/salvar-ementa', [CursoController::class, 'salvarEmenta']);
+    $router->post('/admin/cursos/alternar-ementa', [CursoController::class, 'alternarEmenta']);
     $router->get('/admin/cursos/corpo-docente', [CursoController::class, 'corpoDocente']);
     $router->post('/admin/cursos/salvar-corpo-docente', [CursoController::class, 'salvarCorpoDocente']);
     $router->post('/admin/cursos/remover-corpo-docente', [CursoController::class, 'removerCorpoDocente']);

@@ -191,7 +191,7 @@ final class TurmaRepository
                     INNER JOIN alunos a ON a.id = m.id_aluno
                     INNER JOIN turmas t ON t.id = m.id_turma
                     INNER JOIN cursos c ON c.id = m.id_curso
-                    WHERE m.ativo = 1
+                    WHERE m.ativo = 1 AND t.ativo = 1
                     ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
 
             $stmt = $pdo->query($sql);
@@ -217,7 +217,7 @@ final class TurmaRepository
                     INNER JOIN alunos a ON a.id = m.id_aluno
                     INNER JOIN turmas t ON t.id = m.id_turma
                     INNER JOIN cursos c ON c.id = m.id_curso
-                    WHERE m.ativo = 1 AND ' . $this->professorAccessCondition() . '
+                    WHERE m.ativo = 1 AND t.ativo = 1 AND ' . $this->professorAccessCondition() . '
                     ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
             $stmt = $pdo->prepare($sql);
             $this->bindProfessorCondition($stmt, $professorId);

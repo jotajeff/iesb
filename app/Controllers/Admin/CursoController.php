@@ -818,9 +818,8 @@ final class CursoController extends Controller
                 $disciplina = $stmt->fetch() ?: null;
 
                 if ($disciplina) {
-                    $stmt = $pdo->prepare('SELECT id, ementa FROM ementa WHERE id_disciplina = :id_disciplina AND ativo = :ativo LIMIT 1');
+                    $stmt = $pdo->prepare('SELECT id, ementa, ativo FROM ementa WHERE id_disciplina = :id_disciplina ORDER BY id DESC LIMIT 1');
                     $stmt->bindValue(':id_disciplina', $disciplinaId, \PDO::PARAM_INT);
-                    $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
                     $stmt->execute();
                     $ementa = $stmt->fetch() ?: null;
                 }
@@ -885,6 +884,60 @@ final class CursoController extends Controller
         }
 
         $this->redirect('/admin/cursos/ementa?id_disciplina=' . $disciplinaId);
+    }
+
+    public function alternarEmenta(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $ementaId = (int) $this->input('id', 0);
+        $disciplinaIdInput = (int) $this->input('id_disciplina', 0);
+        $disciplinaId = 0;
+
+        if ($ementaId <= 0) {
+            Session::setFlash('flash', 'Ementa inválida.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, id_disciplina, ativo FROM ementa WHERE id = :id LIMIT 1');
+                $stmt->bindValue(':id', $ementaId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $row = $stmt->fetch() ?: null;
+
+                if ($row) {
+                    $disciplinaId = (int) ($row['id_disciplina'] ?? 0);
+                    $novoAtivo = (int) ($row['ativo'] ?? 1) === 1 ? 0 : 1;
+
+                    $stmt = $pdo->prepare('UPDATE ementa SET ativo = :ativo WHERE id = :id');
+                    $stmt->bindValue(':ativo', $novoAtivo, \PDO::PARAM_INT);
+                    $stmt->bindValue(':id', $ementaId, \PDO::PARAM_INT);
+                    $stmt->execute();
+
+                    $this->logService->log('atualizar', 'ementa', $ementaId, $novoAtivo === 1 ? 'Ementa ativada' : 'Ementa inativada');
+                    Session::setFlash('flash', $novoAtivo === 1 ? 'Ementa ativada com sucesso.' : 'Ementa inativada com sucesso.');
+                } else {
+                    Session::setFlash('flash', 'Ementa não encontrada.');
+                }
+            } else {
+                Session::setFlash('flash', 'Sem conexão com o banco de dados.');
+            }
+        } catch (\Throwable $e) {
+            error_log('[EMENTA] Erro ao alternar ativo: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao alterar o status da ementa.');
+        }
+
+        if ($disciplinaId <= 0) {
+            $disciplinaId = $disciplinaIdInput;
+        }
+
+        $this->redirect('/admin/cursos/ementa?id_disciplina=' . ($disciplinaId > 0 ? $disciplinaId : 0));
     }
 
     public function detalhes(): void

@@ -15,6 +15,8 @@
             <dl class="row mb-3">
               <dt class="col-sm-3 text-muted">Nome</dt>
               <dd class="col-sm-9"><?= htmlspecialchars((string) ($usuario['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></dd>
+              <dt class="col-sm-3 text-muted">Titulação</dt>
+              <dd class="col-sm-9"><?= htmlspecialchars(trim((string) ($usuario['titulacao'] ?? '')) !== '' ? (string) $usuario['titulacao'] : '-', ENT_QUOTES, 'UTF-8') ?></dd>
               <dt class="col-sm-3 text-muted">Email</dt>
               <dd class="col-sm-9"><?= htmlspecialchars((string) ($usuario['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></dd>
               <dt class="col-sm-3 text-muted">Telefone</dt>
