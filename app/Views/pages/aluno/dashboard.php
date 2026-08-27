@@ -103,52 +103,42 @@
     <div class="row g-4">
       <div class="col-12" data-aos="fade-up">
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 16px; padding: 2rem; box-shadow: var(--card-shadow);">
-          <h3 class="mb-3">Cursos Disponíveis</h3>
+          <h3 class="mb-1">Amplie Seus Conhecimentos</h3>
+          <p class="text-muted mb-4">Inscreva-se em um de Nossos Cursos e dê mais um passo rumo ao seu desenvolvimento profissional.</p>
           <?php if (empty($cursosDisponiveis)): ?>
             <div class="text-center text-muted py-4">
               <i class="bi bi-journal-bookmark" style="font-size: 2rem;"></i>
               <p class="mt-2 mb-0">Nenhum curso disponível no momento.</p>
             </div>
           <?php else: ?>
-            <div class="table-responsive">
-              <table class="table table-hover align-middle mb-0">
-                <thead>
-                  <tr>
-                    <th style="width: 50px;"></th>
-                    <th>Curso</th>
-                    <th>Segmento</th>
-                    <th>Horário</th>
-                    <th style="width: 140px;"></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <?php foreach ($cursosDisponiveis as $curso): ?>
-                    <tr>
-                      <td>
-                         <a href="/curso/<?= rawurlencode((string) ($curso['slug'] ?? '')) ?>" class="btn btn-sm btn-outline-info" title="Detalhes" target="_blank" rel="noopener">
-                           <i class="bi bi-eye"></i>
-                         </a>
-                      </td>
-                      <td>
-                        <strong><?= htmlspecialchars($curso['nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></strong>
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+              <?php foreach ($cursosDisponiveis as $curso): ?>
+                <?php
+                  $cursoImage = trim((string) ($curso['imagem_card'] ?? ''));
+                  $cursoSlug = rawurlencode((string) ($curso['slug'] ?? ''));
+                  $cursoUrl = '/curso/' . $cursoSlug;
+                  $cursoNome = htmlspecialchars((string) ($curso['nome'] ?? '-'), ENT_QUOTES, 'UTF-8');
+                ?>
+                <div class="col">
+                  <a href="<?= htmlspecialchars($cursoUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="text-decoration-none" title="Detalhes do curso">
+                    <div class="card curso-card h-100 border-0 shadow-sm">
+                      <?php if ($cursoImage !== ''): ?>
+                        <img src="/<?= htmlspecialchars($cursoImage, ENT_QUOTES, 'UTF-8') ?>" alt="Imagem do curso <?= $cursoNome ?>" class="card-img-top" style="height: 150px; object-fit: cover;">
+                      <?php else: ?>
+                        <div class="d-flex align-items-center justify-content-center bg-light" style="height: 150px;">
+                          <i class="bi bi-image text-muted" style="font-size: 2rem;"></i>
+                        </div>
+                      <?php endif; ?>
+                      <div class="card-body">
+                        <h6 class="card-title mb-1"><?= $cursoNome ?></h6>
                         <?php if (!empty($curso['local_curso'])): ?>
-                          <br><small class="text-muted"><?= htmlspecialchars($curso['local_curso'], ENT_QUOTES, 'UTF-8') ?></small>
+                          <p class="card-text small text-muted mb-0"><?= htmlspecialchars($curso['local_curso'], ENT_QUOTES, 'UTF-8') ?></p>
                         <?php endif; ?>
-                      </td>
-                      <td><?= htmlspecialchars($curso['segmento_nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
-                      <td><?= htmlspecialchars($curso['horario'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
-                      <td>
-                        <form method="post" action="/aluno/matricular-curso">
-                          <input type="hidden" name="curso_id" value="<?= (int) $curso['id'] ?>">
-                          <button type="submit" class="btn btn-sm btn-warning w-100">
-                            <i class="bi bi-journal-plus me-1"></i>Matricular
-                          </button>
-                        </form>
-                      </td>
-                    </tr>
-                  <?php endforeach; ?>
-                </tbody>
-              </table>
+                      </div>
+                    </div>
+                  </a>
+                </div>
+              <?php endforeach; ?>
             </div>
           <?php endif; ?>
         </div>
@@ -206,10 +196,10 @@
 </section>
 
 <style>
-  .noticia-card {
+  .noticia-card, .curso-card {
     transition: transform .2s ease, box-shadow .2s ease;
   }
-  .noticia-card:hover {
+  .noticia-card:hover, .curso-card:hover {
     transform: translateY(-4px);
     box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15) !important;
   }

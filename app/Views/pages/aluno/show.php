@@ -20,8 +20,16 @@
                 <div class="col-md-6">
                   <p class="mb-1"><strong><i class="bi bi-people me-1"></i>Turma:</strong> <?= htmlspecialchars($matricula['turma_nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
                   <p class="mb-1"><strong><i class="bi bi-diagram-3 me-1"></i>Matriz curricular:</strong> <?= htmlspecialchars($matricula['estrutura_nome'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
-                  <p class="mb-1"><strong><i class="bi bi-calendar me-1"></i>Início:</strong> <?= htmlspecialchars($matricula['data_inicio'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
-                  <p class="mb-1"><strong><i class="bi bi-calendar me-1"></i>Término:</strong> <?= htmlspecialchars($matricula['data_fim'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
+                  <p class="mb-1"><strong><i class="bi bi-calendar me-1"></i>Início:</strong> <?php
+                    $rawInicio = (string) ($matricula['data_inicio'] ?? '');
+                    $dtInicio = $rawInicio !== '' ? date_create($rawInicio) : false;
+                    echo htmlspecialchars($dtInicio ? $dtInicio->format('d/m/Y') : ($rawInicio ?: '-'), ENT_QUOTES, 'UTF-8');
+                  ?></p>
+                  <p class="mb-1"><strong><i class="bi bi-calendar me-1"></i>Término:</strong> <?php
+                    $rawFim = (string) ($matricula['data_fim'] ?? '');
+                    $dtFim = $rawFim !== '' ? date_create($rawFim) : false;
+                    echo htmlspecialchars($dtFim ? $dtFim->format('d/m/Y') : ($rawFim ?: '-'), ENT_QUOTES, 'UTF-8');
+                  ?></p>
                 </div>
                 <div class="col-md-6">
                   <p class="mb-1"><strong><i class="bi bi-clock me-1"></i>Horário:</strong> <?= htmlspecialchars($matricula['horario'] ?? '-', ENT_QUOTES, 'UTF-8') ?></p>
