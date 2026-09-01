@@ -13,15 +13,21 @@
           <h2 class="mb-3 text-center">Login Aluno</h2>
           <p class="text-muted mb-4 text-center">Acesse sua área acadêmica para acompanhar cursos, turmas e materiais.</p>
 
+          <!-- EM MANUTENÇÃO: remover este alerta e os atributos disabled para reativar o login do aluno -->
+          <div class="alert alert-warning d-flex align-items-center gap-2 mb-4" role="alert">
+            <i class="bi bi-exclamation-triangle-fill fs-4"></i>
+            <div><strong>Em manutenção!</strong> O acesso dos alunos está temporariamente suspenso. Tente novamente mais tarde.</div>
+          </div>
+
           <form method="post" action="/aluno/login" class="d-grid gap-3">
-            <input type="email" name="email" class="form-control-custom" placeholder="E-mail" required>
+            <input type="email" name="email" class="form-control-custom" placeholder="E-mail" required disabled>
             <div class="position-relative">
-              <input type="password" name="password" id="senhaInput" class="form-control-custom" placeholder="Senha" required>
-              <button type="button" id="toggleSenha" class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 border-0 bg-transparent" tabindex="-1" style="color: var(--text-secondary);">
+              <input type="password" name="password" id="senhaInput" class="form-control-custom" placeholder="Senha" required disabled>
+              <button type="button" id="toggleSenha" class="btn btn-sm position-absolute top-50 end-0 translate-middle-y me-2 border-0 bg-transparent" tabindex="-1" style="color: var(--text-secondary);" disabled>
                 <i class="bi bi-eye"></i>
               </button>
             </div>
-            <button class="btn-primary-custom justify-content-center" type="submit">Entrar na Área do Aluno</button>
+            <button class="btn-primary-custom justify-content-center" type="submit" disabled>Entrar na Área do Aluno</button>
           </form>
 
           <div class="text-center mt-3">
