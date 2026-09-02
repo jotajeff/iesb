@@ -7,12 +7,20 @@
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
         <h4 class="mb-0"><i class="bi bi-people me-2"></i>Alunos</h4>
         <div class="d-flex flex-wrap align-items-center gap-2">
-          <form method="get" action="/admin/alunos" class="d-flex align-items-center gap-2">
+          <form method="get" action="/admin/alunos" class="d-flex flex-wrap align-items-center gap-2">
+            <div class="input-group input-group-sm" style="max-width: 240px;">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input type="text" class="form-control" name="nome" value="<?= htmlspecialchars($nomeBusca ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Buscar por nome...">
+              <?php if (!empty($nomeBusca)): ?>
+                <a class="btn btn-outline-secondary" href="/admin/alunos?ativo=<?= (int) ($filtroAtivo ?? 1) ?>" title="Limpar busca"><i class="bi bi-x-lg"></i></a>
+              <?php endif; ?>
+            </div>
             <label class="form-label mb-0 small text-muted" for="filtroAtivo">Status</label>
             <select class="form-select form-select-sm" name="ativo" id="filtroAtivo" onchange="this.form.submit()">
               <option value="1" <?= ($filtroAtivo ?? 1) === 1 ? 'selected' : '' ?>>Ativos</option>
               <option value="0" <?= ($filtroAtivo ?? 1) === 0 ? 'selected' : '' ?>>Inativos</option>
             </select>
+            <button class="btn btn-primary btn-sm" type="submit"><i class="bi bi-funnel me-1"></i>Filtrar</button>
           </form>
           <a class="btn btn-outline-primary btn-sm" href="/admin/alunos/lote"><i class="bi bi-file-earmark-excel me-1"></i>Lote</a>
           <a class="btn btn-primary btn-sm" href="/admin/alunos/novo"><i class="bi bi-plus-circle me-1"></i>Novo aluno</a>
@@ -88,7 +96,7 @@
         $filtroAtivo = (int) ($filtroAtivo ?? 1);
         $deRegistro = $total === 0 ? 0 : (($page - 1) * $perPage) + 1;
         $ateRegistro = min($page * $perPage, $total);
-        $baseUrl = '/admin/alunos?ativo=' . $filtroAtivo . '&page=';
+        $baseUrl = '/admin/alunos?ativo=' . $filtroAtivo . '&nome=' . rawurlencode((string) ($nomeBusca ?? '')) . '&page=';
       ?>
       <nav class="d-flex flex-wrap justify-content-between align-items-center gap-2 mt-3">
         <div class="text-muted small">

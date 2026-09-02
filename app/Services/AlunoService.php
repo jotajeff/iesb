@@ -17,14 +17,14 @@ final class AlunoService
     ) {
     }
 
-    public function alunos(int $limit = 200, ?int $ativo = null, int $offset = 0): array
+    public function alunos(int $limit = 200, ?int $ativo = null, int $offset = 0, string $nome = ''): array
     {
-        return $this->repository->list($limit, $offset, $ativo);
+        return $this->repository->list($limit, $offset, $ativo, $nome);
     }
 
-    public function contarAlunos(?int $ativo = null): int
+    public function contarAlunos(?int $ativo = null, string $nome = ''): int
     {
-        return $this->repository->countAll($ativo);
+        return $this->repository->countAll($ativo, $nome);
     }
 
     public function findAluno(int $id): ?array

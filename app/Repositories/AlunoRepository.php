@@ -9,20 +9,29 @@ use PDO;
 
 final class AlunoRepository
 {
-    public function list(int $limit = 200, int $offset = 0, ?int $ativo = null): array
+    public function list(int $limit = 200, int $offset = 0, ?int $ativo = null, string $nome = ''): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
             return [];
         }
 
+        $nome = trim($nome);
+
         try {
             $sql = 'SELECT id, nome, cpf, data_nascimento, telefone, email, ativo,
                      (SELECT COUNT(*) FROM matricula WHERE id_aluno = alunos.id) AS total_matricula
                      FROM alunos';
 
+            $where = [];
             if ($ativo !== null) {
-                $sql .= ' WHERE ativo = ' . ($ativo === 1 ? '1' : '0');
+                $where[] = 'ativo = ' . ($ativo === 1 ? '1' : '0');
+            }
+            if ($nome !== '') {
+                $where[] = 'nome LIKE :nome';
+            }
+            if ($where) {
+                $sql .= ' WHERE ' . implode(' AND ', $where);
             }
 
             $sql .= ' ORDER BY nome ASC LIMIT :limit OFFSET :offset';
@@ -30,6 +39,9 @@ final class AlunoRepository
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
             $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
+            if ($nome !== '') {
+                $stmt->bindValue(':nome', '%' . $nome . '%', PDO::PARAM_STR);
+            }
             $stmt->execute();
 
             $rows = $stmt->fetchAll();
@@ -40,22 +52,35 @@ final class AlunoRepository
         }
     }
 
-    public function countAll(?int $ativo = null): int
+    public function countAll(?int $ativo = null, string $nome = ''): int
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
             return 0;
         }
 
+        $nome = trim($nome);
+
         try {
             $sql = 'SELECT COUNT(*) FROM alunos';
 
+            $where = [];
             if ($ativo !== null) {
-                $sql .= ' WHERE ativo = ' . ($ativo === 1 ? '1' : '0');
+                $where[] = 'ativo = ' . ($ativo === 1 ? '1' : '0');
+            }
+            if ($nome !== '') {
+                $where[] = 'nome LIKE :nome';
+            }
+            if ($where) {
+                $sql .= ' WHERE ' . implode(' AND ', $where);
             }
 
-            $stmt = $pdo->query($sql);
-            $count = $stmt ? $stmt->fetchColumn() : 0;
+            $stmt = $pdo->prepare($sql);
+            if ($nome !== '') {
+                $stmt->bindValue(':nome', '%' . $nome . '%', PDO::PARAM_STR);
+            }
+            $stmt->execute();
+            $count = $stmt->fetchColumn();
             return (int) $count;
         } catch (\Throwable $e) {
             error_log('[ALUNOS] Erro em countAll: ' . $e->getMessage());
