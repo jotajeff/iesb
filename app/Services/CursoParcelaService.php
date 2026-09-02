@@ -82,7 +82,7 @@ final class CursoParcelaService
                 continue;
             }
 
-            $dataVenc = (new \DateTimeImmutable($dataBase))->modify('+' . ($n - 1) . ' month')->format('Y-m-d');
+            $dataVenc = (new \DateTimeImmutable($dataBase))->modify('+' . (($n - 1) * 30) . ' days')->format('Y-m-d');
 
             $id = $this->criar([
                 'id_curso' => $idCurso,
@@ -173,6 +173,11 @@ final class CursoParcelaService
     public function atualizarAsaasInfo(int $id, array $data): bool
     {
         return $this->repository->updateAsaasInfo($id, $data);
+    }
+
+    public function vincularAcordo(int $id, int $idAcordo): bool
+    {
+        return $this->repository->vincularAcordo($id, $idAcordo);
     }
 
     public function findByAsaasPayment(string $asaasPayment): ?array

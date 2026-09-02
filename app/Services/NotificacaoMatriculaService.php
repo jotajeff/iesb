@@ -31,7 +31,7 @@ final class NotificacaoMatriculaService
         return $this->repository->mapaStatus();
     }
 
-    public function enviar(int $idAluno, int $idCurso, string $nome, string $email, string $cpf, int $idMatricula): bool
+    public function enviar(int $idAluno, int $idCurso, string $nome, string $email, string $cpf, int $idMatricula, bool $forcar = false): bool
     {
         $email = trim($email);
         if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
@@ -39,7 +39,7 @@ final class NotificacaoMatriculaService
             return false;
         }
 
-        if ($this->repository->jaEnviada($idAluno, $idCurso, $email)) {
+        if (!$forcar && $this->repository->jaEnviada($idAluno, $idCurso, $email)) {
             return true;
         }
 
@@ -76,5 +76,47 @@ final class NotificacaoMatriculaService
         }
 
         return $enviado;
+    }
+
+    public function reenviarPorId(int $idNotificacao): array
+    {
+        $notificacao = $this->repository->buscarPorId($idNotificacao);
+        if ($notificacao === null) {
+            return ['sucesso' => false, 'mensagem' => 'Aviso de matrícula não encontrado.'];
+        }
+
+        $idAluno = (int) ($notificacao['id_aluno'] ?? 0);
+        $idCurso = (int) ($notificacao['id_curso'] ?? 0);
+        $idMatricula = (int) ($notificacao['id_matricula'] ?? 0);
+        if ($idAluno <= 0 || $idCurso <= 0 || $idMatricula <= 0) {
+            return ['sucesso' => false, 'mensagem' => 'Não foi possível localizar a matrícula vinculada.'];
+        }
+
+        $aluno = $this->alunoService->findAluno($idAluno);
+        if ($aluno === null) {
+            return ['sucesso' => false, 'mensagem' => 'Aluno não encontrado.'];
+        }
+
+        $email = trim((string) ($aluno['email'] ?? $notificacao['email'] ?? ''));
+        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return ['sucesso' => false, 'mensagem' => 'O aluno não possui um e-mail válido cadastrado.'];
+        }
+
+        $enviado = $this->enviar(
+            $idAluno,
+            $idCurso,
+            (string) ($aluno['nome'] ?? $notificacao['aluno_nome'] ?? ''),
+            $email,
+            (string) ($aluno['cpf'] ?? $notificacao['aluno_cpf'] ?? ''),
+            $idMatricula,
+            true
+        );
+
+        return [
+            'sucesso' => $enviado,
+            'mensagem' => $enviado
+                ? 'E-mail de matrícula reenviado com sucesso.'
+                : 'Não foi possível reenviar o e-mail de matrícula.' . ($this->emailService->getLastError() !== '' ? ' Motivo: ' . $this->emailService->getLastError() : ''),
+        ];
     }
 }

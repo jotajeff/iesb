@@ -10,6 +10,7 @@ use App\Services\AsaasService;
 use App\Services\AuthService;
 use App\Services\CursoParcelaService;
 use App\Services\CursoPagamentoService;
+use App\Services\RecorrenciaService;
 use App\Services\CursoService;
 use App\Support\Session;
 
@@ -117,6 +118,62 @@ final class FinanceiroController extends Controller
 
         $curso = $this->cursoService->findCurso($idCurso);
         $nomeCurso = $curso ? (string) ($curso['nome'] ?? 'Curso') : 'Curso';
+
+        // Tipo 5: matrícula direta com a primeira parcela já paga.
+        // Neste caminho o aluno apenas autoriza cartão e recorrência; não
+        // criamos uma nova cobrança para a primeira parcela.
+        if ($tipoAcordo === 5) {
+            if ($forma !== 'cartao' || !$recorrenciaAutorizada) {
+                $this->render('pages/financeiro', [
+                    'title' => 'Portal Financeiro', 'currentRoute' => '/financeiro', 'acordo' => $acordo,
+                    'token' => $token, 'sucesso' => false, 'inscricaoId' => 0, 'invoiceUrl' => '',
+                    'bankSlipUrl' => '', 'pixQrCode' => null, 'linhaDigitavel' => null, 'billingType' => '',
+                    'asaasError' => 'Esta matrícula já possui a primeira parcela paga. Selecione cartão de crédito e autorize a recorrência.',
+                    'abrirCheckoutNovaAba' => false,
+                ]);
+                return;
+            }
+
+            $origemId = (int) ($acordo['id_curso_parcela_origem'] ?? 0);
+            $origem = $origemId > 0 ? $this->parcelaService->buscar($origemId) : null;
+            if (!is_array($origem)) {
+                $this->render('pages/404', ['title' => 'Parcela de origem não encontrada', 'currentRoute' => '/financeiro']);
+                return;
+            }
+
+            $asaas = new AsaasService();
+            $customerId = trim((string) ($origem['asaas_customer'] ?? ''));
+            if ($customerId === '') {
+                $cliente = $asaas->criarCliente(['nome' => $nome, 'cpf' => $cpf, 'email' => $email, 'telefone' => $telefone]);
+                $customerId = is_array($cliente) ? (string) ($cliente['id'] ?? '') : '';
+                if ($customerId !== '') {
+                    $this->parcelaService->atualizarAsaasInfo($origemId, ['asaas_customer' => $customerId]);
+                }
+            }
+
+            if ($customerId === '') {
+                $this->render('pages/financeiro', [
+                    'title' => 'Portal Financeiro', 'currentRoute' => '/financeiro', 'acordo' => $acordo,
+                    'token' => $token, 'sucesso' => false, 'inscricaoId' => 0, 'invoiceUrl' => '',
+                    'bankSlipUrl' => '', 'pixQrCode' => null, 'linhaDigitavel' => null, 'billingType' => '',
+                    'asaasError' => 'Não foi possível preparar o cliente para a recorrência.', 'abrirCheckoutNovaAba' => false,
+                ]);
+                return;
+            }
+
+            $this->acordoService->atualizarRecorrencia($idAcordo, ['recorrencia_cartao' => 1]);
+            $origem['asaas_customer'] = $customerId;
+            $resultado = (new RecorrenciaService())->criarAssinatura($origem);
+            $this->render('pages/financeiro', [
+                'title' => 'Portal Financeiro', 'currentRoute' => '/financeiro', 'acordo' => $acordo,
+                'token' => $token, 'sucesso' => (bool) ($resultado['success'] ?? false), 'inscricaoId' => $origemId,
+                'invoiceUrl' => '', 'bankSlipUrl' => '', 'pixQrCode' => null, 'linhaDigitavel' => null,
+                'billingType' => 'CREDIT_CARD',
+                'asaasError' => ($resultado['success'] ?? false) ? null : (string) ($resultado['message'] ?? 'Não foi possível ativar a recorrência.'),
+                'abrirCheckoutNovaAba' => false,
+            ]);
+            return;
+        }
 
         if ($nome === '' || $cpf === '' || $idCurso <= 0) {
             $this->render('pages/financeiro', [

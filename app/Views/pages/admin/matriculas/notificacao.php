@@ -26,6 +26,7 @@
               <th><i class="bi bi-envelope me-1"></i>E-mail</th>
               <th><i class="bi bi-toggle-on me-1"></i>Status</th>
               <th><i class="bi bi-calendar3 me-1"></i>Data</th>
+              <th><i class="bi bi-arrow-repeat me-1"></i>Ação</th>
             </tr>
           </thead>
           <tbody>
@@ -50,10 +51,22 @@
                   <?php if ($enviado): ?>
                     <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Enviado</span>
                   <?php else: ?>
-                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Falhou</span>
+                    <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Não enviado</span>
                   <?php endif; ?>
                 </td>
                 <td><?= htmlspecialchars($date ? $date->format('d/m/Y H:i') : ($rawDate ?: '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td>
+                  <?php if (!$enviado): ?>
+                    <form method="post" action="/admin/matriculas/notificacao/reenviar" class="d-inline" onsubmit="return confirm('Deseja reenviar o e-mail de matrícula para este aluno?');">
+                      <input type="hidden" name="id" value="<?= $id ?>">
+                      <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-send me-1"></i>Reenviar e-mail
+                      </button>
+                    </form>
+                  <?php else: ?>
+                    <span class="text-muted small">—</span>
+                  <?php endif; ?>
+                </td>
               </tr>
             <?php endforeach; ?>
           </tbody>

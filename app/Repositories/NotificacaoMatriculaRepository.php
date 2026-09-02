@@ -60,6 +60,37 @@ final class NotificacaoMatriculaRepository
         }
     }
 
+    public function buscarPorId(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT n.*, a.nome AS aluno_nome, a.cpf AS aluno_cpf, a.email AS aluno_email,
+                        a.telefone AS aluno_telefone, m.id AS id_matricula, m.numero AS numero_matricula
+                 FROM notificacao_matricula n
+                 INNER JOIN alunos a ON a.id = n.id_aluno
+                 LEFT JOIN matricula m ON m.id_aluno = n.id_aluno AND m.id_curso = n.id_curso
+                 WHERE n.id = :id
+                 ORDER BY m.id DESC
+                 LIMIT 1'
+            );
+            $stmt->execute([':id' => $id]);
+            $row = $stmt->fetch();
+            return is_array($row) ? $row : null;
+        } catch (\Throwable $e) {
+            error_log('[NOTIFICACAO_MATRICULA] Erro ao buscar notificação: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     /**
      * @return array<string, bool>
      */

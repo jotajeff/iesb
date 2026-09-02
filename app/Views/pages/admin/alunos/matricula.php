@@ -28,6 +28,16 @@
         <i class="bi bi-person me-2"></i>
         Aluno: <strong><?= htmlspecialchars((string) ($alunoSelecionado['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong>
       </div>
+      <?php if (!empty($linkFinanceiroMatricula ?? '')): ?>
+        <div class="alert alert-success" role="status">
+          <div class="fw-semibold mb-2"><i class="bi bi-link-45deg me-1"></i>Link financeiro da opção 2</div>
+          <div class="input-group">
+            <input type="text" class="form-control" id="linkFinanceiroMatricula" value="<?= htmlspecialchars((string) $linkFinanceiroMatricula, ENT_QUOTES, 'UTF-8') ?>" readonly>
+            <button type="button" class="btn btn-outline-success" id="copiarLinkFinanceiro"><i class="bi bi-clipboard me-1"></i>Copiar</button>
+          </div>
+          <div class="form-text">Copie este link e envie ao aluno pelo WhatsApp para ele escolher cartão e recorrência.</div>
+        </div>
+      <?php endif; ?>
 
       <form action="/admin/alunos/matricular" method="post" class="needs-validation" id="formMatricula" novalidate>
         <input type="hidden" name="id_aluno" value="<?= (int) ($alunoSelecionado['id'] ?? 0) ?>">
@@ -60,8 +70,17 @@
         </div>
         <hr class="my-4">
         <h5 class="mb-3"><i class="bi bi-cash-coin me-2"></i>Financeiro da matrícula</h5>
-        <p class="text-muted small">A primeira parcela será lançada como paga. Cada parcela restante será criada como uma cobrança independente no Asaas.</p>
+        <p class="text-muted small">A primeira parcela será lançada como paga. Escolha como as parcelas restantes serão tratadas.</p>
         <div class="row g-3">
+          <div class="col-12">
+            <label for="tipo_financeiro" class="form-label">Forma de tratamento financeiro <span class="text-danger">*</span></label>
+            <select class="form-select" id="tipo_financeiro" name="tipo_financeiro" required>
+              <option value="1">Opção 1 — Gerar cobranças independentes no Asaas</option>
+              <option value="2">Opção 2 — Enviar link para o aluno escolher cartão e recorrência</option>
+              <option value="3">Opção 3 — Acordo direto no Asaas (lançamento manual posterior)</option>
+            </select>
+            <div class="form-text" id="tipoFinanceiroAjuda">As parcelas restantes serão criadas e cobradas individualmente no Asaas.</div>
+          </div>
           <div class="col-md-6">
             <label for="id_curso_pagamento" class="form-label">Plano de pagamento <span class="text-danger">*</span></label>
             <select class="form-select" id="id_curso_pagamento" name="id_curso_pagamento" required>
@@ -103,6 +122,7 @@
                 <th>Turma</th>
                 <th>Data</th>
                 <th>Status</th>
+                <th>Ação</th>
               </tr>
             </thead>
             <tbody>
@@ -128,6 +148,19 @@
                     ?>
                     <span class="badge <?= $statusClass ?>"><?= htmlspecialchars((string) ($mat['status'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
                   </td>
+                  <td>
+                    <?php if ((string) ($mat['status'] ?? '') !== 'cancelado'): ?>
+                      <button type="button" class="btn btn-sm btn-outline-danger btn-cancelar-matricula"
+                              data-bs-toggle="modal" data-bs-target="#modalCancelarMatricula"
+                              data-id-matricula="<?= (int) ($mat['id'] ?? 0) ?>"
+                              data-id-aluno="<?= (int) ($alunoSelecionado['id'] ?? 0) ?>"
+                              data-turma="<?= htmlspecialchars((string) ($mat['turma_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>">
+                        <i class="bi bi-trash me-1"></i>Cancelar
+                      </button>
+                    <?php else: ?>
+                      <span class="text-muted small">Cancelada</span>
+                    <?php endif; ?>
+                  </td>
                 </tr>
               <?php endforeach; ?>
             </tbody>
@@ -137,6 +170,31 @@
     <?php endif; ?>
   </div>
 </section>
+
+<div class="modal fade" id="modalCancelarMatricula" tabindex="-1" aria-labelledby="modalCancelarMatriculaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="/admin/alunos/matricula/cancelar" id="formCancelarMatricula">
+        <input type="hidden" name="id_aluno" id="cancelarIdAluno">
+        <input type="hidden" name="id_matricula" id="cancelarIdMatricula">
+        <div class="modal-header bg-danger-subtle">
+          <h5 class="modal-title" id="modalCancelarMatriculaLabel"><i class="bi bi-shield-exclamation me-2"></i>Cancelar matrícula</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p>Você está cancelando a matrícula da turma <strong id="cancelarTurma">-</strong>.</p>
+          <p class="small text-muted mb-3">O cadastro do aluno será preservado. As parcelas vinculadas serão inativadas e permanecerão no histórico.</p>
+          <label for="senhaConfirmacao" class="form-label">Digite sua senha para confirmar</label>
+          <input type="password" class="form-control" name="senha_confirmacao" id="senhaConfirmacao" autocomplete="current-password" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Voltar</button>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-trash me-1"></i>Confirmar cancelamento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
 
 <div class="modal fade" id="modalConfirmarMatricula" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered modal-lg">
@@ -196,8 +254,20 @@ document.addEventListener('DOMContentLoaded', function () {
   var total = document.getElementById('total_parcelas');
   var primeira = document.getElementById('valor_primeira');
   var demais = document.getElementById('valor_demais');
+  var tipoFinanceiro = document.getElementById('tipo_financeiro');
+  var tipoFinanceiroAjuda = document.getElementById('tipoFinanceiroAjuda');
   var turma = document.getElementById('id_turma');
   if (!plano) return;
+  if (tipoFinanceiro && tipoFinanceiroAjuda) {
+    tipoFinanceiro.addEventListener('change', function () {
+      var textos = {
+        '1': 'As parcelas restantes serão criadas e cobradas individualmente no Asaas.',
+        '2': 'O aluno receberá um link para escolher cartão e autorizar a recorrência das parcelas restantes.',
+        '3': 'As parcelas ficarão registradas localmente; a conciliação com o acordo feito no Asaas será manual.'
+      };
+      tipoFinanceiroAjuda.textContent = textos[tipoFinanceiro.value] || '';
+    });
+  }
   function filtrarPlanos() {
     var optTurma = turma && turma.options[turma.selectedIndex];
     var curso = optTurma ? optTurma.getAttribute('data-curso') : '';
@@ -219,6 +289,44 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
+  var linkFinanceiro = document.getElementById('linkFinanceiroMatricula');
+  var copiarLink = document.getElementById('copiarLinkFinanceiro');
+  if (linkFinanceiro && copiarLink) {
+    copiarLink.addEventListener('click', function () {
+      var textoOriginal = copiarLink.innerHTML;
+      var concluir = function () {
+        copiarLink.innerHTML = '<i class="bi bi-check-lg me-1"></i>Copiado';
+        window.setTimeout(function () { copiarLink.innerHTML = textoOriginal; }, 1800);
+      };
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(linkFinanceiro.value).then(concluir).catch(function () {
+          linkFinanceiro.select();
+          document.execCommand('copy');
+          concluir();
+        });
+      } else {
+        linkFinanceiro.select();
+        document.execCommand('copy');
+        concluir();
+      }
+    });
+  }
+
+  document.querySelectorAll('.btn-cancelar-matricula').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('cancelarIdAluno').value = btn.getAttribute('data-id-aluno') || '';
+      document.getElementById('cancelarIdMatricula').value = btn.getAttribute('data-id-matricula') || '';
+      document.getElementById('cancelarTurma').textContent = btn.getAttribute('data-turma') || '-';
+      document.getElementById('senhaConfirmacao').value = '';
+    });
+  });
+
+  document.getElementById('formCancelarMatricula').addEventListener('submit', function (event) {
+    if (!window.confirm('Confirma o cancelamento desta matrícula?')) {
+      event.preventDefault();
+    }
+  });
+
   var form = document.getElementById('formMatricula');
   if (!form) return;
   var confirmado = false;

@@ -255,6 +255,26 @@ final class TurmaController extends Controller
         ], 'admin');
     }
 
+    public function reenviarNotificacaoMatricula(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $id = (int) $this->input('id', 0);
+        $resultado = (new NotificacaoMatriculaService())->reenviarPorId($id);
+        $this->logService->log(
+            ($resultado['sucesso'] ?? false) ? 'criar' : 'erro',
+            'notificacao_matricula',
+            $id,
+            (string) ($resultado['mensagem'] ?? 'Tentativa de reenvio de e-mail de matrícula.')
+        );
+        Session::setFlash('flash', (string) ($resultado['mensagem'] ?? 'Não foi possível reenviar o e-mail.'));
+        $this->redirect('/admin/matriculas/notificacao');
+    }
+
     public function show(): void
     {
         if (!$this->isStaff()) {

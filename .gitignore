@@ -10,4 +10,4 @@
 !/storage/cache/.gitkeep
 /storage
 *.md
-*.sql
+*.sql/.env_old

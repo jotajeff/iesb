@@ -6,12 +6,14 @@ namespace App\Services;
 
 use App\Repositories\AlunoRepository;
 use App\Repositories\TurmaRepository;
+use App\Repositories\MatriculaRepository;
 
 final class AlunoService
 {
     public function __construct(
         private readonly AlunoRepository $repository = new AlunoRepository(),
         private readonly TurmaRepository $turmaRepository = new TurmaRepository(),
+        private readonly MatriculaRepository $matriculaRepository = new MatriculaRepository(),
     ) {
     }
 
@@ -113,6 +115,11 @@ final class AlunoService
     public function atualizarMatriculaTurma(int $idMatricula, int $idNovaTurma): bool
     {
         return $this->turmaRepository->updateMatriculaTurma($idMatricula, $idNovaTurma);
+    }
+
+    public function cancelarMatricula(int $idMatricula): bool
+    {
+        return $this->matriculaRepository->cancelar($idMatricula);
     }
 
     public function registrarTroca(int $idOrigem, int $idDestino, int $idAluno, string $motivo): int

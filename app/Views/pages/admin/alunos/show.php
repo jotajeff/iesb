@@ -373,6 +373,7 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                         <th>Valor</th>
                         <th>Situação</th>
                         <th>Pagamento</th>
+                        <th>Ação</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -403,6 +404,19 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                             <div class="fw-semibold"><?= htmlspecialchars((string) ($pf['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></div>
                             <?php if (!empty($pf['turma_nome']) && (string) $pf['turma_nome'] !== '-'): ?>
                               <div class="text-muted small"><i class="bi bi-people me-1"></i><?= htmlspecialchars((string) $pf['turma_nome'], ENT_QUOTES, 'UTF-8') ?></div>
+                            <?php endif; ?>
+                          </td>
+                          <td>
+                            <?php if (!in_array($pfStatus, ['RECEBIDO', 'CONFIRMADO', 'CANCELADO', 'ESTORNADO'], true)): ?>
+                              <button type="button" class="btn btn-sm btn-outline-success btn-lancar-pago"
+                                      data-bs-toggle="modal" data-bs-target="#modalLancarParcelaPaga"
+                                      data-id-parcela="<?= (int) ($pf['id'] ?? 0) ?>"
+                                      data-valor="R$ <?= number_format($pfValor, 2, ',', '.') ?>"
+                                      data-parcela="<?= $pfNumero > 0 ? $pfNumero . 'ª de ' . $pfTotal : 'Parcela' ?>">
+                                <i class="bi bi-check-circle me-1"></i>Lançar como pago
+                              </button>
+                            <?php else: ?>
+                              <span class="text-muted small">—</span>
                             <?php endif; ?>
                           </td>
                           <td>
@@ -545,6 +559,31 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
   </div>
 </div>
 
+<div class="modal fade" id="modalLancarParcelaPaga" tabindex="-1" aria-labelledby="modalLancarParcelaPagaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="/admin/alunos/parcela/pagar" id="formLancarParcelaPaga">
+        <input type="hidden" name="id_aluno" value="<?= (int) ($alunoData['id'] ?? 0) ?>">
+        <input type="hidden" name="id_parcela" id="lancarParcelaId">
+        <div class="modal-header bg-success-subtle">
+          <h5 class="modal-title" id="modalLancarParcelaPagaLabel"><i class="bi bi-cash-coin me-2"></i>Lançar parcela como paga</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p>Confirmar pagamento manual da <strong id="lancarParcelaNumero">parcela</strong> no valor de <strong id="lancarParcelaValor">-</strong>?</p>
+          <p class="small text-muted">A cobrança do Asaas não será excluída. Apenas o status financeiro local será atualizado.</p>
+          <label for="lancarParcelaSenha" class="form-label">Digite sua senha para confirmar</label>
+          <input type="password" class="form-control" name="senha_confirmacao" id="lancarParcelaSenha" autocomplete="current-password" required>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>Confirmar pagamento</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div id="documentoLoader" class="d-none" style="position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
   <div class="d-flex flex-column align-items-center text-white px-3">
     <div class="spinner-border mb-3" style="width:3rem;height:3rem;" role="status">
@@ -628,4 +667,13 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
       if (btn) btn.disabled = true;
     });
   }
+
+  document.querySelectorAll('.btn-lancar-pago').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      document.getElementById('lancarParcelaId').value = btn.getAttribute('data-id-parcela') || '';
+      document.getElementById('lancarParcelaNumero').textContent = btn.getAttribute('data-parcela') || 'parcela';
+      document.getElementById('lancarParcelaValor').textContent = btn.getAttribute('data-valor') || '-';
+      document.getElementById('lancarParcelaSenha').value = '';
+    });
+  });
 </script>

@@ -29,7 +29,8 @@ final class AcordoPagamentoRepository
                      :utilizado, :ativo)';
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':tipo', (int) ($data['tipo'] ?? 1), PDO::PARAM_INT);
-            $stmt->bindValue(':id_pre_inscricao', (int) ($data['id_pre_inscricao'] ?? 0), PDO::PARAM_INT);
+            $idPreInscricao = (int) ($data['id_pre_inscricao'] ?? 0);
+            $stmt->bindValue(':id_pre_inscricao', $idPreInscricao > 0 ? $idPreInscricao : null, $idPreInscricao > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->bindValue(':id_curso_pagamento', (int) ($data['id_curso_pagamento'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':id_curso_parcela_origem', isset($data['id_curso_parcela_origem']) && (int) $data['id_curso_parcela_origem'] > 0 ? (int) $data['id_curso_parcela_origem'] : null, isset($data['id_curso_parcela_origem']) && (int) $data['id_curso_parcela_origem'] > 0 ? PDO::PARAM_INT : PDO::PARAM_NULL);
             $stmt->bindValue(':id_usuario_autorizacao', (int) ($data['id_usuario_autorizacao'] ?? 0), PDO::PARAM_INT);
@@ -73,14 +74,18 @@ final class AcordoPagamentoRepository
                            cp.tipo AS plano_tipo,
                            cp.valor AS plano_valor,
                            cp.parcelas AS plano_parcelas,
-                           p.nome AS candidato_nome,
-                           p.email AS candidato_email,
-                           p.whatsapp AS candidato_telefone,
-                           p.curso_id
+                           COALESCE(p.nome, a.nome) AS candidato_nome,
+                           COALESCE(p.email, a.email) AS candidato_email,
+                           COALESCE(p.whatsapp, a.telefone) AS candidato_telefone,
+                           COALESCE(p.curso_id, cp_origem.id_curso) AS curso_id,
+                           cp_origem.id_aluno AS origem_id_aluno,
+                           cp_origem.id_matricula AS origem_id_matricula
                     FROM acordo_pagamento ap
                     LEFT JOIN cursos_pagamento cp ON cp.id = ap.id_curso_pagamento
                     LEFT JOIN cursos c ON c.id = cp.id_curso
+                    LEFT JOIN curso_parcela cp_origem ON cp_origem.id = ap.id_curso_parcela_origem
                     LEFT JOIN pre_inscricao p ON p.id = ap.id_pre_inscricao
+                    LEFT JOIN alunos a ON a.id = cp_origem.id_aluno
                     WHERE ap.token = :token
                     LIMIT 1';
             $stmt = $pdo->prepare($sql);

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 26/08/2026 às 15:56
+-- Tempo de geração: 01/09/2026 às 19:53
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -30,7 +30,7 @@ SET time_zone = "+00:00";
 CREATE TABLE `acordo_pagamento` (
   `id` int(11) NOT NULL,
   `tipo` tinyint(4) NOT NULL DEFAULT '1',
-  `id_pre_inscricao` int(11) NOT NULL,
+  `id_pre_inscricao` int(11) DEFAULT NULL,
   `id_curso_pagamento` int(11) NOT NULL,
   `id_curso_parcela_origem` int(11) DEFAULT NULL,
   `id_usuario_autorizacao` int(11) NOT NULL,

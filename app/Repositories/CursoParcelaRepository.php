@@ -138,6 +138,24 @@ final class CursoParcelaRepository
         }
     }
 
+    public function vincularAcordo(int $id, int $idAcordo): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $id <= 0 || $idAcordo <= 0) {
+            return false;
+        }
+
+        try {
+            $stmt = $pdo->prepare('UPDATE curso_parcela
+                                   SET id_acordo_pagamento = :id_acordo, updated_at = CURRENT_TIMESTAMP
+                                   WHERE id = :id AND ativo = 1');
+            return $stmt->execute([':id_acordo' => $idAcordo, ':id' => $id]);
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro ao vincular acordo: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function findById(int $id): ?array
     {
         try {

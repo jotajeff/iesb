@@ -170,6 +170,8 @@ return static function (Router $router): void {
     $router->get('/admin/alunos/troca', [AlunoController::class, 'troca']);
     $router->post('/admin/alunos/trocar', [AlunoController::class, 'trocar']);
     $router->post('/admin/alunos/restaurar-senha', [AlunoController::class, 'restaurarSenha']);
+    $router->post('/admin/alunos/matricula/cancelar', [AlunoController::class, 'cancelarMatricula']);
+    $router->post('/admin/alunos/parcela/pagar', [AlunoController::class, 'lancarParcelaPaga']);
     $router->post('/admin/alunos/compartilhar-documento', [AlunoController::class, 'compartilharDocumento']);
     $router->post('/admin/alunos/upload-documento', [AlunoController::class, 'uploadDocumento']);
     $router->post('/admin/alunos/liberar-documentos', [AlunoController::class, 'liberarDocumentosPublicos']);
@@ -188,6 +190,7 @@ return static function (Router $router): void {
     $router->post('/admin/turmas/geracao/confirmar', [TurmaController::class, 'geracaoConfirmar']);
     $router->get('/admin/matriculas', [TurmaController::class, 'matriculas']);
     $router->get('/admin/matriculas/notificacao', [TurmaController::class, 'matriculasNotificacao']);
+    $router->post('/admin/matriculas/notificacao/reenviar', [TurmaController::class, 'reenviarNotificacaoMatricula']);
     $router->get('/admin/turmas/show', [TurmaController::class, 'show']);
     $router->get('/admin/turmas/novo', [TurmaController::class, 'novo']);
     $router->get('/admin/turmas/editar', [TurmaController::class, 'editar']);

@@ -123,4 +123,31 @@ final class AuthService
 
         return $user;
     }
+
+    public function reautenticarSessao(string $password): bool
+    {
+        $sessionUser = Session::get('user');
+        if (!is_array($sessionUser) || !$this->isStaff() || trim($password) === '') {
+            return false;
+        }
+
+        // O e-mail é estável entre as bases (produção/Sandbox); o ID pode mudar.
+        $email = trim((string) ($sessionUser['email'] ?? ''));
+        $user = $email !== '' ? $this->users->findByEmail($email) : null;
+
+        if ($user === null) {
+            $userId = (int) ($sessionUser['id'] ?? 0);
+            $user = $userId > 0 ? $this->users->findById($userId) : null;
+        }
+
+        $sessionRole = (string) ($sessionUser['role'] ?? $sessionUser['type'] ?? '');
+        $storedRole = (string) ($user['role'] ?? $user['tipo'] ?? $user['type'] ?? '');
+        $passwordHash = (string) ($user['password'] ?? $user['senha'] ?? '');
+
+        if ($user === null || $storedRole !== $sessionRole || $passwordHash === '') {
+            return false;
+        }
+
+        return password_verify($password, $passwordHash);
+    }
 }

@@ -106,4 +106,38 @@ final class MatriculaRepository
         $stmt->bindValue(':id', $id, PDO::PARAM_INT);
         $stmt->execute();
     }
+
+    public function cancelar(int $idMatricula): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idMatricula <= 0) {
+            return false;
+        }
+
+        try {
+            $pdo->beginTransaction();
+            $stmt = $pdo->prepare('UPDATE matricula
+                SET ativo = 0, status = :status, updated_at = CURRENT_TIMESTAMP
+                WHERE id = :id AND ativo = 1');
+            $stmt->execute([':status' => 'cancelado', ':id' => $idMatricula]);
+
+            if ($stmt->rowCount() !== 1) {
+                $pdo->rollBack();
+                return false;
+            }
+
+            $stmtParcelas = $pdo->prepare('UPDATE curso_parcela
+                SET ativo = 0, updated_at = CURRENT_TIMESTAMP
+                WHERE id_matricula = :id_matricula AND ativo = 1');
+            $stmtParcelas->execute([':id_matricula' => $idMatricula]);
+            $pdo->commit();
+            return true;
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            error_log('[MATRICULA] Erro ao cancelar matrícula: ' . $e->getMessage());
+            return false;
+        }
+    }
 }

@@ -15,6 +15,7 @@ $asaasError = $asaasError ?? null;
 $abrirCheckoutNovaAba = $abrirCheckoutNovaAba ?? false;
 
 $ehParcela = $modo === 'parcela';
+$primeiraJaPaga = !$ehParcela && (int) ($acordo['tipo'] ?? 0) === 5;
 
 if ($ehParcela) {
     $cursoNome = (string) ($parcela['curso_nome'] ?? '-');
@@ -133,7 +134,7 @@ $formAction = $ehParcela
           <?php endif; ?>
 
           <div class="bg-white border rounded-4 p-4 shadow-sm mb-4">
-            <h5 class="mb-3"><i class="bi bi-person-check me-2"></i><?= $ehParcela ? 'Parcela a pagar' : 'Acordo negociado' ?></h5>
+            <h5 class="mb-3"><i class="bi bi-person-check me-2"></i><?= $ehParcela ? 'Parcela a pagar' : ($primeiraJaPaga ? 'Autorizar recorrência das parcelas restantes' : 'Acordo negociado') ?></h5>
             <div class="row g-3">
               <div class="col-md-6">
                 <div class="text-muted small text-uppercase">Candidato</div>
@@ -236,13 +237,13 @@ $formAction = $ehParcela
               <?php if (!$ehParcela): ?>
                 <div class="recorrencia-box" id="recorrenciaBox" style="display:none;">
                   <div class="form-check mb-0">
-                    <input class="form-check-input" type="checkbox" name="recorrencia" value="1" id="recorrenciaCheck">
+                    <input class="form-check-input" type="checkbox" name="recorrencia" value="1" id="recorrenciaCheck"<?= $primeiraJaPaga ? ' checked required' : '' ?>>
                     <label class="form-check-label" for="recorrenciaCheck">
                       <i class="bi bi-arrow-repeat me-1"></i>Autorizar cobrança automática das próximas parcelas
                       <span class="text-muted">no cartão de crédito</span>
                     </label>
                   </div>
-                  <div class="form-text mb-0">Ao autorizar, as parcelas restantes do acordo serão cobradas automaticamente no seu cartão após a confirmação do pagamento da entrada.</div>
+                  <div class="form-text mb-0"><?= $primeiraJaPaga ? 'A primeira parcela já foi paga. As parcelas restantes serão cobradas automaticamente no seu cartão a cada 30 dias.' : 'Ao autorizar, as parcelas restantes do acordo serão cobradas automaticamente no seu cartão após a confirmação do pagamento da entrada.' ?></div>
                 </div>
               <?php endif; ?>
 
@@ -252,8 +253,12 @@ $formAction = $ehParcela
                   Ao continuar, será gerada a cobrança da <strong><?= $numeroParcela ?>ª parcela</strong>
                   (R$ <?= number_format($valorParcela, 2, ',', '.') ?>).
                 <?php else: ?>
-                  Ao continuar, será gerada a cobrança referente à <strong>entrada</strong>
-                  (R$ <?= number_format($valorParcela, 2, ',', '.') ?>). As demais parcelas serão geradas após a confirmação do pagamento.
+                  <?php if ($primeiraJaPaga): ?>
+                    A primeira parcela já está registrada como paga. Ao continuar, a recorrência das <strong><?= max(0, $totalParcelas - 1) ?> parcelas restantes</strong> será ativada.
+                  <?php else: ?>
+                    Ao continuar, será gerada a cobrança referente à <strong>entrada</strong>
+                    (R$ <?= number_format($valorParcela, 2, ',', '.') ?>). As demais parcelas serão geradas após a confirmação do pagamento.
+                  <?php endif; ?>
                 <?php endif; ?>
               </div>
 
