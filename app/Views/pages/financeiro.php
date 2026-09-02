@@ -71,7 +71,7 @@ $formAction = $ehParcela
         <?php elseif ($sucesso): ?>
           <div class="bg-white border rounded-4 p-5 shadow-sm text-center">
             <div class="mb-3 text-success"><i class="bi bi-check-circle-fill" style="font-size:4rem;"></i></div>
-            <h3 class="mb-2">Cobrança gerada!</h3>
+            <h3 class="mb-2"><?= $primeiraJaPaga ? 'Link de recorrência criado!' : 'Cobrança gerada!' ?></h3>
             <?php if ($ehParcela): ?>
               <p class="text-muted mb-1"><?= $numeroParcela ?>ª parcela (de <?= $totalParcelas ?>) para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
               <p class="mb-4">Valor da parcela: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong></p>
@@ -80,8 +80,13 @@ $formAction = $ehParcela
                 <p class="text-muted mb-1">Primeira parcela do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
                 <p class="mb-4">Valor da parcela: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
               <?php else: ?>
-                <p class="text-muted mb-1">Primeira parcela (entrada) do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
-                <p class="mb-4">Valor da entrada: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
+                <?php if ($primeiraJaPaga): ?>
+                  <p class="text-muted mb-1">A primeira parcela já foi paga para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+                  <p class="mb-4">Abra o link abaixo para cadastrar o cartão e ativar as <?= max(0, $parcelas - 1) ?> cobranças restantes.</p>
+                <?php else: ?>
+                  <p class="text-muted mb-1">Primeira parcela (entrada) do acordo para <strong><?= htmlspecialchars($cursoNome, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+                  <p class="mb-4">Valor da entrada: <strong>R$ <?= number_format($valorParcela, 2, ',', '.') ?></strong> (total de <?= $parcelas ?>x)</p>
+                <?php endif; ?>
               <?php endif; ?>
             <?php endif; ?>
             <?php if ($asaasError): ?>
@@ -120,7 +125,7 @@ $formAction = $ehParcela
               <?php else: ?>
                 <p class="text-muted mb-4">Sua cobrança foi gerada. Clique no botão abaixo para concluir o pagamento no ambiente seguro do Asaas.</p>
                 <?php $checkoutUrl = $invoiceUrl !== '' ? $invoiceUrl : $bankSlipUrl; ?>
-                <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($checkoutUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" id="btnAbrirCheckout"><i class="bi bi-credit-card me-1"></i>Abrir pagamento</a>
+                <a class="btn-primary-custom mb-3" href="<?= htmlspecialchars($checkoutUrl, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer" id="btnAbrirCheckout"><i class="bi bi-credit-card me-1"></i><?= $primeiraJaPaga ? 'Cadastrar cartão e ativar recorrência' : 'Abrir pagamento' ?></a>
               <?php endif; ?>
               <br>
             <?php else: ?>
@@ -243,7 +248,7 @@ $formAction = $ehParcela
                       <span class="text-muted">no cartão de crédito</span>
                     </label>
                   </div>
-                  <div class="form-text mb-0"><?= $primeiraJaPaga ? 'A primeira parcela já foi paga. As parcelas restantes serão cobradas automaticamente no seu cartão a cada 30 dias.' : 'Ao autorizar, as parcelas restantes do acordo serão cobradas automaticamente no seu cartão após a confirmação do pagamento da entrada.' ?></div>
+                  <div class="form-text mb-0"><?= $primeiraJaPaga ? 'A primeira parcela já foi paga. As parcelas restantes serão cobradas automaticamente no seu cartão no dia 10 de cada mês.' : 'Ao autorizar, as parcelas restantes do acordo serão cobradas automaticamente no seu cartão após a confirmação do pagamento da entrada.' ?></div>
                 </div>
               <?php endif; ?>
 

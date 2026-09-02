@@ -88,7 +88,7 @@ final class AsaasService
             'billingType' => (string) ($data['billing_type'] ?? 'CREDIT_CARD'),
             'value' => (float) ($data['value'] ?? 0),
             'cycle' => (string) ($data['cycle'] ?? 'MONTHLY'),
-            'nextDueDate' => $data['next_due_date'] ?? date('Y-m-d', strtotime('+30 days')),
+            'nextDueDate' => $data['next_due_date'] ?? $this->proximoDiaDez(),
             'description' => mb_substr((string) ($data['description'] ?? ''), 0, 200),
             'externalReference' => (string) ($data['external_reference'] ?? ''),
         ];
@@ -109,6 +109,75 @@ final class AsaasService
         }
 
         return null;
+    }
+
+    /**
+     * Recupera a primeira cobrança criada pelo Asaas para uma assinatura.
+     * Essa cobrança contém a invoiceUrl usada pelo aluno para informar o cartão.
+     */
+    public function primeiraCobrancaAssinatura(string $subscriptionId): ?array
+    {
+        $subscriptionId = trim($subscriptionId);
+        if ($subscriptionId === '') {
+            return null;
+        }
+
+        $response = $this->request(
+            'GET',
+            '/subscriptions/' . rawurlencode($subscriptionId) . '/payments?limit=1'
+        );
+
+        $cobrancas = is_array($response['data'] ?? null) ? $response['data'] : [];
+        if (!isset($cobrancas[0]) || !is_array($cobrancas[0])) {
+            return null;
+        }
+
+        $cobranca = $cobrancas[0];
+        return [
+            'id' => (string) ($cobranca['id'] ?? ''),
+            'status' => (string) ($cobranca['status'] ?? 'PENDING'),
+            'invoiceUrl' => (string) ($cobranca['invoiceUrl'] ?? ''),
+            'bankSlipUrl' => (string) ($cobranca['bankSlipUrl'] ?? ''),
+            'paymentLink' => (string) ($cobranca['paymentLink'] ?? ''),
+        ];
+    }
+
+    public function criarLinkPagamento(array $data): ?array
+    {
+        $body = [
+            'name' => mb_substr((string) ($data['name'] ?? 'Pagamento'), 0, 100),
+            'description' => mb_substr((string) ($data['description'] ?? ''), 0, 500),
+            'value' => (float) ($data['value'] ?? 0),
+            'billingType' => (string) ($data['billing_type'] ?? 'CREDIT_CARD'),
+            'chargeType' => (string) ($data['charge_type'] ?? 'RECURRENT'),
+            'subscriptionCycle' => (string) ($data['subscription_cycle'] ?? 'MONTHLY'),
+            'externalReference' => (string) ($data['external_reference'] ?? ''),
+            'notificationEnabled' => true,
+        ];
+
+        if (!empty($data['end_date'])) {
+            $body['endDate'] = (string) $data['end_date'];
+        }
+
+        $response = $this->request('POST', '/paymentLinks', $body);
+        if (!$response || empty($response['url'])) {
+            return null;
+        }
+
+        return [
+            'id' => (string) ($response['id'] ?? ''),
+            'url' => (string) $response['url'],
+        ];
+    }
+
+    private function proximoDiaDez(): string
+    {
+        $mes = (new \DateTimeImmutable('today'))->modify('first day of next month');
+        return $mes->setDate(
+            (int) $mes->format('Y'),
+            (int) $mes->format('m'),
+            10
+        )->format('Y-m-d');
     }
 
     public function listarCobrancas(array $filters = []): ?array

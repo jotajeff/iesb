@@ -45,7 +45,7 @@ final class CursoParcelaService
 
     /**
      * Gera as parcelas restantes (2..N) para inscrições feitas pelo site,
-     * com intervalo de 30 dias. Usa o total_parcelas do plano (cursos_pagamento)
+     * com vencimento no dia 10 de cada mês. Usa o total_parcelas do plano (cursos_pagamento)
      * já gravado na parcela origem.
      *
      * @param array<string, mixed> $parcelaOrigem
@@ -82,7 +82,7 @@ final class CursoParcelaService
                 continue;
             }
 
-            $dataVenc = (new \DateTimeImmutable($dataBase))->modify('+' . (($n - 1) * 30) . ' days')->format('Y-m-d');
+            $dataVenc = $this->calcularVencimentoMensal($dataBase, $n - 1);
 
             $id = $this->criar([
                 'id_curso' => $idCurso,
@@ -142,7 +142,7 @@ final class CursoParcelaService
                 continue;
             }
 
-            $dataVenc = date('Y-m-d', strtotime($dataBase . ' + ' . (($n - 1) * 30) . ' days'));
+            $dataVenc = $this->calcularVencimentoMensal($dataBase, $n - 1);
 
             $id = $this->criarComAcordo([
                 'id_curso' => $idCurso,
@@ -173,6 +173,22 @@ final class CursoParcelaService
     public function atualizarAsaasInfo(int $id, array $data): bool
     {
         return $this->repository->updateAsaasInfo($id, $data);
+    }
+
+    private function calcularVencimentoMensal(string $dataBase, int $meses): string
+    {
+        try {
+            $base = new \DateTimeImmutable($dataBase);
+        } catch (\Throwable) {
+            $base = new \DateTimeImmutable('today');
+        }
+
+        $mes = $base->modify('first day of +' . max(0, $meses) . ' month');
+        return $mes->setDate(
+            (int) $mes->format('Y'),
+            (int) $mes->format('m'),
+            10
+        )->format('Y-m-d');
     }
 
     public function vincularAcordo(int $id, int $idAcordo): bool

@@ -12,7 +12,24 @@
       <span class="badge bg-primary"><?= count($matriculasView) ?> matrícula(s)</span>
     </div>
 
-    <?php if (empty($matriculasView)): ?>
+    <form method="get" action="/admin/matriculas" class="row g-2 mb-4">
+      <div class="col-md-6 col-lg-4">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" class="form-control" name="nome" value="<?= htmlspecialchars($nomeBusca ?? '', ENT_QUOTES, 'UTF-8') ?>" placeholder="Pesquisar pelo nome do aluno...">
+          <?php if (!empty($nomeBusca)): ?>
+            <a class="btn btn-outline-secondary" href="/admin/matriculas" title="Limpar busca"><i class="bi bi-x-lg"></i></a>
+          <?php endif; ?>
+        </div>
+      </div>
+      <div class="col-auto">
+        <button class="btn btn-primary" type="submit"><i class="bi bi-funnel me-1"></i>Filtrar</button>
+      </div>
+    </form>
+
+    <?php if ($nomeBusca !== '' && empty($matriculasView)): ?>
+      <p class="text-muted mb-0">Nenhuma matrícula encontrada para "<strong><?= htmlspecialchars($nomeBusca, ENT_QUOTES, 'UTF-8') ?></strong>".</p>
+    <?php elseif (empty($matriculasView)): ?>
       <p class="text-muted mb-0">Nenhuma matrícula ativa encontrada.</p>
     <?php else: ?>
       <?php foreach ($matriculasView as $matricula): ?>

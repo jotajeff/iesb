@@ -154,7 +154,7 @@ final class MatriculaService
             $inscricao['id_aluno'] = $idAluno;
             $inscricao['id_matricula'] = $idMatricula;
 
-            // Inscrição direta (sem acordo): gera as demais parcelas (30 dias)
+            // Inscrição direta (sem acordo): gera as demais parcelas no dia 10 de cada mês.
             // assim que a 1ª é paga, para constarem no financeiro do aluno.
             $this->garantirParcelasRestantesDireta($inscricao);
 
@@ -183,7 +183,8 @@ final class MatriculaService
 
     /**
      * Gera as parcelas restantes (2..N) de uma inscrição direta feita pelo
-     * site (sem acordo de pagamento), com intervalo de 30 dias. Idempotente.
+     * site (sem acordo de pagamento), com vencimento no dia 10 de cada mês.
+     * Idempotente.
      * Não faz nada para acordos (o fluxo deles é tratado pela recorrência).
      *
      * @param array<string, mixed> $inscricao
@@ -264,10 +265,10 @@ final class MatriculaService
 
             $dataBase = (string) ($inscricao['data_vencimento'] ?? date('Y-m-d'));
             if ($dataInicio === '') {
-                $dataInicio = date('Y-m-d', strtotime($dataBase . ' + 30 days'));
+                $dataInicio = $this->calcularVencimentoMensal($dataBase, 1);
             }
             if ($dataFim === '') {
-                $dataFim = date('Y-m-d', strtotime($dataInicio . ' + ' . (($totalParcelas - 2) * 30) . ' days'));
+                $dataFim = $this->calcularVencimentoMensal($dataBase, $totalParcelas - 1);
             }
 
             $valor = (float) ($inscricao['valor'] ?? 0);
@@ -384,6 +385,22 @@ final class MatriculaService
      *
      * @param array<string, mixed> $inscricao
      */
+    private function calcularVencimentoMensal(string $dataBase, int $meses): string
+    {
+        try {
+            $base = new \DateTimeImmutable($dataBase);
+        } catch (\Throwable) {
+            $base = new \DateTimeImmutable('today');
+        }
+
+        $mes = $base->modify('first day of +' . max(0, $meses) . ' month');
+        return $mes->setDate(
+            (int) $mes->format('Y'),
+            (int) $mes->format('m'),
+            10
+        )->format('Y-m-d');
+    }
+
     private function criarAssinaturaSeNecessario(array $inscricao): void
     {
         if ((int) ($inscricao['numero_parcela'] ?? 1) !== 1) {

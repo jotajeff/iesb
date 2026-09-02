@@ -223,9 +223,10 @@ final class TurmaController extends Controller
 
         $authUser = Session::get('user');
         $isProfessor = (string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor';
+        $nomeBusca = trim((string) ($_GET['nome'] ?? ''));
         $matriculas = $isProfessor
-            ? $this->turmaService->matriculasAtivasDoProfessor((int) ($authUser['id'] ?? 0))
-            : $this->turmaService->matriculasAtivas();
+            ? $this->turmaService->matriculasAtivasDoProfessor((int) ($authUser['id'] ?? 0), $nomeBusca)
+            : $this->turmaService->matriculasAtivas($nomeBusca);
 
         $emailStatus = (new NotificacaoMatriculaService())->mapaStatus();
 
@@ -234,6 +235,7 @@ final class TurmaController extends Controller
             'currentRoute' => '/admin/matriculas',
             'matriculas' => $matriculas,
             'emailStatus' => $emailStatus,
+            'nomeBusca' => $nomeBusca,
         ], 'admin');
     }
 

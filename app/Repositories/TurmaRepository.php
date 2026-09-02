@@ -177,12 +177,14 @@ final class TurmaRepository
         }
     }
 
-    public function listMatriculasAtivas(): array
+    public function listMatriculasAtivas(string $nome = ''): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
             return [];
         }
+
+        $nome = trim($nome);
 
         try {
             $sql = 'SELECT m.id, m.id_aluno, m.id_curso, m.id_turma, m.data_matricula,
@@ -191,10 +193,17 @@ final class TurmaRepository
                     INNER JOIN alunos a ON a.id = m.id_aluno
                     INNER JOIN turmas t ON t.id = m.id_turma
                     INNER JOIN cursos c ON c.id = m.id_curso
-                    WHERE m.ativo = 1 AND t.ativo = 1
-                    ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
+                    WHERE m.ativo = 1 AND t.ativo = 1';
+            if ($nome !== '') {
+                $sql .= ' AND a.nome LIKE :nome';
+            }
+            $sql .= ' ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
 
-            $stmt = $pdo->query($sql);
+            $stmt = $pdo->prepare($sql);
+            if ($nome !== '') {
+                $stmt->bindValue(':nome', '%' . $nome . '%', PDO::PARAM_STR);
+            }
+            $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
         } catch (\Throwable $e) {
@@ -203,12 +212,14 @@ final class TurmaRepository
         }
     }
 
-    public function listMatriculasAtivasForProfessor(int $professorId): array
+    public function listMatriculasAtivasForProfessor(int $professorId, string $nome = ''): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO || $professorId <= 0) {
             return [];
         }
+
+        $nome = trim($nome);
 
         try {
             $sql = 'SELECT m.id, m.id_aluno, m.id_curso, m.id_turma, m.data_matricula,
@@ -217,10 +228,16 @@ final class TurmaRepository
                     INNER JOIN alunos a ON a.id = m.id_aluno
                     INNER JOIN turmas t ON t.id = m.id_turma
                     INNER JOIN cursos c ON c.id = m.id_curso
-                    WHERE m.ativo = 1 AND t.ativo = 1 AND ' . $this->professorAccessCondition() . '
-                    ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
+                    WHERE m.ativo = 1 AND t.ativo = 1 AND ' . $this->professorAccessCondition();
+            if ($nome !== '') {
+                $sql .= ' AND a.nome LIKE :nome';
+            }
+            $sql .= ' ORDER BY c.nome ASC, t.nome ASC, a.nome ASC';
             $stmt = $pdo->prepare($sql);
             $this->bindProfessorCondition($stmt, $professorId);
+            if ($nome !== '') {
+                $stmt->bindValue(':nome', '%' . $nome . '%', PDO::PARAM_STR);
+            }
             $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];

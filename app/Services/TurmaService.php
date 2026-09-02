@@ -28,14 +28,14 @@ final class TurmaService
         return $this->repository->listForProfessor($professorId, $limit, $ativo);
     }
 
-    public function matriculasAtivas(): array
+    public function matriculasAtivas(string $nome = ''): array
     {
-        return $this->repository->listMatriculasAtivas();
+        return $this->repository->listMatriculasAtivas($nome);
     }
 
-    public function matriculasAtivasDoProfessor(int $professorId): array
+    public function matriculasAtivasDoProfessor(int $professorId, string $nome = ''): array
     {
-        return $this->repository->listMatriculasAtivasForProfessor($professorId);
+        return $this->repository->listMatriculasAtivasForProfessor($professorId, $nome);
     }
 
     public function professorPodeAcessarTurma(int $professorId, int $turmaId): bool

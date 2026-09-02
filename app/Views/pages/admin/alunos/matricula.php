@@ -73,7 +73,11 @@
         <p class="text-muted small">A primeira parcela será lançada como paga. Escolha como as parcelas restantes serão tratadas.</p>
         <div class="row g-3">
           <div class="col-12">
-            <label for="tipo_financeiro" class="form-label">Forma de tratamento financeiro <span class="text-danger">*</span></label>
+            <label for="tipo_financeiro" class="form-label">Forma de tratamento financeiro <span class="text-danger">*</span>
+              <button type="button" class="btn btn-sm p-0 border-0 bg-transparent" data-bs-toggle="modal" data-bs-target="#modalFormaFinanceira" title="O que cada opção significa?" style="color: #0d6efd;">
+                <i class="bi bi-question-circle"></i>
+              </button>
+            </label>
             <select class="form-select" id="tipo_financeiro" name="tipo_financeiro" required>
               <option value="1">Opção 1 — Gerar cobranças independentes no Asaas</option>
               <option value="2">Opção 2 — Enviar link para o aluno escolher cartão e recorrência</option>
@@ -227,6 +231,35 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i>Cancelar</button>
         <button type="button" class="btn btn-success" id="btnConfirmarMatricula"><i class="bi bi-check-lg me-1"></i>Confirmar matrícula</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalFormaFinanceira" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary-subtle">
+        <h5 class="modal-title"><i class="bi bi-question-circle me-2"></i>Forma de tratamento financeiro</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Entenda o que cada opção faz com as parcelas após a primeira (paga):</p>
+        <div class="d-flex gap-3 mb-3">
+          <span class="badge bg-primary rounded-pill align-self-start mt-1">Opção 1</span>
+          <span>Primeira paga, demais geradas automaticamente no painel financeiro do aluno.</span>
+        </div>
+        <div class="d-flex gap-3 mb-3">
+          <span class="badge bg-primary rounded-pill align-self-start mt-1">Opção 2</span>
+          <span>Primeira paga, demais, a forma de pagamento será decidida pelo aluno. Via link enviado para o mesmo.</span>
+        </div>
+        <div class="d-flex gap-3">
+          <span class="badge bg-primary rounded-pill align-self-start mt-1">Opção 3</span>
+          <span>Controle de parcelas fica a cargo do admin / IESB.</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Entendi</button>
       </div>
     </div>
   </div>

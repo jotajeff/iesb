@@ -161,16 +161,38 @@ final class FinanceiroController extends Controller
                 return;
             }
 
-            $this->acordoService->atualizarRecorrencia($idAcordo, ['recorrencia_cartao' => 1]);
             $origem['asaas_customer'] = $customerId;
-            $resultado = (new RecorrenciaService())->criarAssinatura($origem);
+            $this->parcelaService->gerarParcelasRestantes($origem, $acordo);
+            $parcelasAcordo = $this->parcelaService->listarPorAcordo($idAcordo);
+            $dataFimRecorrencia = '';
+            foreach ($parcelasAcordo as $parcelaAcordo) {
+                if ((int) ($parcelaAcordo['numero_parcela'] ?? 0) === $totalParcelas) {
+                    $dataFimRecorrencia = (string) ($parcelaAcordo['data_vencimento'] ?? '');
+                    break;
+                }
+            }
+
+            $link = $asaas->criarLinkPagamento([
+                'name' => $nomeCurso . ' - recorrência',
+                'description' => $descricaoPlano . ' - ' . max(0, $totalParcelas - 1) . ' parcelas restantes',
+                'value' => $valorDemaisParcelas > 0 ? $valorDemaisParcelas : (float) ($origem['valor'] ?? 0),
+                'billing_type' => 'CREDIT_CARD',
+                'charge_type' => 'RECURRENT',
+                'subscription_cycle' => 'MONTHLY',
+                'end_date' => $dataFimRecorrencia !== '' ? $dataFimRecorrencia : null,
+                'external_reference' => (string) $idAcordo,
+            ]);
+            $resultado = $link !== null
+                ? ['success' => true, 'invoiceUrl' => (string) ($link['url'] ?? '')]
+                : ['success' => false, 'message' => 'Não foi possível criar o link de pagamento recorrente: ' . ($asaas->getLastError() ?? 'erro desconhecido')];
+            $invoiceUrlRecorrencia = (string) ($resultado['invoiceUrl'] ?? '');
             $this->render('pages/financeiro', [
                 'title' => 'Portal Financeiro', 'currentRoute' => '/financeiro', 'acordo' => $acordo,
                 'token' => $token, 'sucesso' => (bool) ($resultado['success'] ?? false), 'inscricaoId' => $origemId,
-                'invoiceUrl' => '', 'bankSlipUrl' => '', 'pixQrCode' => null, 'linhaDigitavel' => null,
+                'invoiceUrl' => $invoiceUrlRecorrencia, 'bankSlipUrl' => '', 'pixQrCode' => null, 'linhaDigitavel' => null,
                 'billingType' => 'CREDIT_CARD',
                 'asaasError' => ($resultado['success'] ?? false) ? null : (string) ($resultado['message'] ?? 'Não foi possível ativar a recorrência.'),
-                'abrirCheckoutNovaAba' => false,
+                'abrirCheckoutNovaAba' => ($resultado['success'] ?? false) && $invoiceUrlRecorrencia !== '',
             ]);
             return;
         }

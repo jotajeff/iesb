@@ -84,10 +84,10 @@ final class RecorrenciaService
 
         $dataBase = (string) ($parcelaOrigem['data_vencimento'] ?? date('Y-m-d'));
         if ($dataInicio === '') {
-            $dataInicio = date('Y-m-d', strtotime($dataBase . ' + 30 days'));
+            $dataInicio = $this->calcularVencimentoMensal($dataBase, 1);
         }
         if ($dataFim === '') {
-            $dataFim = date('Y-m-d', strtotime($dataInicio . ' + ' . (($totalParcelas - 2) * 30) . ' days'));
+            $dataFim = $this->calcularVencimentoMensal($dataBase, $totalParcelas - 1);
         }
 
         $valor = (float) ($acordo['valor_demais_parcelas'] ?? 0);
@@ -119,6 +119,10 @@ final class RecorrenciaService
             ];
         }
 
+        $cobranca = $this->asaas->primeiraCobrancaAssinatura((string) ($resultado['id'] ?? ''));
+        $invoiceUrl = (string) ($cobranca['invoiceUrl'] ?? $cobranca['paymentLink'] ?? '');
+        $bankSlipUrl = (string) ($cobranca['bankSlipUrl'] ?? '');
+
         $this->acordoService->atualizarRecorrencia($idAcordo, [
             'asaas_subscription' => (string) ($resultado['id'] ?? ''),
             'status_recorrencia' => 'ATIVA',
@@ -131,7 +135,26 @@ final class RecorrenciaService
             'subscription' => (string) ($resultado['id'] ?? ''),
             'dataInicio' => $dataInicio,
             'dataFim' => $dataFim,
+            'invoiceUrl' => $invoiceUrl,
+            'bankSlipUrl' => $bankSlipUrl,
+            'paymentId' => (string) ($cobranca['id'] ?? ''),
         ];
+    }
+
+    private function calcularVencimentoMensal(string $dataBase, int $meses): string
+    {
+        try {
+            $base = new \DateTimeImmutable($dataBase);
+        } catch (\Throwable) {
+            $base = new \DateTimeImmutable('today');
+        }
+
+        $mes = $base->modify('first day of +' . max(0, $meses) . ' month');
+        return $mes->setDate(
+            (int) $mes->format('Y'),
+            (int) $mes->format('m'),
+            10
+        )->format('Y-m-d');
     }
 
     /**
@@ -175,6 +198,20 @@ final class RecorrenciaService
             $parcelaOrigem = $this->parcelaService->findByAsaasSubscription($subscription);
             if ($parcelaOrigem !== null) {
                 return $this->vincularParcelaPorInscricao($parcelaOrigem, $payment);
+            }
+
+            // Link de pagamento recorrente: a assinatura só nasce depois que
+            // o aluno informa o cartão, portanto ainda não existe no acordo.
+            $externalReference = (string) ($payment['externalReference'] ?? '');
+            if ($externalReference !== '' && ctype_digit($externalReference)) {
+                $acordo = $this->acordoService->findById((int) $externalReference);
+                if ($acordo !== null) {
+                    $this->acordoService->atualizarRecorrencia((int) $acordo['id'], [
+                        'asaas_subscription' => $subscription,
+                        'status_recorrencia' => 'ATIVA',
+                    ]);
+                    return $this->vincularParcelaPorAcordo((int) $acordo['id'], $payment);
+                }
             }
 
             return null;

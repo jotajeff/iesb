@@ -11,3 +11,4 @@
 /storage
 *.md
 *.sql/.env_old
+/.env_sandbox
