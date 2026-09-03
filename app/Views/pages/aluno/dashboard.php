@@ -49,6 +49,24 @@
       </div>
     <?php endif; ?>
 
+    <?php if (!empty($avisoParcela)): ?>
+      <div class="alert alert-warning d-flex align-items-start gap-3 mb-4" role="alert">
+        <i class="bi bi-exclamation-triangle-fill fs-4 mt-1" aria-hidden="true"></i>
+        <div>
+          <div class="fw-semibold">
+            <?php if ((int) $avisoParcelaDias === 1): ?>
+              Falta 1 dia para o vencimento da sua parcela.
+            <?php else: ?>
+              Faltam <?= (int) $avisoParcelaDias ?> dias para o vencimento da sua parcela.
+            <?php endif; ?>
+          </div>
+          <a href="/aluno/financeiro" class="alert-link fw-semibold d-inline-block mt-2">
+            <i class="bi bi-cash-coin me-1"></i>Ver financeiro
+          </a>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <div class="row g-3 mb-4">
       <div class="col-md-3" data-aos="fade-up" data-aos-delay="0">
         <a href="/aluno/cursos" class="text-decoration-none">
@@ -62,17 +80,6 @@
             </div>
           </div>
         </a>
-      </div>
-      <div class="col-md-3" data-aos="fade-up" data-aos-delay="100">
-        <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #198754, #157347); color: #fff;">
-          <div class="d-flex align-items-center justify-content-center rounded-circle" style="width: 54px; height: 54px; background: rgba(255,255,255,0.2); font-size: 1.5rem;">
-            <i class="bi bi-check-circle-fill"></i>
-          </div>
-          <div>
-            <div class="fs-3 fw-bold"><?= $statusCounts['active'] ?? 0 ?></div>
-            <div class="small opacity-75">Ativos</div>
-          </div>
-        </div>
       </div>
       <div class="col-md-3" data-aos="fade-up" data-aos-delay="200">
         <div class="d-flex align-items-center gap-3 p-3 rounded-3 shadow-sm" style="background: linear-gradient(135deg, #ffc107, #e0a800); color: #212529;">

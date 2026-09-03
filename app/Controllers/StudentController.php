@@ -150,6 +150,40 @@ final class StudentController extends Controller
             }
         }
 
+        $avisoParcela = null;
+        $avisoParcelaDias = 0;
+        if ($pdo instanceof \PDO && $studentId === 77) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT cp.id, cp.numero_parcela, cp.data_vencimento, cp.valor, c.nome AS curso_nome'
+                    . ' FROM curso_parcela cp'
+                    . ' LEFT JOIN cursos c ON c.id = cp.id_curso'
+                    . ' WHERE cp.id_aluno = :id_aluno'
+                    . ' AND cp.status IN (\'PENDENTE\', \'AGUARDANDO\')'
+                    . ' AND cp.ativo = 1'
+                    . ' AND cp.data_vencimento BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 10 DAY)'
+                    . ' ORDER BY cp.data_vencimento ASC'
+                    . ' LIMIT 1'
+                );
+                $stmt->bindValue(':id_aluno', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $avisoParcela = $stmt->fetch() ?: null;
+            } catch (\Throwable $e) {
+                error_log('[STUDENT DASHBOARD PARCELA] Erro: ' . $e->getMessage());
+                $avisoParcela = null;
+            }
+
+            if (is_array($avisoParcela)) {
+                try {
+                    $hoje = new \DateTime('today');
+                    $vencimento = new \DateTime((string) ($avisoParcela['data_vencimento'] ?? ''));
+                    $avisoParcelaDias = (int) $hoje->diff($vencimento)->days;
+                } catch (\Throwable) {
+                    $avisoParcelaDias = 0;
+                }
+            }
+        }
+
         $this->render('pages/aluno/dashboard', [
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
@@ -160,6 +194,8 @@ final class StudentController extends Controller
             'temEndereco' => $temEndereco,
             'documentosPendentes' => $documentosPendentes,
             'noticias' => $this->noticiaService->listPublicados(),
+            'avisoParcela' => $avisoParcela,
+            'avisoParcelaDias' => $avisoParcelaDias,
         ], 'aluno');
     }
 
