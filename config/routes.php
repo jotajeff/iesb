@@ -21,6 +21,7 @@ use App\Controllers\Admin\StorageController;
 use App\Controllers\Admin\AcademicoController;
 use App\Controllers\Admin\PermissaoController;
 use App\Controllers\Admin\BannerAlunoController;
+use App\Controllers\Admin\ChamadaController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -280,6 +281,13 @@ return static function (Router $router): void {
     $router->get('/admin/config/banner-aluno/editar', [BannerAlunoController::class, 'editar']);
     $router->post('/admin/config/banner-aluno/salvar', [BannerAlunoController::class, 'salvar']);
 
+    $router->get('/admin/chamadas', [ChamadaController::class, 'index']);
+    $router->get('/admin/chamadas/novo', [ChamadaController::class, 'novo']);
+    $router->get('/admin/chamadas/relatorio', [ChamadaController::class, 'relatorio']);
+    $router->post('/admin/chamadas/gerar', [ChamadaController::class, 'gerar']);
+    $router->get('/admin/chamadas/ajax-professores', [ChamadaController::class, 'ajaxProfessores']);
+    $router->get('/admin/chamadas/ajax-disciplinas', [ChamadaController::class, 'ajaxDisciplinas']);
+
     $router->get('/admin/visitas', [VisitaController::class, 'index']);
     $router->get('/admin/visitas/mensal', [VisitaController::class, 'mensal']);
     $router->get('/admin/visitas/analytics', [VisitaController::class, 'analytics']);
@@ -317,6 +325,8 @@ return static function (Router $router): void {
     $router->post('/aluno/matricular', [StudentController::class, 'enroll']);
     $router->get('/aluno/notificacoes', [StudentController::class, 'notificacoes']);
     $router->post('/aluno/notificacoes/marcar-lida', [StudentController::class, 'marcarLida']);
+    $router->post('/aluno/chamada/presenca', [StudentController::class, 'registrarPresencaChamada']);
+    $router->get('/aluno/chamadas', [StudentController::class, 'chamadas']);
     $router->get('/aluno/documentos', [StudentController::class, 'documentos']);
     $router->post('/aluno/documentos/enviar', [StudentController::class, 'uploadDocumento']);
     $router->get('/aluno/documentos/visualizar', [StudentController::class, 'visualizarDocumento']);

@@ -67,6 +67,55 @@
       </div>
     <?php endif; ?>
 
+    <?php if (!empty($chamadaAberta) && trim((string) ($chamadaAberta['presenca_atual'] ?? '')) === ''): ?>
+      <?php
+        $presencaAtual = (string) ($chamadaAberta['presenca_atual'] ?? '');
+        $chData = (string) ($chamadaAberta['data_aula'] ?? '');
+        $chDataFmt = $chData !== '' ? date_create($chData) : false;
+        $chInicio = substr((string) ($chamadaAberta['hora_inicio'] ?? ''), 0, 5);
+        $chFim = substr((string) ($chamadaAberta['hora_fim'] ?? ''), 0, 5);
+        $chInicioFull = (string) ($chamadaAberta['hora_inicio'] ?? '');
+        $chFimFull = (string) ($chamadaAberta['hora_fim'] ?? '');
+        $dentroHorario = false;
+        if ($chData !== '' && $chInicioFull !== '' && $chFimFull !== '') {
+          $inicioTs = strtotime($chData . ' ' . $chInicioFull);
+          $fimTs = strtotime($chData . ' ' . $chFimFull);
+          $agoraTs = time();
+          $dentroHorario = $inicioTs !== false && $fimTs !== false && $agoraTs >= $inicioTs && $agoraTs <= $fimTs;
+        }
+      ?>
+      <div class="alert alert-primary d-flex align-items-start gap-3 mb-4" role="alert">
+        <i class="bi bi-clipboard-check fs-4 mt-1" aria-hidden="true"></i>
+        <div class="flex-grow-1">
+          <div class="fw-semibold"><i class="bi bi-bell me-1"></i>Chamada em andamento</div>
+          <div class="small mt-1">
+            <strong>Disciplina:</strong> <?= htmlspecialchars((string) ($chamadaAberta['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+            &middot; <strong>Turma:</strong> <?= htmlspecialchars((string) ($chamadaAberta['turma_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+            &middot; <strong>Horário:</strong> <?= htmlspecialchars(($chDataFmt ? $chDataFmt->format('d/m') : $chData) . ' ' . $chInicio . ' às ' . $chFim, ENT_QUOTES, 'UTF-8') ?>
+          </div>
+          <?php if (!$dentroHorario): ?>
+            <div class="alert alert-warning py-2 px-3 mb-2 mt-2 small">
+              <i class="bi bi-exclamation-triangle me-1"></i>Registro de presença permitido apenas entre <strong><?= htmlspecialchars($chInicio, ENT_QUOTES, 'UTF-8') ?></strong> e <strong><?= htmlspecialchars($chFim, ENT_QUOTES, 'UTF-8') ?></strong>.
+            </div>
+          <?php endif; ?>
+          <div class="d-flex flex-wrap gap-2 mt-2">
+            <form method="post" action="/aluno/chamada/presenca" class="d-inline">
+              <input type="hidden" name="id_chamada" value="<?= (int) ($chamadaAberta['id'] ?? 0) ?>">
+              <button type="submit" name="presenca" value="PRESENTE" class="btn btn-sm btn-success" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-check-lg me-1"></i>Presente</button>
+            </form>
+            <form method="post" action="/aluno/chamada/presenca" class="d-inline">
+              <input type="hidden" name="id_chamada" value="<?= (int) ($chamadaAberta['id'] ?? 0) ?>">
+              <button type="submit" name="presenca" value="AUSENTE" class="btn btn-sm btn-outline-danger" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-x-lg me-1"></i>Ausente</button>
+            </form>
+            <form method="post" action="/aluno/chamada/presenca" class="d-inline">
+              <input type="hidden" name="id_chamada" value="<?= (int) ($chamadaAberta['id'] ?? 0) ?>">
+              <button type="submit" name="presenca" value="JUSTIFICADA" class="btn btn-sm btn-outline-warning" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-shield-check me-1"></i>Justificada</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <?php if (!empty($banners ?? [])): ?>
       <div class="mb-4" data-aos="fade-up">
         <?php foreach ($banners as $banner): ?>
@@ -225,6 +274,10 @@
     </div>
   </div>
 </section>
+
+<div class="text-center small py-3" style="color: #6c757d !important;">
+  <i class="bi bi-clock me-1"></i><?= htmlspecialchars(date('d/m/Y H:i:s'), ENT_QUOTES, 'UTF-8') ?>
+</div>
 
 <style>
   .noticia-card, .curso-card {

@@ -214,6 +214,11 @@ final class StudentController extends Controller
             }
         }
 
+        $chamadaAberta = null;
+        if ($pdo instanceof \PDO) {
+            $chamadaAberta = $this->chamadaAbertaDoAluno($studentId);
+        }
+
         $this->render('pages/aluno/dashboard', [
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
@@ -225,6 +230,7 @@ final class StudentController extends Controller
             'documentosPendentes' => $documentosPendentes,
             'noticias' => $this->noticiaService->listPublicados(),
             'banners' => $banners,
+            'chamadaAberta' => $chamadaAberta,
             'avisoParcela' => $avisoParcela,
             'avisoParcelaDias' => $avisoParcelaDias,
         ], 'aluno');
@@ -252,6 +258,195 @@ final class StudentController extends Controller
             'noticia' => $noticia,
             'noticias' => $this->noticiaService->listPublicados(),
         ], 'aluno');
+    }
+
+    public function chamadas(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $chamadaAberta = $this->chamadaAbertaDoAluno($studentId);
+        $historico = [];
+        $pdo = Database::connection();
+
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT c.id, c.data_aula, c.hora_inicio, c.hora_fim, c.status AS chamada_status,'
+                    . ' t.nome AS turma_nome, d.nome AS disciplina_nome, cp.presenca, cp.updated_at'
+                    . ' FROM chamada_presenca cp'
+                    . ' JOIN chamada c ON c.id = cp.id_chamada'
+                    . ' JOIN matricula m ON m.id = cp.id_matricula'
+                    . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
+                    . ' JOIN disciplina d ON d.id = td.id_disciplina'
+                    . ' JOIN turmas t ON t.id = td.id_turma'
+                    . ' WHERE m.id_aluno = :aluno'
+                    . ' ORDER BY c.data_aula DESC, c.id DESC'
+                    . ' LIMIT 50'
+                );
+                $stmt->bindValue(':aluno', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $historico = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT CHAMADAS] Erro histórico: ' . $e->getMessage());
+                $historico = [];
+            }
+        }
+
+        $this->render('pages/aluno/chamadas', [
+            'title' => 'Chamadas',
+            'currentRoute' => '/aluno/chamadas',
+            'chamadaAberta' => $chamadaAberta,
+            'historico' => $historico,
+        ], 'aluno');
+    }
+
+    private function chamadaAbertaDoAluno(int $studentId): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO || $studentId <= 0) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT c.id, c.id_turma_disciplina, c.data_aula, c.numero_aula, c.hora_inicio, c.hora_fim, c.conteudo, c.status,"
+                . ' t.nome AS turma_nome, d.nome AS disciplina_nome,'
+                . " (SELECT cp.presenca FROM chamada_presenca cp"
+                . ' JOIN matricula m3 ON m3.id = cp.id_matricula'
+                . ' WHERE cp.id_chamada = c.id AND m3.id_aluno = :aluno_presenca LIMIT 1) AS presenca_atual'
+                . ' FROM chamada c'
+                . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
+                . ' JOIN disciplina d ON d.id = td.id_disciplina'
+                . ' JOIN turmas t ON t.id = td.id_turma'
+                . " WHERE c.status = 'ABERTA'"
+                . ' AND c.data_aula = CURDATE()'
+                . ' AND EXISTS ('
+                . ' SELECT 1 FROM matricula m'
+                . ' WHERE m.id_turma = td.id_turma'
+                . ' AND m.id_aluno = :aluno_chamada'
+                . ' AND m.ativo = 1'
+                . ')'
+                . ' ORDER BY c.data_aula DESC, c.id DESC'
+                . ' LIMIT 1'
+            );
+            $stmt->bindValue(':aluno_presenca', $studentId, \PDO::PARAM_INT);
+            $stmt->bindValue(':aluno_chamada', $studentId, \PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch() ?: null;
+            return is_array($row) ? $row : null;
+        } catch (\Throwable $e) {
+            error_log('[STUDENT CHAMADA ABERTA] Erro: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    public function registrarPresencaChamada(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+            return;
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+        $idChamada = (int) $this->input('id_chamada', 0);
+        $presenca = trim((string) $this->input('presenca', ''));
+
+        if ($idChamada <= 0 || !in_array($presenca, ['PRESENTE', 'AUSENTE', 'JUSTIFICADA'], true)) {
+            Session::setFlash('flash', 'Dados inválidos para registrar presença.');
+            $this->redirect('/aluno');
+            return;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            Session::setFlash('flash', 'Erro ao registrar presença.');
+            $this->redirect('/aluno');
+            return;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                "SELECT c.id, c.id_turma_disciplina FROM chamada c"
+                . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
+                . " WHERE c.id = :id AND c.status = 'ABERTA'"
+                . ' AND c.data_aula = CURDATE()'
+                . ' AND c.hora_inicio IS NOT NULL AND c.hora_fim IS NOT NULL'
+                . ' AND NOW() BETWEEN TIMESTAMP(c.data_aula, c.hora_inicio) AND TIMESTAMP(c.data_aula, c.hora_fim)'
+                . ' AND EXISTS ('
+                . ' SELECT 1 FROM matricula m'
+                . ' WHERE m.id_turma = td.id_turma'
+                . ' AND m.id_aluno = :aluno'
+                . ' AND m.ativo = 1'
+                . ') LIMIT 1'
+            );
+            $stmt->bindValue(':id', $idChamada, \PDO::PARAM_INT);
+            $stmt->bindValue(':aluno', $studentId, \PDO::PARAM_INT);
+            $stmt->execute();
+            $chamada = $stmt->fetch() ?: null;
+
+            if (!$chamada) {
+                Session::setFlash('flash', 'Chamada indisponível ou fora do horário.');
+                $this->redirect('/aluno');
+                return;
+            }
+
+            $idTurmaDisciplina = (int) ($chamada['id_turma_disciplina'] ?? 0);
+
+            $stmt = $pdo->prepare(
+                'SELECT m.id FROM matricula m'
+                . ' JOIN turma_disciplina td ON td.id = :id_td AND td.id_turma = m.id_turma'
+                . ' WHERE m.id_aluno = :aluno AND m.ativo = 1 LIMIT 1'
+            );
+            $stmt->bindValue(':id_td', $idTurmaDisciplina, \PDO::PARAM_INT);
+            $stmt->bindValue(':aluno', $studentId, \PDO::PARAM_INT);
+            $stmt->execute();
+            $idMatricula = (int) ($stmt->fetchColumn() ?: 0);
+
+            if ($idMatricula <= 0) {
+                Session::setFlash('flash', 'Matrícula na disciplina não encontrada.');
+                $this->redirect('/aluno');
+                return;
+            }
+
+            $stmt = $pdo->prepare(
+                'SELECT id FROM chamada_presenca WHERE id_chamada = :id_chamada AND id_matricula = :id_matricula LIMIT 1'
+            );
+            $stmt->bindValue(':id_chamada', $idChamada, \PDO::PARAM_INT);
+            $stmt->bindValue(':id_matricula', $idMatricula, \PDO::PARAM_INT);
+            $stmt->execute();
+            $idPresenca = (int) ($stmt->fetchColumn() ?: 0);
+
+            if ($idPresenca > 0) {
+                $stmt = $pdo->prepare('UPDATE chamada_presenca SET presenca = :presenca WHERE id = :id');
+                $stmt->bindValue(':presenca', $presenca, \PDO::PARAM_STR);
+                $stmt->bindValue(':id', $idPresenca, \PDO::PARAM_INT);
+                $stmt->execute();
+            } else {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO chamada_presenca (id_chamada, id_matricula, presenca, created_at)'
+                    . ' VALUES (:id_chamada, :id_matricula, :presenca, NOW())'
+                );
+                $stmt->bindValue(':id_chamada', $idChamada, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_matricula', $idMatricula, \PDO::PARAM_INT);
+                $stmt->bindValue(':presenca', $presenca, \PDO::PARAM_STR);
+                $stmt->execute();
+            }
+
+            Session::setFlash('flash', 'Presença registrada como ' . ucfirst(strtolower($presenca)) . '.');
+        } catch (\Throwable $e) {
+            error_log('[STUDENT CHAMADA PRESENCA] Erro: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao registrar a presença.');
+        }
+
+        $this->redirect('/aluno');
     }
 
     public function cursos(): void

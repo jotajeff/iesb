@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 04/09/2026 às 11:34
+-- Tempo de geração: 04/09/2026 às 15:15
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -147,6 +147,44 @@ CREATE TABLE `categoria_noticia` (
   `slug` varchar(100) COLLATE utf8_unicode_ci NOT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT '1'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `chamada`
+--
+
+CREATE TABLE `chamada` (
+  `id` int(11) NOT NULL,
+  `id_turma` int(11) NOT NULL,
+  `id_turma_disciplina` int(11) NOT NULL,
+  `id_usuario_professor` int(11) DEFAULT NULL,
+  `data_aula` date NOT NULL,
+  `numero_aula` int(11) DEFAULT NULL,
+  `hora_inicio` time DEFAULT NULL,
+  `hora_fim` time DEFAULT NULL,
+  `conteudo` text COLLATE utf8_unicode_ci,
+  `observacao` text COLLATE utf8_unicode_ci,
+  `status` enum('ABERTA','FECHADA','CANCELADA') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'ABERTA',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `chamada_presenca`
+--
+
+CREATE TABLE `chamada_presenca` (
+  `id` int(11) NOT NULL,
+  `id_chamada` int(11) NOT NULL,
+  `id_matricula` int(11) NOT NULL,
+  `presenca` enum('PRESENTE','AUSENTE','JUSTIFICADA') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'PRESENTE',
+  `observacao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- --------------------------------------------------------
 
@@ -1142,6 +1180,26 @@ ALTER TABLE `categoria_noticia`
   ADD UNIQUE KEY `slug` (`slug`);
 
 --
+-- Índices de tabela `chamada`
+--
+ALTER TABLE `chamada`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_chamada_turma_disciplina_data` (`id_turma_disciplina`,`data_aula`),
+  ADD KEY `idx_chamada_turma_disciplina` (`id_turma_disciplina`),
+  ADD KEY `idx_chamada_professor` (`id_usuario_professor`),
+  ADD KEY `idx_chamada_data` (`data_aula`),
+  ADD KEY `idx_chamada_status` (`status`);
+
+--
+-- Índices de tabela `chamada_presenca`
+--
+ALTER TABLE `chamada_presenca`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_chamada_matricula` (`id_chamada`,`id_matricula`),
+  ADD KEY `idx_chamada_presenca_chamada` (`id_chamada`),
+  ADD KEY `idx_chamada_presenca_matricula` (`id_matricula`);
+
+--
 -- Índices de tabela `comentarios`
 --
 ALTER TABLE `comentarios`
@@ -1556,6 +1614,18 @@ ALTER TABLE `categoria_noticia`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `chamada`
+--
+ALTER TABLE `chamada`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `chamada_presenca`
+--
+ALTER TABLE `chamada_presenca`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `comentarios`
 --
 ALTER TABLE `comentarios`
@@ -1864,6 +1934,20 @@ ALTER TABLE `visitas_paginas`
 --
 ALTER TABLE `carousel_item`
   ADD CONSTRAINT `fk_carousel_item_carousel` FOREIGN KEY (`id_carousel`) REFERENCES `carousel` (`id`) ON DELETE CASCADE;
+
+--
+-- Restrições para tabelas `chamada`
+--
+ALTER TABLE `chamada`
+  ADD CONSTRAINT `fk_chamada_professor` FOREIGN KEY (`id_usuario_professor`) REFERENCES `usuarios` (`id`) ON DELETE SET NULL ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_chamada_turma_disciplina` FOREIGN KEY (`id_turma_disciplina`) REFERENCES `turma_disciplina` (`id`) ON DELETE CASCADE ON UPDATE CASCADE;
+
+--
+-- Restrições para tabelas `chamada_presenca`
+--
+ALTER TABLE `chamada_presenca`
+  ADD CONSTRAINT `fk_chamada_presenca_chamada` FOREIGN KEY (`id_chamada`) REFERENCES `chamada` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
+  ADD CONSTRAINT `fk_chamada_presenca_matricula` FOREIGN KEY (`id_matricula`) REFERENCES `matricula` (`id`) ON UPDATE CASCADE;
 
 --
 -- Restrições para tabelas `corpo_docente`
