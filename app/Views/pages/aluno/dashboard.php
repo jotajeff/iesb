@@ -67,6 +67,30 @@
       </div>
     <?php endif; ?>
 
+    <?php if (!empty($banners ?? [])): ?>
+      <div class="mb-4" data-aos="fade-up">
+        <?php foreach ($banners as $banner): ?>
+          <?php
+            $bannerImg = trim((string) ($banner['banner'] ?? ''));
+            $bannerLink = trim((string) ($banner['link'] ?? ''));
+            $bannerTexto = trim((string) ($banner['texto'] ?? ''));
+          ?>
+          <?php if ($bannerImg !== ''): ?>
+            <div class="rounded-3 overflow-hidden shadow-sm border mb-3" style="border-color: var(--border-color); background: var(--bg-card);">
+              <img src="/<?= htmlspecialchars($bannerImg, ENT_QUOTES, 'UTF-8') ?>" alt="<?= htmlspecialchars($bannerTexto !== '' ? $bannerTexto : 'Banner', ENT_QUOTES, 'UTF-8') ?>" class="img-fluid w-100" style="max-height: 400px; object-fit: cover; display: block;">
+              <?php if ($bannerTexto !== ''): ?>
+                <div class="p-3">
+                  <a href="<?= htmlspecialchars($bannerLink !== '' ? $bannerLink : '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="fw-semibold text-decoration-none">
+                    <?= htmlspecialchars($bannerTexto, ENT_QUOTES, 'UTF-8') ?>
+                  </a>
+                </div>
+              <?php endif; ?>
+            </div>
+          <?php endif; ?>
+        <?php endforeach; ?>
+      </div>
+    <?php endif; ?>
+
     <div class="row g-3 mb-4">
       <div class="col-md-3" data-aos="fade-up" data-aos-delay="0">
         <a href="/aluno/cursos" class="text-decoration-none">

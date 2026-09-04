@@ -20,6 +20,7 @@ use App\Controllers\Admin\TipoDocumentoController;
 use App\Controllers\Admin\StorageController;
 use App\Controllers\Admin\AcademicoController;
 use App\Controllers\Admin\PermissaoController;
+use App\Controllers\Admin\BannerAlunoController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -273,6 +274,11 @@ return static function (Router $router): void {
 
     $router->get('/admin/config/email', [ConfigController::class, 'email']);
     $router->post('/admin/config/email/enviar', [ConfigController::class, 'emailEnviar']);
+
+    $router->get('/admin/config/banner-aluno', [BannerAlunoController::class, 'index']);
+    $router->get('/admin/config/banner-aluno/novo', [BannerAlunoController::class, 'novo']);
+    $router->get('/admin/config/banner-aluno/editar', [BannerAlunoController::class, 'editar']);
+    $router->post('/admin/config/banner-aluno/salvar', [BannerAlunoController::class, 'salvar']);
 
     $router->get('/admin/visitas', [VisitaController::class, 'index']);
     $router->get('/admin/visitas/mensal', [VisitaController::class, 'mensal']);

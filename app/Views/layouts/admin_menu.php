@@ -112,10 +112,11 @@
               </ul>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/sessao') === 0) || (strpos($currentRoute ?? '', '/admin/config/carousel') === 0) || (strpos($currentRoute ?? '', '/admin/config/noticias') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-file-earmark-text me-1"></i>Conteúdo</a>
+              <a class="nav-link dropdown-toggle <?= ((strpos($currentRoute ?? '', '/admin/sessao') === 0) || (strpos($currentRoute ?? '', '/admin/config/carousel') === 0) || (strpos($currentRoute ?? '', '/admin/config/noticias') === 0) || (strpos($currentRoute ?? '', '/admin/config/banner-aluno') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-file-earmark-text me-1"></i>Conteúdo</a>
               <ul class="dropdown-menu">
                 <li><a class="dropdown-item" href="/admin/sessao"><i class="bi bi-layers me-1"></i>Sessões</a></li>
                 <li><a class="dropdown-item" href="/admin/config/carousel"><i class="bi bi-images me-1"></i>Carrossel</a></li>
+                <li><a class="dropdown-item" href="/admin/config/banner-aluno"><i class="bi bi-easel me-1"></i>Banner-Aluno</a></li>
                 <li><a class="dropdown-item" href="/admin/config/noticias"><i class="bi bi-newspaper me-1"></i>Notícias</a></li>
               </ul>
             </li>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 01/09/2026 às 19:53
+-- Tempo de geração: 04/09/2026 às 11:34
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -75,6 +75,22 @@ CREATE TABLE `alunos` (
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `banner_aluno`
+--
+
+CREATE TABLE `banner_aluno` (
+  `id` int(11) NOT NULL,
+  `banner` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
+  `texto` varchar(256) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `link` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
+  `id_curso` int(11) DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1096,6 +1112,12 @@ ALTER TABLE `alunos`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `banner_aluno`
+--
+ALTER TABLE `banner_aluno`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `carousel`
 --
 ALTER TABLE `carousel`
@@ -1507,6 +1529,12 @@ ALTER TABLE `acordo_pagamento`
 -- AUTO_INCREMENT de tabela `alunos`
 --
 ALTER TABLE `alunos`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `banner_aluno`
+--
+ALTER TABLE `banner_aluno`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --

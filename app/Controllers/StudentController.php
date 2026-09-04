@@ -184,6 +184,36 @@ final class StudentController extends Controller
             }
         }
 
+        $banners = [];
+        if ($pdo instanceof \PDO) {
+            try {
+                $condicoes = ['id_curso IS NULL'];
+                $params = [':ativo' => 1];
+                foreach ($idsMatriculados as $i => $cursoId) {
+                    if ((int) $cursoId <= 0) {
+                        continue;
+                    }
+                    $key = ':curso_' . $i;
+                    $condicoes[] = 'id_curso = ' . $key;
+                    $params[$key] = (int) $cursoId;
+                }
+
+                $sql = 'SELECT id, banner, texto, link, id_curso FROM banner_aluno'
+                    . ' WHERE ativo = :ativo AND (' . implode(' OR ', $condicoes) . ')'
+                    . ' ORDER BY id DESC';
+
+                $stmt = $pdo->prepare($sql);
+                foreach ($params as $key => $value) {
+                    $stmt->bindValue($key, $value, \PDO::PARAM_INT);
+                }
+                $stmt->execute();
+                $banners = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT DASHBOARD BANNER] Erro: ' . $e->getMessage());
+                $banners = [];
+            }
+        }
+
         $this->render('pages/aluno/dashboard', [
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
@@ -194,6 +224,7 @@ final class StudentController extends Controller
             'temEndereco' => $temEndereco,
             'documentosPendentes' => $documentosPendentes,
             'noticias' => $this->noticiaService->listPublicados(),
+            'banners' => $banners,
             'avisoParcela' => $avisoParcela,
             'avisoParcelaDias' => $avisoParcelaDias,
         ], 'aluno');
