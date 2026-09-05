@@ -46,19 +46,16 @@ final class ChamadaService
     }
 
     /**
-     * @return array<int, array<string, mixed>>
-     */
-    public function cursos(): array
-    {
-        return $this->repository->cursos();
-    }
-
-    /**
      * @return array<string, mixed>
      */
-    public function relatorioPresencas(int $idCurso): array
+    public function relatorioPresencas(int $idTurma): array
     {
-        return $this->repository->relatorioPresencas($idCurso);
+        return $this->repository->relatorioPresencas($idTurma);
+    }
+
+    public function alterarStatus(int $id, string $status): bool
+    {
+        return $this->repository->alterarStatus($id, $status);
     }
 
     /**

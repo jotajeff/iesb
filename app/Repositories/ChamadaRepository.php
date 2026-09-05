@@ -31,7 +31,7 @@ final class ChamadaRepository
             $sql = 'SELECT ch.id, ' . $selectTurma . ' ch.id_turma_disciplina, ch.id_usuario_professor,'
                 . ' ch.data_aula, ch.numero_aula, ch.hora_inicio, ch.hora_fim,'
                 . ' ch.conteudo, ch.observacao, ch.status, ch.created_at,'
-                . ' t.nome AS turma_nome, d.nome AS disciplina_nome,'
+                . ' t.nome AS turma_nome, cu.nome AS curso_nome, d.nome AS disciplina_nome,'
                 . ' COALESCE(uprof.nome, (' . $profTd . ')) AS professor_nome,'
                 . ' (SELECT COUNT(*) FROM chamada_presenca cp WHERE cp.id_chamada = ch.id) AS total_presencas,'
                 . " (SELECT COUNT(*) FROM chamada_presenca cp2 WHERE cp2.id_chamada = ch.id AND cp2.presenca = 'PRESENTE') AS total_presentes"
@@ -39,32 +39,14 @@ final class ChamadaRepository
                 . $joinTurma
                 . ' JOIN turma_disciplina td ON td.id = ch.id_turma_disciplina'
                 . ' JOIN disciplina d ON d.id = td.id_disciplina'
+                . ' LEFT JOIN cursos cu ON cu.id = t.id_curso'
                 . ' LEFT JOIN usuarios uprof ON uprof.id = ch.id_usuario_professor'
-                . ' ORDER BY ch.data_aula DESC, ch.id DESC';
+                . ' ORDER BY cu.nome ASC, t.nome ASC, ch.data_aula DESC, ch.id DESC';
 
             $rows = $pdo->query($sql)->fetchAll();
             return is_array($rows) ? $rows : [];
         } catch (\Throwable $e) {
             error_log('[CHAMADA] Erro em list: ' . $e->getMessage());
-            return [];
-        }
-    }
-
-    /**
-     * @return array<int, array<string, mixed>>
-     */
-    public function turmas(): array
-    {
-        $pdo = Database::connection();
-        if (!$pdo instanceof PDO) {
-            return [];
-        }
-
-        try {
-            $rows = $pdo->query('SELECT id, nome FROM turmas WHERE ativo = 1 ORDER BY nome ASC')->fetchAll();
-            return is_array($rows) ? $rows : [];
-        } catch (\Throwable $e) {
-            error_log('[CHAMADA] Erro em turmas: ' . $e->getMessage());
             return [];
         }
     }
@@ -129,7 +111,7 @@ final class ChamadaRepository
     /**
      * @return array<int, array<string, mixed>>
      */
-    public function cursos(): array
+    public function turmas(): array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -137,10 +119,17 @@ final class ChamadaRepository
         }
 
         try {
-            $rows = $pdo->query('SELECT id, nome FROM cursos ORDER BY nome ASC')->fetchAll();
+            $stmt = $pdo->query(
+                'SELECT t.id, t.nome AS turma_nome, c.nome AS curso_nome'
+                . ' FROM turmas t'
+                . ' JOIN cursos c ON c.id = t.id_curso'
+                . ' WHERE t.ativo = 1'
+                . ' ORDER BY c.nome ASC, t.nome ASC'
+            );
+            $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
         } catch (\Throwable $e) {
-            error_log('[CHAMADA] Erro em cursos: ' . $e->getMessage());
+            error_log('[CHAMADA] Erro em turmas: ' . $e->getMessage());
             return [];
         }
     }
@@ -148,22 +137,32 @@ final class ChamadaRepository
     /**
      * @return array<string, mixed>
      */
-    public function relatorioPresencas(int $idCurso): array
+    public function relatorioPresencas(int $idTurma): array
     {
         $pdo = Database::connection();
-        if (!$pdo instanceof PDO || $idCurso <= 0) {
-            return ['alunos' => [], 'chamadas' => [], 'presencas' => []];
+        if (!$pdo instanceof PDO || $idTurma <= 0) {
+            return ['turma' => null, 'alunos' => [], 'chamadas' => [], 'presencas' => []];
         }
 
         try {
             $stmt = $pdo->prepare(
+                'SELECT t.id AS id_turma, t.nome AS turma_nome, c.nome AS curso_nome'
+                . ' FROM turmas t'
+                . ' JOIN cursos c ON c.id = t.id_curso'
+                . ' WHERE t.id = :id_turma LIMIT 1'
+            );
+            $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
+            $stmt->execute();
+            $turma = $stmt->fetch() ?: null;
+
+            $stmt = $pdo->prepare(
                 'SELECT m.id AS id_matricula, m.id_aluno, a.nome AS aluno_nome'
                 . ' FROM matricula m'
                 . ' JOIN alunos a ON a.id = m.id_aluno'
-                . ' WHERE m.id_curso = :id_curso AND m.ativo = 1'
+                . ' WHERE m.id_turma = :id_turma AND m.ativo = 1'
                 . ' ORDER BY a.nome ASC'
             );
-            $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
+            $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
             $stmt->execute();
             $alunos = $stmt->fetchAll() ?: [];
 
@@ -174,10 +173,10 @@ final class ChamadaRepository
                 . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
                 . ' JOIN turmas t ON t.id = td.id_turma'
                 . ' JOIN disciplina d ON d.id = td.id_disciplina'
-                . ' WHERE t.id_curso = :id_curso'
+                . ' WHERE td.id_turma = :id_turma'
                 . ' ORDER BY c.data_aula ASC, c.id ASC'
             );
-            $stmt->bindValue(':id_curso', $idCurso, PDO::PARAM_INT);
+            $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
             $stmt->execute();
             $chamadas = $stmt->fetchAll() ?: [];
 
@@ -196,13 +195,32 @@ final class ChamadaRepository
             }
 
             return [
+                'turma' => $turma,
                 'alunos' => $alunos,
                 'chamadas' => $chamadas,
                 'presencas' => $presencas,
             ];
         } catch (\Throwable $e) {
             error_log('[CHAMADA] Erro em relatorioPresencas: ' . $e->getMessage());
-            return ['alunos' => [], 'chamadas' => [], 'presencas' => []];
+            return ['turma' => null, 'alunos' => [], 'chamadas' => [], 'presencas' => []];
+        }
+    }
+
+    public function alterarStatus(int $id, string $status): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $id <= 0 || !in_array($status, ['ABERTA', 'FECHADA', 'CANCELADA'], true)) {
+            return false;
+        }
+
+        try {
+            $stmt = $pdo->prepare('UPDATE chamada SET status = :status WHERE id = :id');
+            $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro em alterarStatus: ' . $e->getMessage());
+            return false;
         }
     }
 

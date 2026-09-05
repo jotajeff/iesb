@@ -99,17 +99,20 @@
             </div>
           <?php endif; ?>
           <div class="d-flex flex-wrap gap-2 mt-2">
-            <form method="post" action="/aluno/chamada/presenca" class="d-inline">
+            <form method="post" action="/aluno/chamada/presenca" class="d-inline form-presenca">
               <input type="hidden" name="id_chamada" value="<?= (int) ($chamadaAberta['id'] ?? 0) ?>">
-              <button type="submit" name="presenca" value="PRESENTE" class="btn btn-sm btn-success" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-check-lg me-1"></i>Presente</button>
+              <input type="hidden" name="presenca" value="PRESENTE">
+              <button type="submit" value="PRESENTE" class="btn btn-sm btn-success" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-check-lg me-1"></i>Presente</button>
             </form>
-            <form method="post" action="/aluno/chamada/presenca" class="d-inline">
+            <form method="post" action="/aluno/chamada/presenca" class="d-inline form-presenca">
               <input type="hidden" name="id_chamada" value="<?= (int) ($chamadaAberta['id'] ?? 0) ?>">
-              <button type="submit" name="presenca" value="AUSENTE" class="btn btn-sm btn-outline-danger" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-x-lg me-1"></i>Ausente</button>
+              <input type="hidden" name="presenca" value="AUSENTE">
+              <button type="submit" value="AUSENTE" class="btn btn-sm btn-outline-danger" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-x-lg me-1"></i>Ausente</button>
             </form>
-            <form method="post" action="/aluno/chamada/presenca" class="d-inline">
+            <form method="post" action="/aluno/chamada/presenca" class="d-inline form-presenca">
               <input type="hidden" name="id_chamada" value="<?= (int) ($chamadaAberta['id'] ?? 0) ?>">
-              <button type="submit" name="presenca" value="JUSTIFICADA" class="btn btn-sm btn-outline-warning" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-shield-check me-1"></i>Justificada</button>
+              <input type="hidden" name="presenca" value="JUSTIFICADA">
+              <button type="submit" value="JUSTIFICADA" class="btn btn-sm btn-outline-warning" <?= $dentroHorario ? '' : 'disabled' ?>><i class="bi bi-shield-check me-1"></i>Justificada</button>
             </form>
           </div>
         </div>
@@ -278,6 +281,91 @@
 <div class="text-center small py-3" style="color: #6c757d !important;">
   <i class="bi bi-clock me-1"></i><?= htmlspecialchars(date('d/m/Y H:i:s'), ENT_QUOTES, 'UTF-8') ?>
 </div>
+
+<div class="modal fade" id="modalConfirmarPresenca" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-primary-subtle">
+        <h5 class="modal-title"><i class="bi bi-clipboard-check me-2"></i>Confirmar presença</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="text-muted small mb-3">Revise os dados antes de confirmar sua presença:</p>
+        <dl class="row mb-0">
+          <dt class="col-sm-5 text-muted">Aluno</dt>
+          <dd class="col-sm-7" id="cpAluno">-</dd>
+          <dt class="col-sm-5 text-muted">Curso</dt>
+          <dd class="col-sm-7" id="cpCurso">-</dd>
+          <dt class="col-sm-5 text-muted">Turma</dt>
+          <dd class="col-sm-7" id="cpTurma">-</dd>
+          <dt class="col-sm-5 text-muted">Disciplina</dt>
+          <dd class="col-sm-7" id="cpDisciplina">-</dd>
+          <dt class="col-sm-5 text-muted">Data / Horário</dt>
+          <dd class="col-sm-7" id="cpData">-</dd>
+          <dt class="col-sm-5 text-muted">Professor</dt>
+          <dd class="col-sm-7" id="cpProfessor">-</dd>
+          <dt class="col-sm-5 text-muted">Presença</dt>
+          <dd class="col-sm-7" id="cpPresenca">-</dd>
+        </dl>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal"><i class="bi bi-x me-1"></i>Cancelar</button>
+        <button type="button" class="btn btn-success" id="btnConfirmarPresenca"><i class="bi bi-check-lg me-1"></i>Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  <?php
+    $chDados = (string) ($chamadaAberta['data_aula'] ?? '');
+    $chDtDados = $chDados !== '' ? date_create($chDados) : false;
+    $chHIni = substr((string) ($chamadaAberta['hora_inicio'] ?? ''), 0, 5);
+    $chHFim = substr((string) ($chamadaAberta['hora_fim'] ?? ''), 0, 5);
+    $chDataLabel = ($chDtDados ? $chDtDados->format('d/m/Y') : $chDados)
+      . ($chHIni !== '' || $chHFim !== '' ? ' ' . $chHIni . ' às ' . $chHFim : '');
+  ?>
+  var chamadaDados = {
+    aluno: <?= json_encode((string) ($alunoNome ?? ''), JSON_UNESCAPED_UNICODE) ?>,
+    curso: <?= json_encode((string) ($chamadaAberta['curso_nome'] ?? ''), JSON_UNESCAPED_UNICODE) ?>,
+    turma: <?= json_encode((string) ($chamadaAberta['turma_nome'] ?? ''), JSON_UNESCAPED_UNICODE) ?>,
+    disciplina: <?= json_encode((string) ($chamadaAberta['disciplina_nome'] ?? ''), JSON_UNESCAPED_UNICODE) ?>,
+    data: <?= json_encode($chDataLabel, JSON_UNESCAPED_UNICODE) ?>,
+    professor: <?= json_encode((string) ($chamadaAberta['professor_nome'] ?? ''), JSON_UNESCAPED_UNICODE) ?>
+  };
+  var formConfirmar = null;
+  var modalEl = document.getElementById('modalConfirmarPresenca');
+  if (!modalEl) return;
+
+  function textoPresenca(v) {
+    return v.charAt(0) + v.slice(1).toLowerCase();
+  }
+
+  document.querySelectorAll('.form-presenca').forEach(function (form) {
+    form.addEventListener('submit', function (event) {
+      event.preventDefault();
+      var presencaInput = form.querySelector('input[name="presenca"]');
+      var presenca = presencaInput ? presencaInput.value : '';
+      document.getElementById('cpAluno').textContent = chamadaDados.aluno || '-';
+      document.getElementById('cpCurso').textContent = chamadaDados.curso || '-';
+      document.getElementById('cpTurma').textContent = chamadaDados.turma || '-';
+      document.getElementById('cpDisciplina').textContent = chamadaDados.disciplina || '-';
+      document.getElementById('cpData').textContent = chamadaDados.data || '-';
+      document.getElementById('cpProfessor').textContent = chamadaDados.professor || '-';
+      document.getElementById('cpPresenca').textContent = textoPresenca(presenca);
+      formConfirmar = form;
+      bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    });
+  });
+
+  document.getElementById('btnConfirmarPresenca').addEventListener('click', function () {
+    var modal = bootstrap.Modal.getInstance(modalEl);
+    if (modal) modal.hide();
+    if (formConfirmar) formConfirmar.submit();
+  });
+});
+</script>
 
 <style>
   .noticia-card, .curso-card {

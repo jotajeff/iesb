@@ -1,7 +1,8 @@
 <?php
-  $cursosView = is_array($cursos ?? null) ? $cursos : [];
-  $idCurso = (int) ($idCurso ?? 0);
+  $turmasView = is_array($turmas ?? null) ? $turmas : [];
+  $idTurma = (int) ($idTurma ?? 0);
   $rel = is_array($relatorio ?? null) ? $relatorio : [];
+  $turma = is_array($rel['turma'] ?? null) ? $rel['turma'] : null;
   $alunos = is_array($rel['alunos'] ?? null) ? $rel['alunos'] : [];
   $chamadas = is_array($rel['chamadas'] ?? null) ? $rel['chamadas'] : [];
   $presencas = is_array($rel['presencas'] ?? null) ? $rel['presencas'] : [];
@@ -16,12 +17,18 @@
 
     <form method="get" action="/admin/chamadas/relatorio" class="row g-2 align-items-end mb-4">
       <div class="col-md-5 col-lg-4">
-        <label class="form-label">Curso</label>
-        <select class="form-select" name="id_curso" required>
-          <option value="">Selecione o curso</option>
-          <?php foreach ($cursosView as $curso): ?>
-            <option value="<?= (int) ($curso['id'] ?? 0) ?>" <?= $idCurso === (int) ($curso['id'] ?? 0) ? 'selected' : '' ?>>
-              <?= htmlspecialchars((string) ($curso['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+        <label class="form-label">Turma</label>
+        <select class="form-select" name="id_turma" required>
+          <option value="">Selecione a turma</option>
+          <?php foreach ($turmasView as $turmaOpt): ?>
+            <?php
+              $label = (string) ($turmaOpt['turma_nome'] ?? '-');
+              if (trim((string) ($turmaOpt['curso_nome'] ?? '')) !== '') {
+                $label .= ' — ' . (string) $turmaOpt['curso_nome'];
+              }
+            ?>
+            <option value="<?= (int) ($turmaOpt['id'] ?? 0) ?>" <?= $idTurma === (int) ($turmaOpt['id'] ?? 0) ? 'selected' : '' ?>>
+              <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
             </option>
           <?php endforeach; ?>
         </select>
@@ -31,10 +38,17 @@
       </div>
     </form>
 
-    <?php if ($idCurso > 0): ?>
+    <?php if ($idTurma > 0): ?>
+      <?php if ($turma): ?>
+        <div class="alert alert-light border mb-3">
+          <i class="bi bi-book me-1"></i><strong>Curso:</strong> <?= htmlspecialchars((string) ($turma['curso_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+          &middot; <i class="bi bi-people me-1"></i><strong>Turma:</strong> <?= htmlspecialchars((string) ($turma['turma_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+        </div>
+      <?php endif; ?>
+
       <?php if (empty($alunos) || empty($chamadas)): ?>
         <p class="text-muted mb-0">
-          <?= empty($alunos) ? 'Nenhum aluno matriculado neste curso.' : 'Nenhuma chamada gerada para este curso.' ?>
+          <?= empty($alunos) ? 'Nenhum aluno matriculado nesta turma.' : 'Nenhuma chamada gerada para esta turma.' ?>
         </p>
       <?php else: ?>
         <div class="table-responsive">
@@ -78,8 +92,19 @@
                   <?php endforeach; ?>
                 </tr>
               <?php endforeach; ?>
+              <tr class="table-light">
+                <td class="text-start fw-semibold">Total de alunos da turma</td>
+                <?php foreach ($chamadas as $ch): ?>
+                  <td class="text-center fw-semibold"><?= count($alunos) ?></td>
+                <?php endforeach; ?>
+              </tr>
             </tbody>
           </table>
+        </div>
+        <div class="d-flex justify-content-end mt-3">
+          <a class="btn btn-success" href="/admin/chamadas/relatorio/excel?id_turma=<?= $idTurma ?>">
+            <i class="bi bi-file-earmark-excel me-1"></i>Exportar para Excel
+          </a>
         </div>
       <?php endif; ?>
     <?php endif; ?>

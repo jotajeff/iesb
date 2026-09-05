@@ -231,6 +231,7 @@ final class StudentController extends Controller
             'noticias' => $this->noticiaService->listPublicados(),
             'banners' => $banners,
             'chamadaAberta' => $chamadaAberta,
+            'alunoNome' => (string) ($user['name'] ?? ''),
             'avisoParcela' => $avisoParcela,
             'avisoParcelaDias' => $avisoParcelaDias,
         ], 'aluno');
@@ -276,15 +277,19 @@ final class StudentController extends Controller
 
         if ($pdo instanceof \PDO) {
             try {
-                $stmt = $pdo->prepare(
+$stmt = $pdo->prepare(
                     'SELECT c.id, c.data_aula, c.hora_inicio, c.hora_fim, c.status AS chamada_status,'
-                    . ' t.nome AS turma_nome, d.nome AS disciplina_nome, cp.presenca, cp.updated_at'
+                    . ' t.nome AS turma_nome, cu.nome AS curso_nome, d.nome AS disciplina_nome,'
+                    . ' COALESCE(uprof.nome, uprof2.nome) AS professor_nome, cp.presenca, cp.updated_at'
                     . ' FROM chamada_presenca cp'
                     . ' JOIN chamada c ON c.id = cp.id_chamada'
                     . ' JOIN matricula m ON m.id = cp.id_matricula'
                     . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
                     . ' JOIN disciplina d ON d.id = td.id_disciplina'
                     . ' JOIN turmas t ON t.id = td.id_turma'
+                    . ' LEFT JOIN cursos cu ON cu.id = t.id_curso'
+                    . ' LEFT JOIN usuarios uprof ON uprof.id = c.id_usuario_professor'
+                    . ' LEFT JOIN usuarios uprof2 ON uprof2.id = td.id_usuario_professor'
                     . ' WHERE m.id_aluno = :aluno'
                     . ' ORDER BY c.data_aula DESC, c.id DESC'
                     . ' LIMIT 50'
@@ -303,6 +308,7 @@ final class StudentController extends Controller
             'currentRoute' => '/aluno/chamadas',
             'chamadaAberta' => $chamadaAberta,
             'historico' => $historico,
+            'alunoNome' => (string) ($user['name'] ?? ''),
         ], 'aluno');
     }
 
@@ -316,7 +322,8 @@ final class StudentController extends Controller
         try {
             $stmt = $pdo->prepare(
                 "SELECT c.id, c.id_turma_disciplina, c.data_aula, c.numero_aula, c.hora_inicio, c.hora_fim, c.conteudo, c.status,"
-                . ' t.nome AS turma_nome, d.nome AS disciplina_nome,'
+                . ' t.nome AS turma_nome, cu.nome AS curso_nome, d.nome AS disciplina_nome,'
+                . ' COALESCE(uprof.nome, uprof2.nome) AS professor_nome,'
                 . " (SELECT cp.presenca FROM chamada_presenca cp"
                 . ' JOIN matricula m3 ON m3.id = cp.id_matricula'
                 . ' WHERE cp.id_chamada = c.id AND m3.id_aluno = :aluno_presenca LIMIT 1) AS presenca_atual'
@@ -324,6 +331,9 @@ final class StudentController extends Controller
                 . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
                 . ' JOIN disciplina d ON d.id = td.id_disciplina'
                 . ' JOIN turmas t ON t.id = td.id_turma'
+                . ' LEFT JOIN cursos cu ON cu.id = t.id_curso'
+                . ' LEFT JOIN usuarios uprof ON uprof.id = c.id_usuario_professor'
+                . ' LEFT JOIN usuarios uprof2 ON uprof2.id = td.id_usuario_professor'
                 . " WHERE c.status = 'ABERTA'"
                 . ' AND c.data_aula = CURDATE()'
                 . ' AND EXISTS ('
@@ -343,6 +353,22 @@ final class StudentController extends Controller
         } catch (\Throwable $e) {
             error_log('[STUDENT CHAMADA ABERTA] Erro: ' . $e->getMessage());
             return null;
+        }
+    }
+
+    private function ensureColunasPresenca(\PDO $pdo): void
+    {
+        try {
+            $stmt = $pdo->query('SHOW COLUMNS FROM chamada_presenca');
+            $colunas = $stmt->fetchAll(\PDO::FETCH_COLUMN);
+            if (!in_array('ip', $colunas, true)) {
+                $pdo->exec('ALTER TABLE chamada_presenca ADD COLUMN ip VARCHAR(45) DEFAULT NULL AFTER presenca');
+            }
+            if (!in_array('responsavel', $colunas, true)) {
+                $pdo->exec('ALTER TABLE chamada_presenca ADD COLUMN responsavel VARCHAR(50) DEFAULT NULL AFTER ip');
+            }
+        } catch (\Throwable $e) {
+            error_log('[STUDENT CHAMADA] Erro ao garantir colunas de presença: ' . $e->getMessage());
         }
     }
 
@@ -424,19 +450,30 @@ final class StudentController extends Controller
             $stmt->execute();
             $idPresenca = (int) ($stmt->fetchColumn() ?: 0);
 
+            $this->ensureColunasPresenca($pdo);
+
+            $ip = (string) ($_SERVER['REMOTE_ADDR'] ?? '');
+            $ip = mb_substr($ip, 0, 45);
+
             if ($idPresenca > 0) {
-                $stmt = $pdo->prepare('UPDATE chamada_presenca SET presenca = :presenca WHERE id = :id');
+                $stmt = $pdo->prepare(
+                    'UPDATE chamada_presenca SET presenca = :presenca, ip = :ip, responsavel = :responsavel, updated_at = NOW() WHERE id = :id'
+                );
                 $stmt->bindValue(':presenca', $presenca, \PDO::PARAM_STR);
+                $stmt->bindValue(':ip', $ip, \PDO::PARAM_STR);
+                $stmt->bindValue(':responsavel', 'aluno', \PDO::PARAM_STR);
                 $stmt->bindValue(':id', $idPresenca, \PDO::PARAM_INT);
                 $stmt->execute();
             } else {
                 $stmt = $pdo->prepare(
-                    'INSERT INTO chamada_presenca (id_chamada, id_matricula, presenca, created_at)'
-                    . ' VALUES (:id_chamada, :id_matricula, :presenca, NOW())'
+                    'INSERT INTO chamada_presenca (id_chamada, id_matricula, presenca, ip, responsavel, created_at)'
+                    . ' VALUES (:id_chamada, :id_matricula, :presenca, :ip, :responsavel, NOW())'
                 );
                 $stmt->bindValue(':id_chamada', $idChamada, \PDO::PARAM_INT);
                 $stmt->bindValue(':id_matricula', $idMatricula, \PDO::PARAM_INT);
                 $stmt->bindValue(':presenca', $presenca, \PDO::PARAM_STR);
+                $stmt->bindValue(':ip', $ip, \PDO::PARAM_STR);
+                $stmt->bindValue(':responsavel', 'aluno', \PDO::PARAM_STR);
                 $stmt->execute();
             }
 

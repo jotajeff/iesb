@@ -19,7 +19,13 @@
         <select class="form-select" name="id_turma" id="chamadaTurma" required>
           <option value="">Selecione a turma</option>
           <?php foreach ($turmasView as $turma): ?>
-            <option value="<?= (int) ($turma['id'] ?? 0) ?>"><?= htmlspecialchars((string) ($turma['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></option>
+            <?php
+              $turmaLabel = (string) ($turma['turma_nome'] ?? '-');
+              if (trim((string) ($turma['curso_nome'] ?? '')) !== '') {
+                $turmaLabel .= ' — ' . (string) $turma['curso_nome'];
+              }
+            ?>
+            <option value="<?= (int) ($turma['id'] ?? 0) ?>"><?= htmlspecialchars($turmaLabel, ENT_QUOTES, 'UTF-8') ?></option>
           <?php endforeach; ?>
         </select>
       </div>
