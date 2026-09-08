@@ -114,15 +114,8 @@ final class AuthController extends Controller
             Session::setFlash('flash', 'Enviamos um link de redefinição para seu e-mail.');
         } else {
             $erro = $emailService->getLastError();
-            $configInfo = $emailService->getDebugInfo();
-            $msg = 'Erro ao enviar o e-mail.';
-            if ($configInfo !== '') {
-                $msg .= ' Config: ' . $configInfo . '.';
-            }
-            if ($erro !== '') {
-                $msg .= ' Erro: ' . $erro;
-            }
-            Session::setFlash('flash', $msg);
+            error_log('[EMAIL] Falha ao enviar redefinição de senha do aluno: ' . ($erro !== '' ? $erro : 'erro desconhecido'));
+            Session::setFlash('flash', 'Não foi possível enviar o e-mail de redefinição. Verifique a configuração de e-mail e tente novamente.');
         }
 
         $this->redirect('/aluno/solicitar-redefinicao');
@@ -239,15 +232,8 @@ final class AuthController extends Controller
             Session::setFlash('flash', 'Enviamos um link de redefinição para seu e-mail.');
         } else {
             $erro = $emailService->getLastError();
-            $configInfo = $emailService->getDebugInfo();
-            $msg = 'Erro ao enviar o e-mail.';
-            if ($configInfo !== '') {
-                $msg .= ' Config: ' . $configInfo . '.';
-            }
-            if ($erro !== '') {
-                $msg .= ' Erro: ' . $erro;
-            }
-            Session::setFlash('flash', $msg);
+            error_log('[EMAIL] Falha ao enviar redefinição de senha do staff: ' . ($erro !== '' ? $erro : 'erro desconhecido'));
+            Session::setFlash('flash', 'Não foi possível enviar o e-mail de redefinição. Verifique a configuração de e-mail e tente novamente.');
         }
 
         $this->redirect('/admin/solicitar-redefinicao');

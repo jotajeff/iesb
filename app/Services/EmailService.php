@@ -26,25 +26,46 @@ final class EmailService
             $stmt->execute();
             $row = $stmt->fetch();
 
-            if ($row && !empty($row['email']) && !empty($row['senha'])) {
+            if ($row && !empty($row['email'])) {
                 $email = trim((string) $row['email']);
-                $senha = trim((string) $row['senha']);
 
-                $this->debugInfo = "Host: smtp.gmail.com, Port: 587, User: {$email}";
+                // Gmail no longer accepts the normal account password over SMTP.
+                // Prefer a dedicated app password from .env, while keeping the
+                // database password as a backwards-compatible fallback.
+                $smtpUsername = trim((string) (getenv('SMTP_USERNAME') ?: $email));
+                $smtpPasswordFromEnv = getenv('SMTP_PASSWORD');
+                if ($smtpPasswordFromEnv === false || trim($smtpPasswordFromEnv) === '') {
+                    $smtpPasswordFromEnv = getenv('GMAIL_APP_PASSWORD');
+                }
+                $smtpPassword = $smtpPasswordFromEnv !== false && trim($smtpPasswordFromEnv) !== ''
+                    ? preg_replace('/\s+/', '', trim($smtpPasswordFromEnv))
+                    : trim((string) ($row['senha'] ?? ''));
+                $smtpHost = trim((string) (getenv('SMTP_HOST') ?: 'smtp.gmail.com'));
+                $smtpPort = (int) (getenv('SMTP_PORT') ?: 587);
+                $smtpEncryption = strtolower(trim((string) (getenv('SMTP_ENCRYPTION') ?: 'tls')));
+
+                if ($smtpUsername === '' || $smtpPassword === '' || $smtpHost === '' || $smtpPort <= 0) {
+                    $this->lastError = 'Configuração SMTP incompleta. Informe SMTP_USERNAME e SMTP_PASSWORD no .env.';
+                    return;
+                }
+
+                $this->debugInfo = "Host: {$smtpHost}, Port: {$smtpPort}, User: {$smtpUsername}";
 
                 $this->mail->isSMTP();
-                $this->mail->Host = 'smtp.gmail.com';
+                $this->mail->Host = $smtpHost;
                 $this->mail->SMTPAuth = true;
-                $this->mail->Username = $email;
-                $this->mail->Password = $senha;
-                $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $this->mail->Port = 587;
+                $this->mail->Username = $smtpUsername;
+                $this->mail->Password = $smtpPassword;
+                $this->mail->SMTPSecure = $smtpEncryption === 'ssl'
+                    ? PHPMailer::ENCRYPTION_SMTPS
+                    : PHPMailer::ENCRYPTION_STARTTLS;
+                $this->mail->Port = $smtpPort;
                 $this->mail->CharSet = 'UTF-8';
 
-                $this->mail->setFrom($email, 'IESB - Área do Aluno');
+                $this->mail->setFrom($smtpUsername, 'IESB - Área do Aluno');
                 $this->configured = true;
             } else {
-                $this->lastError = 'Nenhuma instituição ativa encontrada com email e senha preenchidos.';
+                $this->lastError = 'Nenhuma instituição encontrada com e-mail preenchido.';
             }
         } else {
             $this->lastError = 'Sem conexão com o banco de dados.';
@@ -69,6 +90,11 @@ final class EmailService
     public function enviarRedefinicaoSenha(string $destinatario, string $nome, string $link): bool
     {
         try {
+            if (!$this->configured) {
+                $this->lastError = $this->lastError !== '' ? $this->lastError : 'Serviço de e-mail não configurado.';
+                return false;
+            }
+
             $this->mail->addAddress($destinatario, $nome);
             $this->mail->isHTML(true);
             $this->mail->Subject = 'Redefinição de Senha - IESB';

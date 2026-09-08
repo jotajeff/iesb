@@ -8,7 +8,10 @@
           <p class="text-muted mb-4">Defina uma nova senha para sua conta.</p>
 
           <?php if (!empty($flash)): ?>
-            <div class="alert alert-info"><?= htmlspecialchars((string) $flash, ENT_QUOTES, 'UTF-8') ?></div>
+            <?php $isError = str_contains((string) $flash, 'Erro') || str_contains((string) $flash, 'não foi possível') || str_contains((string) $flash, 'Não foi possível'); ?>
+            <div class="alert <?= $isError ? 'alert-danger' : 'alert-info' ?>">
+              <?= htmlspecialchars((string) $flash, ENT_QUOTES, 'UTF-8') ?>
+            </div>
           <?php endif; ?>
 
           <form method="post" action="/aluno/redefinir-senha" class="d-grid gap-3">

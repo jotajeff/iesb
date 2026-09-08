@@ -8,7 +8,7 @@
           <p class="text-muted mb-4">Informe seu e-mail cadastrado para receber o link de redefinição.</p>
 
           <?php if (!empty($flash)): ?>
-            <?php $isError = str_contains($flash, 'Erro'); ?>
+            <?php $isError = str_contains((string) $flash, 'Erro') || str_contains((string) $flash, 'não foi possível') || str_contains((string) $flash, 'Não foi possível'); ?>
             <div class="alert <?= $isError ? 'alert-danger' : 'alert-info' ?>">
               <?= htmlspecialchars((string) $flash, ENT_QUOTES, 'UTF-8') ?>
             </div>

@@ -51,11 +51,6 @@
             </a>
             <ul class="dropdown-menu" aria-labelledby="secretariaDropdown">
               <li>
-                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/chamadas' ? 'active' : '' ?>" href="/aluno/chamadas">
-                  <i class="bi bi-clipboard-check me-1"></i>Chamadas
-                </a>
-              </li>
-              <li>
                 <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/perfil' ? 'active' : '' ?>" href="/aluno/perfil">
                   <i class="bi bi-person me-1"></i>Perfil
                 </a>
@@ -68,6 +63,19 @@
               <li>
                 <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/documentos' ? 'active' : '' ?>" href="/aluno/documentos">
                   <i class="bi bi-folder2-open me-1"></i>Documentos
+                </a>
+              </li>
+              <li>
+                <hr class="dropdown-divider">
+              </li>
+              <li>
+                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/chamadas' ? 'active' : '' ?>" href="/aluno/chamadas">
+                  <i class="bi bi-clipboard-check me-1"></i>Chamadas
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/calendario' ? 'active' : '' ?>" href="/aluno/calendario">
+                  <i class="bi bi-calendar3 me-1"></i>Calendário
                 </a>
               </li>
             </ul>

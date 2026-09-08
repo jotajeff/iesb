@@ -115,15 +115,36 @@
       <nav class="d-flex justify-content-center mt-3">
         <ul class="pagination pagination-sm mb-0">
           <li class="page-item <?= $pagination['currentPage'] <= 1 ? 'disabled' : '' ?>">
+            <a class="page-link" href="?<?= queryString(['page' => 1]) ?>">Primeiro</a>
+          </li>
+          <li class="page-item <?= $pagination['currentPage'] <= 1 ? 'disabled' : '' ?>">
             <a class="page-link" href="?<?= queryString(['page' => $pagination['currentPage'] - 1]) ?>">Anterior</a>
           </li>
-          <?php for ($p = 1; $p <= $pagination['totalPages']; $p++): ?>
-            <li class="page-item <?= $p === $pagination['currentPage'] ? 'active' : '' ?>">
+          <?php
+            $totalPaginas = (int) $pagination['totalPages'];
+            $paginaAtual = (int) $pagination['currentPage'];
+            $janela = [];
+            for ($i = 1; $i <= $totalPaginas; $i++) {
+              if ($i === 1 || $i === $totalPaginas || abs($i - $paginaAtual) <= 1) {
+                $janela[] = $i;
+              }
+            }
+            $anterior = 0;
+          ?>
+          <?php foreach ($janela as $p): ?>
+            <?php if ($anterior > 0 && $p - $anterior > 1): ?>
+              <li class="page-item disabled"><span class="page-link">&hellip;</span></li>
+            <?php endif; ?>
+            <li class="page-item <?= $p === $paginaAtual ? 'active' : '' ?>">
               <a class="page-link" href="?<?= queryString(['page' => $p]) ?>"><?= $p ?></a>
             </li>
-          <?php endfor; ?>
+            <?php $anterior = $p; ?>
+          <?php endforeach; ?>
           <li class="page-item <?= $pagination['currentPage'] >= $pagination['totalPages'] ? 'disabled' : '' ?>">
             <a class="page-link" href="?<?= queryString(['page' => $pagination['currentPage'] + 1]) ?>">Próximo</a>
+          </li>
+          <li class="page-item <?= $pagination['currentPage'] >= $pagination['totalPages'] ? 'disabled' : '' ?>">
+            <a class="page-link" href="?<?= queryString(['page' => $totalPaginas]) ?>">Último</a>
           </li>
         </ul>
       </nav>

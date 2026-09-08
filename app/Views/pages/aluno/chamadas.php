@@ -80,8 +80,18 @@
               <div class="d-flex flex-wrap align-items-center gap-2">
                 <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
                 <strong><?= htmlspecialchars((string) ($h['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong>
-                <span class="badge <?= $hPresenca === 'PRESENTE' ? 'bg-success' : ($hPresenca === 'JUSTIFICADA' ? 'bg-warning text-dark' : 'bg-danger') ?> ms-auto">
-                  <?= htmlspecialchars(ucfirst(strtolower($hPresenca ?: '-')), ENT_QUOTES, 'UTF-8') ?>
+                <span class="badge <?= ($hData !== '' && $hData > date('Y-m-d')) ? 'bg-secondary' : ($hPresenca === 'PRESENTE' ? 'bg-success' : ($hPresenca === 'JUSTIFICADA' ? 'bg-warning text-dark' : 'bg-danger')) ?> ms-auto">
+                  <?php if ($hData !== '' && $hData > date('Y-m-d')): ?>
+                    Agendada
+                  <?php elseif ($hPresenca === 'PRESENTE'): ?>
+                    Presente
+                  <?php elseif ($hPresenca === 'AUSENTE'): ?>
+                    Ausente
+                  <?php elseif ($hPresenca === 'JUSTIFICADA'): ?>
+                    Justificada
+                  <?php else: ?>
+                    Ausente
+                  <?php endif; ?>
                 </span>
               </div>
               <div class="ps-4 mt-2 text-muted small">

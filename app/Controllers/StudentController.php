@@ -281,20 +281,25 @@ $stmt = $pdo->prepare(
                     'SELECT c.id, c.data_aula, c.hora_inicio, c.hora_fim, c.status AS chamada_status,'
                     . ' t.nome AS turma_nome, cu.nome AS curso_nome, d.nome AS disciplina_nome,'
                     . ' COALESCE(uprof.nome, uprof2.nome) AS professor_nome, cp.presenca, cp.updated_at'
-                    . ' FROM chamada_presenca cp'
-                    . ' JOIN chamada c ON c.id = cp.id_chamada'
-                    . ' JOIN matricula m ON m.id = cp.id_matricula'
+                    . ' FROM chamada c'
                     . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
                     . ' JOIN disciplina d ON d.id = td.id_disciplina'
                     . ' JOIN turmas t ON t.id = td.id_turma'
                     . ' LEFT JOIN cursos cu ON cu.id = t.id_curso'
                     . ' LEFT JOIN usuarios uprof ON uprof.id = c.id_usuario_professor'
                     . ' LEFT JOIN usuarios uprof2 ON uprof2.id = td.id_usuario_professor'
-                    . ' WHERE m.id_aluno = :aluno'
+                    . ' LEFT JOIN matricula mm ON mm.id_turma = td.id_turma'
+                    . ' AND mm.id_aluno = :aluno_matricula AND mm.ativo = 1'
+                    . ' LEFT JOIN chamada_presenca cp ON cp.id_chamada = c.id AND cp.id_matricula = mm.id'
+                    . ' WHERE EXISTS ('
+                    . ' SELECT 1 FROM matricula m2'
+                    . ' WHERE m2.id_turma = td.id_turma AND m2.id_aluno = :aluno_where AND m2.ativo = 1'
+                    . ')'
                     . ' ORDER BY c.data_aula DESC, c.id DESC'
                     . ' LIMIT 50'
                 );
-                $stmt->bindValue(':aluno', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':aluno_matricula', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':aluno_where', $studentId, \PDO::PARAM_INT);
                 $stmt->execute();
                 $historico = $stmt->fetchAll() ?: [];
             } catch (\Throwable $e) {
@@ -309,6 +314,78 @@ $stmt = $pdo->prepare(
             'chamadaAberta' => $chamadaAberta,
             'historico' => $historico,
             'alunoNome' => (string) ($user['name'] ?? ''),
+        ], 'aluno');
+    }
+
+    public function calendario(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $linhas = [];
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT c.id, c.data_aula, c.status AS chamada_status, td.id_turma,'
+                    . ' d.nome AS disciplina_nome, cp.presenca'
+                    . ' FROM chamada c'
+                    . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
+                    . ' JOIN disciplina d ON d.id = td.id_disciplina'
+                    . ' LEFT JOIN matricula mm ON mm.id_turma = td.id_turma'
+                    . ' AND mm.id_aluno = :aluno_matricula AND mm.ativo = 1'
+                    . ' LEFT JOIN chamada_presenca cp ON cp.id_chamada = c.id AND cp.id_matricula = mm.id'
+                    . ' WHERE EXISTS ('
+                    . ' SELECT 1 FROM matricula m2'
+                    . ' WHERE m2.id_turma = td.id_turma AND m2.id_aluno = :aluno_where AND m2.ativo = 1'
+                    . ')'
+                    . ' ORDER BY c.data_aula ASC, c.id ASC'
+                );
+                $stmt->bindValue(':aluno_matricula', $studentId, \PDO::PARAM_INT);
+                $stmt->bindValue(':aluno_where', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $linhas = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT CALENDARIO] Erro: ' . $e->getMessage());
+                $linhas = [];
+            }
+        }
+
+        $calendario = [];
+        foreach ($linhas as $l) {
+            $data = (string) ($l['data_aula'] ?? '');
+            if ($data === '') {
+                continue;
+            }
+            $dt = date_create($data);
+            if (!$dt) {
+                continue;
+            }
+            $ano = (int) $dt->format('Y');
+            $mes = (int) $dt->format('n');
+            $dia = (int) $dt->format('j');
+            $calendario[$ano][$mes][$dia][] = [
+                'id' => (int) ($l['id'] ?? 0),
+                'status' => (string) ($l['chamada_status'] ?? ''),
+                'disciplina' => (string) ($l['disciplina_nome'] ?? ''),
+                'presenca' => (string) ($l['presenca'] ?? ''),
+            ];
+        }
+        ksort($calendario);
+        foreach ($calendario as &$meses) {
+            ksort($meses);
+        }
+        unset($meses);
+
+        $this->render('pages/aluno/calendario', [
+            'title' => 'Calendário',
+            'currentRoute' => '/aluno/calendario',
+            'calendario' => $calendario,
         ], 'aluno');
     }
 
@@ -476,6 +553,13 @@ $stmt = $pdo->prepare(
                 $stmt->bindValue(':responsavel', 'aluno', \PDO::PARAM_STR);
                 $stmt->execute();
             }
+
+            $this->logService->log(
+                $idPresenca > 0 ? 'atualizar' : 'criar',
+                'chamada_presenca',
+                $idPresenca > 0 ? $idPresenca : 0,
+                'Presença ' . $presenca . ' registrada na chamada #' . $idChamada . ' pelo aluno'
+            );
 
             Session::setFlash('flash', 'Presença registrada como ' . ucfirst(strtolower($presenca)) . '.');
         } catch (\Throwable $e) {
