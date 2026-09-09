@@ -861,10 +861,12 @@ $stmt = $pdo->prepare(
 
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT id, titulo, link, tipo, created_at'
-                    . ' FROM material'
-                    . ' WHERE id_fk = :id_fk AND ativo = :ativo'
-                    . ' ORDER BY FIELD(tipo, \'video\', \'PDF\', \'Artigo\', \'Apostila\'), created_at DESC'
+                    'SELECT m.id, m.titulo, m.link, m.tipo, m.id_disciplina, m.created_at,'
+                    . ' d.nome AS disciplina_nome'
+                    . ' FROM material m'
+                    . ' LEFT JOIN disciplina d ON d.id = m.id_disciplina'
+                    . ' WHERE m.id_fk = :id_fk AND m.ativo = :ativo'
+                    . ' ORDER BY m.id_disciplina ASC, d.nome ASC, m.created_at DESC'
                 );
                 $stmt->bindValue(':id_fk', $turmaId, \PDO::PARAM_INT);
                 $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);

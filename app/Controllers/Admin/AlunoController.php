@@ -19,6 +19,7 @@ use App\Services\AcordoPagamentoService;
 use App\Services\EmailService;
 use App\Services\PlanilhaService;
 use App\Services\IpLocationService;
+use App\Services\FinanceiroLinkService;
 use App\Support\Session;
 
 final class AlunoController extends Controller
@@ -31,6 +32,7 @@ final class AlunoController extends Controller
     private CursoPagamentoService $pagamentoService;
     private NotificacaoMatriculaService $notificacaoMatriculaService;
     private AcordoPagamentoService $acordoService;
+    private FinanceiroLinkService $financeiroLinkService;
 
     public function __construct()
     {
@@ -42,6 +44,7 @@ final class AlunoController extends Controller
         $this->pagamentoService = new CursoPagamentoService();
         $this->notificacaoMatriculaService = new NotificacaoMatriculaService();
         $this->acordoService = new AcordoPagamentoService();
+        $this->financeiroLinkService = new FinanceiroLinkService();
     }
 
     public function index(): void
@@ -255,7 +258,10 @@ final class AlunoController extends Controller
             'logsAluno' => $logs,
             'documentos' => $documentos,
             'parcelasFinanceiro' => $this->parcelaService->listarPorAluno($id),
+            'linksFinanceiro' => $this->financeiroLinkService->listarPorAluno($id),
+            'linkFinanceiroMigracao' => Session::get('link_financeiro_migracao', ''),
         ], 'admin');
+        Session::forget('link_financeiro_migracao');
     }
 
     public function novo(): void
@@ -662,6 +668,201 @@ final class AlunoController extends Controller
 
         $this->logService->log('atualizar', 'curso_parcela', $idParcela, 'Parcela lançada como paga manualmente pelo administrador.');
         Session::setFlash('flash', 'Parcela lançada como paga com sucesso.');
+        $this->redirect($redirect);
+    }
+
+    /**
+     * Troca as cobranças futuras já criadas no Asaas por um link para o aluno
+     * escolher cartão recorrente. A matrícula, a turma e a primeira parcela
+     * paga permanecem intactas.
+     */
+    public function migrarFinanceiroParaRecorrencia(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $idAluno = (int) $this->input('id_aluno', 0);
+        $idMatricula = (int) $this->input('id_matricula', 0);
+        $idParcelaOrigem = (int) $this->input('id_parcela_origem', 0);
+        $valorParcela = $this->valorBrasileiro((string) $this->input('valor_parcela', '0'));
+        $redirect = '/admin/alunos/show?id=' . $idAluno;
+
+        $origem = $idParcelaOrigem > 0 ? $this->parcelaService->buscar($idParcelaOrigem) : null;
+        if ($idAluno <= 0 || $idMatricula <= 0 || !is_array($origem)
+            || (int) ($origem['id_aluno'] ?? 0) !== $idAluno
+            || (int) ($origem['id_matricula'] ?? 0) !== $idMatricula
+            || (int) ($origem['numero_parcela'] ?? 0) !== 1
+            || !in_array((string) ($origem['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
+            Session::setFlash('flash', 'A parcela de origem precisa ser a primeira parcela paga desta matrícula.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $acordoExistente = $this->acordoService->findAtivoPorParcelaOrigem($idParcelaOrigem);
+        if (is_array($acordoExistente) && (string) ($acordoExistente['token'] ?? '') !== '') {
+            $linkExistente = rtrim((string) (getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com'), '/')
+                . '/financeiro/' . (string) $acordoExistente['token'];
+            Session::set('link_financeiro_migracao', $linkExistente);
+            Session::setFlash('flash', 'Esta matrícula já possui um link de recorrência.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $parcelas = $this->parcelaService->listarPorMatricula($idAluno, $idMatricula);
+        $futuras = array_values(array_filter(
+            $parcelas,
+            static fn (array $parcela): bool => (int) ($parcela['numero_parcela'] ?? 0) >= 2
+                && !in_array((string) ($parcela['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)
+        ));
+
+        if ($futuras === []) {
+            Session::setFlash('flash', 'Não há parcelas futuras pendentes para migrar.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        if ($valorParcela <= 0) {
+            $valorParcela = (float) ($futuras[0]['valor'] ?? $origem['valor'] ?? 0);
+        }
+        if ($valorParcela <= 0) {
+            Session::setFlash('flash', 'Informe um valor válido para as parcelas restantes.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $asaas = new AsaasService();
+        foreach ($futuras as $parcela) {
+            $paymentId = trim((string) ($parcela['asaas_payment'] ?? ''));
+            if ($paymentId !== '' && !$asaas->cancelarCobranca($paymentId)) {
+                Session::setFlash('flash', 'Não foi possível cancelar a cobrança ' . $paymentId . ' no Asaas. Nenhuma nova opção foi criada.');
+                $this->redirect($redirect);
+                return;
+            }
+        }
+
+        foreach ($futuras as $parcela) {
+            if (!$this->parcelaService->inativarParcelaMigrada((int) ($parcela['id'] ?? 0))) {
+                Session::setFlash('flash', 'Uma parcela foi cancelada no Asaas, mas não foi possível removê-la do financeiro local. Verifique o financeiro antes de tentar novamente.');
+                $this->redirect($redirect);
+                return;
+            }
+        }
+
+        $usuarioSessao = Session::get('user');
+        $idAcordo = $this->acordoService->salvar([
+            'tipo' => 5,
+            'id_pre_inscricao' => 0,
+            'id_curso_pagamento' => (int) ($origem['id_pagamento'] ?? 0),
+            'id_curso_parcela_origem' => $idParcelaOrigem,
+            'id_usuario_autorizacao' => is_array($usuarioSessao) ? (int) ($usuarioSessao['id'] ?? 0) : 0,
+            'cpf' => preg_replace('/\D/', '', (string) ($origem['cpf'] ?? '')),
+            'token' => $this->acordoService->gerarToken(),
+            'valor_entrada' => (float) ($origem['valor'] ?? 0),
+            'data_vencimento_entrada' => (string) ($origem['data_vencimento'] ?? date('Y-m-d')),
+            'total_parcelas' => (int) ($origem['total_parcelas'] ?? count($parcelas)),
+            'valor_demais_parcelas' => $valorParcela,
+            'motivo' => 'Migração de cobranças futuras para cartão recorrente',
+            'observacao' => 'Matrícula existente; primeira parcela já paga.',
+            'utilizado' => 0,
+            'ativo' => 1,
+        ]);
+
+        if ($idAcordo <= 0) {
+            Session::setFlash('flash', 'As cobranças foram canceladas, mas não foi possível criar o novo link financeiro.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $this->parcelaService->vincularAcordo($idParcelaOrigem, $idAcordo);
+        $acordo = $this->acordoService->findById($idAcordo);
+        $token = is_array($acordo) ? (string) ($acordo['token'] ?? '') : '';
+        $link = $token !== ''
+            ? rtrim((string) (getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com'), '/') . '/financeiro/' . $token
+            : '';
+        $email = trim((string) ($origem['email'] ?? ''));
+        if ($link !== '') {
+            Session::set('link_financeiro_migracao', $link);
+            $this->financeiroLinkService->criar([
+                'id_aluno' => $idAluno,
+                'id_matricula' => $idMatricula,
+                'id_parcela_origem' => $idParcelaOrigem,
+                'id_acordo_pagamento' => $idAcordo,
+                'token' => $token,
+                'url' => $link,
+                'nome_aluno' => (string) ($origem['nome'] ?? ''),
+                'email_destino' => $email,
+                'valor_parcela' => $valorParcela,
+                'enviado_em' => $email !== '' ? date('Y-m-d H:i:s') : null,
+            ]);
+        }
+
+        if ($link !== '' && $email !== '') {
+            try {
+                (new EmailService())->enviarHtml(
+                    $email,
+                    (string) ($origem['nome'] ?? 'Aluno'),
+                    'Escolha a forma de pagamento das parcelas restantes',
+                    '<p>Olá, ' . htmlspecialchars((string) ($origem['nome'] ?? ''), ENT_QUOTES, 'UTF-8') . '.</p>'
+                    . '<p>A primeira parcela da sua matrícula já está paga. Acesse o link abaixo para escolher cartão de crédito e, se desejar, ativar a cobrança recorrente das parcelas restantes:</p>'
+                    . '<p><a href="' . htmlspecialchars($link, ENT_QUOTES, 'UTF-8') . '">Acessar financeiro</a></p>',
+                    "Olá, " . (string) ($origem['nome'] ?? '') . ".\n\nA primeira parcela da matrícula já está paga. Acesse o financeiro para escolher a forma de pagamento das parcelas restantes:\n" . $link
+                );
+            } catch (\Throwable $e) {
+                error_log('[MIGRACAO RECORRENCIA] Erro ao enviar link: ' . $e->getMessage());
+            }
+        }
+
+        $this->logService->log('atualizar', 'acordo_pagamento', $idAcordo, 'Parcelas futuras migradas para escolha de cartão recorrente; matrícula preservada.');
+        Session::setFlash('flash', 'Migração concluída. O link foi exibido na modal e o aluno permanece matriculado.');
+        $this->redirect($redirect);
+    }
+
+    public function reenviarLinkFinanceiro(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $idAluno = (int) $this->input('id_aluno', 0);
+        $idLink = (int) $this->input('id_link', 0);
+        $link = $idLink > 0 ? $this->financeiroLinkService->buscar($idLink) : null;
+        $redirect = '/admin/alunos/show?id=' . $idAluno;
+
+        if (!is_array($link) || (int) ($link['id_aluno'] ?? 0) !== $idAluno) {
+            Session::setFlash('flash', 'Link financeiro não encontrado para este aluno.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $email = trim((string) ($link['email_destino'] ?? ''));
+        if ($email === '') {
+            Session::setFlash('flash', 'Este aluno não possui e-mail cadastrado para reenvio.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        try {
+            (new EmailService())->enviarHtml(
+                $email,
+                (string) ($link['nome_aluno'] ?? 'Aluno'),
+                'Link para escolha do pagamento das parcelas restantes',
+                '<p>Olá, ' . htmlspecialchars((string) ($link['nome_aluno'] ?? ''), ENT_QUOTES, 'UTF-8') . '.</p>'
+                . '<p>Segue novamente o link para escolher a forma de pagamento das parcelas restantes da sua matrícula:</p>'
+                . '<p><a href="' . htmlspecialchars((string) ($link['url'] ?? ''), ENT_QUOTES, 'UTF-8') . '">Acessar financeiro</a></p>',
+                "Olá, " . (string) ($link['nome_aluno'] ?? '') . ".\n\nAcesse o financeiro pelo link:\n" . (string) ($link['url'] ?? '')
+            );
+            $this->financeiroLinkService->marcarReenvio($idLink);
+            Session::setFlash('flash', 'Link reenviado para ' . $email . '.');
+        } catch (\Throwable $e) {
+            error_log('[FINANCEIRO_LINK] Erro ao reenviar: ' . $e->getMessage());
+            Session::setFlash('flash', 'Não foi possível reenviar o link.');
+        }
+
         $this->redirect($redirect);
     }
 

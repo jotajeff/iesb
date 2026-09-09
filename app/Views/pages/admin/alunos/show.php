@@ -1,6 +1,8 @@
 <?php
 $alunoData = is_array($aluno ?? null) ? $aluno : null;
 $cursosLista = is_array($cursos ?? null) ? $cursos : [];
+$linkFinanceiroMigracao = trim((string) ($linkFinanceiroMigracao ?? ''));
+$linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
 
 
 ?>
@@ -339,12 +341,25 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                 $qtdPagas = 0;
                 $valorTotal = 0.0;
                 $valorPago = 0.0;
+                $parcelaMigracao = null;
                 foreach ($parcelasFin as $pf) {
                     $v = (float) ($pf['valor'] ?? 0);
                     $valorTotal += $v;
                     if (in_array((string) ($pf['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
                         $qtdPagas++;
                         $valorPago += $v;
+                    }
+                    if ($parcelaMigracao === null
+                        && (int) ($pf['numero_parcela'] ?? 0) === 1
+                        && in_array((string) ($pf['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)
+                        && (int) ($pf['id_matricula'] ?? 0) > 0
+                        && count(array_filter($parcelasFin, static fn (array $outra): bool =>
+                            (int) ($outra['id_matricula'] ?? 0) === (int) ($pf['id_matricula'] ?? 0)
+                            && (int) ($outra['numero_parcela'] ?? 0) >= 2
+                            && !in_array((string) ($outra['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)
+                        )) > 0
+                    ) {
+                        $parcelaMigracao = $pf;
                     }
                 }
               ?>
@@ -357,6 +372,22 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                   <span class="badge bg-success">Pago: R$ <?= number_format($valorPago, 2, ',', '.') ?></span>
                   <span class="badge bg-danger">Aberto: R$ <?= number_format($valorTotal - $valorPago, 2, ',', '.') ?></span>
                 </div>
+                <?php if (is_array($parcelaMigracao)): ?>
+                  <div class="d-flex align-items-center justify-content-between gap-3 mx-3 mt-3 mb-2 p-3 border rounded-3 bg-light">
+                    <div>
+                      <div class="fw-semibold"><i class="bi bi-arrow-repeat me-1"></i>Alterar parcelas futuras para cartão recorrente</div>
+                      <div class="small text-muted">Cancela as cobranças futuras no Asaas e envia ao aluno um novo link financeiro. A matrícula e a 1ª parcela paga serão preservadas.</div>
+                    </div>
+                    <button type="button" class="btn btn-primary btn-sm btn-abrir-migracao"
+                            data-bs-toggle="modal" data-bs-target="#modalMigrarRecorrencia"
+                            data-id-aluno="<?= (int) ($alunoData['id'] ?? 0) ?>"
+                            data-id-matricula="<?= (int) ($parcelaMigracao['id_matricula'] ?? 0) ?>"
+                            data-id-origem="<?= (int) ($parcelaMigracao['id'] ?? 0) ?>"
+                            data-valor="<?= number_format((float) ($parcelaMigracao['valor'] ?? 0), 2, ',', '.') ?>">
+                      <i class="bi bi-link-45deg me-1"></i>Gerar novo link
+                    </button>
+                  </div>
+                <?php endif; ?>
               <?php endif; ?>
               <?php if (empty($parcelasFin)): ?>
                 <div class="alert alert-light border text-muted m-3">
@@ -386,6 +417,14 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                           $pfValor = (float) ($pf['valor'] ?? 0);
                           $pfInvoice = (string) ($pf['invoice_url'] ?? '');
                           $pfPayment = (string) ($pf['asaas_payment'] ?? '');
+                          $pfPodeMigrar = $pfNumero === 1
+                            && in_array($pfStatus, ['RECEBIDO', 'CONFIRMADO'], true)
+                            && (int) ($pf['id_matricula'] ?? 0) > 0
+                            && count(array_filter($parcelasFin, static fn (array $outra): bool =>
+                                (int) ($outra['id_matricula'] ?? 0) === (int) ($pf['id_matricula'] ?? 0)
+                                && (int) ($outra['numero_parcela'] ?? 0) >= 2
+                                && !in_array((string) ($outra['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)
+                            )) > 0;
 
                           $pfStatusLabel = match ($pfStatus) {
                               'RECEBIDO', 'CONFIRMADO' => 'Pago',
@@ -455,6 +494,54 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
                             <?php else: ?>
                               <span class="text-muted">-</span>
                             <?php endif; ?>
+                            <?php if ($pfPodeMigrar): ?>
+                              <button type="button" class="btn btn-sm btn-outline-primary mt-2 btn-abrir-migracao"
+                                      data-bs-toggle="modal" data-bs-target="#modalMigrarRecorrencia"
+                                      data-id-aluno="<?= (int) ($alunoData['id'] ?? 0) ?>"
+                                      data-id-matricula="<?= (int) ($pf['id_matricula'] ?? 0) ?>"
+                                      data-id-origem="<?= (int) ($pf['id'] ?? 0) ?>"
+                                      data-valor="<?= number_format($pfValor, 2, ',', '.') ?>">
+                                <i class="bi bi-arrow-repeat me-1"></i>Cartão recorrente
+                              </button>
+                            <?php endif; ?>
+                          </td>
+                        </tr>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
+              <?php endif; ?>
+            </div>
+          </div>
+        </div>
+
+        <div class="accordion-item">
+          <h2 class="accordion-header">
+            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#linksFinanceirosAluno" aria-expanded="false" aria-controls="linksFinanceirosAluno">
+              <i class="bi bi-link-45deg me-2"></i>Links financeiros / acordos (<?= count($linksFinanceiro) ?>)
+            </button>
+          </h2>
+          <div id="linksFinanceirosAluno" class="accordion-collapse collapse" data-bs-parent="#alunoAccordion">
+            <div class="accordion-body p-0">
+              <?php if ($linksFinanceiro === []): ?>
+                <div class="alert alert-light border text-muted m-3 mb-0"><i class="bi bi-inbox me-1"></i>Sem registro/acordo</div>
+              <?php else: ?>
+                <div class="table-responsive">
+                  <table class="table table-striped table-sm align-middle mb-0">
+                    <thead><tr><th>Link</th><th>Valor</th><th>Gerado em</th><th>Último reenvio</th><th>Ação</th></tr></thead>
+                    <tbody>
+                      <?php foreach ($linksFinanceiro as $linkFinanceiro): ?>
+                        <tr>
+                          <td><a href="<?= htmlspecialchars((string) ($linkFinanceiro['url'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars((string) ($linkFinanceiro['url'] ?? ''), ENT_QUOTES, 'UTF-8') ?></a></td>
+                          <td>R$ <?= number_format((float) ($linkFinanceiro['valor_parcela'] ?? 0), 2, ',', '.') ?></td>
+                          <td><?= htmlspecialchars((string) ($linkFinanceiro['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                          <td><?= htmlspecialchars((string) ($linkFinanceiro['ultimo_reenvio_em'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                          <td>
+                            <form method="post" action="/admin/alunos/financeiro/reenviar-link" onsubmit="return confirm('Reenviar este link para o e-mail do aluno?');">
+                              <input type="hidden" name="id_aluno" value="<?= (int) ($alunoData['id'] ?? 0) ?>">
+                              <input type="hidden" name="id_link" value="<?= (int) ($linkFinanceiro['id'] ?? 0) ?>">
+                              <button type="submit" class="btn btn-sm btn-outline-primary"><i class="bi bi-envelope me-1"></i>Reenviar</button>
+                            </form>
                           </td>
                         </tr>
                       <?php endforeach; ?>
@@ -584,6 +671,52 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
   </div>
 </div>
 
+<div class="modal fade" id="modalMigrarRecorrencia" tabindex="-1" aria-labelledby="modalMigrarRecorrenciaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="/admin/alunos/financeiro/migrar-recorrencia" id="formMigrarRecorrencia">
+        <input type="hidden" name="id_aluno" id="migracaoIdAluno">
+        <input type="hidden" name="id_matricula" id="migracaoIdMatricula">
+        <input type="hidden" name="id_parcela_origem" id="migracaoIdOrigem">
+        <div class="modal-header bg-primary-subtle">
+          <h5 class="modal-title" id="modalMigrarRecorrenciaLabel"><i class="bi bi-arrow-repeat me-2"></i>Gerar link de cartão recorrente</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <?php if ($linkFinanceiroMigracao !== ''): ?>
+              <div class="alert alert-success mb-0">
+              <div class="fw-semibold mb-2"><i class="bi bi-check-circle me-1"></i>Link gerado com sucesso</div>
+              <div class="input-group">
+                <input type="text" class="form-control" id="linkFinanceiroMigracao" value="<?= htmlspecialchars($linkFinanceiroMigracao, ENT_QUOTES, 'UTF-8') ?>" readonly>
+                <button type="button" class="btn btn-outline-success" id="btnCopiarLinkMigracao"><i class="bi bi-copy me-1"></i>Copiar</button>
+              </div>
+              <div class="mt-2"><a href="<?= htmlspecialchars($linkFinanceiroMigracao, ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener noreferrer"><?= htmlspecialchars($linkFinanceiroMigracao, ENT_QUOTES, 'UTF-8') ?></a></div>
+              <div class="small mt-2">O link também foi enviado ao e-mail cadastrado do aluno.</div>
+            </div>
+          <?php else: ?>
+            <p class="mb-3">As cobranças futuras serão canceladas no Asaas e substituídas por um link para o aluno escolher cartão recorrente. A matrícula e a primeira parcela paga serão preservadas.</p>
+            <label for="migracaoValorParcela" class="form-label fw-semibold">Valor de cada parcela restante</label>
+            <div class="input-group">
+              <span class="input-group-text">R$</span>
+              <input type="text" class="form-control" name="valor_parcela" id="migracaoValorParcela" inputmode="decimal" required>
+            </div>
+            <div class="form-text">Informe o valor acordado para cada parcela a partir da 2ª. Ele pode ser diferente da primeira parcela.</div>
+            <div class="alert alert-warning small mt-3 mb-0"><i class="bi bi-exclamation-triangle me-1"></i>Esta operação cancela as cobranças futuras existentes no Asaas.</div>
+          <?php endif; ?>
+        </div>
+        <div class="modal-footer">
+          <?php if ($linkFinanceiroMigracao !== ''): ?>
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Concluir</button>
+          <?php else: ?>
+            <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-link-45deg me-1"></i>Cancelar cobranças e gerar link</button>
+          <?php endif; ?>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
 <div id="documentoLoader" class="d-none" style="position:fixed;inset:0;z-index:1100;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;">
   <div class="d-flex flex-column align-items-center text-white px-3">
     <div class="spinner-border mb-3" style="width:3rem;height:3rem;" role="status">
@@ -676,4 +809,36 @@ $cursosLista = is_array($cursos ?? null) ? $cursos : [];
       document.getElementById('lancarParcelaSenha').value = '';
     });
   });
+
+  document.querySelectorAll('.btn-abrir-migracao').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var aluno = document.getElementById('migracaoIdAluno');
+      var matricula = document.getElementById('migracaoIdMatricula');
+      var origem = document.getElementById('migracaoIdOrigem');
+      var valor = document.getElementById('migracaoValorParcela');
+      if (aluno) aluno.value = btn.getAttribute('data-id-aluno') || '';
+      if (matricula) matricula.value = btn.getAttribute('data-id-matricula') || '';
+      if (origem) origem.value = btn.getAttribute('data-id-origem') || '';
+      if (valor) valor.value = btn.getAttribute('data-valor') || '';
+    });
+  });
+
+  var btnCopiarLink = document.getElementById('btnCopiarLinkMigracao');
+  if (btnCopiarLink) {
+    btnCopiarLink.addEventListener('click', function () {
+      var campo = document.getElementById('linkFinanceiroMigracao');
+      if (!campo) return;
+      navigator.clipboard.writeText(campo.value).then(function () {
+        btnCopiarLink.innerHTML = '<i class="bi bi-check me-1"></i>Copiado';
+      }).catch(function () {
+        campo.select();
+        document.execCommand('copy');
+        btnCopiarLink.innerHTML = '<i class="bi bi-check me-1"></i>Copiado';
+      });
+    });
+  }
+
+  <?php if ($linkFinanceiroMigracao !== ''): ?>
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('modalMigrarRecorrencia')).show();
+  <?php endif; ?>
 </script>

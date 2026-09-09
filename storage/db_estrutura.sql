@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 04/09/2026 às 15:15
+-- Tempo de geração: 09/09/2026 às 20:06
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -182,6 +182,8 @@ CREATE TABLE `chamada_presenca` (
   `id_matricula` int(11) NOT NULL,
   `presenca` enum('PRESENTE','AUSENTE','JUSTIFICADA') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'PRESENTE',
   `observacao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `ip` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `responsavel` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
@@ -509,6 +511,30 @@ CREATE TABLE `estrutura_modulo` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `financeiro_link`
+--
+
+CREATE TABLE `financeiro_link` (
+  `id` int(11) NOT NULL,
+  `id_aluno` int(11) NOT NULL,
+  `id_matricula` int(11) NOT NULL,
+  `id_parcela_origem` int(11) NOT NULL,
+  `id_acordo_pagamento` int(11) DEFAULT NULL,
+  `token` varchar(64) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `url` varchar(500) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `nome_aluno` varchar(150) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email_destino` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `valor_parcela` decimal(10,2) NOT NULL DEFAULT '0.00',
+  `enviado_em` datetime DEFAULT NULL,
+  `ultimo_reenvio_em` datetime DEFAULT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `funcoes_docente`
 --
 
@@ -618,6 +644,7 @@ CREATE TABLE `material` (
   `titulo` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
   `link` text COLLATE utf8_unicode_ci NOT NULL,
   `id_fk` int(11) NOT NULL,
+  `id_disciplina` int(11) DEFAULT NULL,
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
@@ -1319,6 +1346,16 @@ ALTER TABLE `estrutura_modulo`
   ADD KEY `idx_estrutura_modulo_estrutura` (`id_estrutura`);
 
 --
+-- Índices de tabela `financeiro_link`
+--
+ALTER TABLE `financeiro_link`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_financeiro_link_aluno` (`id_aluno`),
+  ADD KEY `idx_financeiro_link_matricula` (`id_matricula`),
+  ADD KEY `idx_financeiro_link_acordo` (`id_acordo_pagamento`),
+  ADD KEY `idx_financeiro_link_token` (`token`);
+
+--
 -- Índices de tabela `funcoes_docente`
 --
 ALTER TABLE `funcoes_docente`
@@ -1725,6 +1762,12 @@ ALTER TABLE `estrutura_disciplina`
 -- AUTO_INCREMENT de tabela `estrutura_modulo`
 --
 ALTER TABLE `estrutura_modulo`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `financeiro_link`
+--
+ALTER TABLE `financeiro_link`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --

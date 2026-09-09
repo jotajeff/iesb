@@ -108,49 +108,73 @@
           </h2>
           <div id="collapseMaterial" class="accordion-collapse collapse" data-bs-parent="#accordionCurso">
             <div class="accordion-body">
-              <?php if (empty($materiais ?? [])): ?>
+              <?php
+                $materiaisView = $materiais ?? [];
+                $gruposMateriais = [];
+                foreach ($materiaisView as $m) {
+                  $idDisc = (int) ($m['id_disciplina'] ?? 0);
+                  $nomeDisc = $idDisc > 0
+                    ? (string) ($m['disciplina_nome'] ?? 'Disciplina')
+                    : 'Secretaria';
+                  $gruposMateriais[$idDisc]['nome'] = $nomeDisc;
+                  $gruposMateriais[$idDisc]['itens'][] = $m;
+                }
+                uksort($gruposMateriais, static fn (int $a, int $b): int => $a === 0 ? -1 : ($b === 0 ? 1 : strcmp((string) ($gruposMateriais[$a]['nome'] ?? ''), (string) ($gruposMateriais[$b]['nome'] ?? ''))));
+              ?>
+              <?php if (empty($gruposMateriais)): ?>
                 <p class="text-muted mb-0"><i class="bi bi-inbox me-1"></i>Nenhum material disponível.</p>
               <?php else: ?>
-                <div class="table-responsive">
-                  <table class="table table-sm align-middle">
-                    <thead>
-                      <tr>
-                        <th><i class="bi bi-hash"></i></th>
-                        <th><i class="bi bi-fonts me-1"></i>Título</th>
-                        <th><i class="bi bi-tag me-1"></i>Tipo</th>
-                        <th><i class="bi bi-link-45deg me-1"></i>Link</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <?php foreach ($materiais as $m): ?>
-                        <tr>
-                          <td><?= (int) ($m['id'] ?? 0) ?></td>
-                          <td><?= htmlspecialchars($m['titulo'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
-                          <td>
-                            <span class="badge <?= match ($m['tipo'] ?? '') { 'video' => 'bg-danger', 'drive' => 'bg-primary', default => 'bg-secondary' } ?>">
-                              <?= htmlspecialchars(ucfirst($m['tipo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
-                            </span>
-                          </td>
-                          <td class="text-break" style="max-width:300px;">
-                            <?php if (($m['tipo'] ?? '') === 'video'): ?>
-                              <a href="/aluno/video?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-danger">
-                                <i class="bi bi-camera-reels me-1"></i>Assistir
-                              </a>
-                            <?php elseif (($m['tipo'] ?? '') === 'drive'): ?>
-                              <a href="/aluno/drive?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-google me-1"></i>Visualizar
-                              </a>
-                            <?php else: ?>
-                              <a href="<?= htmlspecialchars($m['link'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                <i class="bi bi-box-arrow-up-right me-1"></i>Abrir
-                              </a>
-                            <?php endif; ?>
-                          </td>
-                        </tr>
-                      <?php endforeach; ?>
-                    </tbody>
-                  </table>
-                </div>
+                <?php foreach ($gruposMateriais as $idGrupoMaterial => $grupoMaterial): ?>
+                  <div class="mb-4">
+                    <h6 class="mb-2">
+                      <?php if ($idGrupoMaterial === 0): ?>
+                        <span class="badge bg-secondary me-1"><i class="bi bi-briefcase me-1"></i>Secretaria</span>
+                      <?php endif; ?>
+                      <?= htmlspecialchars((string) $grupoMaterial['nome'], ENT_QUOTES, 'UTF-8') ?>
+                      <span class="text-muted small fw-normal ms-1"><?= count($grupoMaterial['itens']) ?> material(is)</span>
+                    </h6>
+                    <div class="table-responsive">
+                      <table class="table table-sm table-striped align-middle mb-0">
+                        <thead>
+                          <tr>
+                            <th><i class="bi bi-hash"></i></th>
+                            <th><i class="bi bi-fonts me-1"></i>Título</th>
+                            <th><i class="bi bi-tag me-1"></i>Tipo</th>
+                            <th><i class="bi bi-link-45deg me-1"></i>Link</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <?php foreach ($grupoMaterial['itens'] as $m): ?>
+                            <tr>
+                              <td><?= (int) ($m['id'] ?? 0) ?></td>
+                              <td><?= htmlspecialchars($m['titulo'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                              <td>
+                                <span class="badge <?= match ($m['tipo'] ?? '') { 'video' => 'bg-danger', 'drive' => 'bg-primary', default => 'bg-secondary' } ?>">
+                                  <?= htmlspecialchars(ucfirst($m['tipo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                                </span>
+                              </td>
+                              <td class="text-break" style="max-width:300px;">
+                                <?php if (($m['tipo'] ?? '') === 'video'): ?>
+                                  <a href="/aluno/video?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-danger">
+                                    <i class="bi bi-camera-reels me-1"></i>Assistir
+                                  </a>
+                                <?php elseif (($m['tipo'] ?? '') === 'drive'): ?>
+                                  <a href="/aluno/drive?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary">
+                                    <i class="bi bi-google me-1"></i>Visualizar
+                                  </a>
+                                <?php else: ?>
+                                  <a href="<?= htmlspecialchars($m['link'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                                    <i class="bi bi-box-arrow-up-right me-1"></i>Abrir
+                                  </a>
+                                <?php endif; ?>
+                              </td>
+                            </tr>
+                          <?php endforeach; ?>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                <?php endforeach; ?>
               <?php endif; ?>
             </div>
           </div>

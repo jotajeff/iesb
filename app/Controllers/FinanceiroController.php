@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Core\Controller;
+use App\Core\Database;
 use App\Services\AcordoPagamentoService;
 use App\Services\AsaasService;
 use App\Services\AuthService;
@@ -164,28 +165,45 @@ final class FinanceiroController extends Controller
             $origem['asaas_customer'] = $customerId;
             $this->parcelaService->gerarParcelasRestantes($origem, $acordo);
             $parcelasAcordo = $this->parcelaService->listarPorAcordo($idAcordo);
+            $dataInicioRecorrencia = '';
             $dataFimRecorrencia = '';
             foreach ($parcelasAcordo as $parcelaAcordo) {
+                if ((int) ($parcelaAcordo['numero_parcela'] ?? 0) === 2 && $dataInicioRecorrencia === '') {
+                    $dataInicioRecorrencia = (string) ($parcelaAcordo['data_vencimento'] ?? '');
+                }
                 if ((int) ($parcelaAcordo['numero_parcela'] ?? 0) === $totalParcelas) {
                     $dataFimRecorrencia = (string) ($parcelaAcordo['data_vencimento'] ?? '');
                     break;
                 }
             }
 
-            $link = $asaas->criarLinkPagamento([
+            $link = $asaas->criarCheckoutRecorrente([
                 'name' => $nomeCurso . ' - recorrência',
                 'description' => $descricaoPlano . ' - ' . max(0, $totalParcelas - 1) . ' parcelas restantes',
                 'value' => $valorDemaisParcelas > 0 ? $valorDemaisParcelas : (float) ($origem['valor'] ?? 0),
-                'billing_type' => 'CREDIT_CARD',
-                'charge_type' => 'RECURRENT',
-                'subscription_cycle' => 'MONTHLY',
+                'customer_data' => [
+                    'name' => $nome,
+                    'cpfCnpj' => $cpf,
+                    'email' => $email,
+                    'phone' => preg_replace('/\D/', '', $telefone),
+                    ...$this->enderecoCheckoutAluno((int) ($origem['id_aluno'] ?? 0)),
+                ],
+                'next_due_date' => $dataInicioRecorrencia ?? '',
                 'end_date' => $dataFimRecorrencia !== '' ? $dataFimRecorrencia : null,
                 'external_reference' => (string) $idAcordo,
+                'success_url' => rtrim((string) (getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com'), '/') . '/financeiro/' . rawurlencode($token),
+                'cancel_url' => rtrim((string) (getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com'), '/') . '/financeiro/' . rawurlencode($token),
+                'expired_url' => rtrim((string) (getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com'), '/') . '/financeiro/' . rawurlencode($token),
             ]);
             $resultado = $link !== null
                 ? ['success' => true, 'invoiceUrl' => (string) ($link['url'] ?? '')]
                 : ['success' => false, 'message' => 'Não foi possível criar o link de pagamento recorrente: ' . ($asaas->getLastError() ?? 'erro desconhecido')];
             $invoiceUrlRecorrencia = (string) ($resultado['invoiceUrl'] ?? '');
+            if (($resultado['success'] ?? false) === true) {
+                // O link do portal pode ser reutilizado após falha de API,
+                // mas não deve criar duas assinaturas após sucesso.
+                $this->acordoService->marcarUtilizado($idAcordo);
+            }
             $this->render('pages/financeiro', [
                 'title' => 'Portal Financeiro', 'currentRoute' => '/financeiro', 'acordo' => $acordo,
                 'token' => $token, 'sucesso' => (bool) ($resultado['success'] ?? false), 'inscricaoId' => $origemId,
@@ -561,5 +579,47 @@ final class FinanceiroController extends Controller
         $curso = $idCurso > 0 ? $this->cursoService->findCurso($idCurso) : null;
         $parcela['curso_nome'] = $curso ? (string) ($curso['nome'] ?? 'Curso') : 'Curso';
         return $parcela;
+    }
+
+    /**
+     * O Checkout recorrente do Asaas exige endereço no customerData.
+     * Retorna somente campos preenchidos; não inventa endereço quando o aluno
+     * ainda não possui cadastro na tabela endereco.
+     *
+     * @return array<string, string>
+     */
+    private function enderecoCheckoutAluno(int $idAluno): array
+    {
+        if ($idAluno <= 0) {
+            return [];
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            return [];
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT cep, logradouro, numero, cidade, uf
+                                   FROM endereco
+                                   WHERE tipo = :tipo AND id_fk = :id_fk
+                                   LIMIT 1');
+            $stmt->execute([':tipo' => 'aluno', ':id_fk' => $idAluno]);
+            $endereco = $stmt->fetch();
+            if (!is_array($endereco) || trim((string) ($endereco['logradouro'] ?? '')) === '') {
+                return [];
+            }
+
+            return [
+                'address' => trim((string) $endereco['logradouro']),
+                'addressNumber' => trim((string) ($endereco['numero'] ?? 'S/N')) ?: 'S/N',
+                'postalCode' => preg_replace('/\D/', '', (string) ($endereco['cep'] ?? '')),
+                'city' => trim((string) ($endereco['cidade'] ?? '')),
+                'province' => trim((string) ($endereco['uf'] ?? '')),
+            ];
+        } catch (\Throwable $e) {
+            error_log('[FINANCEIRO] Erro ao buscar endereço do aluno: ' . $e->getMessage());
+            return [];
+        }
     }
 }

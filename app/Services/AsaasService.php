@@ -170,6 +170,76 @@ final class AsaasService
         ];
     }
 
+    /**
+     * Cria um checkout recorrente com vencimento explícito da próxima parcela.
+     * O checkout coleta/valida o cartão e o Asaas cria a assinatura na data
+     * informada em nextDueDate.
+     */
+    public function criarCheckoutRecorrente(array $data): ?array
+    {
+        $appUrl = rtrim((string) (getenv('APP_URL') ?: 'https://inteligenciaeducacionalsouzabrazil.com'), '/');
+        $body = [
+            'billingTypes' => ['CREDIT_CARD'],
+            'chargeTypes' => ['RECURRENT'],
+            'minutesToExpire' => 1440,
+            'externalReference' => (string) ($data['external_reference'] ?? ''),
+            'items' => [[
+                // O Checkout Asaas aceita no máximo 30 caracteres em items[].name.
+                'name' => mb_substr((string) ($data['name'] ?? 'Parcelas recorrentes'), 0, 30),
+                'description' => mb_substr((string) ($data['description'] ?? ''), 0, 500),
+                'quantity' => 1,
+                'value' => (float) ($data['value'] ?? 0),
+            ]],
+            'subscription' => [
+                'cycle' => 'MONTHLY',
+                'nextDueDate' => (string) ($data['next_due_date'] ?? date('Y-m-d')),
+                'endDate' => (string) ($data['end_date'] ?? ''),
+            ],
+            'callback' => [
+                'successUrl' => (string) ($data['success_url'] ?? ($appUrl . '/')),
+                'cancelUrl' => (string) ($data['cancel_url'] ?? ($appUrl . '/')),
+                'expiredUrl' => (string) ($data['expired_url'] ?? ($appUrl . '/')),
+            ],
+        ];
+
+        $customerData = is_array($data['customer_data'] ?? null) ? $data['customer_data'] : [];
+        if ($customerData !== []) {
+            $body['customerData'] = $customerData;
+        } else {
+            $body['customer'] = (string) ($data['customer_id'] ?? '');
+        }
+
+        if ($body['subscription']['endDate'] === '') {
+            unset($body['subscription']['endDate']);
+        }
+
+        $response = $this->request('POST', '/checkouts', $body);
+        $url = (string) ($response['link'] ?? $response['url'] ?? '');
+        if (!$response || $url === '') {
+            return null;
+        }
+
+        return [
+            'id' => (string) ($response['id'] ?? ''),
+            'url' => $url,
+        ];
+    }
+
+    /**
+     * Cancela uma cobrança pendente no Asaas. O Asaas não apaga o histórico;
+     * a operação equivalente para uma cobrança já criada é o cancelamento.
+     */
+    public function cancelarCobranca(string $paymentId): bool
+    {
+        $paymentId = trim($paymentId);
+        if ($paymentId === '') {
+            return true;
+        }
+
+        $this->request('DELETE', '/payments/' . rawurlencode($paymentId));
+        return $this->lastError === null;
+    }
+
     private function proximoDiaDez(): string
     {
         $mes = (new \DateTimeImmutable('today'))->modify('first day of next month');
@@ -324,6 +394,8 @@ final class AsaasService
         } elseif ($method === 'PUT') {
             curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'PUT');
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($body));
+        } elseif ($method === 'DELETE') {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
         }
 
         $response = curl_exec($ch);

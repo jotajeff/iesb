@@ -844,7 +844,8 @@ final class TurmaController extends Controller
             $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
-        } catch (\Throwable) {
+        } catch (\Throwable $e) {
+            error_log('[TURMA MATERIAIS] Erro ao listar materiais da turma ' . $idTurma . ': ' . $e->getMessage());
             return [];
         }
     }

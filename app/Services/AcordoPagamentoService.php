@@ -28,6 +28,11 @@ final class AcordoPagamentoService
         return $this->repository->findById($id);
     }
 
+    public function findAtivoPorParcelaOrigem(int $idParcelaOrigem): ?array
+    {
+        return $this->repository->findAtivoPorParcelaOrigem($idParcelaOrigem);
+    }
+
     public function findByAsaasSubscription(string $subscription): ?array
     {
         return $this->repository->findByAsaasSubscription($subscription);

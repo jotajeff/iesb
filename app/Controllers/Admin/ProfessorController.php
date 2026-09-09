@@ -165,7 +165,37 @@ final class ProfessorController extends Controller
             return;
         }
 
-        $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, 'professor', $ativo, $telefone, $titulacao);
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare('SELECT id FROM usuarios WHERE email = :email LIMIT 1');
+                $stmt->bindValue(':email', $email, \PDO::PARAM_STR);
+                $stmt->execute();
+                if ($stmt->fetchColumn() !== false) {
+                    Session::setFlash('flash', 'Já existe um usuário cadastrado com este e-mail. Utilize outro e-mail.');
+                    $this->redirect('/admin/professores/novo');
+                    return;
+                }
+            } catch (\Throwable $e) {
+                error_log('[PROFESSOR NOVO] Erro ao verificar e-mail: ' . $e->getMessage());
+            }
+        }
+
+        try {
+            $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, 'professor', $ativo, $telefone, $titulacao);
+        } catch (\Throwable $e) {
+            error_log('[PROFESSOR NOVO] Erro ao criar professor: ' . $e->getMessage());
+            Session::setFlash('flash', 'Não foi possível criar o professor. Verifique se o e-mail já está em uso e tente novamente.');
+            $this->redirect('/admin/professores/novo');
+            return;
+        }
+
+        if ($usuarioId <= 0) {
+            Session::setFlash('flash', 'Não foi possível criar o professor. Tente novamente.');
+            $this->redirect('/admin/professores/novo');
+            return;
+        }
+
         $this->logService->log('criar', 'usuario', $usuarioId, "Professor criado: $nome");
         Session::setFlash('flash', 'Professor criado com sucesso.');
         $this->redirect('/admin/professores');

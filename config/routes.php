@@ -22,6 +22,7 @@ use App\Controllers\Admin\AcademicoController;
 use App\Controllers\Admin\PermissaoController;
 use App\Controllers\Admin\BannerAlunoController;
 use App\Controllers\Admin\ChamadaController;
+use App\Controllers\Admin\MaterialController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -174,6 +175,8 @@ return static function (Router $router): void {
     $router->post('/admin/alunos/restaurar-senha', [AlunoController::class, 'restaurarSenha']);
     $router->post('/admin/alunos/matricula/cancelar', [AlunoController::class, 'cancelarMatricula']);
     $router->post('/admin/alunos/parcela/pagar', [AlunoController::class, 'lancarParcelaPaga']);
+    $router->post('/admin/alunos/financeiro/migrar-recorrencia', [AlunoController::class, 'migrarFinanceiroParaRecorrencia']);
+    $router->post('/admin/alunos/financeiro/reenviar-link', [AlunoController::class, 'reenviarLinkFinanceiro']);
     $router->post('/admin/alunos/compartilhar-documento', [AlunoController::class, 'compartilharDocumento']);
     $router->post('/admin/alunos/upload-documento', [AlunoController::class, 'uploadDocumento']);
     $router->post('/admin/alunos/liberar-documentos', [AlunoController::class, 'liberarDocumentosPublicos']);
@@ -287,6 +290,12 @@ return static function (Router $router): void {
     $router->get('/admin/chamadas/relatorio/excel', [ChamadaController::class, 'relatorioExcel']);
     $router->post('/admin/chamadas/gerar', [ChamadaController::class, 'gerar']);
     $router->post('/admin/chamadas/alterar-status', [ChamadaController::class, 'alterarStatus']);
+
+    $router->get('/admin/material', [MaterialController::class, 'index']);
+    $router->get('/admin/material/novo', [MaterialController::class, 'novo']);
+    $router->get('/admin/material/ajax-disciplinas', [MaterialController::class, 'ajaxDisciplinas']);
+    $router->post('/admin/material/salvar', [MaterialController::class, 'salvar']);
+    $router->post('/admin/material/deletar', [MaterialController::class, 'deletar']);
     $router->get('/admin/chamadas/ajax-professores', [ChamadaController::class, 'ajaxProfessores']);
     $router->get('/admin/chamadas/ajax-disciplinas', [ChamadaController::class, 'ajaxDisciplinas']);
 

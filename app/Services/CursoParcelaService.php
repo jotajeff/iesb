@@ -43,6 +43,21 @@ final class CursoParcelaService
         return $this->repository->listByInscricao($idAluno, $idPagamento, $idCurso);
     }
 
+    public function listarPorMatricula(int $idAluno, int $idMatricula): array
+    {
+        return $this->repository->listByMatricula($idAluno, $idMatricula);
+    }
+
+    public function vincularAcordoNasParcelasFuturas(int $idAluno, int $idMatricula, int $idAcordo): bool
+    {
+        return $this->repository->vincularAcordoNasParcelasFuturas($idAluno, $idMatricula, $idAcordo);
+    }
+
+    public function inativarParcelaMigrada(int $id): bool
+    {
+        return $this->repository->inativarParcelaMigrada($id);
+    }
+
     /**
      * Gera as parcelas restantes (2..N) para inscrições feitas pelo site,
      * com vencimento no dia 10 de cada mês. Usa o total_parcelas do plano (cursos_pagamento)

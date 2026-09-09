@@ -364,6 +364,12 @@ document.addEventListener('DOMContentLoaded', function () {
   if (!form) return;
   var confirmado = false;
 
+  function formatarDataBR(v) {
+    if (!v) return '-';
+    var partes = String(v).split('-');
+    return partes.length === 3 ? partes[2] + '/' + partes[1] + '/' + partes[0] : v;
+  }
+
   form.addEventListener('submit', function (event) {
     if (confirmado) return;
     if (!form.checkValidity()) return;
@@ -378,7 +384,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('cfTurma').textContent = (sTurma && sTurma.selectedIndex >= 0) ? sTurma.options[sTurma.selectedIndex].textContent.trim() : '-';
     document.getElementById('cfStatus').textContent = (sStatus && sStatus.selectedIndex >= 0) ? sStatus.options[sStatus.selectedIndex].textContent.trim() : '-';
     document.getElementById('cfPlano').textContent = (sPlano && sPlano.selectedIndex >= 0) ? sPlano.options[sPlano.selectedIndex].textContent.trim() : '-';
-    document.getElementById('cfData').textContent = (document.getElementById('data_vencimento') ? document.getElementById('data_vencimento').value : '') || '-';
+    document.getElementById('cfData').textContent = formatarDataBR(document.getElementById('data_vencimento') ? document.getElementById('data_vencimento').value : '');
     document.getElementById('cfTotal').textContent = (document.getElementById('total_parcelas') ? document.getElementById('total_parcelas').value : '') || '-';
     document.getElementById('cfPrimeira').textContent = (document.getElementById('valor_primeira') ? document.getElementById('valor_primeira').value : '') || '-';
     document.getElementById('cfDemais').textContent = (document.getElementById('valor_demais') ? document.getElementById('valor_demais').value : '') || '-';

@@ -427,6 +427,89 @@ final class CursoParcelaRepository
         }
     }
 
+    public function listByMatricula(int $idAluno, int $idMatricula): array
+    {
+        if ($idAluno <= 0 || $idMatricula <= 0) {
+            return [];
+        }
+
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return [];
+            }
+
+            $stmt = $pdo->prepare('SELECT cp.*
+                                   FROM curso_parcela cp
+                                   WHERE cp.id_aluno = :id_aluno
+                                     AND cp.id_matricula = :id_matricula
+                                     AND cp.ativo = 1
+                                   ORDER BY cp.numero_parcela ASC, cp.id ASC');
+            $stmt->execute([':id_aluno' => $idAluno, ':id_matricula' => $idMatricula]);
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em listByMatricula: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function vincularAcordoNasParcelasFuturas(int $idAluno, int $idMatricula, int $idAcordo): bool
+    {
+        if ($idAluno <= 0 || $idMatricula <= 0 || $idAcordo <= 0) {
+            return false;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return false;
+            }
+
+            $stmt = $pdo->prepare('UPDATE curso_parcela
+                                   SET id_acordo_pagamento = :id_acordo,
+                                       updated_at = CURRENT_TIMESTAMP
+                                   WHERE id_aluno = :id_aluno
+                                     AND id_matricula = :id_matricula
+                                     AND numero_parcela >= 2
+                                     AND ativo = 1');
+            return $stmt->execute([
+                ':id_acordo' => $idAcordo,
+                ':id_aluno' => $idAluno,
+                ':id_matricula' => $idMatricula,
+            ]);
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em vincularAcordoNasParcelasFuturas: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function inativarParcelaMigrada(int $id): bool
+    {
+        if ($id <= 0) {
+            return false;
+        }
+
+        try {
+            $pdo = Database::connection();
+            if (!$pdo instanceof PDO) {
+                return false;
+            }
+
+            $stmt = $pdo->prepare('UPDATE curso_parcela
+                                   SET asaas_payment = NULL,
+                                       invoice_url = NULL,
+                                       bank_slip_url = NULL,
+                                       ativo = 0,
+                                       updated_at = CURRENT_TIMESTAMP
+                                   WHERE id = :id AND ativo = 1');
+            return $stmt->execute([':id' => $id]);
+        } catch (\Throwable $e) {
+            error_log('[CURSO_PARCELA] Erro em inativarParcelaMigrada: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function updateStatus(int $id, string $status, ?int $idAluno = null, ?int $idMatricula = null): bool
     {
         try {

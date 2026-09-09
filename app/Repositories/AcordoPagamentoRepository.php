@@ -122,6 +122,31 @@ final class AcordoPagamentoRepository
         }
     }
 
+    public function findAtivoPorParcelaOrigem(int $idParcelaOrigem): ?array
+    {
+        if ($idParcelaOrigem <= 0) {
+            return null;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT * FROM acordo_pagamento
+                                   WHERE id_curso_parcela_origem = :id_origem
+                                     AND tipo = 5 AND ativo = 1
+                                   ORDER BY id DESC LIMIT 1');
+            $stmt->execute([':id_origem' => $idParcelaOrigem]);
+            $row = $stmt->fetch();
+            return is_array($row) ? $row : null;
+        } catch (\Throwable $e) {
+            error_log('[ACORDO_PAGAMENTO] Erro em findAtivoPorParcelaOrigem: ' . $e->getMessage());
+            return null;
+        }
+    }
+
     public function findByAsaasSubscription(string $subscription): ?array
     {
         if ($subscription === '') {
