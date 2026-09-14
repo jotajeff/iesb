@@ -35,10 +35,18 @@ final class MatriculaService
         }
 
         $inscricao = $this->parcelaService->findByAsaasPayment($paymentId);
+        if (!$inscricao && trim((string) ($payment['subscription'] ?? '')) === '') {
+            // Cobranças avulsas/parcelas geradas diretamente usam o ID da
+            // parcela em externalReference. Tentar essa chave antes do
+            // fallback legado de acordo evita interpretar o ID como acordo.
+            $inscricao = $this->vincularParcelaPorReferencia($payment);
+        }
         if (!$inscricao) {
             $inscricao = $this->recorrenciaService->vincularParcelaRecorrente($payment);
         }
-        if (!$inscricao) {
+        if (!$inscricao && trim((string) ($payment['subscription'] ?? '')) !== '') {
+            // Compatibilidade com cobranças recorrentes antigas que gravaram
+            // a parcela, e não o acordo, em externalReference.
             $inscricao = $this->vincularParcelaPorReferencia($payment);
         }
         if (!$inscricao) {
@@ -436,14 +444,27 @@ final class MatriculaService
             return null;
         }
 
-        $parcela = $this->parcelaService->findByExternalReference((int) $externalReference);
-        if ($parcela === null) {
+        $parcela = $this->parcelaService->buscar((int) $externalReference);
+        if ($parcela === null || (int) ($parcela['ativo'] ?? 1) !== 1) {
             return null;
         }
 
-        $this->parcelaService->atualizarAsaasInfo((int) $parcela['id'], [
-            'asaas_payment' => $paymentId,
-        ]);
+        $paymentExistente = trim((string) ($parcela['asaas_payment'] ?? ''));
+        if ($paymentExistente !== '' && $paymentExistente !== $paymentId) {
+            error_log(sprintf(
+                '[ASAAS_WEBHOOK] Conflito de externalReference: parcela=%d payment_existente=%s payment_recebido=%s',
+                (int) ($parcela['id'] ?? 0),
+                $paymentExistente,
+                $paymentId
+            ));
+            return null;
+        }
+
+        if ($paymentExistente === '') {
+            $this->parcelaService->atualizarAsaasInfo((int) $parcela['id'], [
+                'asaas_payment' => $paymentId,
+            ]);
+        }
 
         return $this->parcelaService->buscar((int) $parcela['id']);
     }

@@ -240,6 +240,21 @@ final class AsaasService
         return $this->lastError === null;
     }
 
+    public function atualizarDataVencimento(string $paymentId, string $novaData): bool
+    {
+        $paymentId = trim($paymentId);
+        $novaData = trim($novaData);
+        if ($paymentId === '' || $novaData === '') {
+            return false;
+        }
+
+        $response = $this->request('PUT', '/payments/' . rawurlencode($paymentId), [
+            'dueDate' => $novaData,
+        ]);
+
+        return is_array($response) && isset($response['id']);
+    }
+
     private function proximoDiaDez(): string
     {
         $mes = (new \DateTimeImmutable('today'))->modify('first day of next month');

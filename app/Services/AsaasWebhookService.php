@@ -69,13 +69,30 @@ final class AsaasWebhookService
                 default => $this->handleIgnoredEvent($event, $paymentId),
             };
         } catch (\Throwable $e) {
-            $this->log('ERROR', 'Erro no processamento: ' . $e->getMessage(), $paymentId);
+            $message = $e->getMessage();
+            $retryable = $this->isRetryableProcessingError($message);
+            $this->log(
+                $retryable ? 'ERROR' : 'WARN',
+                'Erro no processamento: ' . $message . ($retryable ? '' : ' (evento reconhecido; requer reconciliação)'),
+                $paymentId
+            );
             return [
                 'success' => false,
-                'error' => 'Erro interno',
-                'httpStatus' => 500,
+                'error' => $retryable ? 'Erro interno' : 'Pagamento recebido, pendente de reconciliação',
+                // Falhas técnicas continuam provocando retry. Falhas de
+                // vínculo não são transitórias e não devem criar uma fila
+                // infinita no Asaas; ficam registradas para reconciliação.
+                'httpStatus' => $retryable ? 500 : 200,
             ];
         }
+    }
+
+    private function isRetryableProcessingError(string $message): bool
+    {
+        return !in_array($message, [
+            'Inscrição não encontrada',
+            'Cobrança recorrente sem parcela correspondente',
+        ], true);
     }
 
     public function validarToken(string $token): bool

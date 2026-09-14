@@ -177,6 +177,20 @@ final class FinanceiroController extends Controller
                 }
             }
 
+            $enderecoCheckout = $this->enderecoCheckoutAluno((int) ($origem['id_aluno'] ?? 0));
+            foreach (['address', 'postalCode', 'city', 'province'] as $campoEndereco) {
+                if (trim((string) ($enderecoCheckout[$campoEndereco] ?? '')) === '') {
+                    $this->render('pages/financeiro', [
+                        'title' => 'Portal Financeiro', 'currentRoute' => '/financeiro', 'acordo' => $acordo,
+                        'token' => $token, 'sucesso' => false, 'inscricaoId' => $origemId, 'invoiceUrl' => '',
+                        'bankSlipUrl' => '', 'pixQrCode' => null, 'linhaDigitavel' => null, 'billingType' => 'CREDIT_CARD',
+                        'asaasError' => 'Para ativar a recorrência, cadastre primeiro seu endereço completo no portal do aluno.',
+                        'abrirCheckoutNovaAba' => false,
+                    ]);
+                    return;
+                }
+            }
+
             $link = $asaas->criarCheckoutRecorrente([
                 'name' => $nomeCurso . ' - recorrência',
                 'description' => $descricaoPlano . ' - ' . max(0, $totalParcelas - 1) . ' parcelas restantes',
@@ -186,7 +200,7 @@ final class FinanceiroController extends Controller
                     'cpfCnpj' => $cpf,
                     'email' => $email,
                     'phone' => preg_replace('/\D/', '', $telefone),
-                    ...$this->enderecoCheckoutAluno((int) ($origem['id_aluno'] ?? 0)),
+                    ...$enderecoCheckout,
                 ],
                 'next_due_date' => $dataInicioRecorrencia ?? '',
                 'end_date' => $dataFimRecorrencia !== '' ? $dataFimRecorrencia : null,

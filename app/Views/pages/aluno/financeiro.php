@@ -90,17 +90,20 @@ foreach ($parcelasView as $parcela) {
                       $vencimento = (string) ($parcela['data_vencimento'] ?? '');
                       $valor = (float) ($parcela['valor'] ?? 0);
                       $parcelaId = (int) ($parcela['id'] ?? 0);
+                      $vencida = $vencimento !== ''
+                        && $vencimento < date('Y-m-d')
+                        && !in_array($status, ['RECEBIDO', 'CONFIRMADO', 'CANCELADO', 'ESTORNADO'], true);
 
                       $statusLabel = match ($status) {
                           'RECEBIDO', 'CONFIRMADO' => 'Pago',
                           'CANCELADO' => 'Cancelado',
                           'ESTORNADO' => 'Estornado',
-                          default => 'Pendente',
+                          default => $vencida ? 'Vencido' : 'Pendente',
                       };
                       $statusClass = match ($status) {
                           'RECEBIDO', 'CONFIRMADO' => 'success',
                           'CANCELADO', 'ESTORNADO' => 'danger',
-                          default => 'warning',
+                          default => $vencida ? 'danger' : 'warning',
                       };
                       $estaPaga = in_array($status, ['RECEBIDO', 'CONFIRMADO'], true);
                     ?>
@@ -113,7 +116,7 @@ foreach ($parcelasView as $parcela) {
                           -
                         <?php endif; ?>
                       </td>
-                      <td><?= htmlspecialchars(
+                      <td class="<?= $vencida ? 'text-danger fw-semibold' : '' ?>"><?= htmlspecialchars(
                         $vencimento !== ''
                           ? (new \DateTime($vencimento))->format('d/m/Y')
                           : '-',
@@ -122,7 +125,7 @@ foreach ($parcelasView as $parcela) {
                       ) ?></td>
                       <td>R$ <?= number_format($valor, 2, ',', '.') ?></td>
                       <td>
-                        <span class="badge bg-<?= $statusClass ?>"><?= $statusLabel ?></span>
+                        <span class="badge bg-<?= $statusClass ?><?= $statusClass === 'warning' ? ' text-dark' : '' ?>"><?= $statusLabel ?></span>
                       </td>
                       <td>
                         <?php if (!$estaPaga && $parcelaId > 0): ?>

@@ -107,6 +107,9 @@
                         <a class="btn btn-outline-secondary btn-sm" href="<?= htmlspecialchars((string) ($mat['link'] ?? '#'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" title="Abrir">
                           <i class="bi bi-box-arrow-up-right"></i>
                         </a>
+                        <a class="btn btn-outline-primary btn-sm" href="/admin/material/editar?id=<?= (int) ($mat['id'] ?? 0) ?>" title="Editar">
+                          <i class="bi bi-pencil-square"></i>
+                        </a>
                         <form method="post" action="/admin/material/deletar" class="d-inline"
                               onsubmit="return confirm('Tem certeza que deseja remover este material?');">
                           <input type="hidden" name="id" value="<?= (int) ($mat['id'] ?? 0) ?>">

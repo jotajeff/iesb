@@ -20,6 +20,7 @@ use App\Services\EmailService;
 use App\Services\PlanilhaService;
 use App\Services\IpLocationService;
 use App\Services\FinanceiroLinkService;
+use App\Services\HistoricoVencimentoParcelaService;
 use App\Support\Session;
 
 final class AlunoController extends Controller
@@ -33,6 +34,7 @@ final class AlunoController extends Controller
     private NotificacaoMatriculaService $notificacaoMatriculaService;
     private AcordoPagamentoService $acordoService;
     private FinanceiroLinkService $financeiroLinkService;
+    private HistoricoVencimentoParcelaService $historicoVencimentoService;
 
     public function __construct()
     {
@@ -45,6 +47,7 @@ final class AlunoController extends Controller
         $this->notificacaoMatriculaService = new NotificacaoMatriculaService();
         $this->acordoService = new AcordoPagamentoService();
         $this->financeiroLinkService = new FinanceiroLinkService();
+        $this->historicoVencimentoService = new HistoricoVencimentoParcelaService();
     }
 
     public function index(): void
@@ -258,6 +261,7 @@ final class AlunoController extends Controller
             'logsAluno' => $logs,
             'documentos' => $documentos,
             'parcelasFinanceiro' => $this->parcelaService->listarPorAluno($id),
+            'historicoVencimentos' => $this->historicoVencimentoService->listarPorAluno($id),
             'linksFinanceiro' => $this->financeiroLinkService->listarPorAluno($id),
             'linkFinanceiroMigracao' => Session::get('link_financeiro_migracao', ''),
         ], 'admin');
@@ -668,6 +672,71 @@ final class AlunoController extends Controller
 
         $this->logService->log('atualizar', 'curso_parcela', $idParcela, 'Parcela lançada como paga manualmente pelo administrador.');
         Session::setFlash('flash', 'Parcela lançada como paga com sucesso.');
+        $this->redirect($redirect);
+    }
+
+    public function reagendarParcela(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+            return;
+        }
+
+        $idAluno = (int) $this->input('id_aluno', 0);
+        $idParcela = (int) $this->input('id_parcela', 0);
+        $novaData = trim((string) $this->input('nova_data_vencimento', ''));
+        $motivo = trim((string) $this->input('motivo', ''));
+        $redirect = '/admin/alunos/show?id=' . $idAluno;
+
+        $parcela = $idParcela > 0 ? $this->parcelaService->buscar($idParcela) : null;
+        if ($idAluno <= 0 || !is_array($parcela) || (int) ($parcela['id_aluno'] ?? 0) !== $idAluno) {
+            Session::setFlash('flash', 'Parcela inválida ou não pertencente a este aluno.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        if (in_array((string) ($parcela['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
+            Session::setFlash('flash', 'Parcelas pagas não podem ter o vencimento alterado.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $data = \DateTimeImmutable::createFromFormat('!Y-m-d', $novaData);
+        $errosData = \DateTimeImmutable::getLastErrors();
+        $dataValida = $data !== false && ($errosData === false || ($errosData['warning_count'] ?? 0) === 0 && ($errosData['error_count'] ?? 0) === 0);
+        $hoje = new \DateTimeImmutable('today');
+        if (!$dataValida || $data < $hoje) {
+            Session::setFlash('flash', 'Informe uma nova data de vencimento válida, igual ou posterior a hoje.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $paymentId = trim((string) ($parcela['asaas_payment'] ?? ''));
+        if ($paymentId !== '') {
+            $asaas = new AsaasService();
+            if (!$asaas->atualizarDataVencimento($paymentId, $novaData)) {
+                Session::setFlash('flash', 'Não foi possível atualizar o vencimento no Asaas: ' . ($asaas->getLastError() ?? 'erro desconhecido'));
+                $this->redirect($redirect);
+                return;
+            }
+        }
+
+        $usuario = Session::get('user');
+        $idUsuario = is_array($usuario) && (int) ($usuario['id'] ?? 0) > 0 ? (int) $usuario['id'] : null;
+        if (!$this->historicoVencimentoService->reagendar($idParcela, $novaData, $idUsuario, $motivo)) {
+            Session::setFlash('flash', 'Não foi possível gerar a nova data de vencimento.');
+            $this->redirect($redirect);
+            return;
+        }
+
+        $this->logService->log(
+            'atualizar',
+            'curso_parcela',
+            $idParcela,
+            'Vencimento alterado de ' . (string) ($parcela['data_vencimento'] ?? '-') . ' para ' . $novaData . '.'
+        );
+        Session::setFlash('flash', 'Nova data de vencimento registrada com sucesso.');
         $this->redirect($redirect);
     }
 

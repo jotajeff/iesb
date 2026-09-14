@@ -3,6 +3,7 @@ $alunoData = is_array($aluno ?? null) ? $aluno : null;
 $cursosLista = is_array($cursos ?? null) ? $cursos : [];
 $linkFinanceiroMigracao = trim((string) ($linkFinanceiroMigracao ?? ''));
 $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
+$historicoVencimentos = is_array($historicoVencimentos ?? null) ? $historicoVencimentos : [];
 
 
 ?>
@@ -341,13 +342,20 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
                 $qtdPagas = 0;
                 $valorTotal = 0.0;
                 $valorPago = 0.0;
+                $qtdVencidas = 0;
                 $parcelaMigracao = null;
+                $hojeFinanceiro = date('Y-m-d');
                 foreach ($parcelasFin as $pf) {
                     $v = (float) ($pf['valor'] ?? 0);
                     $valorTotal += $v;
                     if (in_array((string) ($pf['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)) {
                         $qtdPagas++;
                         $valorPago += $v;
+                    }
+                    if ((string) ($pf['data_vencimento'] ?? '') !== ''
+                        && (string) ($pf['data_vencimento'] ?? '') < $hojeFinanceiro
+                        && !in_array((string) ($pf['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO', 'CANCELADO', 'ESTORNADO'], true)) {
+                        $qtdVencidas++;
                     }
                     if ($parcelaMigracao === null
                         && (int) ($pf['numero_parcela'] ?? 0) === 1
@@ -368,6 +376,7 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
                   <span class="badge bg-light text-dark border"><?= $totalParcelas ?> parcela(s)</span>
                   <span class="badge bg-success"><?= $qtdPagas ?> paga(s)</span>
                   <span class="badge bg-warning text-dark"><?= $totalParcelas - $qtdPagas ?> pendente(s)</span>
+                  <?php if ($qtdVencidas > 0): ?><span class="badge bg-danger"><?= $qtdVencidas ?> vencida(s)</span><?php endif; ?>
                   <span class="badge bg-info text-dark">Total: R$ <?= number_format($valorTotal, 2, ',', '.') ?></span>
                   <span class="badge bg-success">Pago: R$ <?= number_format($valorPago, 2, ',', '.') ?></span>
                   <span class="badge bg-danger">Aberto: R$ <?= number_format($valorTotal - $valorPago, 2, ',', '.') ?></span>
@@ -417,6 +426,9 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
                           $pfValor = (float) ($pf['valor'] ?? 0);
                           $pfInvoice = (string) ($pf['invoice_url'] ?? '');
                           $pfPayment = (string) ($pf['asaas_payment'] ?? '');
+                          $pfVencida = $pfVenc !== ''
+                            && $pfVenc < date('Y-m-d')
+                            && !in_array($pfStatus, ['RECEBIDO', 'CONFIRMADO', 'CANCELADO', 'ESTORNADO'], true);
                           $pfPodeMigrar = $pfNumero === 1
                             && in_array($pfStatus, ['RECEBIDO', 'CONFIRMADO'], true)
                             && (int) ($pf['id_matricula'] ?? 0) > 0
@@ -430,12 +442,12 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
                               'RECEBIDO', 'CONFIRMADO' => 'Pago',
                               'CANCELADO' => 'Cancelado',
                               'ESTORNADO' => 'Estornado',
-                              default => 'Pendente',
+                              default => $pfVencida ? 'Vencido' : 'Pendente',
                           };
                           $pfStatusClass = match ($pfStatus) {
                               'RECEBIDO', 'CONFIRMADO' => 'success',
                               'CANCELADO', 'ESTORNADO' => 'danger',
-                              default => 'warning',
+                              default => $pfVencida ? 'danger' : 'warning',
                           };
                         ?>
                         <tr>
@@ -482,7 +494,7 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
                           </td>
                           <td>R$ <?= number_format($pfValor, 2, ',', '.') ?></td>
                           <td>
-                            <span class="badge bg-<?= $pfStatusClass ?>"><?= $pfStatusLabel ?></span>
+                            <span class="badge bg-<?= $pfStatusClass ?><?= $pfStatusClass === 'warning' ? ' text-dark' : '' ?>"><?= $pfStatusLabel ?></span>
                           </td>
                           <td>
                             <?php if ($pfInvoice !== ''): ?>
@@ -505,11 +517,46 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
                               </button>
                             <?php endif; ?>
                           </td>
+                          <td>
+                            <?php if ($pfVencida): ?>
+                              <button type="button" class="btn btn-sm btn-outline-danger btn-abrir-reagendamento"
+                                      data-bs-toggle="modal" data-bs-target="#modalReagendarParcela"
+                                      data-id-parcela="<?= (int) ($pf['id'] ?? 0) ?>"
+                                      data-parcela="<?= $pfNumero > 0 ? $pfNumero . 'ª de ' . $pfTotal : 'Parcela' ?>"
+                                      data-vencimento="<?= htmlspecialchars($pfVenc, ENT_QUOTES, 'UTF-8') ?>">
+                                <i class="bi bi-calendar2-plus me-1"></i>Gerar nova data
+                              </button>
+                            <?php else: ?>
+                              <span class="text-muted small">—</span>
+                            <?php endif; ?>
+                          </td>
                         </tr>
                       <?php endforeach; ?>
                     </tbody>
                   </table>
                 </div>
+                <?php if ($historicoVencimentos !== []): ?>
+                  <div class="border-top p-3">
+                    <div class="fw-semibold mb-2"><i class="bi bi-clock-history me-1"></i>Histórico de alterações de vencimento</div>
+                    <div class="table-responsive">
+                      <table class="table table-sm align-middle mb-0">
+                        <thead><tr><th>Parcela</th><th>Data anterior</th><th>Nova data</th><th>Motivo</th><th>Usuário</th><th>Registrado em</th></tr></thead>
+                        <tbody>
+                          <?php foreach ($historicoVencimentos as $historico): ?>
+                            <tr>
+                              <td><?= (int) ($historico['numero_parcela'] ?? 0) ?>ª de <?= (int) ($historico['total_parcelas'] ?? 0) ?></td>
+                              <td><?= htmlspecialchars((string) ($historico['data_anterior'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                              <td class="fw-semibold text-primary"><?= htmlspecialchars((string) ($historico['data_nova'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                              <td><?= htmlspecialchars((string) ($historico['motivo'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                              <td><?= htmlspecialchars((string) ($historico['usuario_nome'] ?? 'Sistema'), ENT_QUOTES, 'UTF-8') ?></td>
+                              <td><?= htmlspecialchars((string) ($historico['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                            </tr>
+                          <?php endforeach; ?>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                <?php endif; ?>
               <?php endif; ?>
             </div>
           </div>
@@ -642,6 +689,33 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
         <a id="visualizarDocumentoAbrir" href="#" target="_blank" class="btn btn-outline-primary btn-sm"><i class="bi bi-box-arrow-up-right me-1"></i>Abrir no Drive</a>
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fechar</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="modalReagendarParcela" tabindex="-1" aria-labelledby="modalReagendarParcelaLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <form method="post" action="/admin/alunos/parcela/reagendar" id="formReagendarParcela">
+        <input type="hidden" name="id_aluno" value="<?= (int) ($alunoData['id'] ?? 0) ?>">
+        <input type="hidden" name="id_parcela" id="reagendarParcelaId">
+        <div class="modal-header bg-danger-subtle">
+          <h5 class="modal-title" id="modalReagendarParcelaLabel"><i class="bi bi-calendar2-plus me-2"></i>Gerar nova data</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+        </div>
+        <div class="modal-body">
+          <p>Defina uma nova data de vencimento para a <strong id="reagendarParcelaNumero">parcela</strong>.</p>
+          <div class="alert alert-warning small py-2"><i class="bi bi-exclamation-triangle me-1"></i>A data atual (<strong id="reagendarParcelaDataAtual">-</strong>) será preservada no histórico.</div>
+          <label for="reagendarNovaData" class="form-label">Nova data de vencimento</label>
+          <input type="date" class="form-control" name="nova_data_vencimento" id="reagendarNovaData" min="<?= date('Y-m-d') ?>" required>
+          <label for="reagendarMotivo" class="form-label mt-3">Motivo (opcional)</label>
+          <textarea class="form-control" name="motivo" id="reagendarMotivo" rows="2" maxlength="255" placeholder="Ex.: negociação com o aluno"></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+          <button type="submit" class="btn btn-danger"><i class="bi bi-calendar-check me-1"></i>Salvar nova data</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
@@ -800,6 +874,21 @@ $linksFinanceiro = is_array($linksFinanceiro ?? null) ? $linksFinanceiro : [];
       if (btn) btn.disabled = true;
     });
   }
+
+  document.querySelectorAll('.btn-abrir-reagendamento').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var id = document.getElementById('reagendarParcelaId');
+      var numero = document.getElementById('reagendarParcelaNumero');
+      var atual = document.getElementById('reagendarParcelaDataAtual');
+      var novaData = document.getElementById('reagendarNovaData');
+      var motivo = document.getElementById('reagendarMotivo');
+      if (id) id.value = btn.getAttribute('data-id-parcela') || '';
+      if (numero) numero.textContent = btn.getAttribute('data-parcela') || 'parcela';
+      if (atual) atual.textContent = btn.getAttribute('data-vencimento') || '-';
+      if (novaData) novaData.value = '';
+      if (motivo) motivo.value = '';
+    });
+  });
 
   document.querySelectorAll('.btn-lancar-pago').forEach(function (btn) {
     btn.addEventListener('click', function () {

@@ -212,6 +212,22 @@ final class RecorrenciaService
                     ]);
                     return $this->vincularParcelaPorAcordo((int) $acordo['id'], $payment);
                 }
+
+                // Algumas cobranças antigas gravaram diretamente o ID da
+                // parcela em externalReference, mesmo tendo subscription.
+                // Só aceita parcela ativa e futura para não vincular uma
+                // cobrança recorrente à primeira parcela ou a uma já paga.
+                $parcelaReferenciada = $this->parcelaService->buscar((int) $externalReference);
+                if (
+                    $parcelaReferenciada !== null
+                    && (int) ($parcelaReferenciada['ativo'] ?? 1) === 1
+                    && (int) ($parcelaReferenciada['numero_parcela'] ?? 0) >= 2
+                    && trim((string) ($parcelaReferenciada['asaas_payment'] ?? '')) === ''
+                    && !in_array((string) ($parcelaReferenciada['status'] ?? ''), ['RECEBIDO', 'CONFIRMADO'], true)
+                ) {
+                    $this->associarCobranca($parcelaReferenciada, $payment);
+                    return $this->parcelaService->buscar((int) $parcelaReferenciada['id']);
+                }
             }
 
             return null;

@@ -227,6 +227,90 @@ final class MaterialController extends Controller
         }
     }
 
+    public function editar(): void
+    {
+        if (!$this->podeGerenciar()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($_GET['id'] ?? 0);
+        $material = $id > 0 ? $this->buscarMaterial($id) : null;
+
+        if (!$material) {
+            Session::setFlash('flash', 'Material não encontrado.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
+        $this->render('pages/admin/material/editar', [
+            'title' => 'Editar Material',
+            'currentRoute' => '/admin/material',
+            'material' => $material,
+            'turmas' => $this->turmas(),
+            'disciplinas' => $this->disciplinasDaTurma((int) ($material['id_fk'] ?? 0)),
+        ], 'admin');
+    }
+
+    public function atualizar(): void
+    {
+        if (!$this->podeGerenciar()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $idTurma = (int) $this->input('id_fk', 0);
+        $idDisciplina = (int) $this->input('id_disciplina', 0);
+        $titulo = trim((string) $this->input('titulo', ''));
+
+        if ($id <= 0 || $idTurma <= 0 || $titulo === '') {
+            Session::setFlash('flash', 'Dados inválidos.');
+            $this->redirect('/admin/material/editar?id=' . $id);
+            return;
+        }
+
+        $material = $this->buscarMaterial($id);
+        if (!$material) {
+            Session::setFlash('flash', 'Material não encontrado.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            Session::setFlash('flash', 'Sem conexão com o banco de dados.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
+        try {
+            $sql = 'UPDATE material SET titulo = :titulo, id_fk = :id_fk, id_disciplina = :id_disciplina, updated_at = NOW()';
+            if ((string) ($material['tipo'] ?? '') === 'video') {
+                $sql .= ', link = :link';
+            }
+            $sql .= ' WHERE id = :id';
+
+            $stmt = $pdo->prepare($sql);
+            $stmt->bindValue(':titulo', $titulo, PDO::PARAM_STR);
+            $stmt->bindValue(':id_fk', $idTurma, PDO::PARAM_INT);
+            $stmt->bindValue(':id_disciplina', $idDisciplina > 0 ? $idDisciplina : 0, PDO::PARAM_INT);
+            if ((string) ($material['tipo'] ?? '') === 'video') {
+                $stmt->bindValue(':link', trim((string) $this->input('link', '')), PDO::PARAM_STR);
+            }
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $this->logService->log('atualizar', 'material', $id, "Material atualizado: $titulo");
+            Session::setFlash('flash', 'Material atualizado com sucesso.');
+        } catch (\Throwable $e) {
+            error_log('[MATERIAL] Erro em atualizar: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao atualizar o material.');
+        }
+
+        $this->redirect('/admin/material');
+    }
+
     public function ajaxDisciplinas(): void
     {
         if (!$this->podeGerenciar()) {
@@ -235,20 +319,22 @@ final class MaterialController extends Controller
         }
 
         $idTurma = (int) ($_GET['id_turma'] ?? 0);
-        if ($idTurma <= 0) {
-            $this->json([]);
-            return;
-        }
+        $this->json($this->disciplinasDaTurma($idTurma));
+    }
 
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    private function disciplinasDaTurma(int $idTurma): array
+    {
         $pdo = Database::connection();
-        if (!$pdo instanceof PDO) {
-            $this->json([]);
-            return;
+        if (!$pdo instanceof PDO || $idTurma <= 0) {
+            return [];
         }
 
         try {
             $stmt = $pdo->prepare(
-                'SELECT td.id, d.nome AS disciplina_nome'
+                'SELECT DISTINCT d.id, d.nome AS disciplina_nome'
                 . ' FROM turma_disciplina td'
                 . ' INNER JOIN disciplina d ON d.id = td.id_disciplina AND d.ativo = 1'
                 . ' WHERE td.id_turma = :id_turma AND td.ativo = 1'
@@ -256,10 +342,29 @@ final class MaterialController extends Controller
             );
             $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
             $stmt->execute();
-            $this->json($stmt->fetchAll() ?: []);
+            return $stmt->fetchAll() ?: [];
         } catch (\Throwable $e) {
-            error_log('[MATERIAL] Erro em ajaxDisciplinas: ' . $e->getMessage());
-            $this->json([]);
+            error_log('[MATERIAL] Erro em disciplinasDaTurma: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    private function buscarMaterial(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $id <= 0) {
+            return null;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT * FROM material WHERE id = :id AND ativo = 1 LIMIT 1');
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return is_array($row) ? $row : null;
+        } catch (\Throwable $e) {
+            error_log('[MATERIAL] Erro em buscarMaterial: ' . $e->getMessage());
+            return null;
         }
     }
 

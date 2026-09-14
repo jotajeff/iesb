@@ -52,7 +52,7 @@
         </p>
       <?php else: ?>
         <div class="table-responsive">
-          <table class="table table-bordered table-sm align-middle">
+          <table class="table table-bordered table-striped table-hover table-sm align-middle">
             <thead class="table-dark">
               <tr>
                 <th class="text-start">Aluno</th>
@@ -63,7 +63,6 @@
                   ?>
                   <th class="text-center" title="<?= htmlspecialchars((string) ($ch['disciplina_nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
                     <?= htmlspecialchars($chDt ? $chDt->format('d/m') : ($chData ?: '-'), ENT_QUOTES, 'UTF-8') ?>
-                    <div class="small fw-normal text-white-50"><?= htmlspecialchars((string) ($ch['disciplina_nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?></div>
                   </th>
                 <?php endforeach; ?>
               </tr>
@@ -86,7 +85,7 @@
                       <?php elseif ($presenca === 'JUSTIFICADA'): ?>
                         <span class="badge bg-warning text-dark">J</span>
                       <?php else: ?>
-                        <span class="badge bg-secondary">Falta</span>
+                        <span class="badge bg-secondary">F</span>
                       <?php endif; ?>
                     </td>
                   <?php endforeach; ?>
@@ -101,6 +100,47 @@
             </tbody>
           </table>
         </div>
+
+        <?php
+          $aulasLista = $chamadas;
+          usort($aulasLista, static function (array $a, array $b): int {
+            return strcmp((string) ($a['data_aula'] ?? ''), (string) ($b['data_aula'] ?? ''))
+              ?: ((int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0));
+          });
+        ?>
+        <h6 class="mt-4 mb-2"><i class="bi bi-journal-text me-1"></i>Dias de aula e disciplinas ministradas</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-striped table-hover align-middle mb-0">
+            <thead>
+              <tr>
+                <th style="width: 130px;">Dia</th>
+                <th>Disciplina</th>
+                <th>Horário</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?php foreach ($aulasLista as $aula): ?>
+                <?php
+                  $aData = (string) ($aula['data_aula'] ?? '');
+                  $aDt = $aData !== '' ? date_create($aData) : false;
+                  $aInicio = substr((string) ($aula['hora_inicio'] ?? ''), 0, 5);
+                  $aFim = substr((string) ($aula['hora_fim'] ?? ''), 0, 5);
+                ?>
+                <tr>
+                  <td><?= htmlspecialchars($aDt ? $aDt->format('d/m/Y') : ($aData ?: '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                  <td><?= htmlspecialchars((string) ($aula['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                  <td><?= htmlspecialchars(($aInicio !== '' || $aFim !== '') ? ($aInicio !== '' ? $aInicio : '-') . ' às ' . ($aFim !== '' ? $aFim : '-') : '-', ENT_QUOTES, 'UTF-8') ?></td>
+                </tr>
+              <?php endforeach; ?>
+            </tbody>
+            <tfoot>
+              <tr class="table-light">
+                <td colspan="3" class="fw-semibold">Total de aulas: <?= count($aulasLista) ?></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
         <div class="d-flex justify-content-end mt-3">
           <a class="btn btn-success" href="/admin/chamadas/relatorio/excel?id_turma=<?= $idTurma ?>">
             <i class="bi bi-file-earmark-excel me-1"></i>Exportar para Excel

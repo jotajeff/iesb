@@ -175,6 +175,7 @@ return static function (Router $router): void {
     $router->post('/admin/alunos/restaurar-senha', [AlunoController::class, 'restaurarSenha']);
     $router->post('/admin/alunos/matricula/cancelar', [AlunoController::class, 'cancelarMatricula']);
     $router->post('/admin/alunos/parcela/pagar', [AlunoController::class, 'lancarParcelaPaga']);
+    $router->post('/admin/alunos/parcela/reagendar', [AlunoController::class, 'reagendarParcela']);
     $router->post('/admin/alunos/financeiro/migrar-recorrencia', [AlunoController::class, 'migrarFinanceiroParaRecorrencia']);
     $router->post('/admin/alunos/financeiro/reenviar-link', [AlunoController::class, 'reenviarLinkFinanceiro']);
     $router->post('/admin/alunos/compartilhar-documento', [AlunoController::class, 'compartilharDocumento']);
@@ -293,8 +294,10 @@ return static function (Router $router): void {
 
     $router->get('/admin/material', [MaterialController::class, 'index']);
     $router->get('/admin/material/novo', [MaterialController::class, 'novo']);
+    $router->get('/admin/material/editar', [MaterialController::class, 'editar']);
     $router->get('/admin/material/ajax-disciplinas', [MaterialController::class, 'ajaxDisciplinas']);
     $router->post('/admin/material/salvar', [MaterialController::class, 'salvar']);
+    $router->post('/admin/material/atualizar', [MaterialController::class, 'atualizar']);
     $router->post('/admin/material/deletar', [MaterialController::class, 'deletar']);
     $router->get('/admin/chamadas/ajax-professores', [ChamadaController::class, 'ajaxProfessores']);
     $router->get('/admin/chamadas/ajax-disciplinas', [ChamadaController::class, 'ajaxDisciplinas']);
