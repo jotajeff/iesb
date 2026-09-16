@@ -8,6 +8,7 @@ use App\Core\Controller;
 use App\Services\DashboardService;
 use App\Services\ImageService;
 use App\Services\LogService;
+use App\Services\ProtocoloService;
 use App\Support\Session;
 
 final class DashboardController extends Controller
@@ -49,6 +50,16 @@ final class DashboardController extends Controller
             ? '/admin/professores/fotos?id=' . $userId
             : '/admin/usuarios/fotos?id=' . $userId;
 
+        $protocolosAbertos = 0;
+        if ($isAdmin) {
+            try {
+                $contagemProtocolos = (new ProtocoloService())->contarPorStatus();
+                $protocolosAbertos = (int) ($contagemProtocolos['ABERTO'] ?? 0);
+            } catch (\Throwable) {
+                $protocolosAbertos = 0;
+            }
+        }
+
         $this->render('pages/admin/dashboard/index', [
             'title' => 'Painel Admin',
             'currentRoute' => '/admin',
@@ -57,6 +68,7 @@ final class DashboardController extends Controller
             'isAdmin' => $isAdmin,
             'userFoto' => $userFoto,
             'fotosUrl' => $fotosUrl,
+            'protocolosAbertos' => $protocolosAbertos,
         ], 'admin');
     }
 

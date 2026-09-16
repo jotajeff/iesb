@@ -95,6 +95,24 @@ $dashboardTypeLabel = match ($dashboardType) {
         </div>
       </a>
     </div>
+    <?php if ((int) ($protocolosAbertos ?? 0) > 0): ?>
+    <div class="col-md-4">
+      <a href="/admin/protocolos?status=ABERTO" class="text-decoration-none d-block h-100">
+        <div class="dashboard-task-card task-card-protocolos h-100 task-card-alert">
+          <div class="task-card-top">
+            <div>
+              <small class="task-card-label">Protocolos abertos</small>
+              <h2 class="task-card-value mb-0"><?= (int) $protocolosAbertos ?></h2>
+            </div>
+            <div class="task-card-icon task-card-icon-protocolos">
+              <i class="bi bi-chat-left-text"></i>
+            </div>
+          </div>
+          <div class="task-card-footer">Aguardando atendimento da Secretaria</div>
+        </div>
+      </a>
+    </div>
+    <?php endif; ?>
     <?php endif; ?>
   </div>
 
@@ -197,6 +215,14 @@ $dashboardTypeLabel = match ($dashboardType) {
 
 .task-card-cursos::before {
   background: #6f42c1;
+}
+
+.task-card-protocolos::before {
+  background: #0d9488;
+}
+
+.task-card-icon-protocolos {
+  background: linear-gradient(135deg, #0d9488, #5eead4);
 }
 
 .task-card-preinscricao::before {

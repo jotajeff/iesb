@@ -219,6 +219,31 @@ final class StudentController extends Controller
             $chamadaAberta = $this->chamadaAbertaDoAluno($studentId);
         }
 
+        $pendenciaFinanceira = null;
+        $pendenciasFinanceiras = 0;
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    "SELECT cp.id, cp.numero_parcela, cp.data_vencimento, cp.valor, c.nome AS curso_nome"
+                    . ' FROM curso_parcela cp'
+                    . ' LEFT JOIN cursos c ON c.id = cp.id_curso'
+                    . ' WHERE cp.id_aluno = :aluno AND cp.ativo = 1'
+                    . " AND cp.status NOT IN ('RECEBIDO', 'CONFIRMADO')"
+                    . ' AND cp.data_vencimento IS NOT NULL AND cp.data_vencimento < CURDATE()'
+                    . ' ORDER BY cp.data_vencimento ASC'
+                );
+                $stmt->bindValue(':aluno', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $rowsParcela = $stmt->fetchAll() ?: [];
+                $pendenciasFinanceiras = count($rowsParcela);
+                $pendenciaFinanceira = $rowsParcela[0] ?? null;
+            } catch (\Throwable $e) {
+                error_log('[STUDENT DASHBOARD PENDENCIA] Erro: ' . $e->getMessage());
+                $pendenciaFinanceira = null;
+                $pendenciasFinanceiras = 0;
+            }
+        }
+
         $this->render('pages/aluno/dashboard', [
             'title' => 'Área do Aluno',
             'currentRoute' => '/area-do-aluno',
@@ -234,6 +259,8 @@ final class StudentController extends Controller
             'alunoNome' => (string) ($user['name'] ?? ''),
             'avisoParcela' => $avisoParcela,
             'avisoParcelaDias' => $avisoParcelaDias,
+            'pendenciaFinanceira' => $pendenciaFinanceira,
+            'pendenciasFinanceiras' => $pendenciasFinanceiras,
         ], 'aluno');
     }
 

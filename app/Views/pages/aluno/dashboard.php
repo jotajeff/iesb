@@ -18,6 +18,33 @@
 
 <section class="py-4" id="home" style="margin-top: 20px;">
   <div class="container">
+    <?php if (!empty($pendenciaFinanceira)): ?>
+      <?php
+        $pfData = (string) ($pendenciaFinanceira['data_vencimento'] ?? '');
+        $pfDt = $pfData !== '' ? date_create($pfData) : false;
+        $pfCurso = trim((string) ($pendenciaFinanceira['curso_nome'] ?? ''));
+      ?>
+      <div class="alert alert-danger d-flex align-items-start gap-3 mb-4 alerta-pendencia-financeira" role="alert">
+        <i class="bi bi-exclamation-octagon-fill fs-4 mt-1" aria-hidden="true"></i>
+        <div>
+          <div class="fw-semibold">Você possui pendência financeira.</div>
+          <div class="small mt-1">
+            <?= (int) ($pendenciasFinanceiras ?? 1) ?> parcela(s) vencida(s) e em aberto.
+            <?php if ($pfCurso !== ''): ?>
+              Curso: <strong><?= htmlspecialchars($pfCurso, ENT_QUOTES, 'UTF-8') ?></strong>.
+            <?php endif; ?>
+            Vencimento mais antigo: <strong><?= htmlspecialchars($pfDt ? $pfDt->format('d/m/Y') : ($pfData ?: '-'), ENT_QUOTES, 'UTF-8') ?></strong>.
+          </div>
+          <a href="/aluno/financeiro" class="alert-link fw-semibold d-inline-block mt-2">
+            <i class="bi bi-cash-coin me-1" aria-hidden="true"></i>Regularizar no financeiro
+          </a>
+          <div class="small mt-2">
+            Qualquer divergência, dúvidas, esclarecimentos, entre em contato com a IESB.
+          </div>
+        </div>
+      </div>
+    <?php endif; ?>
+
     <?php if (!empty($documentosPendentes)): ?>
       <?php
         $documentosPendentesLista = array_map(
@@ -368,6 +395,21 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
+  @keyframes pendenciaFinanceiraPulse {
+    0% {
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.55);
+    }
+    70% {
+      box-shadow: 0 0 0 16px rgba(220, 53, 69, 0);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(220, 53, 69, 0);
+    }
+  }
+  .alerta-pendencia-financeira {
+    border-width: 2px;
+    animation: pendenciaFinanceiraPulse 2.2s ease-out infinite;
+  }
   .noticia-card, .curso-card {
     transition: transform .2s ease, box-shadow .2s ease;
   }

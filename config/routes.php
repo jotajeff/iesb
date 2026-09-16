@@ -23,11 +23,13 @@ use App\Controllers\Admin\PermissaoController;
 use App\Controllers\Admin\BannerAlunoController;
 use App\Controllers\Admin\ChamadaController;
 use App\Controllers\Admin\MaterialController;
+use App\Controllers\Admin\ProtocoloController as AdminProtocoloController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
 use App\Controllers\FinanceiroController;
 use App\Controllers\StudentController;
+use App\Controllers\ProtocoloController;
 use App\Controllers\ApiController;
 use App\Core\Router;
 
@@ -298,6 +300,13 @@ return static function (Router $router): void {
     $router->get('/admin/material/ajax-disciplinas', [MaterialController::class, 'ajaxDisciplinas']);
     $router->post('/admin/material/salvar', [MaterialController::class, 'salvar']);
     $router->post('/admin/material/atualizar', [MaterialController::class, 'atualizar']);
+
+    $router->get('/admin/protocolos', [AdminProtocoloController::class, 'index']);
+    $router->get('/admin/protocolos/show', [AdminProtocoloController::class, 'show']);
+    $router->post('/admin/protocolos/responder', [AdminProtocoloController::class, 'responder']);
+    $router->post('/admin/protocolos/status', [AdminProtocoloController::class, 'status']);
+    $router->post('/admin/protocolos/prioridade', [AdminProtocoloController::class, 'prioridade']);
+    $router->post('/admin/protocolos/assumir', [AdminProtocoloController::class, 'assumir']);
     $router->post('/admin/material/deletar', [MaterialController::class, 'deletar']);
     $router->get('/admin/chamadas/ajax-professores', [ChamadaController::class, 'ajaxProfessores']);
     $router->get('/admin/chamadas/ajax-disciplinas', [ChamadaController::class, 'ajaxDisciplinas']);
@@ -342,6 +351,12 @@ return static function (Router $router): void {
     $router->post('/aluno/chamada/presenca', [StudentController::class, 'registrarPresencaChamada']);
     $router->get('/aluno/chamadas', [StudentController::class, 'chamadas']);
     $router->get('/aluno/calendario', [StudentController::class, 'calendario']);
+
+    $router->get('/aluno/protocolos', [ProtocoloController::class, 'index']);
+    $router->get('/aluno/protocolos/novo', [ProtocoloController::class, 'novo']);
+    $router->post('/aluno/protocolos/criar', [ProtocoloController::class, 'criar']);
+    $router->get('/aluno/protocolos/show', [ProtocoloController::class, 'show']);
+    $router->post('/aluno/protocolos/mensagem', [ProtocoloController::class, 'mensagem']);
     $router->get('/aluno/documentos', [StudentController::class, 'documentos']);
     $router->post('/aluno/documentos/enviar', [StudentController::class, 'uploadDocumento']);
     $router->get('/aluno/documentos/visualizar', [StudentController::class, 'visualizarDocumento']);

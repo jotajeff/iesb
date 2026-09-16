@@ -46,7 +46,7 @@
             </a>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= in_array(($currentRoute ?? ''), ['/aluno/perfil', '/aluno/endereco', '/aluno/documentos', '/aluno/chamadas'], true) ? 'active' : '' ?>" href="#" id="secretariaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle <?= in_array(($currentRoute ?? ''), ['/aluno/perfil', '/aluno/endereco', '/aluno/documentos', '/aluno/protocolos', '/aluno/chamadas'], true) ? 'active' : '' ?>" href="#" id="secretariaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-person-badge me-1"></i>Secretaria
             </a>
             <ul class="dropdown-menu" aria-labelledby="secretariaDropdown">
@@ -63,6 +63,11 @@
               <li>
                 <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/documentos' ? 'active' : '' ?>" href="/aluno/documentos">
                   <i class="bi bi-folder2-open me-1"></i>Documentos
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/protocolos' ? 'active' : '' ?>" href="/aluno/protocolos">
+                  <i class="bi bi-chat-left-text me-1"></i>Protocolos
                 </a>
               </li>
               <li>

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 14/09/2026 às 10:27
+-- Tempo de geração: 15/09/2026 às 20:46
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -550,6 +550,22 @@ CREATE TABLE `funcoes_docente` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `historico_vencimento_parcela`
+--
+
+CREATE TABLE `historico_vencimento_parcela` (
+  `id` int(11) NOT NULL,
+  `id_curso_parcela` int(11) NOT NULL,
+  `data_anterior` date NOT NULL,
+  `data_nova` date NOT NULL,
+  `id_usuario` int(11) DEFAULT NULL,
+  `motivo` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `imagem`
 --
 
@@ -873,6 +889,39 @@ CREATE TABLE `pre_inscricao` (
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `protocolos`
+--
+
+CREATE TABLE `protocolos` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `id_aluno` int(10) UNSIGNED NOT NULL,
+  `id_matricula` int(10) UNSIGNED DEFAULT NULL,
+  `assunto` varchar(255) COLLATE utf8_unicode_ci NOT NULL,
+  `status` enum('ABERTO','EM_ATENDIMENTO','RESPONDIDO','ENCERRADO') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'ABERTO',
+  `prioridade` enum('NORMAL','ALTA','URGENTE') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'NORMAL',
+  `id_usuario_responsavel` int(10) UNSIGNED DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `protocolo_mensagens`
+--
+
+CREATE TABLE `protocolo_mensagens` (
+  `id` int(10) UNSIGNED NOT NULL,
+  `id_protocolo` int(10) UNSIGNED NOT NULL,
+  `id_usuario` int(10) UNSIGNED DEFAULT NULL,
+  `tipo` enum('ALUNO','SECRETARIA','SISTEMA') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'ALUNO',
+  `mensagem` text COLLATE utf8_unicode_ci NOT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1364,6 +1413,15 @@ ALTER TABLE `funcoes_docente`
   ADD KEY `idx_ativo` (`ativo`);
 
 --
+-- Índices de tabela `historico_vencimento_parcela`
+--
+ALTER TABLE `historico_vencimento_parcela`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_historico_vencimento_parcela` (`id_curso_parcela`),
+  ADD KEY `idx_historico_vencimento_usuario` (`id_usuario`),
+  ADD KEY `idx_historico_vencimento_created` (`created_at`);
+
+--
 -- Índices de tabela `imagem`
 --
 ALTER TABLE `imagem`
@@ -1492,6 +1550,26 @@ ALTER TABLE `paginas`
 --
 ALTER TABLE `pre_inscricao`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Índices de tabela `protocolos`
+--
+ALTER TABLE `protocolos`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_protocolos_aluno` (`id_aluno`),
+  ADD KEY `idx_protocolos_matricula` (`id_matricula`),
+  ADD KEY `idx_protocolos_status` (`status`),
+  ADD KEY `idx_protocolos_responsavel` (`id_usuario_responsavel`),
+  ADD KEY `idx_protocolos_created_at` (`created_at`);
+
+--
+-- Índices de tabela `protocolo_mensagens`
+--
+ALTER TABLE `protocolo_mensagens`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_protocolo_mensagens_protocolo` (`id_protocolo`),
+  ADD KEY `idx_protocolo_mensagens_usuario` (`id_usuario`),
+  ADD KEY `idx_protocolo_mensagens_created_at` (`created_at`);
 
 --
 -- Índices de tabela `segmento`
@@ -1777,6 +1855,12 @@ ALTER TABLE `funcoes_docente`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `historico_vencimento_parcela`
+--
+ALTER TABLE `historico_vencimento_parcela`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `imagem`
 --
 ALTER TABLE `imagem`
@@ -1877,6 +1961,18 @@ ALTER TABLE `paginas`
 --
 ALTER TABLE `pre_inscricao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `protocolos`
+--
+ALTER TABLE `protocolos`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `protocolo_mensagens`
+--
+ALTER TABLE `protocolo_mensagens`
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `segmento`
