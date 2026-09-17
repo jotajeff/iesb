@@ -291,6 +291,9 @@ return static function (Router $router): void {
     $router->get('/admin/chamadas/novo', [ChamadaController::class, 'novo']);
     $router->get('/admin/chamadas/relatorio', [ChamadaController::class, 'relatorio']);
     $router->get('/admin/chamadas/relatorio/excel', [ChamadaController::class, 'relatorioExcel']);
+    $router->get('/admin/chamadas/lancamento', [ChamadaController::class, 'lancamento']);
+    $router->post('/admin/chamadas/lancamento/registrar', [ChamadaController::class, 'registrarPresenca']);
+    $router->post('/admin/chamadas/lancamento/encerrar', [ChamadaController::class, 'encerrarLancamento']);
     $router->post('/admin/chamadas/gerar', [ChamadaController::class, 'gerar']);
     $router->post('/admin/chamadas/alterar-status', [ChamadaController::class, 'alterarStatus']);
 

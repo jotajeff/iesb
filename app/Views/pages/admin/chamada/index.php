@@ -34,10 +34,10 @@
               <thead>
                 <tr>
                   <th><i class="bi bi-hash"></i></th>
+                  <th>Modo</th>
                   <th>Disciplina</th>
                   <th>Professor</th>
                   <th>Data</th>
-                  <th>Aula</th>
                   <th>Horário</th>
                   <th>Presenças</th>
                   <th>Status</th>
@@ -49,15 +49,27 @@
                     $statusChamada = (string) ($chamada['status'] ?? 'ABERTA');
                     $totalPresencas = (int) ($chamada['total_presencas'] ?? 0);
                     $totalPresentes = (int) ($chamada['total_presentes'] ?? 0);
+                    $totalInscritos = (int) ($chamada['total_inscritos'] ?? 0);
                     $rawData = (string) ($chamada['data_aula'] ?? '');
                     $dataChamada = $rawData !== '' ? date_create($rawData) : false;
                   ?>
                   <tr>
-                    <td><?= (int) ($chamada['id'] ?? 0) ?></td>
+                    <td>
+                      <a class="text-decoration-none fw-medium" href="/admin/chamadas/lancamento?id=<?= (int) ($chamada['id'] ?? 0) ?>" title="Lançamento de presença">
+                        #<?= (int) ($chamada['id'] ?? 0) ?>
+                      </a>
+                    </td>
+                    <?php $modoChamada = (int) ($chamada['modo'] ?? 1); ?>
+                    <td>
+                      <?php if ($modoChamada === 2): ?>
+                        <span class="badge bg-success" title="Modo Automática">A</span>
+                      <?php else: ?>
+                        <span class="badge bg-secondary" title="Modo Manual">M</span>
+                      <?php endif; ?>
+                    </td>
                     <td><?= htmlspecialchars((string) ($chamada['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars((string) ($chamada['professor_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                     <td><?= htmlspecialchars($dataChamada ? $dataChamada->format('d/m/Y') : ($rawData ?: '-'), ENT_QUOTES, 'UTF-8') ?></td>
-                    <td><?= (int) ($chamada['numero_aula'] ?? 0) > 0 ? (int) $chamada['numero_aula'] : '-' ?></td>
                     <td>
                       <?php
                         $hInicio = (string) ($chamada['hora_inicio'] ?? '');
@@ -66,7 +78,7 @@
                       ?>
                     </td>
                     <td>
-                      <span class="badge bg-primary"><?= $totalPresentes ?>/<?= $totalPresencas ?></span>
+                      <span class="badge bg-primary" title="Presentes / inscritos na turma"><?= $totalPresentes ?>/<?= $totalInscritos ?></span>
                     </td>
                     <td>
                       <select class="form-select form-select-sm chamada-status-select status-<?= strtolower($statusChamada) ?>" data-chamada-id="<?= (int) ($chamada['id'] ?? 0) ?>" data-current="<?= htmlspecialchars($statusChamada, ENT_QUOTES, 'UTF-8') ?>" aria-label="Alterar status">

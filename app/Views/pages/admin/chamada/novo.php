@@ -73,6 +73,14 @@
         </select>
       </div>
 
+      <div class="col-md-4">
+        <label class="form-label">Modo</label>
+        <select class="form-select" name="modo">
+          <option value="1" selected>Manual</option>
+          <option value="2">Automática</option>
+        </select>
+      </div>
+
       <div class="col-12">
         <label class="form-label">Conteúdo da aula</label>
         <textarea class="form-control" name="conteudo" rows="3" placeholder="Conteúdo ministrado (opcional)"></textarea>

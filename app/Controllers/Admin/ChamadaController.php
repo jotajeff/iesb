@@ -199,6 +199,97 @@ final class ChamadaController extends Controller
         $this->json(['erro' => 'Erro ao alterar o status.'], 500);
     }
 
+    public function lancamento(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($_GET['id'] ?? 0);
+        $chamada = $id > 0 ? $this->chamadaService->buscarPorId($id) : null;
+
+        if (!$chamada) {
+            Session::setFlash('flash', 'Chamada não encontrada.');
+            $this->redirect('/admin/chamadas');
+            return;
+        }
+
+        $this->render('pages/admin/chamada/lancamento', [
+            'title' => 'Lançamento de Presença',
+            'currentRoute' => '/admin/chamadas',
+            'chamada' => $chamada,
+            'inscritos' => $this->chamadaService->inscritosDaChamada($id),
+            'presencas' => $this->chamadaService->presencasDaChamada($id),
+        ], 'admin');
+    }
+
+    public function registrarPresenca(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $idChamada = (int) $this->input('id_chamada', 0);
+        $idMatricula = (int) $this->input('id_matricula', 0);
+        $presenca = trim((string) $this->input('presenca', 'PRESENTE'));
+        $entrada = trim((string) $this->input('entrada', ''));
+        $permanencia = trim((string) $this->input('permanencia', ''));
+        $observacao = trim((string) $this->input('observacao', ''));
+
+        $chamada = $idChamada > 0 ? $this->chamadaService->buscarPorId($idChamada) : null;
+        if (!$chamada) {
+            Session::setFlash('flash', 'Chamada não encontrada.');
+            $this->redirect('/admin/chamadas');
+            return;
+        }
+
+        if ((string) ($chamada['status'] ?? '') !== 'ABERTA') {
+            Session::setFlash('flash', 'Esta chamada não está aberta para lançamento.');
+            $this->redirect('/admin/chamadas');
+            return;
+        }
+
+        $ok = $this->chamadaService->registrarPresenca(
+            $idChamada,
+            $idMatricula,
+            in_array($presenca, ['PRESENTE', 'AUSENTE', 'JUSTIFICADA'], true) ? $presenca : 'PRESENTE',
+            $entrada !== '' ? $entrada : null,
+            $permanencia !== '' ? $permanencia : null,
+            $observacao !== '' ? $observacao : null,
+            (string) ($_SERVER['REMOTE_ADDR'] ?? ''),
+            'secretaria'
+        );
+
+        if ($ok) {
+            $this->logService->log('criar', 'chamada_presenca', $idChamada, 'Presença lançada pela secretaria (matrícula #' . $idMatricula . ')');
+            Session::setFlash('flash', 'Presença registrada com sucesso.');
+        } else {
+            Session::setFlash('flash', 'Erro ao registrar a presença.');
+        }
+
+        $this->redirect('/admin/chamadas/lancamento?id=' . $idChamada);
+    }
+
+    public function encerrarLancamento(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        if ($id > 0 && $this->chamadaService->alterarStatus($id, 'FECHADA')) {
+            $this->logService->log('atualizar', 'chamada', $id, 'Chamada encerrada (lançamento de presença)');
+            Session::setFlash('flash', 'Chamada encerrada com sucesso.');
+        } else {
+            Session::setFlash('flash', 'Não foi possível encerrar a chamada.');
+        }
+
+        $this->redirect('/admin/chamadas');
+    }
+
     public function gerar(): void
     {
         if (!$this->isStaff()) {
@@ -220,6 +311,7 @@ final class ChamadaController extends Controller
             'id_turma' => $idTurma,
             'id_turma_disciplina' => $idTurmaDisciplina,
             'id_usuario_professor' => (int) $this->input('id_usuario_professor', 0),
+            'modo' => (int) $this->input('modo', 1),
             'data_aula' => $dataAula,
             'numero_aula' => (int) $this->input('numero_aula', 0),
             'hora_inicio' => trim((string) $this->input('hora_inicio', '')),

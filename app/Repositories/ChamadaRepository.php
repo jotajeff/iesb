@@ -28,20 +28,21 @@ final class ChamadaRepository
                 ? ' JOIN turmas t ON t.id = ch.id_turma'
                 : ' JOIN turmas t ON t.id = td.id_turma';
 
-            $sql = 'SELECT ch.id, ' . $selectTurma . ' ch.id_turma_disciplina, ch.id_usuario_professor,'
+            $sql = 'SELECT ch.id, ' . $selectTurma . ' ch.id_turma_disciplina, ch.id_usuario_professor, ch.modo,'
                 . ' ch.data_aula, ch.numero_aula, ch.hora_inicio, ch.hora_fim,'
                 . ' ch.conteudo, ch.observacao, ch.status, ch.created_at,'
                 . ' t.nome AS turma_nome, cu.nome AS curso_nome, d.nome AS disciplina_nome,'
                 . ' COALESCE(uprof.nome, (' . $profTd . ')) AS professor_nome,'
                 . ' (SELECT COUNT(*) FROM chamada_presenca cp WHERE cp.id_chamada = ch.id) AS total_presencas,'
-                . " (SELECT COUNT(*) FROM chamada_presenca cp2 WHERE cp2.id_chamada = ch.id AND cp2.presenca = 'PRESENTE') AS total_presentes"
+                . " (SELECT COUNT(*) FROM chamada_presenca cp2 WHERE cp2.id_chamada = ch.id AND cp2.presenca = 'PRESENTE') AS total_presentes,"
+                . ' (SELECT COUNT(*) FROM matricula mm WHERE mm.id_turma = td.id_turma AND mm.ativo = 1) AS total_inscritos'
                 . ' FROM chamada ch'
                 . $joinTurma
                 . ' JOIN turma_disciplina td ON td.id = ch.id_turma_disciplina'
                 . ' JOIN disciplina d ON d.id = td.id_disciplina'
                 . ' LEFT JOIN cursos cu ON cu.id = t.id_curso'
                 . ' LEFT JOIN usuarios uprof ON uprof.id = ch.id_usuario_professor'
-                . ' ORDER BY cu.nome ASC, t.nome ASC, ch.data_aula DESC, ch.id DESC';
+                . ' ORDER BY cu.nome ASC, t.nome ASC, ch.data_aula ASC, ch.id ASC';
 
             $rows = $pdo->query($sql)->fetchAll();
             return is_array($rows) ? $rows : [];
@@ -224,6 +225,156 @@ final class ChamadaRepository
         }
     }
 
+    public function buscarPorId(int $id): ?array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $id <= 0) {
+            return null;
+        }
+
+        try {
+            $prof = $this->professorNameExpression($pdo);
+
+            $stmt = $pdo->prepare(
+                'SELECT c.id, c.status, c.modo, c.data_aula, c.numero_aula, c.hora_inicio, c.hora_fim, c.conteudo,'
+                . ' c.id_turma_disciplina, td.id_turma,'
+                . ' t.nome AS turma_nome, d.nome AS disciplina_nome,'
+                . ' (' . $prof . ') AS professor_nome'
+                . ' FROM chamada c'
+                . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
+                . ' JOIN turmas t ON t.id = td.id_turma'
+                . ' JOIN disciplina d ON d.id = td.id_disciplina'
+                . ' WHERE c.id = :id LIMIT 1'
+            );
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            $row = $stmt->fetch();
+            return is_array($row) ? $row : null;
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro em buscarPorId: ' . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Alunos matriculados na turma da chamada (ordem alfabética).
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function inscritosDaChamada(int $idChamada): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idChamada <= 0) {
+            return [];
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT m.id AS id_matricula, a.nome AS aluno_nome, a.email AS aluno_email'
+                . ' FROM chamada c'
+                . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
+                . ' JOIN matricula m ON m.id_turma = td.id_turma AND m.ativo = 1'
+                . ' JOIN alunos a ON a.id = m.id_aluno'
+                . ' WHERE c.id = :id'
+                . ' ORDER BY a.nome ASC'
+            );
+            $stmt->bindValue(':id', $idChamada, PDO::PARAM_INT);
+            $stmt->execute();
+            $rows = $stmt->fetchAll();
+            return is_array($rows) ? $rows : [];
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro em inscritosDaChamada: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    /**
+     * Presenças já registradas, indexadas por id_matricula.
+     *
+     * @return array<int, array<string, mixed>>
+     */
+    public function presencasDaChamada(int $idChamada): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idChamada <= 0) {
+            return [];
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, id_matricula, presenca, entrada, permanencia, observacao'
+                . ' FROM chamada_presenca WHERE id_chamada = :id'
+            );
+            $stmt->bindValue(':id', $idChamada, PDO::PARAM_INT);
+            $stmt->execute();
+
+            $mapa = [];
+            foreach ($stmt->fetchAll() ?: [] as $row) {
+                $mapa[(int) ($row['id_matricula'] ?? 0)] = $row;
+            }
+            return $mapa;
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro em presencasDaChamada: ' . $e->getMessage());
+            return [];
+        }
+    }
+
+    public function registrarPresenca(
+        int $idChamada,
+        int $idMatricula,
+        string $presenca,
+        ?string $entrada,
+        ?string $permanencia,
+        ?string $observacao,
+        string $ip,
+        string $responsavel
+    ): bool {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idChamada <= 0 || $idMatricula <= 0) {
+            return false;
+        }
+        if (!in_array($presenca, ['PRESENTE', 'AUSENTE', 'JUSTIFICADA'], true)) {
+            return false;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id FROM chamada_presenca WHERE id_chamada = :id_chamada AND id_matricula = :id_matricula LIMIT 1'
+            );
+            $stmt->bindValue(':id_chamada', $idChamada, PDO::PARAM_INT);
+            $stmt->bindValue(':id_matricula', $idMatricula, PDO::PARAM_INT);
+            $stmt->execute();
+            $idPresenca = (int) ($stmt->fetchColumn() ?: 0);
+
+            if ($idPresenca > 0) {
+                $stmt = $pdo->prepare(
+                    'UPDATE chamada_presenca SET presenca = :presenca, entrada = :entrada, permanencia = :permanencia,'
+                    . ' observacao = :observacao, ip = :ip, responsavel = :responsavel, updated_at = NOW()'
+                    . ' WHERE id = :id'
+                );
+                $stmt->bindValue(':id', $idPresenca, PDO::PARAM_INT);
+            } else {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO chamada_presenca (id_chamada, id_matricula, presenca, entrada, permanencia, observacao, ip, responsavel, created_at)'
+                    . ' VALUES (:id_chamada, :id_matricula, :presenca, :entrada, :permanencia, :observacao, :ip, :responsavel, NOW())'
+                );
+                $stmt->bindValue(':id_chamada', $idChamada, PDO::PARAM_INT);
+                $stmt->bindValue(':id_matricula', $idMatricula, PDO::PARAM_INT);
+            }
+
+            $stmt->bindValue(':presenca', $presenca, PDO::PARAM_STR);
+            $stmt->bindValue(':entrada', $entrada, $entrada === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':permanencia', $permanencia, $permanencia === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':observacao', $observacao, $observacao === null ? PDO::PARAM_NULL : PDO::PARAM_STR);
+            $stmt->bindValue(':ip', $ip, PDO::PARAM_STR);
+            $stmt->bindValue(':responsavel', $responsavel, PDO::PARAM_STR);
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro em registrarPresenca: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     /**
      * @param array<string, mixed> $data
      */
@@ -258,11 +409,11 @@ final class ChamadaRepository
             $temIdTurma = $this->chamadaHasIdTurma($pdo);
 
             $colunas = $temIdTurma
-                ? '(id_turma, id_turma_disciplina, id_usuario_professor, data_aula, numero_aula, hora_inicio, hora_fim, conteudo, observacao, status, created_at)'
-                : '(id_turma_disciplina, id_usuario_professor, data_aula, numero_aula, hora_inicio, hora_fim, conteudo, observacao, status, created_at)';
+                ? '(id_turma, id_turma_disciplina, id_usuario_professor, modo, data_aula, numero_aula, hora_inicio, hora_fim, conteudo, observacao, status, created_at)'
+                : '(id_turma_disciplina, id_usuario_professor, modo, data_aula, numero_aula, hora_inicio, hora_fim, conteudo, observacao, status, created_at)';
             $valores = $temIdTurma
-                ? ' VALUES (:id_turma, :id_td, :id_prof, :data_aula, :numero_aula, :hora_inicio, :hora_fim, :conteudo, :observacao, :status, NOW())'
-                : ' VALUES (:id_td, :id_prof, :data_aula, :numero_aula, :hora_inicio, :hora_fim, :conteudo, :observacao, :status, NOW())';
+                ? ' VALUES (:id_turma, :id_td, :id_prof, :modo, :data_aula, :numero_aula, :hora_inicio, :hora_fim, :conteudo, :observacao, :status, NOW())'
+                : ' VALUES (:id_td, :id_prof, :modo, :data_aula, :numero_aula, :hora_inicio, :hora_fim, :conteudo, :observacao, :status, NOW())';
 
             $stmt = $pdo->prepare('INSERT INTO chamada ' . $colunas . $valores);
             if ($temIdTurma) {
@@ -270,6 +421,8 @@ final class ChamadaRepository
             }
             $stmt->bindValue(':id_td', $idTurmaDisciplina, PDO::PARAM_INT);
             $stmt->bindValue(':id_prof', (int) ($data['id_usuario_professor'] ?? 0) > 0 ? (int) $data['id_usuario_professor'] : null, PDO::PARAM_INT);
+            $modo = (int) ($data['modo'] ?? 1);
+            $stmt->bindValue(':modo', in_array($modo, [1, 2], true) ? $modo : 1, PDO::PARAM_INT);
             $stmt->bindValue(':data_aula', $dataAula, PDO::PARAM_STR);
             $stmt->bindValue(':numero_aula', (int) ($data['numero_aula'] ?? 0) > 0 ? (int) $data['numero_aula'] : null, PDO::PARAM_INT);
             $stmt->bindValue(':hora_inicio', trim((string) ($data['hora_inicio'] ?? '')) !== '' ? $data['hora_inicio'] : null, PDO::PARAM_STR);

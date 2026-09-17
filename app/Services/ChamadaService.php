@@ -53,6 +53,40 @@ final class ChamadaService
         return $this->repository->relatorioPresencas($idTurma);
     }
 
+    public function buscarPorId(int $id): ?array
+    {
+        return $this->repository->buscarPorId($id);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function inscritosDaChamada(int $idChamada): array
+    {
+        return $this->repository->inscritosDaChamada($idChamada);
+    }
+
+    /**
+     * @return array<int, array<string, mixed>>
+     */
+    public function presencasDaChamada(int $idChamada): array
+    {
+        return $this->repository->presencasDaChamada($idChamada);
+    }
+
+    public function registrarPresenca(
+        int $idChamada,
+        int $idMatricula,
+        string $presenca,
+        ?string $entrada,
+        ?string $permanencia,
+        ?string $observacao,
+        string $ip,
+        string $responsavel
+    ): bool {
+        return $this->repository->registrarPresenca($idChamada, $idMatricula, $presenca, $entrada, $permanencia, $observacao, $ip, $responsavel);
+    }
+
     public function alterarStatus(int $id, string $status): bool
     {
         return $this->repository->alterarStatus($id, $status);

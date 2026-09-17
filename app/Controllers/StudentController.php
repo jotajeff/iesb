@@ -322,7 +322,7 @@ $stmt = $pdo->prepare(
                     . ' SELECT 1 FROM matricula m2'
                     . ' WHERE m2.id_turma = td.id_turma AND m2.id_aluno = :aluno_where AND m2.ativo = 1'
                     . ')'
-                    . ' ORDER BY c.data_aula DESC, c.id DESC'
+                    . ' ORDER BY c.data_aula ASC, c.id ASC'
                     . ' LIMIT 50'
                 );
                 $stmt->bindValue(':aluno_matricula', $studentId, \PDO::PARAM_INT);
@@ -439,6 +439,7 @@ $stmt = $pdo->prepare(
                 . ' LEFT JOIN usuarios uprof ON uprof.id = c.id_usuario_professor'
                 . ' LEFT JOIN usuarios uprof2 ON uprof2.id = td.id_usuario_professor'
                 . " WHERE c.status = 'ABERTA'"
+                . ' AND c.modo = 2'
                 . ' AND c.data_aula = CURDATE()'
                 . ' AND EXISTS ('
                 . ' SELECT 1 FROM matricula m'
@@ -507,6 +508,7 @@ $stmt = $pdo->prepare(
                 "SELECT c.id, c.id_turma_disciplina FROM chamada c"
                 . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
                 . " WHERE c.id = :id AND c.status = 'ABERTA'"
+                . ' AND c.modo = 2'
                 . ' AND c.data_aula = CURDATE()'
                 . ' AND c.hora_inicio IS NOT NULL AND c.hora_fim IS NOT NULL'
                 . ' AND NOW() BETWEEN TIMESTAMP(c.data_aula, c.hora_inicio) AND TIMESTAMP(c.data_aula, c.hora_fim)'

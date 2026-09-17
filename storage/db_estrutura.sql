@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 15/09/2026 às 20:46
+-- Tempo de geração: 16/09/2026 às 20:23
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -156,6 +156,7 @@ CREATE TABLE `categoria_noticia` (
 
 CREATE TABLE `chamada` (
   `id` int(11) NOT NULL,
+  `modo` int(1) NOT NULL DEFAULT '1',
   `id_turma` int(11) NOT NULL,
   `id_turma_disciplina` int(11) NOT NULL,
   `id_usuario_professor` int(11) DEFAULT NULL,
@@ -181,6 +182,8 @@ CREATE TABLE `chamada_presenca` (
   `id_chamada` int(11) NOT NULL,
   `id_matricula` int(11) NOT NULL,
   `presenca` enum('PRESENTE','AUSENTE','JUSTIFICADA') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'PRESENTE',
+  `entrada` time DEFAULT NULL,
+  `permanencia` time DEFAULT NULL,
   `observacao` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `ip` varchar(40) COLLATE utf8mb4_unicode_ci NOT NULL,
   `responsavel` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
