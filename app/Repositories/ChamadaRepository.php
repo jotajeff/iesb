@@ -30,7 +30,7 @@ final class ChamadaRepository
 
             $sql = 'SELECT ch.id, ' . $selectTurma . ' ch.id_turma_disciplina, ch.id_usuario_professor, ch.modo,'
                 . ' ch.data_aula, ch.numero_aula, ch.hora_inicio, ch.hora_fim,'
-                . ' ch.conteudo, ch.observacao, ch.status, ch.created_at,'
+                . ' ch.conteudo, ch.observacao, ch.status, ch.created_at, ch.origem_chamada,'
                 . ' t.nome AS turma_nome, cu.nome AS curso_nome, d.nome AS disciplina_nome,'
                 . ' COALESCE(uprof.nome, (' . $profTd . ')) AS professor_nome,'
                 . ' (SELECT COUNT(*) FROM chamada_presenca cp WHERE cp.id_chamada = ch.id) AS total_presencas,'
@@ -207,6 +207,80 @@ final class ChamadaRepository
         }
     }
 
+    public function atualizarChamada(int $id, array $data): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $id <= 0) {
+            return 0;
+        }
+
+        $dataAula = trim((string) ($data['data_aula'] ?? ''));
+        if ($dataAula === '') {
+            return 0;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id FROM chamada WHERE id_turma_disciplina = (SELECT id_turma_disciplina FROM chamada WHERE id = :id)'
+                . ' AND data_aula = :data_aula AND id <> :id2 LIMIT 1'
+            );
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':id2', $id, PDO::PARAM_INT);
+            $stmt->bindValue(':data_aula', $dataAula, PDO::PARAM_STR);
+            $stmt->execute();
+            if ($stmt->fetchColumn() !== false) {
+                return -1;
+            }
+
+            $status = (string) ($data['status'] ?? 'ABERTA');
+            if (!in_array($status, ['ABERTA', 'FECHADA', 'CANCELADA'], true)) {
+                $status = 'ABERTA';
+            }
+            $modo = (int) ($data['modo'] ?? 1);
+            $modo = in_array($modo, [1, 2], true) ? $modo : 1;
+
+            $stmt = $pdo->prepare(
+                'UPDATE chamada SET id_usuario_professor = :id_prof, data_aula = :data_aula, numero_aula = :numero_aula,'
+                . ' hora_inicio = :hora_inicio, hora_fim = :hora_fim, conteudo = :conteudo, observacao = :observacao,'
+                . ' status = :status, modo = :modo, updated_at = NOW()'
+                . ' WHERE id = :id'
+            );
+            $stmt->bindValue(':id_prof', (int) ($data['id_usuario_professor'] ?? 0) > 0 ? (int) $data['id_usuario_professor'] : null, PDO::PARAM_INT);
+            $stmt->bindValue(':data_aula', $dataAula, PDO::PARAM_STR);
+            $stmt->bindValue(':numero_aula', (int) ($data['numero_aula'] ?? 0) > 0 ? (int) $data['numero_aula'] : null, PDO::PARAM_INT);
+            $stmt->bindValue(':hora_inicio', trim((string) ($data['hora_inicio'] ?? '')) !== '' ? $data['hora_inicio'] : null, PDO::PARAM_STR);
+            $stmt->bindValue(':hora_fim', trim((string) ($data['hora_fim'] ?? '')) !== '' ? $data['hora_fim'] : null, PDO::PARAM_STR);
+            $stmt->bindValue(':conteudo', trim((string) ($data['conteudo'] ?? '')) !== '' ? $data['conteudo'] : null, PDO::PARAM_STR);
+            $stmt->bindValue(':observacao', trim((string) ($data['observacao'] ?? '')) !== '' ? $data['observacao'] : null, PDO::PARAM_STR);
+            $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+            $stmt->bindValue(':modo', $modo, PDO::PARAM_INT);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            $stmt->execute();
+            return 1;
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro em atualizarChamada: ' . $e->getMessage());
+            return 0;
+        }
+    }
+
+    public function atualizarOrigem(int $id, string $origem): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $id <= 0) {
+            return false;
+        }
+
+        try {
+            $stmt = $pdo->prepare('UPDATE chamada SET origem_chamada = :origem, updated_at = NOW() WHERE id = :id');
+            $stmt->bindValue(':origem', mb_substr($origem, 0, 100), PDO::PARAM_STR);
+            $stmt->bindValue(':id', $id, PDO::PARAM_INT);
+            return $stmt->execute();
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro em atualizarOrigem: ' . $e->getMessage());
+            return false;
+        }
+    }
+
     public function alterarStatus(int $id, string $status): bool
     {
         $pdo = Database::connection();
@@ -237,7 +311,7 @@ final class ChamadaRepository
 
             $stmt = $pdo->prepare(
                 'SELECT c.id, c.status, c.modo, c.data_aula, c.numero_aula, c.hora_inicio, c.hora_fim, c.conteudo,'
-                . ' c.id_turma_disciplina, td.id_turma,'
+                . ' c.origem_chamada, c.id_usuario_professor, c.id_turma_disciplina, td.id_turma,'
                 . ' t.nome AS turma_nome, d.nome AS disciplina_nome,'
                 . ' (' . $prof . ') AS professor_nome'
                 . ' FROM chamada c'

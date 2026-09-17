@@ -53,6 +53,19 @@ final class ChamadaService
         return $this->repository->relatorioPresencas($idTurma);
     }
 
+    /**
+     * @param array<string, mixed> $data
+     */
+    public function atualizarChamada(int $id, array $data): int
+    {
+        return $this->repository->atualizarChamada($id, $data);
+    }
+
+    public function atualizarOrigem(int $id, string $origem): bool
+    {
+        return $this->repository->atualizarOrigem($id, $origem);
+    }
+
     public function buscarPorId(int $id): ?array
     {
         return $this->repository->buscarPorId($id);

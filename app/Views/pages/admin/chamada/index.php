@@ -41,6 +41,7 @@
                   <th>Horário</th>
                   <th>Presenças</th>
                   <th>Status</th>
+                  <th><i class="bi bi-gear me-1"></i>Ações</th>
                 </tr>
               </thead>
               <tbody>
@@ -87,6 +88,23 @@
                         <option value="CANCELADA" <?= $statusChamada === 'CANCELADA' ? 'selected' : '' ?>>CANCELADA</option>
                       </select>
                     </td>
+                    <td>
+                      <div class="d-flex gap-1">
+                        <?php $origemChamada = trim((string) ($chamada['origem_chamada'] ?? '')); ?>
+                        <?php if ($origemChamada !== ''): ?>
+                          <button type="button" class="btn btn-primary btn-sm btn-origem-pdf" data-origem="<?= htmlspecialchars($origemChamada, ENT_QUOTES, 'UTF-8') ?>" title="Ver origem da chamada">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                          </button>
+                        <?php else: ?>
+                          <button type="button" class="btn btn-secondary btn-sm" disabled title="Sem documento de origem">
+                            <i class="bi bi-file-earmark-pdf"></i>
+                          </button>
+                        <?php endif; ?>
+                        <a class="btn btn-outline-primary btn-sm" href="/admin/chamadas/editar?id=<?= (int) ($chamada['id'] ?? 0) ?>" title="Editar chamada">
+                          <i class="bi bi-pencil-square"></i>
+                        </a>
+                      </div>
+                    </td>
                   </tr>
                 <?php endforeach; ?>
               </tbody>
@@ -97,6 +115,20 @@
     <?php endif; ?>
   </div>
 </section>
+
+<div class="modal fade" id="modalOrigemChamada" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-xl modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title"><i class="bi bi-file-earmark-pdf me-2"></i>Origem da chamada</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body p-0">
+        <iframe id="iframeOrigemChamada" src="" style="width:100%;height:75vh;border:0;" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+</div>
 
 <style>
   .chamada-status-select {
@@ -158,6 +190,29 @@ document.addEventListener('DOMContentLoaded', function () {
           select.value = atual;
         });
     });
+  });
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var modalEl = document.getElementById('modalOrigemChamada');
+  var iframe = document.getElementById('iframeOrigemChamada');
+  if (!modalEl || !iframe || typeof bootstrap === 'undefined') return;
+
+  var modal = new bootstrap.Modal(modalEl);
+
+  document.querySelectorAll('.btn-origem-pdf').forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var origem = btn.getAttribute('data-origem') || '';
+      var m = origem.match(/\/file\/d\/([A-Za-z0-9_-]+)/);
+      iframe.src = m ? ('https://drive.google.com/file/d/' + m[1] + '/preview') : origem;
+      modal.show();
+    });
+  });
+
+  modalEl.addEventListener('hidden.bs.modal', function () {
+    iframe.src = '';
   });
 });
 </script>

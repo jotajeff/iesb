@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 16/09/2026 às 20:23
+-- Tempo de geração: 17/09/2026 às 13:49
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -167,6 +167,7 @@ CREATE TABLE `chamada` (
   `conteudo` text COLLATE utf8_unicode_ci,
   `observacao` text COLLATE utf8_unicode_ci,
   `status` enum('ABERTA','FECHADA','CANCELADA') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'ABERTA',
+  `origem_chamada` varchar(100) COLLATE utf8_unicode_ci DEFAULT NULL,
   `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;

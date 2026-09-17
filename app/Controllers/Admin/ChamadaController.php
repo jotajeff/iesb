@@ -8,10 +8,13 @@ use App\Core\Controller;
 use App\Services\AuthService;
 use App\Services\ChamadaService;
 use App\Services\LogService;
+use App\Services\Storage\StorageService;
 use App\Support\Session;
 
 final class ChamadaController extends Controller
 {
+    private const PASTA_CHAMADAS_DRIVE = '1BT9S9tEKDAkzw8rXzK2rUPM9ixwSM45B';
+
     private ChamadaService $chamadaService;
     private LogService $logService;
 
@@ -287,6 +290,156 @@ final class ChamadaController extends Controller
             Session::setFlash('flash', 'Não foi possível encerrar a chamada.');
         }
 
+        $this->redirect('/admin/chamadas');
+    }
+
+    public function upload(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($_GET['id'] ?? 0);
+        $chamada = $id > 0 ? $this->chamadaService->buscarPorId($id) : null;
+
+        if (!$chamada) {
+            Session::setFlash('flash', 'Chamada não encontrada.');
+            $this->redirect('/admin/chamadas');
+            return;
+        }
+
+        $this->render('pages/admin/chamada/upload', [
+            'title' => 'Origem da Chamada',
+            'currentRoute' => '/admin/chamadas',
+            'chamada' => $chamada,
+        ], 'admin');
+    }
+
+    public function uploadOrigem(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $chamada = $id > 0 ? $this->chamadaService->buscarPorId($id) : null;
+
+        if (!$chamada) {
+            Session::setFlash('flash', 'Chamada não encontrada.');
+            $this->redirect('/admin/chamadas');
+            return;
+        }
+
+        $file = $_FILES['arquivo'] ?? null;
+        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+            Session::setFlash('flash', 'Selecione um arquivo para enviar.');
+            $this->redirect('/admin/chamadas/upload?id=' . $id);
+            return;
+        }
+
+        try {
+            $storage = new StorageService();
+            if (!$storage->isConnected()) {
+                Session::setFlash('flash', 'Storage não conectado. Conecte em /admin/storage.');
+                $this->redirect('/admin/chamadas/upload?id=' . $id);
+                return;
+            }
+
+            $ext = strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION));
+            $nomeDrive = $id . '_' . date('Ymd') . ($ext !== '' ? '.' . $ext : '');
+
+            $resultado = $storage->uploadFile($file, self::PASTA_CHAMADAS_DRIVE, $nomeDrive);
+            $link = (string) ($resultado['link'] ?? '');
+
+            if ($link === '') {
+                Session::setFlash('flash', 'Não foi possível obter o link do arquivo no Drive.');
+                $this->redirect('/admin/chamadas/upload?id=' . $id);
+                return;
+            }
+
+            $this->chamadaService->atualizarOrigem($id, $link);
+            $this->logService->log('criar', 'chamada', $id, 'Origem da chamada #' . $id . ' enviada ao Drive');
+            Session::setFlash('flash', 'Documento de origem enviado com sucesso.');
+        } catch (\Throwable $e) {
+            error_log('[CHAMADA] Erro no upload da origem: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao enviar o documento para o Drive.');
+            $this->redirect('/admin/chamadas/upload?id=' . $id);
+            return;
+        }
+
+        $this->redirect('/admin/chamadas/editar?id=' . $id);
+    }
+
+    public function editar(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) ($_GET['id'] ?? 0);
+        $chamada = $id > 0 ? $this->chamadaService->buscarPorId($id) : null;
+
+        if (!$chamada) {
+            Session::setFlash('flash', 'Chamada não encontrada.');
+            $this->redirect('/admin/chamadas');
+            return;
+        }
+
+        $idTurma = (int) ($chamada['id_turma'] ?? 0);
+
+        $this->render('pages/admin/chamada/editar', [
+            'title' => 'Editar Chamada',
+            'currentRoute' => '/admin/chamadas',
+            'chamada' => $chamada,
+            'professores' => $idTurma > 0 ? $this->chamadaService->professoresDaTurma($idTurma) : [],
+        ], 'admin');
+    }
+
+    public function atualizar(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $id = (int) $this->input('id', 0);
+        $dataAula = trim((string) $this->input('data_aula', ''));
+
+        if ($id <= 0 || $dataAula === '') {
+            Session::setFlash('flash', 'Informe a data da aula.');
+            $this->redirect('/admin/chamadas');
+            return;
+        }
+
+        $resultado = $this->chamadaService->atualizarChamada($id, [
+            'id_usuario_professor' => (int) $this->input('id_usuario_professor', 0),
+            'data_aula' => $dataAula,
+            'numero_aula' => (int) $this->input('numero_aula', 0),
+            'hora_inicio' => trim((string) $this->input('hora_inicio', '')),
+            'hora_fim' => trim((string) $this->input('hora_fim', '')),
+            'conteudo' => trim((string) $this->input('conteudo', '')),
+            'observacao' => trim((string) $this->input('observacao', '')),
+            'status' => (string) $this->input('status', 'ABERTA'),
+            'modo' => (int) $this->input('modo', 1),
+        ]);
+
+        if ($resultado === -1) {
+            Session::setFlash('flash', 'Já existe uma chamada para esta disciplina nesta data.');
+            $this->redirect('/admin/chamadas/editar?id=' . $id);
+            return;
+        }
+
+        if ($resultado <= 0) {
+            Session::setFlash('flash', 'Erro ao atualizar a chamada.');
+            $this->redirect('/admin/chamadas/editar?id=' . $id);
+            return;
+        }
+
+        $this->logService->log('atualizar', 'chamada', $id, 'Chamada #' . $id . ' editada');
+        Session::setFlash('flash', 'Chamada atualizada com sucesso.');
         $this->redirect('/admin/chamadas');
     }
 
