@@ -124,62 +124,87 @@
               <?php if (empty($gruposMateriais)): ?>
                 <p class="text-muted mb-0"><i class="bi bi-inbox me-1"></i>Nenhum material disponível.</p>
               <?php else: ?>
-                <?php foreach ($gruposMateriais as $idGrupoMaterial => $grupoMaterial): ?>
-                  <div class="mb-4">
-                    <h6 class="mb-2">
-                      <?php if ($idGrupoMaterial === 0): ?>
-                        <span class="badge bg-secondary me-1"><i class="bi bi-briefcase me-1"></i>Secretaria</span>
-                      <?php endif; ?>
-                      <?= htmlspecialchars((string) $grupoMaterial['nome'], ENT_QUOTES, 'UTF-8') ?>
-                      <span class="text-muted small fw-normal ms-1"><?= count($grupoMaterial['itens']) ?> material(is)</span>
-                    </h6>
-                    <div class="table-responsive">
-                      <table class="table table-sm table-striped align-middle mb-0">
-                        <thead>
-                          <tr>
-                            <th><i class="bi bi-hash"></i></th>
-                            <th><i class="bi bi-fonts me-1"></i>Título</th>
-                            <th><i class="bi bi-tag me-1"></i>Tipo</th>
-                            <th><i class="bi bi-link-45deg me-1"></i>Link</th>
+                <?php
+                  $renderLinhaMaterial = static function (array $m): void {
+                    $tipoMat = (string) ($m['tipo'] ?? '');
+                    ?>
+                    <tr>
+                      <td><i class="bi bi-check-square fs-5 text-secondary"></i></td>
+                      <td><?= htmlspecialchars($m['titulo'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
+                      <td>
+                        <?php if ($tipoMat === 'video'): ?>
+                          <span class="badge bg-danger"><i class="bi bi-camera-video me-1"></i>Vídeo</span>
+                        <?php elseif ($tipoMat === 'drive'): ?>
+                          <span class="badge bg-primary"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
+                        <?php else: ?>
+                          <span class="badge bg-secondary"><i class="bi bi-file-earmark me-1"></i><?= htmlspecialchars(ucfirst($tipoMat ?: '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <?php endif; ?>
+                      </td>
+                      <td class="text-break">
+                        <?php if ($tipoMat === 'video'): ?>
+                          <a href="/aluno/video?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-camera-reels me-1"></i>Assistir
+                          </a>
+                        <?php elseif ($tipoMat === 'drive'): ?>
+                          <a href="/aluno/drive?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-google me-1"></i>Visualizar
+                          </a>
+                        <?php else: ?>
+                          <a href="<?= htmlspecialchars($m['link'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-box-arrow-up-right me-1"></i>Abrir
+                          </a>
+                        <?php endif; ?>
+                      </td>
+                    </tr>
+                    <?php
+                  };
+                ?>
+                <div class="table-responsive">
+                  <table class="table table-sm table-striped align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th style="width: 44px;"><i class="bi bi-check-square"></i></th>
+                        <th>Título</th>
+                        <th style="width: 130px;"><i class="bi bi-tag me-1"></i>Tipo</th>
+                        <th style="width: 150px;"><i class="bi bi-link-45deg me-1"></i>Link</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <?php foreach ($gruposMateriais as $idGrupoMaterial => $grupoMaterial): ?>
+                        <?php
+                          $itensNormais = [];
+                          $itensExtra = [];
+                          foreach ($grupoMaterial['itens'] as $mItem) {
+                            if ((int) ($mItem['extra'] ?? 0) === 1) {
+                              $itensExtra[] = $mItem;
+                            } else {
+                              $itensNormais[] = $mItem;
+                            }
+                          }
+                        ?>
+                        <tr class="table-light">
+                          <td colspan="4" class="fw-semibold">
+                            <?php if ($idGrupoMaterial === 0): ?>
+                              <span class="badge bg-secondary me-1"><i class="bi bi-briefcase me-1"></i>Secretaria</span>
+                            <?php endif; ?>
+                            <?= htmlspecialchars((string) $grupoMaterial['nome'], ENT_QUOTES, 'UTF-8') ?>
+                            <span class="text-muted small fw-normal ms-1"><?= count($grupoMaterial['itens']) ?> material(is)</span>
+                          </td>
+                        </tr>
+                        <?php foreach ($itensNormais as $mItem) { $renderLinhaMaterial($mItem); } ?>
+                        <?php if (!empty($itensExtra)): ?>
+                          <tr class="table-warning">
+                            <td colspan="4" class="fw-semibold text-warning-emphasis">
+                              <i class="bi bi-star-fill me-1"></i>Material Extra
+                              <span class="text-muted small fw-normal ms-1"><?= count($itensExtra) ?> material(is)</span>
+                            </td>
                           </tr>
-                        </thead>
-                        <tbody>
-                          <?php foreach ($grupoMaterial['itens'] as $m): ?>
-                            <tr>
-                              <td><?= (int) ($m['id'] ?? 0) ?></td>
-                              <td><?= htmlspecialchars($m['titulo'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
-                              <td>
-                                <?php $tipoMat = (string) ($m['tipo'] ?? ''); ?>
-                                <?php if ($tipoMat === 'video'): ?>
-                                  <span class="badge bg-danger"><i class="bi bi-camera-video me-1"></i>Vídeo</span>
-                                <?php elseif ($tipoMat === 'drive'): ?>
-                                  <span class="badge bg-primary"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
-                                <?php else: ?>
-                                  <span class="badge bg-secondary"><i class="bi bi-file-earmark me-1"></i><?= htmlspecialchars(ucfirst($tipoMat ?: '-'), ENT_QUOTES, 'UTF-8') ?></span>
-                                <?php endif; ?>
-                              </td>
-                              <td class="text-break" style="max-width:300px;">
-                                <?php if (($m['tipo'] ?? '') === 'video'): ?>
-                                  <a href="/aluno/video?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-camera-reels me-1"></i>Assistir
-                                  </a>
-                                <?php elseif (($m['tipo'] ?? '') === 'drive'): ?>
-                                  <a href="/aluno/drive?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-google me-1"></i>Visualizar
-                                  </a>
-                                <?php else: ?>
-                                  <a href="<?= htmlspecialchars($m['link'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-box-arrow-up-right me-1"></i>Abrir
-                                  </a>
-                                <?php endif; ?>
-                              </td>
-                            </tr>
-                          <?php endforeach; ?>
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                <?php endforeach; ?>
+                          <?php foreach ($itensExtra as $mItem) { $renderLinhaMaterial($mItem); } ?>
+                        <?php endif; ?>
+                      <?php endforeach; ?>
+                    </tbody>
+                  </table>
+                </div>
               <?php endif; ?>
             </div>
           </div>

@@ -892,7 +892,7 @@ $stmt = $pdo->prepare(
 
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT m.id, m.titulo, m.link, m.tipo, m.id_disciplina, m.created_at,'
+                    'SELECT m.id, m.titulo, m.link, m.tipo, m.extra, m.id_disciplina, m.created_at,'
                     . ' d.nome AS disciplina_nome'
                     . ' FROM material m'
                     . ' LEFT JOIN disciplina d ON d.id = m.id_disciplina'
