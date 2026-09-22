@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 17/09/2026 às 13:49
+-- Tempo de geração: 22/09/2026 às 19:49
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.24
 
@@ -661,6 +661,7 @@ CREATE TABLE `logs_auditoria` (
 CREATE TABLE `material` (
   `id` int(11) NOT NULL,
   `tipo` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `extra` tinyint(1) NOT NULL DEFAULT '0',
   `titulo` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
   `link` text COLLATE utf8_unicode_ci NOT NULL,
   `id_fk` int(11) NOT NULL,

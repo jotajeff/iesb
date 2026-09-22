@@ -101,6 +101,7 @@ final class MaterialController extends Controller
         $idTurma = (int) $this->input('id_fk', 0);
         $idDisciplina = (int) $this->input('id_disciplina', 0);
         $titulo = trim((string) $this->input('titulo', ''));
+        $extra = (int) $this->input('extra', 0) === 1 ? 1 : 0;
 
         if (!in_array($tipo, ['video', 'pdf'], true) || $idTurma <= 0 || $titulo === '') {
             Session::setFlash('flash', 'Selecione o tipo, a turma e informe o título.');
@@ -119,7 +120,7 @@ final class MaterialController extends Controller
                     return;
                 }
 
-                $id = $this->inserirMaterial('video', $link, $idTurma, $titulo, $idDisciplina);
+                $id = $this->inserirMaterial('video', $link, $idTurma, $titulo, $idDisciplina, $extra);
                 if ($id > 0) {
                     $this->logService->log('criar', 'video', $id, "Vídeo publicado na turma $idTurma: $titulo");
                     Session::setFlash('flash', 'Vídeo publicado com sucesso.');
@@ -156,7 +157,7 @@ final class MaterialController extends Controller
                 return;
             }
 
-            $id = $this->inserirMaterial('drive', $link, $idTurma, $titulo, $idDisciplina);
+            $id = $this->inserirMaterial('drive', $link, $idTurma, $titulo, $idDisciplina, $extra);
             if ($id > 0) {
                 $this->logService->log('criar', 'drive', $id, "Material PDF publicado na turma $idTurma: $titulo");
                 Session::setFlash('flash', 'Material publicado com sucesso.');
@@ -202,7 +203,7 @@ final class MaterialController extends Controller
         $this->redirect('/admin/material');
     }
 
-    private function inserirMaterial(string $tipo, string $link, int $idTurma, string $titulo, int $idDisciplina = 0): int
+    private function inserirMaterial(string $tipo, string $link, int $idTurma, string $titulo, int $idDisciplina = 0, int $extra = 0): int
     {
         $pdo = Database::connection();
         if (!$pdo instanceof PDO) {
@@ -211,9 +212,10 @@ final class MaterialController extends Controller
 
         try {
             $stmt = $pdo->prepare(
-                'INSERT INTO material (tipo, link, id_fk, id_disciplina, titulo) VALUES (:tipo, :link, :id_fk, :id_disciplina, :titulo)'
+                'INSERT INTO material (tipo, extra, link, id_fk, id_disciplina, titulo) VALUES (:tipo, :extra, :link, :id_fk, :id_disciplina, :titulo)'
             );
             $stmt->bindValue(':tipo', $tipo, PDO::PARAM_STR);
+            $stmt->bindValue(':extra', $extra === 1 ? 1 : 0, PDO::PARAM_INT);
             $stmt->bindValue(':link', $link, PDO::PARAM_STR);
             $stmt->bindValue(':id_fk', $idTurma, PDO::PARAM_INT);
             $stmt->bindValue(':id_disciplina', $idDisciplina, PDO::PARAM_INT);

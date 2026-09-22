@@ -72,6 +72,13 @@
           <div class="form-text">Selecione a disciplina ou deixe em "Secretaria" para material geral da turma.</div>
         </div>
 
+        <div class="col-12">
+          <div class="form-check">
+            <input class="form-check-input" type="checkbox" name="extra" value="1" id="materialExtra">
+            <label class="form-check-label" for="materialExtra">Material extra</label>
+          </div>
+        </div>
+
         <div class="col-md-6">
           <label class="form-label">Título <span class="text-danger">*</span></label>
           <input type="text" class="form-control" name="titulo" required maxlength="256" placeholder="Ex: Aula 1 - Introdução">

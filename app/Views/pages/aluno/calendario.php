@@ -43,21 +43,25 @@
                       <div class="col"></div>
                     <?php endfor; ?>
                     <?php for ($dia = 1; $dia <= $totalDias; $dia++): ?>
-                      <?php
-                        $dataDia = sprintf('%04d-%02d-%02d', $ano, $mes, $dia);
-                        $aulaFutura = $dataDia > date('Y-m-d');
-                      ?>
+                      <?php $dataDia = sprintf('%04d-%02d-%02d', $ano, $mes, $dia); ?>
                       <div class="col">
                         <?php if (!empty($dias[$dia])): ?>
                           <span class="badge bg-dark text-white" style="font-size: .8rem;"><?= $dia ?></span>
-                          <?php if (!$aulaFutura): ?>
-                            <?php foreach ($dias[$dia] as $ch): ?>
-                              <?php
-                                $presenca = (string) ($ch['presenca'] ?? '');
-                                $chStatus = (string) ($ch['status'] ?? '');
-                                $classe = 'bg-danger';
-                                $rotulo = 'F';
-                                $titulo = 'Falta/Ausente';
+                          <?php foreach ($dias[$dia] as $ch): ?>
+                            <?php
+                              $presenca = (string) ($ch['presenca'] ?? '');
+                              $chStatus = (string) ($ch['status'] ?? '');
+                              $chIni = (string) ($ch['hora_inicio'] ?? '');
+                              $chFim = (string) ($ch['hora_fim'] ?? '');
+                              $horaRef = $chFim !== '' ? $chFim : ($chIni !== '' ? $chIni : '23:59:59');
+                              $tsCh = strtotime($dataDia . ' ' . $horaRef);
+                              $aulaPassou = $tsCh !== false && $tsCh < time();
+                              $temRegistro = in_array($presenca, ['PRESENTE', 'AUSENTE', 'JUSTIFICADA'], true);
+
+                              $classe = '';
+                              $rotulo = '';
+                              $titulo = '';
+                              if ($temRegistro) {
                                 if ($presenca === 'PRESENTE') {
                                   $classe = 'bg-success';
                                   $rotulo = 'P';
@@ -66,22 +70,34 @@
                                   $classe = 'bg-warning text-dark';
                                   $rotulo = 'J';
                                   $titulo = 'Justificada';
-                                } elseif ($presenca === 'AUSENTE') {
+                                } else {
                                   $classe = 'bg-danger';
                                   $rotulo = 'F';
                                   $titulo = 'Ausente';
-                                } elseif ($chStatus === 'CANCELADA') {
-                                  $classe = 'bg-secondary';
-                                  $rotulo = 'C';
-                                  $titulo = 'Chamada cancelada';
                                 }
+                              } elseif ($chStatus === 'CANCELADA') {
+                                $classe = 'bg-secondary';
+                                $rotulo = 'C';
+                                $titulo = 'Chamada cancelada';
+                              } elseif (!$aulaPassou) {
+                                $classe = '';
+                                $rotulo = '';
+                              } else {
+                                $classe = 'bg-danger';
+                                $rotulo = 'F';
+                                $titulo = 'Ausente';
+                              }
+
+                              if ($rotulo !== '') {
                                 $titulo .= ' - ' . (string) ($ch['disciplina'] ?? '');
-                              ?>
+                              }
+                            ?>
+                            <?php if ($rotulo !== ''): ?>
                               <div>
                                 <span class="badge <?= $classe ?>" style="font-size: .65rem;" title="<?= htmlspecialchars($titulo, ENT_QUOTES, 'UTF-8') ?>"><?= $rotulo ?></span>
                               </div>
-                            <?php endforeach; ?>
-                          <?php endif; ?>
+                            <?php endif; ?>
+                          <?php endforeach; ?>
                         <?php else: ?>
                           <span class="text-muted" style="font-size: .8rem;"><?= $dia ?></span>
                         <?php endif; ?>

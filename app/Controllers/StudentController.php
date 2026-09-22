@@ -359,7 +359,7 @@ $stmt = $pdo->prepare(
         if ($pdo instanceof \PDO) {
             try {
                 $stmt = $pdo->prepare(
-                    'SELECT c.id, c.data_aula, c.status AS chamada_status, td.id_turma,'
+                    'SELECT c.id, c.data_aula, c.hora_inicio, c.hora_fim, c.status AS chamada_status, td.id_turma,'
                     . ' d.nome AS disciplina_nome, cp.presenca'
                     . ' FROM chamada c'
                     . ' JOIN turma_disciplina td ON td.id = c.id_turma_disciplina'
@@ -401,6 +401,8 @@ $stmt = $pdo->prepare(
                 'status' => (string) ($l['chamada_status'] ?? ''),
                 'disciplina' => (string) ($l['disciplina_nome'] ?? ''),
                 'presenca' => (string) ($l['presenca'] ?? ''),
+                'hora_inicio' => (string) ($l['hora_inicio'] ?? ''),
+                'hora_fim' => (string) ($l['hora_fim'] ?? ''),
             ];
         }
         ksort($calendario);

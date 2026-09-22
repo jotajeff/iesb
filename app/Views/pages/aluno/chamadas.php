@@ -75,24 +75,24 @@
               $hStatus = (string) ($h['chamada_status'] ?? '');
               $hInicio = substr((string) ($h['hora_inicio'] ?? ''), 0, 5);
               $hFim = substr((string) ($h['hora_fim'] ?? ''), 0, 5);
+              $horaRef = $hFim !== '' ? $hFim : ($hInicio !== '' ? $hInicio : '23:59:59');
+              $tsAula = $hData !== '' ? strtotime($hData . ' ' . $horaRef) : false;
+              $aulaPassou = $tsAula !== false && $tsAula < time();
+              $temRegistro = in_array($hPresenca, ['PRESENTE', 'AUSENTE', 'JUSTIFICADA'], true);
             ?>
             <div class="list-group-item py-3">
               <div class="d-flex flex-wrap align-items-center gap-2">
                 <i class="bi bi-check-circle-fill text-success" aria-hidden="true"></i>
                 <strong><?= htmlspecialchars((string) ($h['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></strong>
-                <span class="badge <?= ($hData !== '' && $hData > date('Y-m-d')) ? 'bg-secondary' : ($hPresenca === 'PRESENTE' ? 'bg-success' : ($hPresenca === 'JUSTIFICADA' ? 'bg-warning text-dark' : 'bg-danger')) ?> ms-auto">
-                  <?php if ($hData !== '' && $hData > date('Y-m-d')): ?>
-                    Agendada
-                  <?php elseif ($hPresenca === 'PRESENTE'): ?>
-                    Presente
-                  <?php elseif ($hPresenca === 'AUSENTE'): ?>
-                    Ausente
-                  <?php elseif ($hPresenca === 'JUSTIFICADA'): ?>
-                    Justificada
-                  <?php else: ?>
-                    Ausente
-                  <?php endif; ?>
-                </span>
+                <?php if ($temRegistro): ?>
+                  <span class="badge <?= $hPresenca === 'PRESENTE' ? 'bg-success' : ($hPresenca === 'JUSTIFICADA' ? 'bg-warning text-dark' : 'bg-danger') ?> ms-auto">
+                    <?= htmlspecialchars($hPresenca === 'PRESENTE' ? 'Presente' : ($hPresenca === 'JUSTIFICADA' ? 'Justificada' : 'Ausente'), ENT_QUOTES, 'UTF-8') ?>
+                  </span>
+                <?php elseif (!$aulaPassou): ?>
+                  <span class="badge bg-secondary ms-auto">Agendada</span>
+                <?php else: ?>
+                  <span class="badge bg-danger ms-auto">Ausente</span>
+                <?php endif; ?>
               </div>
               <div class="ps-4 mt-2 text-muted small">
                 <div>
