@@ -14,6 +14,7 @@
           <table class="table table-hover align-middle mb-0">
             <thead>
               <tr>
+                <th><i class="bi bi-pencil-square"></i></th>
                 <th><i class="bi bi-hash"></i></th>
                 <th><i class="bi bi-tag me-1"></i>Título</th>
                 <th><i class="bi bi-chat-text me-1"></i>Mensagem</th>
@@ -27,6 +28,13 @@
                 <?php $nid = (int) ($n['id'] ?? 0); ?>
                 <?php $lida = !empty($n['lida']); ?>
               <tr class="<?= !$lida ? 'fw-semibold' : '' ?>" data-id="<?= $nid ?>" data-titulo="<?= htmlspecialchars((string) ($n['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-mensagem="<?= htmlspecialchars((string) ($n['mensagem'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-origem="<?= htmlspecialchars((string) ($n['origem_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" data-data="<?= htmlspecialchars((string) ($n['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" data-lida="<?= $lida ? '1' : '0' ?>">
+                <td>
+                  <?php if ($lida): ?>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Já lida"><i class="bi bi-check2-square"></i></button>
+                  <?php else: ?>
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-marcar-lida" data-id="<?= $nid ?>" title="Marcar como lida"><i class="bi bi-pencil-square"></i></button>
+                  <?php endif; ?>
+                </td>
                 <td><a href="#" class="text-decoration-none fw-medium link-notificacao" data-bs-toggle="modal" data-bs-target="#notificacaoModal">#<?= $nid ?></a></td>
                 <td><?= htmlspecialchars((string) ($n['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?></td>
                 <td style="max-width:300px;"><?= nl2br(htmlspecialchars(mb_strimwidth((string) ($n['mensagem'] ?? ''), 0, 120, '...'), ENT_QUOTES, 'UTF-8')) ?></td>
@@ -90,27 +98,42 @@ document.querySelectorAll('.link-notificacao').forEach(function(link) {
   });
 });
 
-document.getElementById('btnMarcarLida').addEventListener('click', function() {
-  var id = this.getAttribute('data-id');
-  if (!id) return;
+function marcarComoLida(id, row) {
+  if (!id || !row) return;
   var formData = new FormData();
   formData.append('id', id);
   fetch('/aluno/notificacoes/marcar-lida', { method: 'POST', body: formData })
     .then(function(r) { return r.json(); })
     .then(function(data) {
       if (data.sucesso) {
-        var row = document.querySelector('tr[data-id="' + id + '"]');
-        if (row) {
-          row.classList.remove('fw-semibold');
-          row.setAttribute('data-lida', '1');
-          var badge = row.querySelector('.badge');
-          if (badge) {
-            badge.outerHTML = '<span class="badge bg-success"><i class="bi bi-check2-all me-1"></i>Lida</span>';
-          }
+        row.classList.remove('fw-semibold');
+        row.setAttribute('data-lida', '1');
+        var badge = row.querySelector('.badge');
+        if (badge) {
+          badge.outerHTML = '<span class="badge bg-success"><i class="bi bi-check2-all me-1"></i>Lida</span>';
         }
-        document.getElementById('btnMarcarLida').style.display = 'none';
+        var iconBtn = row.querySelector('.btn-marcar-lida');
+        if (iconBtn) {
+          iconBtn.outerHTML = '<button type="button" class="btn btn-sm btn-outline-secondary" disabled title="Já lida"><i class="bi bi-check2-square"></i></button>';
+        }
+        var modalBtn = document.getElementById('btnMarcarLida');
+        if (modalBtn && modalBtn.getAttribute('data-id') === String(id)) {
+          modalBtn.style.display = 'none';
+        }
       }
     });
+}
+
+document.querySelectorAll('.btn-marcar-lida').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    marcarComoLida(this.getAttribute('data-id'), this.closest('tr'));
+  });
+});
+
+document.getElementById('btnMarcarLida').addEventListener('click', function() {
+  var id = this.getAttribute('data-id');
+  var row = document.querySelector('tr[data-id="' + id + '"]');
+  marcarComoLida(id, row);
 });
 
 function nl2br(str) {

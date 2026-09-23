@@ -46,7 +46,7 @@
             </a>
           </li>
           <li class="nav-item dropdown">
-            <a class="nav-link dropdown-toggle <?= in_array(($currentRoute ?? ''), ['/aluno/perfil', '/aluno/endereco', '/aluno/documentos', '/aluno/protocolos', '/aluno/chamadas'], true) ? 'active' : '' ?>" href="#" id="secretariaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            <a class="nav-link dropdown-toggle <?= in_array(($currentRoute ?? ''), ['/aluno/perfil', '/aluno/endereco', '/aluno/documentos', '/aluno/secretaria', '/aluno/protocolos', '/aluno/chamadas'], true) ? 'active' : '' ?>" href="#" id="secretariaDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
               <i class="bi bi-person-badge me-1"></i>Secretaria
             </a>
             <ul class="dropdown-menu" aria-labelledby="secretariaDropdown">
@@ -61,8 +61,16 @@
                 </a>
               </li>
               <li>
-                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/documentos' ? 'active' : '' ?>" href="/aluno/documentos">
-                  <i class="bi bi-folder2-open me-1"></i>Documentos
+                <span class="dropdown-item-text fw-bold"><i class="bi bi-folder2-open me-1"></i>Documentos</span>
+              </li>
+              <li>
+                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/documentos' ? 'active' : '' ?>" href="/aluno/documentos" style="padding-left:2.2rem;">
+                  <i class="bi bi-person me-1"></i>Aluno
+                </a>
+              </li>
+              <li>
+                <a class="dropdown-item <?= ($currentRoute ?? '') === '/aluno/secretaria' ? 'active' : '' ?>" href="/aluno/secretaria" style="padding-left:2.2rem;">
+                  <i class="bi bi-building me-1"></i>Secretaria
                 </a>
               </li>
               <li>

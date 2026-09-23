@@ -1714,6 +1714,45 @@ $stmt = $pdo->prepare(
         ], 'aluno');
     }
 
+    public function secretaria(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno para acessar os documentos.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $studentId = (int) ($user['id'] ?? 0);
+
+        $documentos = [];
+        $pdo = Database::connection();
+        if ($pdo instanceof \PDO) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT d.id, d.id_tipo, d.nome_original, d.nome_drive, d.mime_type, d.tamanho,'
+                    . ' d.versao, d.status, d.created_at, d.file_id, t.descricao AS tipo_descricao'
+                    . ' FROM documento d'
+                    . ' LEFT JOIN documento_tipo t ON t.id = d.id_tipo'
+                    . ' WHERE d.id_grupo = :id_grupo AND d.id_registro = :id_registro AND d.ativo = 1'
+                    . ' ORDER BY d.created_at DESC, d.id DESC'
+                );
+                $stmt->bindValue(':id_grupo', 7, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_registro', $studentId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $documentos = $stmt->fetchAll() ?: [];
+            } catch (\Throwable $e) {
+                error_log('[STUDENT SECRETARIA DOCS] Erro: ' . $e->getMessage());
+                $documentos = [];
+            }
+        }
+
+        $this->render('pages/aluno/secretaria', [
+            'title' => 'Documentos da Secretaria',
+            'currentRoute' => '/aluno/secretaria',
+            'documentos' => $documentos,
+        ], 'aluno');
+    }
+
     public function uploadDocumento(): void
     {
         if (!$this->auth->checkRole('aluno')) {

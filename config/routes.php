@@ -23,6 +23,7 @@ use App\Controllers\Admin\PermissaoController;
 use App\Controllers\Admin\BannerAlunoController;
 use App\Controllers\Admin\ChamadaController;
 use App\Controllers\Admin\MaterialController;
+use App\Controllers\Admin\DocumentoController;
 use App\Controllers\Admin\ProtocoloController as AdminProtocoloController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
@@ -308,6 +309,11 @@ return static function (Router $router): void {
     $router->post('/admin/material/salvar', [MaterialController::class, 'salvar']);
     $router->post('/admin/material/atualizar', [MaterialController::class, 'atualizar']);
 
+    $router->get('/admin/documentos', [DocumentoController::class, 'index']);
+    $router->get('/admin/documentos/novo', [DocumentoController::class, 'novo']);
+    $router->get('/admin/documentos/ajax-alunos', [DocumentoController::class, 'ajaxAlunos']);
+    $router->post('/admin/documentos/enviar', [DocumentoController::class, 'upload']);
+
     $router->get('/admin/protocolos', [AdminProtocoloController::class, 'index']);
     $router->get('/admin/protocolos/show', [AdminProtocoloController::class, 'show']);
     $router->post('/admin/protocolos/responder', [AdminProtocoloController::class, 'responder']);
@@ -365,6 +371,7 @@ return static function (Router $router): void {
     $router->get('/aluno/protocolos/show', [ProtocoloController::class, 'show']);
     $router->post('/aluno/protocolos/mensagem', [ProtocoloController::class, 'mensagem']);
     $router->get('/aluno/documentos', [StudentController::class, 'documentos']);
+    $router->get('/aluno/secretaria', [StudentController::class, 'secretaria']);
     $router->post('/aluno/documentos/enviar', [StudentController::class, 'uploadDocumento']);
     $router->get('/aluno/documentos/visualizar', [StudentController::class, 'visualizarDocumento']);
     $router->get('/aluno/documentos/baixar', [StudentController::class, 'baixarDocumento']);

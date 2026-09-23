@@ -44,7 +44,7 @@
               </ul>
             </li>
             <li class="nav-item dropdown">
-              <a class="nav-link dropdown-toggle <?= ((strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/matriculas/notificacao') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/chamadas') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/material') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/protocolos') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-folder2-open me-1"></i>Secretaria</a>
+              <a class="nav-link dropdown-toggle <?= ((strpos((string) ($currentRoute ?? ''), '/admin/tarefas') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/matriculas/notificacao') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/chamadas') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/material') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/protocolos') === 0) || (strpos((string) ($currentRoute ?? ''), '/admin/documentos') === 0)) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-folder2-open me-1"></i>Secretaria</a>
               <ul class="dropdown-menu">
                 <li><span class="dropdown-item-text fw-bold"><i class="bi bi-kanban me-1"></i>Tarefas</span></li>
                 <li><a class="dropdown-item" href="/admin/tarefas" style="padding-left:2.2rem;"><i class="bi bi-kanban me-1"></i>Kanban</a></li>
@@ -54,6 +54,7 @@
                   <hr class="dropdown-divider">
                 </li>
                 <li><a class="dropdown-item" href="/admin/protocolos"><i class="bi bi-chat-left-text me-1"></i>Protocolos</a></li>
+                <li><a class="dropdown-item" href="/admin/documentos"><i class="bi bi-folder2-open me-1"></i>Documentos</a></li>
                 <li><a class="dropdown-item" href="/admin/chamadas"><i class="bi bi-clipboard-check me-1"></i>Chamadas</a></li>
                 <li><a class="dropdown-item" href="/admin/chamadas/relatorio"><i class="bi bi-clipboard-data me-1"></i>Relatório de Presenças</a></li>
                 <li><a class="dropdown-item" href="/admin/material"><i class="bi bi-folder2-open me-1"></i>Material</a></li>

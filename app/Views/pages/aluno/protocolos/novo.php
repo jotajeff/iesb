@@ -38,7 +38,16 @@
 
         <div class="col-md-6">
           <label class="form-label">Assunto <span class="text-danger">*</span></label>
-          <input type="text" class="form-control" name="assunto" maxlength="255" required placeholder="Ex: Dúvida sobre aulas gravadas">
+          <select class="form-select" name="assunto" required>
+            <option value="">Selecione o assunto</option>
+            <option value="Solicitação de Documentos">Solicitação de Documentos</option>
+            <option value="Assunto acadêmico">Assunto acadêmico</option>
+            <option value="Emissão de Diploma/Certificado">Emissão de Diploma/Certificado</option>
+            <option value="Questão Financeira">Questão Financeira</option>
+            <option value="Evento">Evento</option>
+            <option value="Solicitação Especial">Solicitação Especial</option>
+            <option value="Outros assuntos">Outros assuntos</option>
+          </select>
         </div>
 
         <div class="col-12">
