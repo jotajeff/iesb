@@ -94,9 +94,9 @@
                     <?php if ($idTurma > 0): ?>
                       <td><?= htmlspecialchars((string) ($mat['turma_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
                     <?php endif; ?>
-                    <td>
+                    <td style="max-width:160px;">
                       <?php if ((int) ($mat['id_disciplina'] ?? 0) > 0): ?>
-                        <span class="badge bg-info text-dark"><i class="bi bi-journal-bookmark me-1"></i><?= htmlspecialchars((string) ($mat['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
+                        <span class="badge bg-info text-dark" style="white-space:normal; display:inline-block; max-width:160px; text-align:left;" title="<?= htmlspecialchars((string) ($mat['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>"><i class="bi bi-journal-bookmark me-1"></i><?= htmlspecialchars((string) ($mat['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></span>
                       <?php else: ?>
                         <span class="badge bg-secondary"><i class="bi bi-briefcase me-1"></i>Secretaria</span>
                       <?php endif; ?>
