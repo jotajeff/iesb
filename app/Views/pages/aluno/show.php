@@ -136,6 +136,8 @@
                           <span class="badge bg-danger"><i class="bi bi-camera-video me-1"></i>Vídeo</span>
                         <?php elseif ($tipoMat === 'drive'): ?>
                           <span class="badge bg-primary"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
+                        <?php elseif ($tipoMat === 'link'): ?>
+                          <span class="badge bg-success"><i class="bi bi-link-45deg me-1"></i>Link</span>
                         <?php else: ?>
                           <span class="badge bg-secondary"><i class="bi bi-file-earmark me-1"></i><?= htmlspecialchars(ucfirst($tipoMat ?: '-'), ENT_QUOTES, 'UTF-8') ?></span>
                         <?php endif; ?>

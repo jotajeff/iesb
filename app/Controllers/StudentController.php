@@ -6,6 +6,7 @@ namespace App\Controllers;
 
 use App\Core\Controller;
 use App\Core\Database;
+use App\Repositories\LinkRepository;
 use App\Repositories\StorageDriveRepository;
 use App\Services\AlunoService;
 use App\Services\CursoService;
@@ -906,6 +907,23 @@ $stmt = $pdo->prepare(
             } catch (\Throwable $e) {
                 error_log('[STUDENT SHOW] Erro ao buscar materiais: ' . $e->getMessage());
                 $materiais = [];
+            }
+
+            $links = (new LinkRepository())->listarPorTurma($turmaId);
+            if ($links !== []) {
+                $materiais = array_merge($materiais, $links);
+                usort($materiais, static function (array $a, array $b): int {
+                    $da = (int) ($a['id_disciplina'] ?? 0);
+                    $db = (int) ($b['id_disciplina'] ?? 0);
+                    if ($da !== $db) {
+                        return $da <=> $db;
+                    }
+                    $cmp = strcmp((string) ($a['disciplina_nome'] ?? ''), (string) ($b['disciplina_nome'] ?? ''));
+                    if ($cmp !== 0) {
+                        return $cmp;
+                    }
+                    return strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
+                });
             }
 
             $idEstrutura = (int) ($matricula['estrutura_id'] ?? 0);

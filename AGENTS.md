@@ -68,6 +68,7 @@ Não há testes, linting, typecheck ou CI.
 | `chamada` | Chamadas geradas (id_turma, id_turma_disciplina, id_usuario_professor, data_aula, hora_inicio/fim, status) |
 | `chamada_presenca` | Presenças: id_chamada, id_matricula, presenca, ip, responsavel |
 | `material` | Materiais: tipo (video/drive), titulo, link, id_fk (turma), id_disciplina (0=secretaria) |
+| `link` | Links externos (tipo=link): titulo, link, id_fk (turma), id_disciplina, extra. Self-healing via `LinkRepository::ensureSchema()` + `storage/migration_link.sql` |
 | `banner_aluno` | Banners do portal: banner, texto, link, id_curso, ativo |
 | `turma_disciplina_professor` | Junção professor↔turma_disciplina (ou professor↔turma, schema flexível) |
 | `turma_disciplina` | Vínculo turma↔disciplina com professor (legado id_usuario_professor) |
@@ -116,8 +117,9 @@ Não há testes, linting, typecheck ou CI.
 ## Módulo Material (admin/operador)
 
 - `/admin/material` → listagem agrupada por turma, filtro por turma ativa.
-- `/admin/material/novo` → tipo (Vídeo/PDF) → turma → disciplina (Secretaria=0 ou vinculada) → campos → upload.
-- PDF: upload via `StorageService` ao Google Drive, tipo 'drive'. Vídeo: insert direto, tipo 'video'.
+- `/admin/material/novo` → tipo (Vídeo/PDF/**Link** em 3 colunas) → turma → disciplina (Secretaria=0 ou vinculada) → campos → upload.
+- PDF: upload via `StorageService` ao Google Drive, tipo 'drive'. Vídeo: insert direto, tipo 'video'. **Link**: insert na tabela `link` (`LinkRepository`), mesmo fluxo turma/disciplina (não passa por `material`).
+- Listagem admin e portal misturam `material` + `link` (tipo 'link', badge verde). Editar/deletar de link usa `tabela=link` (query/hidden input).
 - `material.id_fk` = turma, `material.id_disciplina` = disciplina (0 = geral/secretaria).
 - Acesso: admin ou operador.
 

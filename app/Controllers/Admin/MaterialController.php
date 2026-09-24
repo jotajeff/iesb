@@ -6,6 +6,7 @@ namespace App\Controllers\Admin;
 
 use App\Core\Controller;
 use App\Core\Database;
+use App\Repositories\LinkRepository;
 use App\Repositories\StorageDriveRepository;
 use App\Services\LogService;
 use App\Services\Storage\StorageService;
@@ -61,6 +62,15 @@ final class MaterialController extends Controller
             }
         }
 
+        $links = (new LinkRepository())->listarAdmin($idTurma > 0 ? $idTurma : null);
+        if ($links !== []) {
+            $materiais = array_merge($materiais, $links);
+            usort($materiais, static function (array $a, array $b): int {
+                $cmp = strcmp((string) ($b['created_at'] ?? ''), (string) ($a['created_at'] ?? ''));
+                return $cmp !== 0 ? $cmp : ((int) ($b['id'] ?? 0) <=> (int) ($a['id'] ?? 0));
+            });
+        }
+
         $this->render('pages/admin/material/index', [
             'title' => 'Materiais',
             'currentRoute' => '/admin/material',
@@ -78,7 +88,7 @@ final class MaterialController extends Controller
         }
 
         $tipo = trim((string) ($_GET['tipo'] ?? ''));
-        if ($tipo !== '' && !in_array($tipo, ['video', 'pdf'], true)) {
+        if ($tipo !== '' && !in_array($tipo, ['video', 'pdf', 'link'], true)) {
             $tipo = '';
         }
 
@@ -103,7 +113,7 @@ final class MaterialController extends Controller
         $titulo = trim((string) $this->input('titulo', ''));
         $extra = (int) $this->input('extra', 0) === 1 ? 1 : 0;
 
-        if (!in_array($tipo, ['video', 'pdf'], true) || $idTurma <= 0 || $titulo === '') {
+        if (!in_array($tipo, ['video', 'pdf', 'link'], true) || $idTurma <= 0 || $titulo === '') {
             Session::setFlash('flash', 'Selecione o tipo, a turma e informe o título.');
             $this->redirect('/admin/material/novo');
             return;
@@ -112,6 +122,25 @@ final class MaterialController extends Controller
         $idDisciplina = $idDisciplina > 0 ? $idDisciplina : 0;
 
         try {
+            if ($tipo === 'link') {
+                $url = trim((string) $this->input('link', ''));
+                if ($url === '') {
+                    Session::setFlash('flash', 'Informe o link (URL).');
+                    $this->redirect('/admin/material/novo?tipo=link');
+                    return;
+                }
+
+                $id = (new LinkRepository())->insert($titulo, $url, $idTurma, $idDisciplina, $extra);
+                if ($id > 0) {
+                    $this->logService->log('criar', 'link', $id, "Link publicado na turma $idTurma: $titulo");
+                    Session::setFlash('flash', 'Link publicado com sucesso.');
+                } else {
+                    Session::setFlash('flash', 'Erro ao publicar o link.');
+                }
+                $this->redirect('/admin/material');
+                return;
+            }
+
             if ($tipo === 'video') {
                 $link = trim((string) $this->input('link', ''));
                 if ($link === '') {
@@ -180,8 +209,20 @@ final class MaterialController extends Controller
         }
 
         $id = (int) $this->input('id', 0);
+        $tabela = ((string) $this->input('tabela', '')) === 'link' ? 'link' : 'material';
         if ($id <= 0) {
             Session::setFlash('flash', 'Material inválido.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
+        if ($tabela === 'link') {
+            if ((new LinkRepository())->softDelete($id)) {
+                $this->logService->log('desativar', 'link', $id, 'Link desativado');
+                Session::setFlash('flash', 'Link removido.');
+            } else {
+                Session::setFlash('flash', 'Erro ao remover o link.');
+            }
             $this->redirect('/admin/material');
             return;
         }
@@ -237,7 +278,10 @@ final class MaterialController extends Controller
         }
 
         $id = (int) ($_GET['id'] ?? 0);
-        $material = $id > 0 ? $this->buscarMaterial($id) : null;
+        $tabela = ((string) ($_GET['tabela'] ?? '')) === 'link' ? 'link' : 'material';
+        $material = $id > 0
+            ? ($tabela === 'link' ? (new LinkRepository())->buscarPorId($id) : $this->buscarMaterial($id))
+            : null;
 
         if (!$material) {
             Session::setFlash('flash', 'Material não encontrado.');
@@ -245,10 +289,15 @@ final class MaterialController extends Controller
             return;
         }
 
+        if ($tabela === 'link') {
+            $material['tipo'] = 'link';
+        }
+
         $this->render('pages/admin/material/editar', [
             'title' => 'Editar Material',
             'currentRoute' => '/admin/material',
             'material' => $material,
+            'tabela' => $tabela,
             'turmas' => $this->turmas(),
             'disciplinas' => $this->disciplinasDaTurma((int) ($material['id_fk'] ?? 0)),
         ], 'admin');
@@ -262,6 +311,7 @@ final class MaterialController extends Controller
         }
 
         $id = (int) $this->input('id', 0);
+        $tabela = ((string) $this->input('tabela', '')) === 'link' ? 'link' : 'material';
         $idTurma = (int) $this->input('id_fk', 0);
         $idDisciplina = (int) $this->input('id_disciplina', 0);
         $titulo = trim((string) $this->input('titulo', ''));
@@ -272,9 +322,28 @@ final class MaterialController extends Controller
             return;
         }
 
-        $material = $this->buscarMaterial($id);
+        $material = $tabela === 'link' ? (new LinkRepository())->buscarPorId($id) : $this->buscarMaterial($id);
         if (!$material) {
             Session::setFlash('flash', 'Material não encontrado.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
+        if ($tabela === 'link') {
+            $linkRepo = new LinkRepository();
+            $url = trim((string) $this->input('link', ''));
+            if ($url === '') {
+                Session::setFlash('flash', 'Informe o link (URL).');
+                $this->redirect('/admin/material/editar?id=' . $id . '&tabela=link');
+                return;
+            }
+
+            if ($linkRepo->atualizar($id, $titulo, $url, $idTurma, $idDisciplina > 0 ? $idDisciplina : 0)) {
+                $this->logService->log('atualizar', 'link', $id, "Link atualizado: $titulo");
+                Session::setFlash('flash', 'Link atualizado com sucesso.');
+            } else {
+                Session::setFlash('flash', 'Erro ao atualizar o link.');
+            }
             $this->redirect('/admin/material');
             return;
         }

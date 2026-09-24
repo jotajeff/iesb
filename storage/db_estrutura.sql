@@ -632,6 +632,27 @@ CREATE TABLE `integracao_google` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `link`
+--
+
+CREATE TABLE `link` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `titulo` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
+  `link` text COLLATE utf8_unicode_ci NOT NULL,
+  `id_fk` int(11) NOT NULL,
+  `id_disciplina` int(11) NOT NULL DEFAULT '0',
+  `extra` tinyint(1) NOT NULL DEFAULT '0',
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_link_id_fk` (`id_fk`),
+  KEY `idx_link_id_disciplina` (`id_disciplina`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `logs_auditoria`
 --
 

@@ -16,7 +16,7 @@
           <a href="/admin/notificacoes?ativo=0" class="btn btn-outline-danger <?= $filtroAtual === '0' ? 'active' : '' ?>" title="Somente inativas">
             <i class="bi bi-x-circle me-1"></i>Inativas
           </a>
-          <a href="/admin/notificacoes" class="btn btn-outline-secondary <?= $filtroAtual === '' ? 'active' : '' ?>" title="Todas">
+          <a href="/admin/notificacoes?ativo=all" class="btn btn-outline-secondary <?= $filtroAtual === '' ? 'active' : '' ?>" title="Todas">
             <i class="bi bi-list-ul me-1"></i>Todas
           </a>
         </div>

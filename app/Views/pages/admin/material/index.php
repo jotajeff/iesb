@@ -85,8 +85,8 @@
                   <tr>
                     <td><?= (int) ($mat['id'] ?? 0) ?></td>
                     <td>
-                      <span class="badge <?= $tipoMaterial === 'video' ? 'bg-danger' : ($tipoMaterial === 'drive' ? 'bg-primary' : 'bg-secondary') ?>">
-                        <i class="bi <?= $tipoMaterial === 'video' ? 'bi-camera-reels' : 'bi-google' ?> me-1"></i>
+                      <span class="badge <?= $tipoMaterial === 'video' ? 'bg-danger' : ($tipoMaterial === 'drive' ? 'bg-primary' : ($tipoMaterial === 'link' ? 'bg-success' : 'bg-secondary')) ?>">
+                        <i class="bi <?= $tipoMaterial === 'video' ? 'bi-camera-reels' : ($tipoMaterial === 'link' ? 'bi-link-45deg' : 'bi-google') ?> me-1"></i>
                         <?= htmlspecialchars($tipoMaterial ?: '-', ENT_QUOTES, 'UTF-8') ?>
                       </span>
                     </td>
@@ -107,12 +107,15 @@
                         <a class="btn btn-outline-secondary btn-sm" href="<?= htmlspecialchars((string) ($mat['link'] ?? '#'), ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" title="Abrir">
                           <i class="bi bi-box-arrow-up-right"></i>
                         </a>
-                        <a class="btn btn-outline-primary btn-sm" href="/admin/material/editar?id=<?= (int) ($mat['id'] ?? 0) ?>" title="Editar">
+                        <a class="btn btn-outline-primary btn-sm" href="/admin/material/editar?id=<?= (int) ($mat['id'] ?? 0) ?><?= $tipoMaterial === 'link' ? '&tabela=link' : '' ?>" title="Editar">
                           <i class="bi bi-pencil-square"></i>
                         </a>
                         <form method="post" action="/admin/material/deletar" class="d-inline"
                               onsubmit="return confirm('Tem certeza que deseja remover este material?');">
                           <input type="hidden" name="id" value="<?= (int) ($mat['id'] ?? 0) ?>">
+                          <?php if ($tipoMaterial === 'link'): ?>
+                            <input type="hidden" name="tabela" value="link">
+                          <?php endif; ?>
                           <button type="submit" class="btn btn-outline-danger btn-sm" title="Remover">
                             <i class="bi bi-trash"></i>
                           </button>

@@ -34,7 +34,15 @@ final class NotificacaoController extends Controller
         $podeCriar = $userRole === 'admin' || $userRole === 'operador';
 
         $reqAtivo = (string) ($_GET['ativo'] ?? '');
-        $filtroAtivo = ($podeCriar && in_array($reqAtivo, ['0', '1'], true)) ? $reqAtivo : '';
+        if (!$podeCriar) {
+            $filtroAtivo = '';
+        } elseif ($reqAtivo === 'all') {
+            $filtroAtivo = '';
+        } elseif ($reqAtivo === '0' || $reqAtivo === '1') {
+            $filtroAtivo = $reqAtivo;
+        } else {
+            $filtroAtivo = '1';
+        }
 
         $notificacoes = [];
         $turmas = [];

@@ -1,6 +1,12 @@
 <?php
   $tipoSelecionado = (string) ($tipo ?? '');
   $turmasView = is_array($turmas ?? null) ? $turmas : [];
+  $badgesTipo = [
+    'video' => ['cor' => 'bg-danger', 'icone' => 'bi-camera-reels'],
+    'pdf' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
+    'link' => ['cor' => 'bg-success', 'icone' => 'bi-link-45deg'],
+  ];
+  $badgeAtual = $badgesTipo[$tipoSelecionado] ?? $badgesTipo['pdf'];
 ?>
 
 <section class="container py-4">
@@ -13,7 +19,7 @@
     <?php if ($tipoSelecionado === ''): ?>
       <p class="text-muted mb-3">Escolha o tipo de material que deseja publicar:</p>
       <div class="row g-3">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <a href="/admin/material/novo?tipo=video" class="text-decoration-none d-block h-100">
             <div class="card border shadow-sm h-100">
               <div class="card-body text-center">
@@ -24,7 +30,7 @@
             </div>
           </a>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-4">
           <a href="/admin/material/novo?tipo=pdf" class="text-decoration-none d-block h-100">
             <div class="card border shadow-sm h-100">
               <div class="card-body text-center">
@@ -35,14 +41,25 @@
             </div>
           </a>
         </div>
+        <div class="col-md-4">
+          <a href="/admin/material/novo?tipo=link" class="text-decoration-none d-block h-100">
+            <div class="card border shadow-sm h-100">
+              <div class="card-body text-center">
+                <i class="bi bi-link-45deg fs-1 text-success"></i>
+                <h5 class="mt-2 mb-1">Link</h5>
+                <p class="text-muted small mb-0">Publique um link externo (site, Google Drive, formulário...).</p>
+              </div>
+            </div>
+          </a>
+        </div>
       </div>
     <?php else: ?>
       <form method="post" action="/admin/material/salvar" enctype="multipart/form-data" class="row g-3" id="formMaterial">
         <input type="hidden" name="tipo" value="<?= htmlspecialchars($tipoSelecionado, ENT_QUOTES, 'UTF-8') ?>">
 
         <div class="col-12">
-          <span class="badge <?= $tipoSelecionado === 'video' ? 'bg-danger' : 'bg-primary' ?>">
-            <i class="bi <?= $tipoSelecionado === 'video' ? 'bi-camera-reels' : 'bi-file-earmark-pdf' ?> me-1"></i>
+          <span class="badge <?= $badgeAtual['cor'] ?>">
+            <i class="bi <?= $badgeAtual['icone'] ?> me-1"></i>
             <?= strtoupper($tipoSelecionado) ?>
           </span>
           <a class="btn btn-outline-secondary btn-sm ms-2" href="/admin/material/novo"><i class="bi bi-arrow-left-short me-1"></i>Trocar tipo</a>
@@ -88,6 +105,12 @@
           <div class="col-12">
             <label class="form-label">Link do vídeo <span class="text-danger">*</span></label>
             <input type="text" class="form-control" name="link" required placeholder="https://www.youtube.com/watch?v=... ou &lt;iframe src=...">
+          </div>
+        <?php elseif ($tipoSelecionado === 'link'): ?>
+          <div class="col-12">
+            <label class="form-label">URL do link <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" name="link" required maxlength="1000" placeholder="https://exemplo.com/...">
+            <div class="form-text">Informe a URL completa (começando com http:// ou https://). O link será aberto em nova aba pelo aluno.</div>
           </div>
         <?php else: ?>
           <div class="col-12">

@@ -3,8 +3,15 @@
   $turmasView = is_array($turmas ?? null) ? $turmas : [];
   $disciplinasView = is_array($disciplinas ?? null) ? $disciplinas : [];
   $tipoMaterial = (string) ($material['tipo'] ?? '');
+  $tabelaMaterial = (string) ($tabela ?? 'material') === 'link' ? 'link' : 'material';
   $turmaAtual = (int) ($material['id_fk'] ?? 0);
   $disciplinaAtual = (int) ($material['id_disciplina'] ?? 0);
+  $badgesTipo = [
+    'video' => ['cor' => 'bg-danger', 'icone' => 'bi-camera-reels'],
+    'drive' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
+    'link' => ['cor' => 'bg-success', 'icone' => 'bi-link-45deg'],
+  ];
+  $badgeAtual = $badgesTipo[$tipoMaterial] ?? ['cor' => 'bg-secondary', 'icone' => 'bi-file-earmark'];
 ?>
 
 <section class="container py-4">
@@ -16,10 +23,11 @@
 
     <form method="post" action="/admin/material/atualizar" class="row g-3">
       <input type="hidden" name="id" value="<?= (int) ($material['id'] ?? 0) ?>">
+      <input type="hidden" name="tabela" value="<?= htmlspecialchars($tabelaMaterial, ENT_QUOTES, 'UTF-8') ?>">
 
       <div class="col-12">
-        <span class="badge <?= $tipoMaterial === 'video' ? 'bg-danger' : ($tipoMaterial === 'drive' ? 'bg-primary' : 'bg-secondary') ?>">
-          <i class="bi <?= $tipoMaterial === 'video' ? 'bi-camera-reels' : 'bi-google' ?> me-1"></i>
+        <span class="badge <?= $badgeAtual['cor'] ?>">
+          <i class="bi <?= $badgeAtual['icone'] ?> me-1"></i>
           <?= htmlspecialchars($tipoMaterial ?: '-', ENT_QUOTES, 'UTF-8') ?>
         </span>
       </div>
@@ -64,6 +72,12 @@
         <div class="col-12">
           <label class="form-label">Link do vídeo</label>
           <input type="text" class="form-control" name="link" value="<?= htmlspecialchars((string) ($material['link'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+        </div>
+      <?php elseif ($tipoMaterial === 'link'): ?>
+        <div class="col-12">
+          <label class="form-label">URL do link <span class="text-danger">*</span></label>
+          <input type="text" class="form-control" name="link" maxlength="1000" required value="<?= htmlspecialchars((string) ($material['link'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+          <div class="form-text">Informe a URL completa (começando com http:// ou https://).</div>
         </div>
       <?php else: ?>
         <div class="col-12">
