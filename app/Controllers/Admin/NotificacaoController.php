@@ -33,6 +33,9 @@ final class NotificacaoController extends Controller
         $userId = (int) ($authUser['id'] ?? 0);
         $podeCriar = $userRole === 'admin' || $userRole === 'operador';
 
+        $reqAtivo = (string) ($_GET['ativo'] ?? '');
+        $filtroAtivo = ($podeCriar && in_array($reqAtivo, ['0', '1'], true)) ? $reqAtivo : '';
+
         $notificacoes = [];
         $turmas = [];
         $professores = [];
@@ -63,15 +66,20 @@ final class NotificacaoController extends Controller
                 }
 
                 if ($userRole === 'professor' && $userId > 0) {
-                    $sql .= ' WHERE n.tipo_destino = \'usuario\' AND n.id_destino = :user_id'
+                    $sql .= ' WHERE n.ativo = 1 AND (n.tipo_destino = \'usuario\' AND n.id_destino = :user_id'
                           . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
                           . '   SELECT tp.id_turma FROM turma_professor tp WHERE tp.id_usuario = :user_id2 AND tp.status = \'A\''
-                          . ' ))';
+                          . ' )))';
+                } elseif ($filtroAtivo !== '') {
+                    $sql .= ' WHERE n.ativo = :filtro_ativo';
                 }
 
                 $sql .= ' ORDER BY n.created_at DESC LIMIT 200';
 
                 $stmt = $pdo->prepare($sql);
+                if ($filtroAtivo !== '') {
+                    $stmt->bindValue(':filtro_ativo', (int) $filtroAtivo, \PDO::PARAM_INT);
+                }
                 if (!$podeCriar && $userId > 0) {
                     $stmt->bindValue(':nl_user', $userId, \PDO::PARAM_INT);
                 }
@@ -106,6 +114,7 @@ final class NotificacaoController extends Controller
             'title' => 'Notificações',
             'currentRoute' => '/admin/notificacoes',
             'notificacoes' => $notificacoes,
+            'filtroAtivo' => $filtroAtivo,
             'podeCriar' => $podeCriar,
             'podeLer' => !$podeCriar && $userId > 0,
             'turmas' => $turmas,
@@ -370,6 +379,49 @@ final class NotificacaoController extends Controller
             'turmas' => $turmas,
             'professores' => $professores,
         ], 'admin');
+    }
+
+    public function alternarAtivo(): void
+    {
+        $userRole = (string) (Session::get('user')['role'] ?? '');
+        if ($userRole !== 'admin' && $userRole !== 'operador') {
+            $this->json(['erro' => 'Acesso negado.'], 403);
+        }
+
+        $notificacaoId = (int) $this->input('id', 0);
+        if ($notificacaoId <= 0) {
+            $this->json(['erro' => 'ID inválido.'], 400);
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            $this->json(['erro' => 'Erro de conexão.'], 500);
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT ativo FROM notificacao WHERE id = :id');
+            $stmt->bindValue(':id', $notificacaoId, \PDO::PARAM_INT);
+            $stmt->execute();
+            $atual = $stmt->fetch();
+
+            if (!$atual) {
+                $this->json(['erro' => 'Notificação não encontrada.'], 404);
+            }
+
+            $novo = ((int) ($atual['ativo'] ?? 1) === 1) ? 0 : 1;
+
+            $stmt = $pdo->prepare('UPDATE notificacao SET ativo = :ativo WHERE id = :id');
+            $stmt->bindValue(':ativo', $novo, \PDO::PARAM_INT);
+            $stmt->bindValue(':id', $notificacaoId, \PDO::PARAM_INT);
+            $stmt->execute();
+
+            $this->logService->log('atualizar', 'notificacao', $notificacaoId, $novo ? 'Notificação ativada' : 'Notificação inativada');
+
+            $this->json(['sucesso' => true, 'ativo' => $novo]);
+        } catch (\Throwable $e) {
+            error_log('[NOTIFICACAO] Erro ao alternar ativo: ' . $e->getMessage());
+            $this->json(['erro' => 'Erro ao alterar o status da notificação.'], 500);
+        }
     }
 
     private function isStaff(): bool

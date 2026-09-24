@@ -5,6 +5,27 @@
 
     <h5 class="mb-3"><i class="bi bi-clock-history me-1"></i>Histórico de Notificações</h5>
 
+    <?php if ($podeCriar): ?>
+      <?php $filtroAtual = (string) ($filtroAtivo ?? ''); ?>
+      <div class="mb-3 d-flex flex-wrap gap-2 align-items-center">
+        <span class="text-muted small"><i class="bi bi-funnel me-1"></i>Status:</span>
+        <div class="btn-group btn-group-sm" role="group" aria-label="Filtrar por status">
+          <a href="/admin/notificacoes?ativo=1" class="btn btn-outline-success <?= $filtroAtual === '1' ? 'active' : '' ?>" title="Somente ativas">
+            <i class="bi bi-check-circle me-1"></i>Ativas
+          </a>
+          <a href="/admin/notificacoes?ativo=0" class="btn btn-outline-danger <?= $filtroAtual === '0' ? 'active' : '' ?>" title="Somente inativas">
+            <i class="bi bi-x-circle me-1"></i>Inativas
+          </a>
+          <a href="/admin/notificacoes" class="btn btn-outline-secondary <?= $filtroAtual === '' ? 'active' : '' ?>" title="Todas">
+            <i class="bi bi-list-ul me-1"></i>Todas
+          </a>
+        </div>
+        <?php if ($filtroAtual !== ''): ?>
+          <span class="badge bg-secondary"><?= (int) count($notificacoes ?? []) ?> resultado(s)</span>
+        <?php endif; ?>
+      </div>
+    <?php endif; ?>
+
     <?php if (empty($notificacoes)): ?>
       <p class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhuma notificação encontrada.</p>
     <?php else: ?>
@@ -33,7 +54,9 @@
             <?php foreach ($notificacoes as $n): ?>
               <?php $nid = (int) ($n['id'] ?? 0); ?>
               <?php $lida = !empty($n['lida']); ?>
-            <tr class="<?= $podeLer && !$lida ? 'fw-semibold' : '' ?>" data-id="<?= $nid ?>" data-titulo="<?= htmlspecialchars((string) ($n['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-mensagem="<?= htmlspecialchars((string) ($n['mensagem'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-origem="<?= htmlspecialchars((string) ($n['origem_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" data-data="<?= htmlspecialchars((string) ($n['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" data-lida="<?= $lida ? '1' : '0' ?>">
+              <?php $tsCriado = strtotime((string) ($n['created_at'] ?? '')); ?>
+              <?php $criadoBr = $tsCriado ? date('d/m/Y', $tsCriado) : '-'; ?>
+            <tr class="<?= $podeLer && !$lida ? 'fw-semibold' : '' ?>" data-id="<?= $nid ?>" data-titulo="<?= htmlspecialchars((string) ($n['titulo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-mensagem="<?= htmlspecialchars((string) ($n['mensagem'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" data-origem="<?= htmlspecialchars((string) ($n['origem_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>" data-data="<?= htmlspecialchars($criadoBr, ENT_QUOTES, 'UTF-8') ?>" data-lida="<?= $lida ? '1' : '0' ?>">
               <td>
                 <?php if ($podeLer): ?>
                   <a href="#" class="text-decoration-none fw-medium link-notificacao" data-bs-toggle="modal" data-bs-target="#notificacaoModal">#<?= $nid ?></a>
@@ -61,10 +84,18 @@
                 <?php endif; ?>
               </td>
               <td><?= htmlspecialchars((string) ($n['origem_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td class="text-nowrap"><?= htmlspecialchars((string) ($n['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td class="text-nowrap"><?= htmlspecialchars($criadoBr, ENT_QUOTES, 'UTF-8') ?></td>
               <?php if ($podeCriar): ?>
                 <td><a href="/admin/notificacoes/leitura?id=<?= $nid ?>" class="text-decoration-none"><span class="badge <?= (int) ($n['total_leitura'] ?? 0) > 0 ? 'bg-info' : 'bg-warning text-dark' ?>"><?= (int) ($n['total_leitura'] ?? 0) ?></span></a></td>
-                <td><a href="/admin/notificacoes/clone?id=<?= $nid ?>" class="btn btn-outline-secondary btn-sm" title="Clonar notificação"><i class="bi bi-copy"></i></a></td>
+                <td class="text-nowrap">
+                  <?php $ativo = (int) ($n['ativo'] ?? 1) === 1; ?>
+                  <button type="button" class="btn btn-sm p-0 border-0 bg-transparent btn-alternar-ativo" data-id="<?= $nid ?>" title="Clique para alternar ativo/inativo">
+                    <span class="badge <?= $ativo ? 'bg-success' : 'bg-danger' ?>">
+                      <i class="bi bi-<?= $ativo ? 'check-circle-fill' : 'x-circle-fill' ?> me-1"></i><?= $ativo ? 'Ativo' : 'Inativo' ?>
+                    </span>
+                  </button>
+                  <a href="/admin/notificacoes/clone?id=<?= $nid ?>" class="btn btn-outline-secondary btn-sm ms-1" title="Clonar notificação"><i class="bi bi-copy"></i></a>
+                </td>
               <?php endif; ?>
               <?php if ($podeLer): ?>
                 <td>
@@ -186,5 +217,43 @@ function nl2br(str) {
   if (!str) return '';
   return str.replace(/\n/g, '<br>');
 }
+</script>
+<?php endif; ?>
+
+<?php if ($podeCriar): ?>
+<script>
+document.querySelectorAll('.btn-alternar-ativo').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var id = this.getAttribute('data-id');
+    if (!id) return;
+    var badge = this.querySelector('.badge');
+    if (badge) {
+      badge.classList.add('opacity-50');
+    }
+    var formData = new FormData();
+    formData.append('id', id);
+    var self = this;
+    fetch('/admin/notificacoes/alternar-ativo', { method: 'POST', body: formData })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (data.sucesso) {
+          var ativo = parseInt(data.ativo, 10) === 1;
+          var b = self.querySelector('.badge');
+          if (b) {
+            b.className = 'badge ' + (ativo ? 'bg-success' : 'bg-danger');
+            b.innerHTML = '<i class="bi bi-' + (ativo ? 'check-circle-fill' : 'x-circle-fill') + ' me-1"></i>' + (ativo ? 'Ativo' : 'Inativo');
+          }
+          self.setAttribute('data-ativo', ativo ? '1' : '0');
+        } else {
+          if (badge) badge.classList.remove('opacity-50');
+          alert(data.erro || 'Erro ao alterar o status da notificação.');
+        }
+      })
+      .catch(function() {
+        if (badge) badge.classList.remove('opacity-50');
+        alert('Erro de conexão ao alterar o status da notificação.');
+      });
+  });
+});
 </script>
 <?php endif; ?>

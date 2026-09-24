@@ -271,6 +271,7 @@ return static function (Router $router): void {
     $router->get('/admin/notificacoes/clone', [NotificacaoController::class, 'clone']);
     $router->post('/admin/notificacoes/salvar', [NotificacaoController::class, 'salvar']);
     $router->post('/admin/notificacoes/marcar-lida', [NotificacaoController::class, 'marcarLida']);
+    $router->post('/admin/notificacoes/alternar-ativo', [NotificacaoController::class, 'alternarAtivo']);
 
     $router->get('/admin/config/categoria', [ConfigController::class, 'categoria']);
     $router->get('/admin/config/categoria/edit', [ConfigController::class, 'editCategoria']);

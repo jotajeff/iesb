@@ -28,7 +28,8 @@
           <dt class="col-sm-2 text-muted">Origem</dt>
           <dd class="col-sm-10"><?= htmlspecialchars((string) ($notificacao['origem_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></dd>
           <dt class="col-sm-2 text-muted">Data</dt>
-          <dd class="col-sm-10"><?= htmlspecialchars((string) ($notificacao['created_at'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></dd>
+          <?php $tsCriado = strtotime((string) ($notificacao['created_at'] ?? '')); ?>
+          <dd class="col-sm-10"><?= htmlspecialchars($tsCriado ? date('d/m/Y', $tsCriado) : '-', ENT_QUOTES, 'UTF-8') ?></dd>
         </dl>
       </div>
     </div>
@@ -54,7 +55,10 @@
               <td><?= (int) ($l['id'] ?? 0) ?></td>
               <td><?= htmlspecialchars((string) ($l['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td><?= htmlspecialchars((string) ($l['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td class="text-nowrap"><?= htmlspecialchars((string) ($l['lida_em'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+              <td class="text-nowrap">
+                <?php $tsLida = strtotime((string) ($l['lida_em'] ?? '')); ?>
+                <?= htmlspecialchars($tsLida ? date('d/m/Y', $tsLida) : '-', ENT_QUOTES, 'UTF-8') ?>
+              </td>
             </tr>
             <?php endforeach; ?>
           </tbody>
