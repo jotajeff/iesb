@@ -87,7 +87,7 @@ Não há testes, linting, typecheck ou CI.
 ## Menu admin
 
 - **Dropdowns**: Cadastros, Secretaria, Acadêmico, Asaas, Acesso, Conteúdo, Setup, Sistema.
-- **Secretaria**: Tarefas, Notificações, Chamadas, Relatório de Presenças, Material, Email Matrículas.
+- **Secretaria**: Tarefas, Notificações, Protocolos, Documentos, Chamadas, Relatório de Presenças, Material, Email Matrículas.
 - **Conteúdo**: Sessões, Carrossel, Banner-Aluno, Notícias.
 - Acesso ao `admin/db` (ferramenta DB) em `public/admin/db/` (fora do roteador MVC).
 - Botão Asaas: visible for users with `tipo='admin'` in `usuarios`.
@@ -123,6 +123,28 @@ Não há testes, linting, typecheck ou CI.
 - `material.id_fk` = turma, `material.id_disciplina` = disciplina (0 = geral/secretaria).
 - Acesso: admin ou operador.
 
+## Módulo Documentos (Secretaria)
+
+- Admin: `/admin/documentos` (lista + filtro por turma), `/admin/documentos/novo` (upload) → `DocumentoController` (`GRUPO_SECRETARIA = 7`).
+- Salva via `StorageService::upload(..., id_grupo=7, ...)` (pasta do aluno, `GROUP_ALUNOS=1`; grupo 7 sem `groupKey` → `root`); log via `LogService`.
+- Portal: `/aluno/documentos` (aluno envia) e `/aluno/secretaria` (vê docs da secretaria, `StudentController::secretaria`, view `pages/aluno/secretaria.php`).
+- Upload com overlay + barra de progresso (`XMLHttpRequest.upload.onprogress`), PDF/PNG/JPG ≤20MB.
+
+## Módulo Protocolos
+
+- `ProtocoloController` (aluno), `Admin\ProtocoloController`, `ProtocoloRepository`, `ProtocoloService`; views `pages/{aluno,admin}/protocolos/*`.
+- Rotas `/aluno/protocolos/*` e `/admin/protocolos/*`. Mensagens ficam em `protocolo_mensagens`; sem DELETE físico.
+- Abertura transacional; aluno só acessa os próprios (`id_aluno` da sessão).
+- Campo **Assunto** é um `<select>` com opções fixas: Solicitação de Documentos, Assunto acadêmico, Emissão de Diploma/Certificado, Questão Financeira, Evento, Solicitação Especial, Outros assuntos.
+
+## Módulo Notificações (admin)
+
+- `/admin/notificacoes` (`Admin\NotificacaoController`). **Filtro padrão `ativo=1`**; botões Ativas (`?ativo=1`) / Inativas (`?ativo=0`) / Todas (`?ativo=all`).
+- Coluna Ações: badge clicável Ativo (verde) / Inativo (vermelho) alterna via `POST /admin/notificacoes/alternar-ativo` (admin/operador) + `LogService`.
+- `markas lida` professor via `POST /admin/notificacoes/marcar-lida`. Portal aluno: `POST /aluno/notificacoes/marcar-lida` com ícone de edição na 1ª coluna.
+- Datas (`created_at`, `lida_em`) formatadas em **dd/mm/aaaa** nas views.
+- Professores veem somente `ativo=1`; portal aluno filtra `n.ativo = 1`.
+
 ## Módulo Banner-Aluno
 
 - `/admin/config/banner-aluno` (admin/operador). CRUD com upload para `public/assets/img/banner/` com prefixo `aluno_`.
@@ -136,7 +158,7 @@ Não há testes, linting, typecheck ou CI.
 
 ## Portal Aluno
 
-- **Layout**: `aluno_topo.php` (menu com Secretaria: Perfil, Endereço, Documentos, divider, Chamadas, Calendário), `aluno_footer.php` (fixo ao fundo via `</main>` correto no `aluno.php`).
+- **Layout**: `aluno_topo.php` (menu com Secretaria: Perfil, Endereço, **Documentos** → subitens *Aluno* `/aluno/documentos` e *Secretaria* `/aluno/secretaria`, Protocolos, divider, Chamadas, Calendário), `aluno_footer.php` (fixo ao fundo via `</main>` correto no `aluno.php`).
 - **Dashboard**: documentos pendentes, aviso endereço, aviso parcela, chamada aberta, banners, cards (cursos matriculados, notificações), grid "Amplie Seus Conhecimentos", notícias, rodapé com horário do servidor.
 - **Chamadas**: página dedicada (`/aluno/chamadas`) com chamada aberta + histórico completo (presença e ausentes futuras = "Agendada").
 - **Calendário**: grade mensal por ano (apenas meses com aulas), dias de aula em badge preto, indicadores de presença/ausência (cores do sistema) — aulas futuras sem indicador.
@@ -150,6 +172,13 @@ Não há testes, linting, typecheck ou CI.
 ## Módulo Permissões
 
 - `PermissaoController`, `PermissaoRepository`, `PermissaoService` → rotas `/admin/permissoes/*`.
+
+## Cursos
+
+- `cursos.bolsa tinyint(1) DEFAULT 0` (já existe no schema). Checkbox "Exibir Bolsa de Estudos disponível" em `/admin/cursos/show` → `POST /admin/cursos/alternar-bolsa` (staff, `LogService`).
+- `CursoRepository::findById` e `findBySlug` selecionam `c.bolsa`.
+- Página pública `pages/curso.php`: se `bolsa=1`, imagem `assets/img/bolsa.png` logo abaixo de "Quero mais informações", link WhatsApp `wa.me/5551992975503?text=...Bolsas de Estudos`, hover `scale(1.2)` (com `overflow-hidden` no link).
+- Rodapé `layouts/footer.php` 3ª coluna: imagem `atendente-comunidade-vip.png` logo abaixo do texto do Grupo VIP, link `wa.me/5551992975503`, efeitos pulse+`scale(1.02)` (CSS `.grupo-vip-*` dentro do footer, vale em todas as páginas).
 
 ## Peculiaridades
 

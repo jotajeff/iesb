@@ -940,6 +940,43 @@ final class CursoController extends Controller
         $this->redirect('/admin/cursos/ementa?id_disciplina=' . ($disciplinaId > 0 ? $disciplinaId : 0));
     }
 
+    public function alternarBolsa(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) $this->input('id', 0);
+        if ($cursoId <= 0) {
+            Session::setFlash('flash', 'Curso inválido.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $bolsa = (int) $this->input('bolsa', 0) === 1 ? 1 : 0;
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('UPDATE cursos SET bolsa = :bolsa WHERE id = :id');
+                $stmt->bindValue(':bolsa', $bolsa, \PDO::PARAM_INT);
+                $stmt->bindValue(':id', $cursoId, \PDO::PARAM_INT);
+                $stmt->execute();
+
+                $this->logService->log('atualizar', 'curso', $cursoId, $bolsa === 1 ? 'Bolsa de Estudos exibida' : 'Bolsa de Estudos ocultada');
+                Session::setFlash('flash', $bolsa === 1 ? 'Bolsa de Estudos disponível para exibição.' : 'Bolsa de Estudos ocultada.');
+            } else {
+                Session::setFlash('flash', 'Sem conexão com o banco de dados.');
+            }
+        } catch (\Throwable $e) {
+            error_log('[CURSO] Erro ao alternar bolsa: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao alterar a exibição da Bolsa de Estudos.');
+        }
+
+        $this->redirect('/admin/cursos/show?id=' . $cursoId);
+    }
+
     public function detalhes(): void
     {
         if (!$this->isStaff()) {

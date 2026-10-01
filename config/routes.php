@@ -81,6 +81,7 @@ return static function (Router $router): void {
     $router->get('/admin/cursos/novo', [CursoController::class, 'novo']);
     $router->post('/admin/cursos/salvar', [CursoController::class, 'salvar']);
     $router->get('/admin/cursos/show', [CursoController::class, 'show']);
+    $router->post('/admin/cursos/alternar-bolsa', [CursoController::class, 'alternarBolsa']);
     $router->get('/admin/cursos/editar', [CursoController::class, 'editar']);
     $router->get('/admin/cursos/edit', [CursoController::class, 'editar']);
     $router->get('/admin/cursos/edit.php', [CursoController::class, 'editar']);

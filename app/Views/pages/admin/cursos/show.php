@@ -238,6 +238,14 @@
       </div>
     <?php endif; ?>
 
+    <form method="post" action="/admin/cursos/alternar-bolsa" class="mt-3">
+      <input type="hidden" name="id" value="<?= (int) ($course['id'] ?? 0) ?>">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" role="switch" name="bolsa" value="1" id="cursoBolsa" <?= (int) ($course['bolsa'] ?? 0) === 1 ? 'checked' : '' ?> onchange="this.form.submit()">
+        <label class="form-check-label" for="cursoBolsa">Exibir Bolsa de Estudos disponível</label>
+      </div>
+    </form>
+
     <hr class="my-4">
 
     <div class="d-flex align-items-center justify-content-between mb-3" id="disciplinas-curso">

@@ -291,6 +291,9 @@
             <p style="font-size: 0.9rem; line-height: 1.7; color: #a5aaaa;">
               Entre para o nosso grupo exclusivo no WhatsApp e fique por dentro de tudo em primeira mão!
             </p>
+            <a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer" class="d-block grupo-vip-link" style="margin-top: 10px;">
+              <img src="/assets/img/atendente-comunidade-vip.png" alt="Fale com nosso atendimento" class="img-fluid grupo-vip-img" style="max-width: 200px; border-radius: 12px; display: block;">
+            </a>
             <ul class="list-unstyled" style="font-size: 0.9rem; color: #c9cece; line-height: 1.9;">
               <li>✨ <strong>Descontos exclusivos para inscritos</strong></li>
               <li>📚 Novidades e oportunidades dos cursos</li>
@@ -300,6 +303,20 @@
             <a href="https://chat.whatsapp.com/GpvVylDTA1lF1faczodW6M" target="_blank" rel="noopener noreferrer">
               <img src="/assets/img/iesb-grupo-vip.png" alt="Grupo VIP IESB no WhatsApp" class="img-fluid" style="max-width: 200px; border-radius: 12px; margin-top: 10px;">
             </a>
+            <style>
+              .grupo-vip-img {
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+              }
+              .grupo-vip-link:hover .grupo-vip-img {
+                animation: grupoVipPulse 1.2s ease-out infinite;
+                transform: scale(1.02);
+              }
+              @keyframes grupoVipPulse {
+                0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
+                70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+              }
+            </style>
           </div>
         </div>
       </div>

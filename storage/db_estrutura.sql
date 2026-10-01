@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 23/09/2026 às 19:22
+-- Tempo de geração: 30/09/2026 às 17:04
 -- Versão do servidor: 5.7.44-48
--- Versão do PHP: 8.4.24
+-- Versão do PHP: 8.4.25
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -265,6 +265,7 @@ CREATE TABLE `cursos` (
   `curso_calendario` date NOT NULL,
   `exibir_home` char(1) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'N',
   `confirmado` char(1) COLLATE utf8_unicode_ci NOT NULL DEFAULT 'N',
+  `bolsa` tinyint(1) NOT NULL DEFAULT '0',
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `vagas` int(11) DEFAULT '0',
   `inscricoes_abertas` char(1) COLLATE utf8_unicode_ci DEFAULT 'S'
@@ -636,7 +637,7 @@ CREATE TABLE `integracao_google` (
 --
 
 CREATE TABLE `link` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `id` int(11) NOT NULL,
   `titulo` varchar(256) COLLATE utf8_unicode_ci NOT NULL,
   `link` text COLLATE utf8_unicode_ci NOT NULL,
   `id_fk` int(11) NOT NULL,
@@ -644,10 +645,7 @@ CREATE TABLE `link` (
   `extra` tinyint(1) NOT NULL DEFAULT '0',
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`),
-  KEY `idx_link_id_fk` (`id_fk`),
-  KEY `idx_link_id_disciplina` (`id_disciplina`)
+  `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 -- --------------------------------------------------------
@@ -1468,6 +1466,14 @@ ALTER TABLE `integracao_google`
   ADD PRIMARY KEY (`id`);
 
 --
+-- Índices de tabela `link`
+--
+ALTER TABLE `link`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `idx_link_id_fk` (`id_fk`),
+  ADD KEY `idx_link_id_disciplina` (`id_disciplina`);
+
+--
 -- Índices de tabela `logs_auditoria`
 --
 ALTER TABLE `logs_auditoria`
@@ -1903,6 +1909,12 @@ ALTER TABLE `instituicao`
 --
 ALTER TABLE `integracao_google`
   MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `link`
+--
+ALTER TABLE `link`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT de tabela `logs_auditoria`

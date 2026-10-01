@@ -359,9 +359,11 @@ $isPos = $nivelSlug === 'pos-graduacao';
           <a class="btn btn-outline-primary w-100 justify-content-center d-flex align-items-center gap-2 mt-2" href="/pre-inscricao?curso_slug=<?= htmlspecialchars($slugPre !== '' ? $slugPre : (string) ((int) ($curso['id'] ?? 0)), ENT_QUOTES, 'UTF-8') ?>">
             <i class="bi bi-info-circle"></i> Quero mais informações
           </a>
-          <a href="https://wa.me/5551992975503" target="_blank" rel="noopener noreferrer" class="d-block mt-3 grupo-vip-link">
-            <img src="/assets/img/atendente-comunidade-vip.png" alt="Fale com nosso atendimento" class="img-fluid rounded-3 shadow-sm w-100 grupo-vip-img" style="display:block;">
-          </a>
+          <?php if ((int) ($curso['bolsa'] ?? 0) === 1): ?>
+            <a href="https://wa.me/5551992975503?text=Quero%20informa%C3%A7%C3%A3o%20sobre%20Bolsas%20de%20Estudos" target="_blank" rel="noopener noreferrer" class="d-block mt-3 rounded-3 overflow-hidden bolsa-link">
+              <img src="/assets/img/bolsa.png" alt="Bolsa de Estudos disponível" class="img-fluid shadow-sm w-100 bolsa-img" style="display:block;">
+            </a>
+          <?php endif; ?>
         </div>
       </div>
 
@@ -394,19 +396,11 @@ $isPos = $nivelSlug === 'pos-graduacao';
   70% { box-shadow: 0 0 0 12px rgba(220, 53, 69, 0); }
   100% { box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
 }
-.grupo-vip-img {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+.bolsa-img {
+  transition: transform 0.3s ease;
 }
-.grupo-vip-link:hover .grupo-vip-img {
-  animation: grupoVipPulse 1.2s ease-out infinite;
-}
-.grupo-vip-link:hover .grupo-vip-img {
-  transform: scale(1.02);
-}
-@keyframes grupoVipPulse {
-  0% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0.7); }
-  70% { box-shadow: 0 0 0 14px rgba(37, 211, 102, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(37, 211, 102, 0); }
+.bolsa-link:hover .bolsa-img {
+  transform: scale(1.2);
 }
 .ementa-toggle {
   cursor: pointer;
