@@ -1012,7 +1012,16 @@ final class CursoController extends Controller
 
         $cursoId = (int) $this->input('curso_id', 0);
         $detalheId = (int) $this->input('detalhe_id', 0);
-        $detalheTexto = (string) $this->input('detalhe', '');
+
+        // O conteúdo do CKEditor é enviado em base64 (campo detalhe_b64) para não
+        // ser bloqueado pelo ModSecurity (406 Not Acceptable) ao conter HTML.
+        $detalheB64 = (string) $this->input('detalhe_b64', '');
+        if ($detalheB64 !== '') {
+            $decodificado = base64_decode(strtr($detalheB64, ' ', '+'), false);
+            $detalheTexto = is_string($decodificado) ? $decodificado : '';
+        } else {
+            $detalheTexto = (string) $this->input('detalhe', '');
+        }
 
         if ($cursoId <= 0) {
             Session::setFlash('flash', 'Curso inválido.');

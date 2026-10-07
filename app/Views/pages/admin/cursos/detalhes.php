@@ -13,17 +13,18 @@
       <a class="btn btn-outline-secondary btn-sm" href="/admin/cursos"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
     </div>
 
-    <form method="post" action="/admin/cursos/detalhes/salvar" class="row g-3">
+    <form method="post" action="/admin/cursos/detalhes/salvar" class="row g-3" id="formDetalhe">
       <input type="hidden" name="curso_id" value="<?= $cursoId ?>">
       <input type="hidden" name="detalhe_id" value="<?= $detalheId ?>">
+      <input type="hidden" name="detalhe_b64" id="detalheB64" value="<?= htmlspecialchars(base64_encode($detalheTexto), ENT_QUOTES, 'UTF-8') ?>">
 
       <div class="col-12">
         <label class="form-label">Conteúdo do Detalhe</label>
         <textarea
           id="detalhe"
           class="form-control"
-          name="detalhe"
           rows="12"><?= htmlspecialchars($detalheTexto, ENT_QUOTES, 'UTF-8') ?></textarea>
+        <div class="form-text">O conteúdo é enviado codificado (base64) para evitar bloqueio do firewall (ModSecurity).</div>
       </div>
 
       <div class="col-12">
@@ -42,9 +43,34 @@
   }
 </style>
 <script>
-  ClassicEditor
-    .create(document.querySelector('#detalhe'))
-    .catch(function (error) {
-      console.error(error);
+  (function () {
+    var editorInstance = null;
+
+    ClassicEditor
+      .create(document.querySelector('#detalhe'))
+      .then(function (editor) {
+        editorInstance = editor;
+      })
+      .catch(function (error) {
+        console.error(error);
+      });
+
+    var form = document.getElementById('formDetalhe');
+    if (!form) return;
+
+    function codificarB64(str) {
+      try {
+        return btoa(unescape(encodeURIComponent(str)));
+      } catch (e) {
+        return '';
+      }
+    }
+
+    form.addEventListener('submit', function () {
+      var texto = editorInstance
+        ? editorInstance.getData()
+        : (document.querySelector('#detalhe') || {}).value || '';
+      document.getElementById('detalheB64').value = codificarB64(texto);
     });
+  })();
 </script>
