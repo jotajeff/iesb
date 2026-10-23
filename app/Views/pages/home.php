@@ -70,9 +70,30 @@
                   </div>
                   <div class="row g-4">
                     <?php $cursosDisponiveis = $cursosDestaque ?? []; ?>
+                    <?php
+                    $niveisMenuDisponiveis = array_values(array_filter(
+                      $niveisMenu ?? [],
+                      static fn(array $nivel): bool => (int) ($nivel['ativo'] ?? 0) === 1
+                    ));
+                    ?>
                     <?php if (empty($cursosDisponiveis)): ?>
                       <div class="col-12 text-center text-muted" data-aos="fade-up" data-aos-delay="100">
-                        Nenhum curso disponível no momento.
+                        <?php if (!empty($niveisMenuDisponiveis)): ?>
+                          <div class="d-flex flex-wrap justify-content-center gap-2">
+                            <?php foreach ($niveisMenuDisponiveis as $nivel): ?>
+                              <?php
+                              $nivelId = (int) ($nivel['id'] ?? 0);
+                              $nivelSlug = trim((string) ($nivel['slug'] ?? ''));
+                              $nivelUrl = $nivelSlug !== ''
+                                ? '/cursos/' . rawurlencode($nivelSlug)
+                                : '/cursos?nivel_id=' . $nivelId;
+                              ?>
+                              <a class="btn-outline-custom" href="<?= htmlspecialchars($nivelUrl, ENT_QUOTES, 'UTF-8') ?>">
+                                <?= htmlspecialchars((string) ($nivel['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
+                              </a>
+                            <?php endforeach; ?>
+                          </div>
+                        <?php endif; ?>
                       </div>
                     <?php else: ?>
                       <?php foreach ($cursosDisponiveis as $index => $course): ?>

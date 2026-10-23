@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 30/09/2026 às 17:04
+-- Tempo de geração: 22/10/2026 às 21:03
 -- Versão do servidor: 5.7.44-48
--- Versão do PHP: 8.4.25
+-- Versão do PHP: 8.4.27
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -1208,6 +1208,21 @@ CREATE TABLE `usuarios_funcao_permissao` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `usuario_liga_funcao`
+--
+
+CREATE TABLE `usuario_liga_funcao` (
+  `id` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `id_funcao` int(11) NOT NULL,
+  `ativo` tinyint(1) NOT NULL DEFAULT '1',
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `visitas_paginas`
 --
 
@@ -1711,6 +1726,15 @@ ALTER TABLE `usuarios_funcao_permissao`
   ADD KEY `fk_fp_modulo` (`id_modulo`);
 
 --
+-- Índices de tabela `usuario_liga_funcao`
+--
+ALTER TABLE `usuario_liga_funcao`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uk_usuario_funcao` (`id_usuario`,`id_funcao`),
+  ADD KEY `idx_usuario_funcao_usuario` (`id_usuario`),
+  ADD KEY `idx_usuario_funcao_funcao` (`id_funcao`);
+
+--
 -- Índices de tabela `visitas_paginas`
 --
 ALTER TABLE `visitas_paginas`
@@ -2097,6 +2121,12 @@ ALTER TABLE `usuarios_funcao_permissao`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
+-- AUTO_INCREMENT de tabela `usuario_liga_funcao`
+--
+ALTER TABLE `usuario_liga_funcao`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT de tabela `visitas_paginas`
 --
 ALTER TABLE `visitas_paginas`
@@ -2273,6 +2303,13 @@ ALTER TABLE `turma_troca`
 ALTER TABLE `usuarios_funcao_permissao`
   ADD CONSTRAINT `fk_fp_funcao` FOREIGN KEY (`id_funcao`) REFERENCES `usuarios_funcao` (`id`),
   ADD CONSTRAINT `fk_fp_modulo` FOREIGN KEY (`id_modulo`) REFERENCES `modulo` (`id`);
+
+--
+-- Restrições para tabelas `usuario_liga_funcao`
+--
+ALTER TABLE `usuario_liga_funcao`
+  ADD CONSTRAINT `fk_usuario_funcao_funcao` FOREIGN KEY (`id_funcao`) REFERENCES `usuarios_funcao` (`id`),
+  ADD CONSTRAINT `fk_usuario_funcao_usuario` FOREIGN KEY (`id_usuario`) REFERENCES `usuarios` (`id`);
 
 --
 -- Restrições para tabelas `visitas_paginas`

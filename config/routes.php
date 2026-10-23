@@ -17,6 +17,7 @@ use App\Controllers\Admin\AsaasController;
 use App\Controllers\Admin\PreInscricaoController;
 use App\Controllers\Admin\SessaoController;
 use App\Controllers\Admin\TipoDocumentoController;
+use App\Controllers\Admin\FuncaoController;
 use App\Controllers\Admin\StorageController;
 use App\Controllers\Admin\AcademicoController;
 use App\Controllers\Admin\PermissaoController;
@@ -238,6 +239,10 @@ return static function (Router $router): void {
     $router->get('/admin/funcoes-docente',            [ConfigController::class, 'funcoesDocente']);
     $router->get('/admin/funcoes-docente/edit',        [ConfigController::class, 'editFuncaoDocente']);
     $router->post('/admin/funcoes-docente/update',      [ConfigController::class, 'updateFuncaoDocente']);
+
+    $router->get('/admin/funcao', [FuncaoController::class, 'index']);
+    $router->get('/admin/funcao/usuario', [FuncaoController::class, 'usuario']);
+    $router->post('/admin/funcao/salvar', [FuncaoController::class, 'salvar']);
 
     $router->get('/admin/config/carousel', [ConfigController::class, 'carousel']);
     $router->get('/admin/config/carousel/editar', [ConfigController::class, 'editCarousel']);
