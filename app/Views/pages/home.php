@@ -5,50 +5,50 @@
                 ?>
                 <section class="hero-carousel" id="<?= $carouselId ?>">
                   <div class="hero-carousel-slider">
-                      <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
-                        <div class="carousel-indicators">
-                          <?php foreach ($carouselItems as $idx => $item): ?>
-                            <button type="button"
-                              data-bs-target="#<?= $carouselId ?>Slider"
-                              data-bs-slide-to="<?= $idx ?>"
-                              class="<?= $idx === 0 ? 'active' : '' ?>"
-                              aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
-                              aria-label="Slide <?= $idx + 1 ?>"></button>
-                          <?php endforeach; ?>
-                        </div>
-                        <div class="carousel-inner">
-                          <?php foreach ($carouselItems as $idx => $item): ?>
-                            <?php
-                            $imagem = trim((string) ($item['imagem'] ?? ''));
-                            $link = trim((string) ($item['link'] ?? ''));
-                            $titulo = htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
-                            $target = trim((string) ($item['target'] ?? '_blank'));
-                            ?>
-                            <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
-                              <?php if ($link !== ''): ?>
-                                <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8') ?>"
-                                  target="<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>" rel="noopener noreferrer">
-                              <?php endif; ?>
-                                <img src="/<?= htmlspecialchars($imagem, ENT_QUOTES, 'UTF-8') ?>"
-                                  alt="<?= $titulo ?>">
-                              <?php if ($link !== ''): ?>
-                                </a>
-                              <?php endif; ?>
-                            </div>
-                          <?php endforeach; ?>
-                        </div>
-                        <button class="carousel-control-prev" type="button"
-                          data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="prev">
-                          <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                          <span class="visually-hidden">Anterior</span>
-                        </button>
-                        <button class="carousel-control-next" type="button"
-                          data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="next">
-                          <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                          <span class="visually-hidden">Próximo</span>
-                        </button>
+                    <div id="<?= $carouselId ?>Slider" class="carousel slide carousel-fade" data-bs-ride="carousel" data-bs-interval="5000">
+                      <div class="carousel-indicators">
+                        <?php foreach ($carouselItems as $idx => $item): ?>
+                          <button type="button"
+                            data-bs-target="#<?= $carouselId ?>Slider"
+                            data-bs-slide-to="<?= $idx ?>"
+                            class="<?= $idx === 0 ? 'active' : '' ?>"
+                            aria-current="<?= $idx === 0 ? 'true' : 'false' ?>"
+                            aria-label="Slide <?= $idx + 1 ?>"></button>
+                        <?php endforeach; ?>
                       </div>
+                      <div class="carousel-inner">
+                        <?php foreach ($carouselItems as $idx => $item): ?>
+                          <?php
+                          $imagem = trim((string) ($item['imagem'] ?? ''));
+                          $link = trim((string) ($item['link'] ?? ''));
+                          $titulo = htmlspecialchars((string) ($item['titulo'] ?? ''), ENT_QUOTES, 'UTF-8');
+                          $target = trim((string) ($item['target'] ?? '_blank'));
+                          ?>
+                          <div class="carousel-item <?= $idx === 0 ? 'active' : '' ?>">
+                            <?php if ($link !== ''): ?>
+                              <a href="<?= htmlspecialchars($link, ENT_QUOTES, 'UTF-8') ?>"
+                                target="<?= htmlspecialchars($target, ENT_QUOTES, 'UTF-8') ?>" rel="noopener noreferrer">
+                              <?php endif; ?>
+                              <img src="/<?= htmlspecialchars($imagem, ENT_QUOTES, 'UTF-8') ?>"
+                                alt="<?= $titulo ?>">
+                              <?php if ($link !== ''): ?>
+                              </a>
+                            <?php endif; ?>
+                          </div>
+                        <?php endforeach; ?>
+                      </div>
+                      <button class="carousel-control-prev" type="button"
+                        data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="prev">
+                        <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Anterior</span>
+                      </button>
+                      <button class="carousel-control-next" type="button"
+                        data-bs-target="#<?= $carouselId ?>Slider" data-bs-slide="next">
+                        <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                        <span class="visually-hidden">Próximo</span>
+                      </button>
                     </div>
+                  </div>
                 </section>
               <?php endif; ?>
 
@@ -63,37 +63,16 @@
                       Escolha o curso ideal para sua carreira
                     </h2>
                     <p class="section-desc centered">
-                      Oferecemos uma variedade de cursos técnicos com carga
+                      Oferecemos uma variedade de cursos livres com carga
                       horária otimizada, aulas práticas e certificação
                       reconhecida.
                     </p>
                   </div>
                   <div class="row g-4">
                     <?php $cursosDisponiveis = $cursosDestaque ?? []; ?>
-                    <?php
-                    $niveisMenuDisponiveis = array_values(array_filter(
-                      $niveisMenu ?? [],
-                      static fn(array $nivel): bool => (int) ($nivel['ativo'] ?? 0) === 1
-                    ));
-                    ?>
                     <?php if (empty($cursosDisponiveis)): ?>
                       <div class="col-12 text-center text-muted" data-aos="fade-up" data-aos-delay="100">
-                        <?php if (!empty($niveisMenuDisponiveis)): ?>
-                          <div class="d-flex flex-wrap justify-content-center gap-2">
-                            <?php foreach ($niveisMenuDisponiveis as $nivel): ?>
-                              <?php
-                              $nivelId = (int) ($nivel['id'] ?? 0);
-                              $nivelSlug = trim((string) ($nivel['slug'] ?? ''));
-                              $nivelUrl = $nivelSlug !== ''
-                                ? '/cursos/' . rawurlencode($nivelSlug)
-                                : '/cursos?nivel_id=' . $nivelId;
-                              ?>
-                              <a class="btn-outline-custom" href="<?= htmlspecialchars($nivelUrl, ENT_QUOTES, 'UTF-8') ?>">
-                                <?= htmlspecialchars((string) ($nivel['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
-                              </a>
-                            <?php endforeach; ?>
-                          </div>
-                        <?php endif; ?>
+                        Nenhum curso disponível no momento.
                       </div>
                     <?php else: ?>
                       <?php foreach ($cursosDisponiveis as $index => $course): ?>
