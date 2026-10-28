@@ -10,6 +10,7 @@ use App\Services\CursoService;
 use App\Services\ConfigService;
 use App\Services\ImageService;
 use App\Services\LogService;
+use App\Services\AuthService;
 use App\Support\Session;
 
 final class CursoController extends Controller
@@ -37,7 +38,7 @@ final class CursoController extends Controller
         }
 
         $authUser = Session::get('user');
-        if ((string) ($authUser['role'] ?? $authUser['tipo'] ?? '') === 'professor') {
+        if ((new AuthService())->isProfessor()) {
             $this->redirect('/admin/professores/turmas');
             return;
         }
@@ -599,8 +600,7 @@ final class CursoController extends Controller
         try {
             $pdo = \App\Core\Database::connection();
             if ($pdo instanceof \PDO) {
-                $stmt = $pdo->prepare('SELECT id, nome FROM usuarios WHERE tipo = :tipo ORDER BY nome ASC');
-                $stmt->bindValue(':tipo', 'professor', \PDO::PARAM_STR);
+                $stmt = $pdo->prepare("SELECT u.id, u.nome FROM usuarios u INNER JOIN usuario_liga_funcao ulf ON ulf.id_usuario = u.id AND ulf.ativo = 1 INNER JOIN usuarios_funcao uf ON uf.id = ulf.id_funcao AND uf.ativo = 1 WHERE LOWER(uf.nome) = 'professor' AND u.ativo = 1 ORDER BY u.nome ASC");
                 $stmt->execute();
                 $professores = $stmt->fetchAll() ?: [];
 

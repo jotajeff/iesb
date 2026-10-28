@@ -70,13 +70,16 @@ final class UserRepository extends JsonRepository
             return null;
         }
 
-        return [
+        $user = [
             'id' => (int) $row['id'],
             'name' => (string) $row['nome'],
             'email' => (string) $row['email'],
             'password' => (string) $row['senha'],
-            'role' => (string) $row['tipo'],
+            // tipo é mantido apenas como compatibilidade com dados legados.
+            'legacy_role' => (string) $row['tipo'],
         ];
+
+        return $this->withAccessProfile($user);
     }
 
     private function findByIdInDatabase(int $id): ?array
@@ -95,12 +98,108 @@ final class UserRepository extends JsonRepository
             return null;
         }
 
-        return [
+        $user = [
             'id' => (int) $row['id'],
             'name' => (string) $row['nome'],
             'email' => (string) $row['email'],
             'password' => (string) $row['senha'],
-            'role' => (string) $row['tipo'],
+            'legacy_role' => (string) $row['tipo'],
         ];
+
+        return $this->withAccessProfile($user);
+    }
+
+    /**
+     * Resolve o acesso exclusivamente pelo vínculo usuário -> função -> módulo.
+     * O campo usuarios.tipo não participa da autorização nova.
+     */
+    private function withAccessProfile(array $user): array
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            $legacyRole = (string) ($user['legacy_role'] ?? '');
+            $user['roles'] = $legacyRole !== '' ? [$legacyRole] : [];
+            $user['role'] = $legacyRole;
+            $user['permissions'] = [];
+            return $user;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT uf.id, uf.nome
+                 FROM usuario_liga_funcao ulf
+                 INNER JOIN usuarios_funcao uf ON uf.id = ulf.id_funcao
+                 WHERE ulf.id_usuario = :id AND ulf.ativo = 1 AND uf.ativo = 1
+                 ORDER BY uf.id ASC'
+            );
+            $stmt->execute(['id' => (int) $user['id']]);
+            $functions = $stmt->fetchAll() ?: [];
+
+            $roles = [];
+            $functionIds = [];
+            foreach ($functions as $function) {
+                $name = $this->normalizeRole((string) ($function['nome'] ?? ''));
+                if ($name !== '') {
+                    $roles[] = $name;
+                }
+                $functionIds[] = (int) ($function['id'] ?? 0);
+            }
+
+            $permissions = [];
+            if ($functionIds !== []) {
+                $placeholders = implode(',', array_fill(0, count($functionIds), '?'));
+                $permissionStmt = $pdo->prepare(
+                    "SELECT m.rota, MAX(fp.consultar) AS consultar, MAX(fp.inserir) AS inserir,
+                            MAX(fp.editar) AS editar, MAX(fp.excluir) AS excluir
+                     FROM usuarios_funcao_permissao fp
+                     INNER JOIN modulo m ON m.id = fp.id_modulo AND m.ativo = 1
+                     WHERE fp.id_funcao IN ($placeholders) AND fp.ativo = 1 AND m.rota IS NOT NULL
+                     GROUP BY m.id, m.rota"
+                );
+                $permissionStmt->execute($functionIds);
+                foreach ($permissionStmt->fetchAll() ?: [] as $permission) {
+                    $route = $this->normalizeRoute((string) ($permission['rota'] ?? ''));
+                    if ($route === '') {
+                        continue;
+                    }
+                    $permissions[$route] = [
+                        'consultar' => (int) ($permission['consultar'] ?? 0),
+                        'inserir' => (int) ($permission['inserir'] ?? 0),
+                        'editar' => (int) ($permission['editar'] ?? 0),
+                        'excluir' => (int) ($permission['excluir'] ?? 0),
+                    ];
+                }
+            }
+
+            $user['functions'] = $functions;
+            $user['roles'] = array_values(array_unique($roles));
+            $user['role'] = $user['roles'][0] ?? '';
+            $user['permissions'] = $permissions;
+            return $user;
+        } catch (\Throwable $e) {
+            error_log('[AUTH] Erro ao carregar funções/permissões: ' . $e->getMessage());
+            $user['functions'] = [];
+            $user['roles'] = [];
+            $user['role'] = '';
+            $user['permissions'] = [];
+            return $user;
+        }
+    }
+
+    private function normalizeRole(string $role): string
+    {
+        $role = mb_strtolower(trim($role));
+        $role = strtr($role, ['á' => 'a', 'ã' => 'a', 'â' => 'a', 'ç' => 'c', 'é' => 'e', 'ê' => 'e', 'í' => 'i', 'ó' => 'o', 'ô' => 'o', 'ú' => 'u']);
+        return match ($role) {
+            'administrador' => 'admin',
+            'coordenacao' => 'coordenador',
+            default => $role,
+        };
+    }
+
+    private function normalizeRoute(string $route): string
+    {
+        $route = parse_url(trim($route), PHP_URL_PATH) ?: trim($route);
+        return '/' . trim($route, '/');
     }
 }

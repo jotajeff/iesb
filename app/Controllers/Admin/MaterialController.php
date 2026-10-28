@@ -517,8 +517,6 @@ final class MaterialController extends Controller
 
     private function podeGerenciar(): bool
     {
-        $user = Session::get('user');
-        $role = (string) ($user['role'] ?? $user['tipo'] ?? '');
-        return in_array($role, ['admin', 'operador'], true);
+        return (new \App\Services\AuthService())->hasPermission('/admin/material', 'editar');
     }
 }

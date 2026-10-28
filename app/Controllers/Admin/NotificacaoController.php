@@ -29,9 +29,9 @@ final class NotificacaoController extends Controller
         }
 
         $authUser = Session::get('user');
-        $userRole = (string) ($authUser['role'] ?? '');
         $userId = (int) ($authUser['id'] ?? 0);
-        $podeCriar = $userRole === 'admin' || $userRole === 'operador';
+        $podeCriar = $this->auth->hasPermission('/admin/notificacoes', 'inserir');
+        $isProfessor = $this->auth->isProfessor();
 
         $reqAtivo = (string) ($_GET['ativo'] ?? '');
         if (!$podeCriar) {
@@ -73,7 +73,7 @@ final class NotificacaoController extends Controller
                           . ' ON nl.id_notificacao = n.id AND nl.id_usuario = :nl_user';
                 }
 
-                if ($userRole === 'professor' && $userId > 0) {
+                if ($isProfessor && $userId > 0) {
                     $sql .= ' WHERE n.ativo = 1 AND (n.tipo_destino = \'usuario\' AND n.id_destino = :user_id'
                           . ' OR (n.tipo_destino = \'turma\' AND n.id_destino IN ('
                           . '   SELECT tp.id_turma FROM turma_professor tp WHERE tp.id_usuario = :user_id2 AND tp.status = \'A\''
@@ -91,7 +91,7 @@ final class NotificacaoController extends Controller
                 if (!$podeCriar && $userId > 0) {
                     $stmt->bindValue(':nl_user', $userId, \PDO::PARAM_INT);
                 }
-                if ($userRole === 'professor' && $userId > 0) {
+                if ($isProfessor && $userId > 0) {
                     $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
                     $stmt->bindValue(':user_id2', $userId, \PDO::PARAM_INT);
                 }
@@ -110,7 +110,7 @@ final class NotificacaoController extends Controller
                 }
 
                 try {
-                    $stmt = $pdo->query("SELECT id, nome FROM usuarios WHERE tipo = 'professor' AND ativo = 1 ORDER BY nome");
+                    $stmt = $pdo->query("SELECT u.id, u.nome FROM usuarios u INNER JOIN usuario_liga_funcao ulf ON ulf.id_usuario = u.id AND ulf.ativo = 1 INNER JOIN usuarios_funcao uf ON uf.id = ulf.id_funcao AND uf.ativo = 1 WHERE LOWER(uf.nome) = 'professor' AND u.ativo = 1 ORDER BY u.nome");
                     $professores = $stmt->fetchAll() ?: [];
                 } catch (\Throwable) {
                     $professores = [];
@@ -127,15 +127,14 @@ final class NotificacaoController extends Controller
             'podeLer' => !$podeCriar && $userId > 0,
             'turmas' => $turmas,
             'professores' => $professores,
-            'userRole' => $userRole,
+            'userRole' => (string) ($authUser['role'] ?? ''),
             'userId' => $userId,
         ], 'admin');
     }
 
     public function salvar(): void
     {
-        $userRole = (string) (Session::get('user')['role'] ?? '');
-        if ($userRole !== 'admin' && $userRole !== 'operador') {
+        if (!$this->auth->hasPermission('/admin/notificacoes', 'inserir')) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/notificacoes');
         }
@@ -199,10 +198,9 @@ final class NotificacaoController extends Controller
     public function marcarLida(): void
     {
         $authUser = Session::get('user');
-        $userRole = (string) ($authUser['role'] ?? '');
         $userId = (int) ($authUser['id'] ?? 0);
 
-        if ($userRole !== 'professor' || $userId <= 0) {
+        if (!$this->auth->isProfessor() || $userId <= 0) {
             $this->json(['erro' => 'Acesso negado.'], 403);
         }
 
@@ -310,8 +308,7 @@ final class NotificacaoController extends Controller
 
     public function clone(): void
     {
-        $userRole = (string) (Session::get('user')['role'] ?? '');
-        if ($userRole !== 'admin' && $userRole !== 'operador') {
+        if (!$this->auth->hasPermission('/admin/notificacoes', 'inserir')) {
             Session::setFlash('flash', 'Acesso negado.');
             $this->redirect('/admin/notificacoes');
         }
@@ -358,7 +355,7 @@ final class NotificacaoController extends Controller
                 }
 
                 try {
-                    $stmt = $pdo->query("SELECT id, nome FROM usuarios WHERE tipo = 'professor' AND ativo = 1 ORDER BY nome");
+                    $stmt = $pdo->query("SELECT u.id, u.nome FROM usuarios u INNER JOIN usuario_liga_funcao ulf ON ulf.id_usuario = u.id AND ulf.ativo = 1 INNER JOIN usuarios_funcao uf ON uf.id = ulf.id_funcao AND uf.ativo = 1 WHERE LOWER(uf.nome) = 'professor' AND u.ativo = 1 ORDER BY u.nome");
                     $all = $stmt->fetchAll() ?: [];
                     if ($tipo === 'usuario') {
                         foreach ($all as $p) {
@@ -391,8 +388,7 @@ final class NotificacaoController extends Controller
 
     public function alternarAtivo(): void
     {
-        $userRole = (string) (Session::get('user')['role'] ?? '');
-        if ($userRole !== 'admin' && $userRole !== 'operador') {
+        if (!$this->auth->hasPermission('/admin/notificacoes', 'excluir')) {
             $this->json(['erro' => 'Acesso negado.'], 403);
         }
 

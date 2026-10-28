@@ -7,6 +7,7 @@ namespace App\Controllers\Admin;
 use App\Core\Controller;
 use App\Services\LogService;
 use App\Services\PermissaoService;
+use App\Services\AuthService;
 use App\Support\Session;
 
 final class PermissaoController extends Controller
@@ -142,8 +143,6 @@ final class PermissaoController extends Controller
 
     private function podeGerenciarPermissoes(): bool
     {
-        $user = Session::get('user');
-        $role = is_array($user) ? (string) ($user['role'] ?? $user['tipo'] ?? '') : '';
-        return in_array($role, ['admin', 'operador'], true);
+        return (new AuthService())->hasPermission('/admin/permissoes', 'editar');
     }
 }

@@ -35,15 +35,23 @@ final class UsuarioService
 
     public function criarUsuario(string $nome, string $email, string $senha, string $tipo = 'aluno', string $ativo = '1', string $telefone = '', string $titulacao = ''): int
     {
-        return $this->repository->create([
+        $idFuncao = $this->repository->findFunctionIdByName($tipo);
+        $id = $this->repository->create([
             'nome' => trim($nome),
             'email' => trim($email),
             'senha' => password_hash($senha, PASSWORD_DEFAULT),
             'tipo' => $tipo,
+            'id_funcao' => $idFuncao,
             'telefone' => $telefone ?: null,
             'titulacao' => trim($titulacao) !== '' ? trim($titulacao) : null,
             'ativo' => $ativo,
         ]);
+
+        if ($id > 0 && $idFuncao > 0) {
+            $this->repository->linkFunction($id, $idFuncao);
+        }
+
+        return $id;
     }
 
     public function atualizarUsuario(int $id, string $senha = '', string $ativo = '1', string $nome = '', string $email = '', string $tipo = '', string $telefone = '', string $titulacao = ''): void

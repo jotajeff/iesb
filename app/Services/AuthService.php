@@ -23,7 +23,7 @@ final class AuthService
             return false;
         }
 
-        if (($user['role'] ?? null) !== $expectedRole) {
+        if (!in_array($expectedRole, (array) ($user['roles'] ?? [$user['role'] ?? '']), true)) {
             error_log(sprintf('[DEBUG LOGIN] role mismatch: esperado=%s, encontrado=%s', $expectedRole, $user['role'] ?? 'null'));
             return false;
         }
@@ -39,8 +39,11 @@ final class AuthService
             'id' => (int) $user['id'],
             'name' => $user['name'],
             'email' => $user['email'],
-            'role' => $user['role'],
-            'type' => $user['role'],
+            'role' => $user['role'] ?? '',
+            'type' => $user['role'] ?? '',
+            'roles' => $user['roles'] ?? [],
+            'functions' => $user['functions'] ?? [],
+            'permissions' => $user['permissions'] ?? [],
         ]);
 
         return true;
@@ -82,7 +85,7 @@ final class AuthService
     public function checkRole(string $role): bool
     {
         $user = Session::get('user');
-        return is_array($user) && ($user['role'] ?? null) === $role;
+        return is_array($user) && in_array($role, (array) ($user['roles'] ?? [$user['role'] ?? '']), true);
     }
 
     public function isAdmin(): bool
@@ -92,7 +95,7 @@ final class AuthService
 
     public function isOperador(): bool
     {
-        return $this->checkRole('operador');
+        return $this->checkRole('operador') || $this->checkRole('secretaria');
     }
 
     public function isProfessor(): bool
@@ -102,7 +105,42 @@ final class AuthService
 
     public function isStaff(): bool
     {
-        return $this->isAdmin() || $this->isOperador() || $this->isProfessor();
+        $user = Session::get('user');
+        if (!is_array($user)) {
+            return false;
+        }
+
+        return (bool) array_intersect(
+            ['admin', 'professor', 'coordenador', 'secretaria', 'operador'],
+            (array) ($user['roles'] ?? [$user['role'] ?? ''])
+        );
+    }
+
+    public function hasPermission(string $route, string $action = 'consultar'): bool
+    {
+        $user = Session::get('user');
+        if (!is_array($user) || !$this->isStaff()) {
+            return false;
+        }
+
+        $route = '/' . trim(parse_url($route, PHP_URL_PATH) ?: $route, '/');
+        $permissions = (array) ($user['permissions'] ?? []);
+        if ($route === '/admin' && !isset($permissions['/admin'])) {
+            $route = '/admin/dashboard';
+        }
+        $matched = null;
+        $matchedLength = -1;
+        foreach ($permissions as $moduleRoute => $permission) {
+            $moduleRoute = '/' . trim((string) $moduleRoute, '/');
+            if ($route === $moduleRoute || str_starts_with($route, $moduleRoute . '/')) {
+                if (strlen($moduleRoute) > $matchedLength) {
+                    $matched = (array) $permission;
+                    $matchedLength = strlen($moduleRoute);
+                }
+            }
+        }
+
+        return $matched !== null && !empty($matched[$action]);
     }
 
     /**
@@ -124,6 +162,49 @@ final class AuthService
         return $user;
     }
 
+    public function userCanAccessAdmin(array $user): bool
+    {
+        $hasStaffFunction = (bool) array_intersect(
+            ['admin', 'professor', 'coordenador', 'secretaria', 'operador'],
+            (array) ($user['roles'] ?? [])
+        );
+
+        $hasRoutePermission = false;
+        foreach ((array) ($user['permissions'] ?? []) as $route => $permission) {
+            if (str_starts_with((string) $route, '/admin') && !empty($permission['consultar'])) {
+                $hasRoutePermission = true;
+                break;
+            }
+        }
+
+        return $hasStaffFunction && $hasRoutePermission;
+    }
+
+    public function userCanAccessAdminById(int $id): bool
+    {
+        $user = $id > 0 ? $this->users->findById($id) : null;
+        return is_array($user) && $this->userCanAccessAdmin($user);
+    }
+
+    public function adminLandingPath(array $user): string
+    {
+        $permissions = (array) ($user['permissions'] ?? []);
+        if (!empty($permissions['/admin']['consultar'])) {
+            return '/admin';
+        }
+        if (!empty($permissions['/admin/dashboard']['consultar'])) {
+            return '/admin/dashboard';
+        }
+
+        foreach ($permissions as $route => $permission) {
+            if (!empty($permission['consultar']) && str_starts_with((string) $route, '/admin')) {
+                return (string) $route;
+            }
+        }
+
+        return '/admin';
+    }
+
     public function reautenticarSessao(string $password): bool
     {
         $sessionUser = Session::get('user');
@@ -140,11 +221,11 @@ final class AuthService
             $user = $userId > 0 ? $this->users->findById($userId) : null;
         }
 
-        $sessionRole = (string) ($sessionUser['role'] ?? $sessionUser['type'] ?? '');
-        $storedRole = (string) ($user['role'] ?? $user['tipo'] ?? $user['type'] ?? '');
+        $sessionRoles = (array) ($sessionUser['roles'] ?? [$sessionUser['role'] ?? $sessionUser['type'] ?? '']);
+        $storedRoles = (array) ($user['roles'] ?? []);
         $passwordHash = (string) ($user['password'] ?? $user['senha'] ?? '');
 
-        if ($user === null || $storedRole !== $sessionRole || $passwordHash === '') {
+        if ($user === null || !array_intersect($sessionRoles, $storedRoles) || $passwordHash === '') {
             return false;
         }
 

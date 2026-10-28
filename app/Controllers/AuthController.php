@@ -35,20 +35,22 @@ final class AuthController extends Controller
         $password = (string) $this->input('password', '');
 
         $user = $this->auth->authenticate($email, $password);
-        $role = (string) ($user['role'] ?? '');
-        $staffRoles = ['admin', 'operador', 'professor'];
 
-        if ($user !== null && in_array($role, $staffRoles, true)) {
+        if ($user !== null && $this->auth->userCanAccessAdmin($user)) {
+            $role = (string) ($user['role'] ?? '');
             Session::set('user', [
                 'id'   => (int) $user['id'],
                 'name' => $user['name'],
                 'email'=> $user['email'],
                 'role' => $role,
                 'type' => $role,
+                'roles' => $user['roles'] ?? [],
+                'functions' => $user['functions'] ?? [],
+                'permissions' => $user['permissions'] ?? [],
             ]);
 
             $this->logService->log('login', 'admin', 0, "Login realizado: $email");
-            $this->redirect('/admin');
+            $this->redirect($this->auth->adminLandingPath($user));
         }
 
         Session::setFlash('flash', 'Credenciais inválidas ou perfil sem acesso.');
@@ -209,8 +211,7 @@ final class AuthController extends Controller
         $repo = new \App\Repositories\UsuarioRepository();
         $usuario = $repo->findByEmailStaff($email);
 
-        $staffRoles = ['admin', 'operador', 'professor'];
-        if ($usuario === null || !in_array((string) ($usuario['tipo'] ?? ''), $staffRoles, true) || intval($usuario['ativo'] ?? 0) !== 1) {
+        if ($usuario === null || intval($usuario['ativo'] ?? 0) !== 1 || !$this->auth->userCanAccessAdminById((int) ($usuario['id'] ?? 0))) {
             Session::setFlash('flash', 'E-mail não encontrado ou conta inativa.');
             $this->redirect('/admin/solicitar-redefinicao');
             return;

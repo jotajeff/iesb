@@ -105,12 +105,13 @@ final class UsuarioRepository
             return 0;
         }
 
-        $sql = 'INSERT INTO usuarios (nome, email, senha, tipo, telefone, titulacao, ativo)
-                VALUES (:nome, :email, :senha, :tipo, :telefone, :titulacao, :ativo)';
+        $sql = 'INSERT INTO usuarios (nome, email, senha, id_funcao, tipo, telefone, titulacao, ativo)
+                VALUES (:nome, :email, :senha, :id_funcao, :tipo, :telefone, :titulacao, :ativo)';
         $stmt = $pdo->prepare($sql);
         $stmt->bindValue(':nome', $payload['nome']);
         $stmt->bindValue(':email', $payload['email']);
         $stmt->bindValue(':senha', $payload['senha']);
+        $stmt->bindValue(':id_funcao', (int) ($payload['id_funcao'] ?? 0), PDO::PARAM_INT);
         $stmt->bindValue(':tipo', $payload['tipo']);
         $stmt->bindValue(':telefone', $payload['telefone'] ?? null, PDO::PARAM_STR);
         $stmt->bindValue(':titulacao', $payload['titulacao'] ?? null, PDO::PARAM_STR);
@@ -118,6 +119,33 @@ final class UsuarioRepository
         $stmt->execute();
 
         return (int) $pdo->lastInsertId();
+    }
+
+    public function findFunctionIdByName(string $name): int
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || trim($name) === '') {
+            return 0;
+        }
+
+        $stmt = $pdo->prepare('SELECT id FROM usuarios_funcao WHERE LOWER(nome) = LOWER(:nome) AND ativo = 1 LIMIT 1');
+        $stmt->execute(['nome' => trim($name)]);
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
+    public function linkFunction(int $idUsuario, int $idFuncao): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || $idUsuario <= 0 || $idFuncao <= 0) {
+            return;
+        }
+
+        $stmt = $pdo->prepare(
+            'INSERT INTO usuario_liga_funcao (id_usuario, id_funcao, ativo)
+             VALUES (:id_usuario, :id_funcao, 1)
+             ON DUPLICATE KEY UPDATE ativo = 1'
+        );
+        $stmt->execute(['id_usuario' => $idUsuario, 'id_funcao' => $idFuncao]);
     }
 
     public function update(int $id, array $payload): void

@@ -73,24 +73,7 @@
               </ul>
             </li>
             <?php
-            $podeAsaas = $userRole === 'admin';
-            if (!$podeAsaas) {
-              $userIdMenu = (int) ($authUser['id'] ?? 0);
-              if ($userIdMenu > 0) {
-                $pdoMenu = \App\Core\Database::connection();
-                if ($pdoMenu instanceof \PDO) {
-                  try {
-                    $stmtMenu = $pdoMenu->prepare('SELECT id FROM usuarios WHERE id = :id AND tipo = :tipo AND ativo = 1 LIMIT 1');
-                    $stmtMenu->bindValue(':id', $userIdMenu, \PDO::PARAM_INT);
-                    $stmtMenu->bindValue(':tipo', 'admin', \PDO::PARAM_STR);
-                    $stmtMenu->execute();
-                    $podeAsaas = (bool) $stmtMenu->fetch();
-                  } catch (\Throwable $e) {
-                    error_log('[MENU ASAAS] Erro: ' . $e->getMessage());
-                  }
-                }
-              }
-            }
+            $podeAsaas = (new \App\Services\AuthService())->hasPermission('/admin/asaas', 'consultar');
             ?>
             <?php if ($podeAsaas): ?>
               <li class="nav-item dropdown">

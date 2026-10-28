@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace App\Core;
 
+use App\Services\AuthService;
+use App\Support\Session;
+
 final class Router
 {
     private array $routes = [];
@@ -67,6 +70,23 @@ final class Router
             return;
         }
 
+        if (str_starts_with($path, '/admin') && !$this->isPublicAdminPath($path)) {
+            $auth = new AuthService();
+            if (!$auth->isStaff()) {
+                Session::setFlash('flash', 'Faça login para acessar o painel.');
+                header('Location: /admin/login');
+                return;
+            }
+
+            $action = $this->permissionAction($method, $path);
+            if (!$auth->hasPermission($path, $action)) {
+                http_response_code(403);
+                Session::setFlash('flash', 'Você não tem permissão para acessar este recurso.');
+                echo 'Acesso negado.';
+                return;
+            }
+        }
+
         if (is_callable($handler)) {
             $handler();
             return;
@@ -81,6 +101,35 @@ final class Router
 
         $controller = new $controllerClass();
         $controller->{$action}();
+    }
+
+    private function isPublicAdminPath(string $path): bool
+    {
+        return in_array($path, [
+            '/admin/login',
+            '/admin/solicitar-redefinicao',
+            '/admin/redefinir-senha',
+        ], true);
+    }
+
+    private function permissionAction(string $method, string $path): string
+    {
+        if ($method !== 'POST') {
+            return 'consultar';
+        }
+
+        $lastSegment = strtolower((string) basename($path));
+        if (preg_match('/(excluir|deletar|remover|cancelar|desativar|alternar)/', $lastSegment)) {
+            return 'excluir';
+        }
+        if (preg_match('/(atualizar|editar|update)/', $lastSegment)) {
+            return 'editar';
+        }
+        if (preg_match('/(salvar|novo|criar|enviar|upload|gerar|registrar|assumir|responder|marcar|compartilhar|migrar|reenviar)/', $lastSegment)) {
+            return 'inserir';
+        }
+
+        return 'editar';
     }
 
     private function normalizePath(string $path): string

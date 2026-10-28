@@ -237,7 +237,7 @@ final class AsaasController extends Controller
 
     private function isAdmin(): bool
     {
-        return (new AuthService())->isAdmin();
+        return (new AuthService())->hasPermission('/admin/asaas', 'consultar');
     }
 
     /**
