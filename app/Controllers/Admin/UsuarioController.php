@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Controllers\Admin;
 
 use App\Core\Controller;
+use App\Services\FuncaoUsuarioService;
 use App\Services\ImageService;
 use App\Services\UsuarioService;
 use App\Services\LogService;
@@ -30,7 +31,9 @@ final class UsuarioController extends Controller
             $this->redirect('/admin/login');
         }
 
-        $usuarios = $this->usuarioService->usuarios();
+        $funcaoService = new FuncaoUsuarioService();
+        $usuarios = $funcaoService->usuariosComFuncoes();
+        $funcoes = $funcaoService->funcoes();
 
         $fotos = [];
         foreach ($usuarios as $usuario) {
@@ -48,6 +51,7 @@ final class UsuarioController extends Controller
             'currentRoute' => '/admin/usuarios',
             'usuarios' => $usuarios,
             'fotos' => $fotos,
+            'funcoes' => $funcoes,
         ], 'admin');
     }
 

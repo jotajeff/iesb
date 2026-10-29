@@ -9,6 +9,8 @@ use PDO;
 
 final class UserRepository extends JsonRepository
 {
+    private static bool $accessDefaultsChecked = false;
+
     public function __construct()
     {
         parent::__construct(dirname(__DIR__, 2) . '/storage/users.json');
@@ -54,6 +56,7 @@ final class UserRepository extends JsonRepository
             return null;
         }
 
+        $this->ensureAccessDefaults($pdo);
         $sql = 'SELECT id, nome, email, senha, tipo, ativo FROM usuarios WHERE email = :email LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['email' => $email]);
@@ -89,6 +92,7 @@ final class UserRepository extends JsonRepository
             return null;
         }
 
+        $this->ensureAccessDefaults($pdo);
         $sql = 'SELECT id, nome, email, senha, tipo, ativo FROM usuarios WHERE id = :id LIMIT 1';
         $stmt = $pdo->prepare($sql);
         $stmt->execute(['id' => $id]);
@@ -135,6 +139,23 @@ final class UserRepository extends JsonRepository
             $stmt->execute(['id' => (int) $user['id']]);
             $functions = $stmt->fetchAll() ?: [];
 
+            // Compatibilidade durante a transição: se o vínculo ainda não foi
+            // criado, aproveitamos a função cujo nome corresponde ao tipo legado.
+            if ($functions === []) {
+                $legacyRole = $this->normalizeRole((string) ($user['legacy_role'] ?? ''));
+                if ($legacyRole !== '' && $legacyRole !== 'aluno') {
+                    $legacyStmt = $pdo->prepare(
+                        'SELECT id, nome FROM usuarios_funcao
+                         WHERE LOWER(nome) = LOWER(:nome) AND ativo = 1 LIMIT 1'
+                    );
+                    $legacyStmt->execute(['nome' => $legacyRole]);
+                    $legacyFunction = $legacyStmt->fetch();
+                    if (is_array($legacyFunction)) {
+                        $functions = [$legacyFunction];
+                    }
+                }
+            }
+
             $roles = [];
             $functionIds = [];
             foreach ($functions as $function) {
@@ -143,6 +164,13 @@ final class UserRepository extends JsonRepository
                     $roles[] = $name;
                 }
                 $functionIds[] = (int) ($function['id'] ?? 0);
+            }
+
+            if ($functions === []) {
+                $legacyRole = $this->normalizeRole((string) ($user['legacy_role'] ?? ''));
+                if ($legacyRole !== '' && $legacyRole !== 'aluno') {
+                    $roles[] = $legacyRole;
+                }
             }
 
             $permissions = [];
@@ -201,5 +229,47 @@ final class UserRepository extends JsonRepository
     {
         $route = parse_url(trim($route), PHP_URL_PATH) ?: trim($route);
         return '/' . trim($route, '/');
+    }
+
+    private function ensureAccessDefaults(PDO $pdo): void
+    {
+        if (self::$accessDefaultsChecked) {
+            return;
+        }
+
+        try {
+            $pdo->exec(
+                'CREATE TABLE IF NOT EXISTS usuario_liga_funcao (
+                    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+                    id_usuario INT NOT NULL,
+                    id_funcao INT NOT NULL,
+                    ativo TINYINT(1) NOT NULL DEFAULT 1,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                    UNIQUE KEY uk_usuario_liga_funcao (id_usuario, id_funcao),
+                    KEY idx_usuario_liga_funcao_usuario (id_usuario),
+                    KEY idx_usuario_liga_funcao_funcao (id_funcao)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+            );
+
+            foreach (['Coordenador', 'Professor'] as $nomeFuncao) {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO usuarios_funcao (nome, descricao, ativo)
+                     SELECT :nome, :descricao, 1 FROM DUAL
+                     WHERE NOT EXISTS (
+                         SELECT 1 FROM usuarios_funcao WHERE LOWER(nome) = LOWER(:nome_check)
+                     )'
+                );
+                $stmt->execute([
+                    'nome' => $nomeFuncao,
+                    'descricao' => 'Acesso definido pelos módulos atribuídos à função.',
+                    'nome_check' => $nomeFuncao,
+                ]);
+            }
+
+            self::$accessDefaultsChecked = true;
+        } catch (\Throwable $e) {
+            error_log('[AUTH] Não foi possível preparar funções de acesso: ' . $e->getMessage());
+        }
     }
 }

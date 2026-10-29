@@ -41,6 +41,7 @@ final class AuthService
             'email' => $user['email'],
             'role' => $user['role'] ?? '',
             'type' => $user['role'] ?? '',
+            'legacy_role' => $user['legacy_role'] ?? '',
             'roles' => $user['roles'] ?? [],
             'functions' => $user['functions'] ?? [],
             'permissions' => $user['permissions'] ?? [],
@@ -90,7 +91,9 @@ final class AuthService
 
     public function isAdmin(): bool
     {
-        return $this->checkRole('admin');
+        $user = Session::get('user');
+        return is_array($user)
+            && ($this->checkRole('admin') || strtolower((string) ($user['legacy_role'] ?? $user['type'] ?? '')) === 'admin');
     }
 
     public function isOperador(): bool
@@ -110,9 +113,13 @@ final class AuthService
             return false;
         }
 
-        return (bool) array_intersect(
+        $roles = (array) ($user['roles'] ?? [$user['role'] ?? '']);
+        $legacyRole = strtolower((string) ($user['legacy_role'] ?? $user['type'] ?? ''));
+
+        return $legacyRole === 'admin'
+            || (bool) array_intersect(
             ['admin', 'professor', 'coordenador', 'secretaria', 'operador'],
-            (array) ($user['roles'] ?? [$user['role'] ?? ''])
+            $roles
         );
     }
 
@@ -121,6 +128,12 @@ final class AuthService
         $user = Session::get('user');
         if (!is_array($user) || !$this->isStaff()) {
             return false;
+        }
+
+        // O administrador continua sendo superusuário durante a transição
+        // dos vínculos legados para usuario_liga_funcao.
+        if ($this->isAdmin()) {
+            return true;
         }
 
         $route = '/' . trim(parse_url($route, PHP_URL_PATH) ?: $route, '/');
@@ -164,6 +177,11 @@ final class AuthService
 
     public function userCanAccessAdmin(array $user): bool
     {
+        if (strtolower((string) ($user['legacy_role'] ?? '')) === 'admin'
+            || in_array('admin', (array) ($user['roles'] ?? []), true)) {
+            return true;
+        }
+
         $hasStaffFunction = (bool) array_intersect(
             ['admin', 'professor', 'coordenador', 'secretaria', 'operador'],
             (array) ($user['roles'] ?? [])

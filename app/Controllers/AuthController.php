@@ -44,6 +44,7 @@ final class AuthController extends Controller
                 'email'=> $user['email'],
                 'role' => $role,
                 'type' => $role,
+                'legacy_role' => $user['legacy_role'] ?? '',
                 'roles' => $user['roles'] ?? [],
                 'functions' => $user['functions'] ?? [],
                 'permissions' => $user['permissions'] ?? [],

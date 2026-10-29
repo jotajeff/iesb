@@ -11,31 +11,39 @@ final class FuncaoUsuarioRepository
 {
     public function listarUsuariosComFuncoes(): array
     {
-        $usuarios = $this->fetchAll(
-            'SELECT id, nome, email, tipo, ativo, created_at FROM usuarios ORDER BY nome ASC'
+        $rows = $this->fetchAll(
+            'SELECT u.id, u.nome, u.email, u.ativo, u.created_at,'
+            . ' f.id AS funcao_id, f.nome AS funcao_nome'
+            . ' FROM usuarios u'
+            . ' LEFT JOIN usuario_liga_funcao ulf ON ulf.id_usuario = u.id AND ulf.ativo = 1'
+            . ' LEFT JOIN usuarios_funcao f ON f.id = ulf.id_funcao AND f.ativo = 1'
+            . ' ORDER BY u.nome ASC, f.nome ASC'
         );
 
-        $vinculos = $this->fetchAll(
-            'SELECT uf.id_usuario, f.id, f.nome'
-            . ' FROM usuario_liga_funcao uf'
-            . ' INNER JOIN usuarios_funcao f ON f.id = uf.id_funcao'
-            . ' WHERE uf.ativo = 1 AND f.ativo = 1'
-            . ' ORDER BY f.nome ASC'
-        );
+        $usuarios = [];
+        foreach ($rows as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            if (!isset($usuarios[$id])) {
+                $usuarios[$id] = [
+                    'id' => $id,
+                    'nome' => (string) ($row['nome'] ?? ''),
+                    'email' => (string) ($row['email'] ?? ''),
+                    'ativo' => (int) ($row['ativo'] ?? 0),
+                    'created_at' => $row['created_at'] ?? null,
+                    'funcoes' => [],
+                ];
+            }
 
-        $porUsuario = [];
-        foreach ($vinculos as $vinculo) {
-            $porUsuario[(int) ($vinculo['id_usuario'] ?? 0)][] = [
-                'id' => (int) ($vinculo['id'] ?? 0),
-                'nome' => (string) ($vinculo['nome'] ?? ''),
-            ];
+            $idFuncao = (int) ($row['funcao_id'] ?? 0);
+            if ($idFuncao > 0) {
+                $usuarios[$id]['funcoes'][] = [
+                    'id' => $idFuncao,
+                    'nome' => (string) ($row['funcao_nome'] ?? ''),
+                ];
+            }
         }
 
-        foreach ($usuarios as $indice => $usuario) {
-            $usuarios[$indice]['funcoes'] = $porUsuario[(int) ($usuario['id'] ?? 0)] ?? [];
-        }
-
-        return $usuarios;
+        return array_values($usuarios);
     }
 
     public function buscarUsuario(int $id): ?array

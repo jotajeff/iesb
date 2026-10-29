@@ -15,6 +15,7 @@
       <a class="nav-link" href="#publico-alvo-curso"><i class="bi bi-people me-1"></i>Público-alvo</a>
       <a class="nav-link" href="#disciplinas-curso"><i class="bi bi-book me-1"></i>Disciplinas</a>
       <a class="nav-link" href="#corpo-docente-curso"><i class="bi bi-people me-1"></i>Corpo Docente</a>
+      <a class="nav-link" href="#coordenacao-curso"><i class="bi bi-person-badge me-1"></i>Coordenação</a>
       <a class="nav-link" href="#galeria-curso"><i class="bi bi-images me-1"></i>Galeria</a>
     </nav>
 
@@ -340,6 +341,45 @@
 
     <hr class="my-4">
 
+    <div class="d-flex align-items-center justify-content-between mb-3" id="coordenacao-curso">
+      <h5 class="mb-0"><i class="bi bi-person-badge me-2"></i>Coordenação</h5>
+      <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/coordenador?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Vincular coordenador</a>
+    </div>
+    <?php $coordenadores = $coordenadores ?? []; ?>
+    <?php if (!empty($coordenadores)): ?>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Turma</th>
+              <th>Coordenador</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody>
+            <?php foreach ($coordenadores as $coord): ?>
+              <tr>
+                <td><?= htmlspecialchars((string) ($coord['turma_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td><?= htmlspecialchars((string) ($coord['usuario_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
+                <td>
+                  <button type="button" class="btn btn-outline-danger btn-sm" onclick="removerCoordenador(<?= (int) ($coord['id'] ?? 0) ?>, <?= (int) ($course['id'] ?? 0) ?>)" title="Remover vínculo">
+                    <i class="bi bi-person-x"></i>
+                  </button>
+                </td>
+              </tr>
+            <?php endforeach; ?>
+          </tbody>
+        </table>
+      </div>
+    <?php else: ?>
+      <div class="text-muted">
+        <i class="bi bi-info-circle me-1"></i>Nenhum coordenador vinculado.
+        <a class="btn btn-sm btn-outline-success ms-2" href="/admin/cursos/coordenador?id_curso=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Vincular coordenador</a>
+      </div>
+    <?php endif; ?>
+
+    <hr class="my-4">
+
     <div class="d-flex align-items-center justify-content-between mb-3" id="galeria-curso">
       <h5 class="mb-0"><i class="bi bi-images me-2"></i>Galeria de Imagens</h5>
       <a class="btn btn-sm btn-outline-primary" href="/admin/cursos/galeria?id=<?= (int) ($course['id'] ?? 0) ?>"><i class="bi bi-plus-circle me-1"></i>Gerenciar imagens</a>
@@ -368,6 +408,22 @@ function removerDocente(id, cursoId) {
   const formData = new FormData();
   formData.append('id', id);
   fetch('/admin/cursos/remover-corpo-docente', { method: 'POST', body: formData })
+    .then(r => r.json())
+    .then(data => {
+      if (data.sucesso) {
+        location.reload();
+      } else {
+        alert('Erro: ' + (data.erro || 'Erro desconhecido'));
+      }
+    })
+    .catch(() => alert('Erro ao remover vínculo.'));
+}
+
+function removerCoordenador(id, cursoId) {
+  if (!confirm('Remover este vínculo de coordenador?')) return;
+  const formData = new FormData();
+  formData.append('id', id);
+  fetch('/admin/cursos/remover-coordenador', { method: 'POST', body: formData })
     .then(r => r.json())
     .then(data => {
       if (data.sucesso) {

@@ -240,6 +240,27 @@ final class CursoController extends Controller
             $corpoDocente = [];
         }
 
+        $coordenadores = [];
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare(
+                    'SELECT tc.id, tc.id_turma, tc.id_usuario,'
+                    . ' t.nome AS turma_nome, u.nome AS usuario_nome'
+                    . ' FROM turma_coordenador tc'
+                    . ' JOIN turmas t ON tc.id_turma = t.id'
+                    . ' JOIN usuarios u ON tc.id_usuario = u.id'
+                    . ' WHERE t.id_curso = :id_curso'
+                    . ' ORDER BY t.nome ASC, u.nome ASC'
+                );
+                $stmt->bindValue(':id_curso', $id, \PDO::PARAM_INT);
+                $stmt->execute();
+                $coordenadores = $stmt->fetchAll() ?: [];
+            }
+        } catch (\Throwable) {
+            $coordenadores = [];
+        }
+
         $galeriaImagens = $this->imageService->listarPorFk('cursos', $id);
 
         $this->render('pages/admin/cursos/show', [
@@ -250,6 +271,7 @@ final class CursoController extends Controller
             'pagamentos' => $this->pagamentoService->listarPorCurso($id),
             'disciplinas' => $disciplinas,
             'corpoDocente' => $corpoDocente,
+            'coordenadores' => $coordenadores,
             'galeriaImagens' => $galeriaImagens,
         ], 'admin');
     }
@@ -697,6 +719,172 @@ final class CursoController extends Controller
             echo json_encode(['sucesso' => true]);
         } catch (\Throwable $e) {
             error_log('[CORPO DOCENTE] Erro ao remover: ' . $e->getMessage());
+            http_response_code(500);
+            echo json_encode(['erro' => 'Erro ao remover vínculo.']);
+        }
+    }
+
+    public function coordenador(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) ($_GET['id_curso'] ?? 0);
+        $course = $this->cursoService->findCurso($cursoId);
+        if (!$course) {
+            Session::setFlash('flash', 'Curso não encontrado.');
+            $this->redirect('/admin/cursos');
+            return;
+        }
+
+        $turmas = [];
+        $coordenadores = [];
+        $vinculados = [];
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT id, nome FROM turmas WHERE id_curso = :id_curso AND ativo = :ativo ORDER BY nome ASC');
+                $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
+                $stmt->execute();
+                $turmas = $stmt->fetchAll() ?: [];
+
+                $stmt = $pdo->prepare(
+                    'SELECT u.id, u.nome FROM usuarios u'
+                    . ' INNER JOIN usuario_liga_funcao ulf ON ulf.id_usuario = u.id AND ulf.ativo = 1'
+                    . ' INNER JOIN usuarios_funcao uf ON uf.id = ulf.id_funcao AND uf.ativo = 1'
+                    . ' WHERE ulf.id_funcao = :id_funcao AND u.ativo = 1'
+                    . ' ORDER BY u.nome ASC'
+                );
+                $stmt->bindValue(':id_funcao', 5, \PDO::PARAM_INT);
+                $stmt->execute();
+                $coordenadores = $stmt->fetchAll() ?: [];
+
+                $stmt = $pdo->prepare(
+                    'SELECT tc.id_turma, tc.id_usuario FROM turma_coordenador tc'
+                    . ' INNER JOIN turmas t ON t.id = tc.id_turma'
+                    . ' WHERE t.id_curso = :id_curso'
+                );
+                $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                $stmt->execute();
+                foreach ($stmt->fetchAll() as $row) {
+                    $vinculados[(int) $row['id_turma'] . '-' . (int) $row['id_usuario']] = true;
+                }
+            }
+        } catch (\Throwable) {
+        }
+
+        $this->render('pages/admin/cursos/coordenador', [
+            'title' => 'Coordenação — ' . ($course['nome'] ?? ''),
+            'currentRoute' => '/admin/cursos/coordenador',
+            'course' => $course,
+            'turmas' => $turmas,
+            'coordenadores' => $coordenadores,
+            'vinculados' => $vinculados,
+        ], 'admin');
+    }
+
+    public function salvarCoordenador(): void
+    {
+        if (!$this->isStaff()) {
+            Session::setFlash('flash', 'Acesso negado.');
+            $this->redirect('/admin/login');
+        }
+
+        $cursoId = (int) $this->input('id_curso', 0);
+        $turmaId = (int) $this->input('id_turma', 0);
+        $usuarioId = (int) $this->input('id_usuario', 0);
+
+        if ($cursoId <= 0 || $turmaId <= 0 || $usuarioId <= 0) {
+            Session::setFlash('flash', 'Selecione a turma e o coordenador.');
+            $this->redirect('/admin/cursos/coordenador?id_curso=' . $cursoId);
+            return;
+        }
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('SELECT 1 FROM turmas WHERE id = :id_turma AND id_curso = :id_curso AND ativo = :ativo LIMIT 1');
+                $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_curso', $cursoId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
+                $stmt->execute();
+                if (!$stmt->fetchColumn()) {
+                    Session::setFlash('flash', 'Turma inválida para este curso.');
+                    $this->redirect('/admin/cursos/coordenador?id_curso=' . $cursoId);
+                    return;
+                }
+
+                $stmt = $pdo->prepare(
+                    'SELECT 1 FROM usuario_liga_funcao ulf'
+                    . ' INNER JOIN usuarios u ON u.id = ulf.id_usuario AND u.ativo = 1'
+                    . ' INNER JOIN usuarios_funcao uf ON uf.id = ulf.id_funcao AND uf.ativo = 1'
+                    . ' WHERE ulf.id_usuario = :id_usuario AND ulf.id_funcao = :id_funcao AND ulf.ativo = 1 LIMIT 1'
+                );
+                $stmt->bindValue(':id_usuario', $usuarioId, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_funcao', 5, \PDO::PARAM_INT);
+                $stmt->execute();
+                if (!$stmt->fetchColumn()) {
+                    Session::setFlash('flash', 'O usuário selecionado não possui a função de coordenador.');
+                    $this->redirect('/admin/cursos/coordenador?id_curso=' . $cursoId);
+                    return;
+                }
+
+                $stmt = $pdo->prepare('SELECT id FROM turma_coordenador WHERE id_turma = :id_turma AND id_usuario = :id_usuario LIMIT 1');
+                $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_usuario', $usuarioId, \PDO::PARAM_INT);
+                $stmt->execute();
+                if ($stmt->fetchColumn()) {
+                    Session::setFlash('flash', 'Este coordenador já está vinculado à turma.');
+                    $this->redirect('/admin/cursos/coordenador?id_curso=' . $cursoId);
+                    return;
+                }
+
+                $stmt = $pdo->prepare('INSERT INTO turma_coordenador (id_turma, id_usuario, created_at) VALUES (:id_turma, :id_usuario, NOW())');
+                $stmt->bindValue(':id_turma', $turmaId, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_usuario', $usuarioId, \PDO::PARAM_INT);
+                $stmt->execute();
+                $this->logService->log('criar', 'turma_coordenador', $turmaId, 'Coordenador ' . $usuarioId . ' vinculado à turma ' . $turmaId);
+            }
+            Session::setFlash('flash', 'Coordenador vinculado com sucesso.');
+        } catch (\Throwable $e) {
+            error_log('[COORDENADOR] Erro ao vincular: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao vincular coordenador.');
+        }
+
+        $this->redirect('/admin/cursos/show?id=' . $cursoId);
+    }
+
+    public function removerCoordenador(): void
+    {
+        if (!$this->isStaff()) {
+            http_response_code(403);
+            echo json_encode(['erro' => 'Acesso negado.']);
+            return;
+        }
+
+        $id = (int) ($this->input('id', 0) ?: ($_POST['id'] ?? 0));
+
+        if ($id <= 0) {
+            http_response_code(400);
+            echo json_encode(['erro' => 'ID inválido.']);
+            return;
+        }
+
+        try {
+            $pdo = \App\Core\Database::connection();
+            if ($pdo instanceof \PDO) {
+                $stmt = $pdo->prepare('DELETE FROM turma_coordenador WHERE id = :id');
+                $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
+                $stmt->execute();
+                $this->logService->log('excluir', 'turma_coordenador', $id, 'Vínculo de coordenador removido');
+            }
+            echo json_encode(['sucesso' => true]);
+        } catch (\Throwable $e) {
+            error_log('[COORDENADOR] Erro ao remover: ' . $e->getMessage());
             http_response_code(500);
             echo json_encode(['erro' => 'Erro ao remover vínculo.']);
         }

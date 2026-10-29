@@ -1,21 +1,29 @@
 <?php
 $dashboardUser = $authUser ?? [];
 $dashboardName = (string) ($dashboardUser['name'] ?? 'Administrador');
-$dashboardType = (string) ($dashboardUser['role'] ?? $dashboardUser['type'] ?? 'admin');
+$dashboardRoles = array_values(array_filter(array_map(
+  static fn($role) => strtolower((string) $role),
+  (array) ($dashboardUser['roles'] ?? [])
+)));
+$dashboardFunctions = array_values(array_filter(
+  (array) ($dashboardUser['functions'] ?? []),
+  static fn($function) => is_array($function) && trim((string) ($function['nome'] ?? '')) !== ''
+));
+$dashboardFunctionNames = array_map(
+  static fn($function) => (string) $function['nome'],
+  $dashboardFunctions
+);
+$dashboardFunctionsLabel = $dashboardFunctionNames !== []
+  ? implode(', ', $dashboardFunctionNames)
+  : 'Nenhuma função vinculada';
+$dashboardType = (string) ($dashboardRoles[0] ?? '');
 $taskIndicators = $taskIndicators ?? [
   'tarefas_criadas' => 0,
   'tarefas_execucao' => 0,
   'tarefas_finalizadas' => 0,
 ];
-$isAdmin = (bool) ($isAdmin ?? ($dashboardType === 'admin'));
+$isAdmin = (bool) ($isAdmin ?? in_array($dashboardType, ['admin', 'operador'], true));
 $canViewCourseEnrollmentCards = in_array($dashboardType, ['admin', 'operador'], true);
-
-$dashboardTypeLabel = match ($dashboardType) {
-  'admin' => 'Administrador',
-  'operador' => 'Operador',
-  'aluno' => 'Aluno',
-  default => ucfirst($dashboardType),
-};
 ?>
 <section class="container py-4">
   <div class="bg-white border rounded-4 p-4 shadow-sm mb-4">
@@ -34,11 +42,19 @@ $dashboardTypeLabel = match ($dashboardType) {
         <div>
           <div class="text-uppercase text-muted small fw-semibold mb-1">Bem-vindo ao painel</div>
           <h4 class="mb-1">Olá, <?= htmlspecialchars($dashboardName, ENT_QUOTES, 'UTF-8') ?></h4>
-          <p class="mb-0 text-muted">Seu nível de acesso atual é <strong><?= htmlspecialchars($dashboardTypeLabel, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
+          <p class="mb-0 text-muted">Funções vinculadas: <strong><?= htmlspecialchars($dashboardFunctionsLabel, ENT_QUOTES, 'UTF-8') ?></strong>.</p>
         </div>
       </div>
       <div class="text-end">
-        <span class="badge bg-dark text-uppercase"><?= htmlspecialchars($dashboardTypeLabel, ENT_QUOTES, 'UTF-8') ?></span>
+        <div class="d-flex flex-wrap justify-content-end gap-1">
+          <?php if ($dashboardFunctionNames !== []): ?>
+            <?php foreach ($dashboardFunctionNames as $dashboardFunctionName): ?>
+              <span class="badge bg-dark text-uppercase"><?= htmlspecialchars($dashboardFunctionName, ENT_QUOTES, 'UTF-8') ?></span>
+            <?php endforeach; ?>
+          <?php else: ?>
+            <span class="badge bg-secondary">Nenhuma função vinculada</span>
+          <?php endif; ?>
+        </div>
       </div>
     </div>
   </div>

@@ -74,7 +74,10 @@ Não há testes, linting, typecheck ou CI.
 | `turma_disciplina` | Vínculo turma↔disciplina com professor (legado id_usuario_professor) |
 | `matricula_disciplina` | Matrícula do aluno em disciplinas da turma |
 | `corpo_docente` | Professores vinculados ao curso (id_curso, id_usuario) |
-| `usuarios` | Usuários (inclui campo `titulacao`) |
+| `turma_coordenador` | Coordenadores por turma (id_turma, id_usuario, created_at) |
+| `usuarios_funcao` | Cadastro de funções (id=5 = coordenador) |
+| `usuario_liga_funcao` | Vínculo usuário↔função (id_usuario, id_funcao, ativo) |
+| `usuarios` | Usuários (inclui campo `titulacao`; `tipo` legado) |
 | `imagem` | Fotos: tabela_fk='usuarios', id_fk=id_professor, path='assets/img/professor/...' |
 
 ## Frontend
@@ -173,8 +176,18 @@ Não há testes, linting, typecheck ou CI.
 
 - `PermissaoController`, `PermissaoRepository`, `PermissaoService` → rotas `/admin/permissoes/*`.
 
+## Usuários, Funções e Dashboard
+
+- **Fonte de verdade**: autorização, listagens e filtros usam `usuario_liga_funcao` + `usuarios_funcao`. Não usar `usuarios.tipo` para exibir função/perfil.
+- `FuncaoUsuarioRepository::listarUsuariosComFuncoes()` faz `LEFT JOIN usuarios → usuario_liga_funcao → usuarios_funcao` e agrupa as funções por usuário.
+- `/admin/usuarios`: filtros por busca (nome/email), **Função** (`usuario_liga_funcao.id_funcao`) e **Ativo**, com filtragem client-side; coluna **Funções** exibe os vínculos ativos.
+- `/admin` (dashboard): exibe as funções vinculadas do usuário (session `authUser.functions`), em badges, em vez do antigo `usuarios.tipo`.
+- `AuthService`/`UserRepository` montam `role`, `roles`, `functions` e `permissions` a partir de `usuario_liga_funcao` (com fallback legado apenas quando não há vínculo).
+
 ## Cursos
 
+- **Coordenação**: em `/admin/cursos/show` (seção abaixo do Corpo Docente), lista os coordenadores das turmas do curso e permite desvincular via `POST /admin/cursos/remover-coordenador`. Vínculo em `/admin/cursos/coordenador?id_curso=X` → `POST /admin/cursos/salvar-coordenador`.
+- O select de coordenador lista somente usuários com `usuario_liga_funcao.id_funcao = 5` (coordenador) e `ativo = 1`; o vínculo é gravado em `turma_coordenador` (`id_turma`, `id_usuario`, `created_at`).
 - `cursos.bolsa tinyint(1) DEFAULT 0` (já existe no schema). Checkbox "Exibir Bolsa de Estudos disponível" em `/admin/cursos/show` → `POST /admin/cursos/alternar-bolsa` (staff, `LogService`).
 - `CursoRepository::findById` e `findBySlug` selecionam `c.bolsa`.
 - Página pública `pages/curso.php`: se `bolsa=1`, imagem `assets/img/bolsa.png` logo abaixo de "Quero mais informações", link WhatsApp `wa.me/5551992975503?text=...Bolsas de Estudos`, hover `scale(1.2)` (com `overflow-hidden` no link).

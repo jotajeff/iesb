@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 27/10/2026 às 20:16
+-- Tempo de geração: 29/10/2026 às 15:20
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.27
 
@@ -1089,6 +1089,19 @@ CREATE TABLE `turmas` (
 -- --------------------------------------------------------
 
 --
+-- Estrutura para tabela `turma_coordenador`
+--
+
+CREATE TABLE `turma_coordenador` (
+  `id` int(11) NOT NULL,
+  `id_turma` int(11) NOT NULL,
+  `id_usuario` int(11) NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Estrutura para tabela `turma_disciplina`
 --
 
@@ -1671,6 +1684,12 @@ ALTER TABLE `turmas`
   ADD KEY `idx_turmas_estrutura` (`id_estrutura`);
 
 --
+-- Índices de tabela `turma_coordenador`
+--
+ALTER TABLE `turma_coordenador`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- Índices de tabela `turma_disciplina`
 --
 ALTER TABLE `turma_disciplina`
@@ -2082,6 +2101,12 @@ ALTER TABLE `tipo_curso`
 -- AUTO_INCREMENT de tabela `turmas`
 --
 ALTER TABLE `turmas`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `turma_coordenador`
+--
+ALTER TABLE `turma_coordenador`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --

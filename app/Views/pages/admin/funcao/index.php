@@ -14,7 +14,6 @@
             <th><i class="bi bi-hash"></i></th>
             <th><i class="bi bi-person me-1"></i>Nome</th>
             <th><i class="bi bi-envelope me-1"></i>Email</th>
-            <th><i class="bi bi-tag me-1"></i>Tipo</th>
             <th><i class="bi bi-person-workspace me-1"></i>Funções</th>
             <th><i class="bi bi-toggle-on me-1"></i>Ativo</th>
             <th><i class="bi bi-gear me-1"></i>Ações</th>
@@ -22,30 +21,18 @@
         </thead>
         <tbody>
           <?php if (empty($usuarios)): ?>
-            <tr><td colspan="7" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum usuário encontrado.</td></tr>
+            <tr><td colspan="6" class="text-muted"><i class="bi bi-inbox me-1"></i>Nenhum usuário encontrado.</td></tr>
           <?php endif; ?>
 
           <?php foreach (($usuarios ?? []) as $usuario): ?>
             <?php
             $id = (int) ($usuario['id'] ?? 0);
-            $tipo = (string) ($usuario['tipo'] ?? 'aluno');
             $funcoes = is_array($usuario['funcoes'] ?? null) ? $usuario['funcoes'] : [];
             ?>
             <tr>
               <td><?= $id ?></td>
               <td><?= htmlspecialchars((string) ($usuario['nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
               <td><?= htmlspecialchars((string) ($usuario['email'] ?? '-'), ENT_QUOTES, 'UTF-8') ?></td>
-              <td>
-                <?php if ($tipo === 'admin'): ?>
-                  <span class="badge bg-dark">Admin</span>
-                <?php elseif ($tipo === 'operador'): ?>
-                  <span class="badge bg-warning text-dark">Operador</span>
-                <?php elseif ($tipo === 'professor'): ?>
-                  <span class="badge bg-primary">Professor</span>
-                <?php else: ?>
-                  <span class="badge bg-info text-dark">Aluno</span>
-                <?php endif; ?>
-              </td>
               <td>
                 <?php if (empty($funcoes)): ?>
                   <span class="text-muted small">Nenhuma função</span>

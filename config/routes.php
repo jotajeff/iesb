@@ -102,6 +102,9 @@ return static function (Router $router): void {
     $router->get('/admin/cursos/corpo-docente', [CursoController::class, 'corpoDocente']);
     $router->post('/admin/cursos/salvar-corpo-docente', [CursoController::class, 'salvarCorpoDocente']);
     $router->post('/admin/cursos/remover-corpo-docente', [CursoController::class, 'removerCorpoDocente']);
+    $router->get('/admin/cursos/coordenador', [CursoController::class, 'coordenador']);
+    $router->post('/admin/cursos/salvar-coordenador', [CursoController::class, 'salvarCoordenador']);
+    $router->post('/admin/cursos/remover-coordenador', [CursoController::class, 'removerCoordenador']);
     $router->get('/admin/cursos/galeria', [CursoController::class, 'galeria']);
     $router->post('/admin/cursos/upload-galeria', [CursoController::class, 'uploadGaleria']);
     $router->post('/admin/cursos/deletar-galeria', [CursoController::class, 'deletarGaleria']);
