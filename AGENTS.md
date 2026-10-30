@@ -159,6 +159,14 @@ Não há testes, linting, typecheck ou CI.
 - `/admin/config/email` → envia email via `EmailService` (SMTP Gmail da instituição).
 - `chamada_presenca`: campos `ip` e `responsavel` criados via ALTER TABLE self-healing.
 
+## Módulo Visitas (admin)
+
+- Rotas: `/admin/visitas` (lista), `/admin/visitas/mensal`, `/admin/visitas/analytics`, `/admin/visitas/paginas`, `/admin/visitas/cursos`, `/admin/visitas/referer` → `Admin\VisitaController`.
+- `VisitaService` + `VisitaRepository` sobre `visitas_paginas`; `VisitTrackerService::track()` registra em toda requisição (`App::run()`).
+- Filtro de origem Brasil/Todos (`?pais=br|todos`) via partial `_filtro_pais.php`; período por `month`/`year`.
+- `UserAgentParserService` classifica `device` (Mobile/Tablet/Desktop), `os` e `browser`; `App\Support\UiIconHelper` mapeia cada valor para ícone Bootstrap.
+- `/admin/visitas/analytics` mostra países, cidades, dispositivos, sistemas e navegadores. A seção final **Perfil** (`analytics.php`) exibe 3 cards — Dispositivo, Sistema e Navegador — com o item mais acessado do período, ícone central estilizado (gradiente + círculo translúcido), contagem, percentual e barra de progresso.
+
 ## Portal Aluno
 
 - **Layout**: `aluno_topo.php` (menu com Secretaria: Perfil, Endereço, **Documentos** → subitens *Aluno* `/aluno/documentos` e *Secretaria* `/aluno/secretaria`, Protocolos, divider, Chamadas, Calendário), `aluno_footer.php` (fixo ao fundo via `</main>` correto no `aluno.php`).

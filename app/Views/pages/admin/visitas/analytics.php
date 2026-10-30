@@ -83,5 +83,64 @@
         </div>
       <?php endforeach; ?>
     </div>
+
+    <?php
+    $perfilCards = [
+      ['label' => 'Dispositivo', 'items' => $a['devices'] ?? [], 'type' => 'device', 'icon' => 'bi-laptop', 'color' => '#efc02b', 'colorDark' => '#c99b0d'],
+      ['label' => 'Sistema', 'items' => $a['systems'] ?? [], 'type' => 'os', 'icon' => 'bi-cpu', 'color' => '#4d4f4e', 'colorDark' => '#2f3130'],
+      ['label' => 'Navegador', 'items' => $a['browsers'] ?? [], 'type' => 'browser', 'icon' => 'bi-compass', 'color' => '#0f9d58', 'colorDark' => '#0a7440'],
+    ];
+    ?>
+
+    <div class="mt-4 pt-4 border-top">
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <span class="d-inline-flex align-items-center justify-content-center rounded-circle" style="width:36px;height:36px;background:rgba(239,192,43,.18);color:#c99b0d;">
+          <i class="bi bi-person-badge"></i>
+        </span>
+        <h5 class="mb-0">Perfil</h5>
+      </div>
+      <div class="row g-3">
+        <?php foreach ($perfilCards as $card): ?>
+          <?php
+          $top = $card['items'][0] ?? null;
+          $topLabel = (string) ($top['label'] ?? 'Sem dados');
+          $topIcon = match ($card['type']) {
+              'device' => \App\Support\UiIconHelper::device($topLabel),
+              'os' => \App\Support\UiIconHelper::os($topLabel),
+              default => \App\Support\UiIconHelper::browser($topLabel),
+          };
+          $topPercent = (float) ($top['percent'] ?? 0);
+          ?>
+          <div class="col-12 col-md-4">
+            <div class="h-100 rounded-4 overflow-hidden border-0 shadow-sm" style="background:#fff;">
+              <div class="position-relative text-center px-3 pt-4 pb-3" style="background: linear-gradient(135deg, <?= $card['color'] ?>, <?= $card['colorDark'] ?>);">
+                <div class="position-absolute top-0 start-0 w-100 h-100" style="background:radial-gradient(circle at 75% 15%, rgba(255,255,255,.35), transparent 45%);"></div>
+                <div class="position-relative d-inline-flex align-items-center justify-content-center rounded-circle mb-3" style="width:92px;height:92px;background:rgba(255,255,255,.22);border:1px solid rgba(255,255,255,.45);box-shadow:0 0 0 8px rgba(255,255,255,.12), inset 0 0 22px rgba(255,255,255,.25);backdrop-filter:blur(2px);">
+                  <i class="bi <?= htmlspecialchars($topIcon, ENT_QUOTES, 'UTF-8') ?> text-white" style="font-size:2.6rem;filter:drop-shadow(0 3px 6px rgba(0,0,0,.25));"></i>
+                </div>
+                <div class="position-relative text-white text-uppercase small fw-semibold" style="letter-spacing:.1em;opacity:.85;">
+                  <i class="bi <?= htmlspecialchars((string) $card['icon'], ENT_QUOTES, 'UTF-8') ?> me-1"></i><?= htmlspecialchars((string) $card['label'], ENT_QUOTES, 'UTF-8') ?>
+                </div>
+              </div>
+              <div class="px-3 py-3 text-center">
+                <div class="fw-bold fs-5 mb-1"><?= htmlspecialchars($topLabel, ENT_QUOTES, 'UTF-8') ?></div>
+                <?php if ($top !== null): ?>
+                  <div class="text-muted small mb-2">
+                    <strong><?= (int) ($top['count'] ?? 0) ?></strong> acessos
+                    <span class="mx-1">·</span>
+                    <?= number_format($topPercent, 1, ',', '.') ?>%
+                  </div>
+                  <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= $topPercent ?>" style="height:6px;background:rgba(77,79,78,.1);">
+                    <div class="progress-bar" style="width: <?= $topPercent ?>%;background: linear-gradient(90deg, <?= $card['color'] ?>, <?= $card['colorDark'] ?>);"></div>
+                  </div>
+                <?php else: ?>
+                  <div class="text-muted small">Sem dados no período.</div>
+                <?php endif; ?>
+              </div>
+            </div>
+          </div>
+        <?php endforeach; ?>
+      </div>
+    </div>
   </div>
 </section>
