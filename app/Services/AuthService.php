@@ -138,7 +138,10 @@ final class AuthService
 
         $route = '/' . trim(parse_url($route, PHP_URL_PATH) ?: $route, '/');
         $permissions = (array) ($user['permissions'] ?? []);
-        if ($route === '/admin' && !isset($permissions['/admin'])) {
+        // /admin é um alias legado do dashboard. Se o registro existe, mas
+        // está zerado para impedir a herança de todas as rotas filhas, usa a
+        // permissão específica de /admin/dashboard.
+        if ($route === '/admin' && empty($permissions['/admin']['consultar'])) {
             $route = '/admin/dashboard';
         }
         $matched = null;

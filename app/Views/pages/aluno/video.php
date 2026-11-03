@@ -47,7 +47,37 @@
             <?php endif; ?>
           </div>
         </div>
+
+        <div class="d-flex justify-content-center mt-3">
+          <button type="button" class="btn btn-success px-4" data-bs-toggle="modal" data-bs-target="#modalConfirmarVideo">
+            <i class="bi bi-check2-circle me-1"></i>Marcar vídeo como visto
+          </button>
+        </div>
       </div>
     </div>
   </div>
 </section>
+
+<div class="modal fade" id="modalConfirmarVideo" tabindex="-1" aria-labelledby="modalConfirmarVideoLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="modalConfirmarVideoLabel">
+          <i class="bi bi-exclamation-triangle-fill text-warning me-2"></i>Confirmar visualização
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fechar"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-3"><strong>Atenção:</strong> Ao marcar este vídeo como visto, você declara ter assistido a todo o conteúdo.</p>
+        <p class="mb-0 text-muted">📌 Por razões de segurança e registro acadêmico, a data, a hora e o seu IP serão armazenados junto à sua confirmação.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+        <form method="post" action="/aluno/video/confirmar" class="d-inline">
+          <input type="hidden" name="id_material" value="<?= (int) ($material['id'] ?? 0) ?>">
+          <button type="submit" class="btn btn-success"><i class="bi bi-check2-circle me-1"></i>Confirmar</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

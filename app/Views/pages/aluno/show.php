@@ -127,15 +127,34 @@
                 <?php
                   $renderLinhaMaterial = static function (array $m): void {
                     $tipoMat = (string) ($m['tipo'] ?? '');
+                    $arquivo = match ($tipoMat) {
+                      'drive' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf', 'rotulo' => 'PDF'],
+                      'excel' => ['cor' => 'bg-success', 'icone' => 'bi-file-earmark-excel', 'rotulo' => 'Excel'],
+                      'doc' => ['cor' => 'bg-info text-dark', 'icone' => 'bi-file-earmark-word', 'rotulo' => 'DOC'],
+                      default => null,
+                    };
+                    $iconeLinha = $arquivo['icone'] ?? match ($tipoMat) {
+                      'video' => 'bi-camera-reels',
+                      'link' => 'bi-link-45deg',
+                      default => 'bi-file-earmark',
+                    };
+                    $corLinha = match ($tipoMat) {
+                      'video' => 'text-danger',
+                      'drive' => 'text-primary',
+                      'excel' => 'text-success',
+                      'doc' => 'text-info',
+                      'link' => 'text-success',
+                      default => 'text-secondary',
+                    };
                     ?>
                     <tr>
-                      <td><i class="bi bi-check-square fs-5 text-secondary"></i></td>
+                      <td><i class="bi <?= $iconeLinha ?> fs-5 <?= $corLinha ?>" title="<?= htmlspecialchars(ucfirst($tipoMat ?: 'Arquivo'), ENT_QUOTES, 'UTF-8') ?>"></i></td>
                       <td><?= htmlspecialchars($m['titulo'] ?? '-', ENT_QUOTES, 'UTF-8') ?></td>
                       <td>
                         <?php if ($tipoMat === 'video'): ?>
                           <span class="badge bg-danger"><i class="bi bi-camera-video me-1"></i>Vídeo</span>
-                        <?php elseif ($tipoMat === 'drive'): ?>
-                          <span class="badge bg-primary"><i class="bi bi-file-earmark-pdf me-1"></i>PDF</span>
+                        <?php elseif ($arquivo !== null): ?>
+                          <span class="badge <?= $arquivo['cor'] ?>"><i class="bi <?= $arquivo['icone'] ?> me-1"></i><?= $arquivo['rotulo'] ?></span>
                         <?php elseif ($tipoMat === 'link'): ?>
                           <span class="badge bg-success"><i class="bi bi-link-45deg me-1"></i>Link</span>
                         <?php else: ?>
@@ -147,12 +166,16 @@
                           <a href="/aluno/video?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-danger">
                             <i class="bi bi-camera-reels me-1"></i>Assistir
                           </a>
-                        <?php elseif ($tipoMat === 'drive'): ?>
+                        <?php elseif ($arquivo !== null): ?>
                           <a href="/aluno/drive?id=<?= (int) ($m['id'] ?? 0) ?>" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-google me-1"></i>Visualizar
+                            <i class="bi <?= $arquivo['icone'] ?> me-1"></i>Visualizar
+                          </a>
+                        <?php elseif ($tipoMat === 'link'): ?>
+                          <a href="<?= htmlspecialchars($m['link'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-link-45deg me-1"></i>Abrir
                           </a>
                         <?php else: ?>
-                          <a href="<?= htmlspecialchars($m['link'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" class="btn btn-sm btn-outline-secondary">
+                          <a href="<?= htmlspecialchars($m['link'] ?? '#', ENT_QUOTES, 'UTF-8') ?>" target="_blank" rel="noopener" class="btn btn-sm btn-outline-secondary">
                             <i class="bi bi-box-arrow-up-right me-1"></i>Abrir
                           </a>
                         <?php endif; ?>

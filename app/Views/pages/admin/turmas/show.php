@@ -453,7 +453,7 @@
                           <td><?= (int) ($mat['id'] ?? 0) ?></td>
                           <td>
                             <?php $tipoMaterial = (string) ($mat['tipo'] ?? ''); ?>
-                            <span class="badge <?= match ($tipoMaterial) { 'video' => 'bg-danger', 'drive' => 'bg-primary', default => 'bg-secondary' } ?>">
+                            <span class="badge <?= match ($tipoMaterial) { 'video' => 'bg-danger', 'drive' => 'bg-primary', 'excel' => 'bg-success', 'doc' => 'bg-info text-dark', default => 'bg-secondary' } ?>">
                               <i class="bi <?= MaterialHelper::icon($tipoMaterial) ?> me-1"></i>
                               <?= htmlspecialchars($tipoMaterial ?: '-', ENT_QUOTES, 'UTF-8') ?>
                             </span>
@@ -466,7 +466,7 @@
                                 <a class="btn btn-sm btn-outline-danger" href="/admin/turmas/ver-video?id=<?= (int) ($mat['id'] ?? 0) ?>">
                                   <i class="bi bi-camera-reels me-1"></i>Assistir
                                 </a>
-                              <?php elseif ($tipoMaterial === 'drive'): ?>
+                              <?php elseif (in_array($tipoMaterial, ['drive', 'excel', 'doc'], true)): ?>
                                 <a class="btn btn-sm btn-outline-primary" href="/admin/turmas/ver-drive?id=<?= (int) ($mat['id'] ?? 0) ?>">
                                   <i class="bi bi-google me-1"></i>Visualizar
                                 </a>

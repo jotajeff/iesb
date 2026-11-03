@@ -12,6 +12,8 @@ final class MaterialHelper
             'video' => 'bi-camera-reels',
             'drive' => 'bi-google',
             'pdf' => 'bi-file-earmark-pdf',
+            'excel' => 'bi-file-earmark-excel',
+            'doc' => 'bi-file-earmark-word',
             'arquivo' => 'bi-file-earmark',
             'link' => 'bi-link-45deg',
             'imagem' => 'bi-image',

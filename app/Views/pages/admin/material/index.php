@@ -2,6 +2,14 @@
   $materiaisView = is_array($materiais ?? null) ? $materiais : [];
   $turmasView = is_array($turmas ?? null) ? $turmas : [];
   $idTurma = (int) ($idTurma ?? 0);
+  $badgesTipo = [
+    'video' => ['cor' => 'bg-danger', 'icone' => 'bi-camera-reels'],
+    'drive' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
+    'pdf' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
+    'excel' => ['cor' => 'bg-success', 'icone' => 'bi-file-earmark-excel'],
+    'doc' => ['cor' => 'bg-info text-dark', 'icone' => 'bi-file-earmark-word'],
+    'link' => ['cor' => 'bg-success', 'icone' => 'bi-link-45deg'],
+  ];
 
   $grupos = [];
   if ($idTurma > 0) {
@@ -79,14 +87,15 @@
                 <?php foreach ($itens as $mat): ?>
                   <?php
                     $tipoMaterial = (string) ($mat['tipo'] ?? '');
+                    $badgeMaterial = $badgesTipo[$tipoMaterial] ?? ['cor' => 'bg-secondary', 'icone' => 'bi-file-earmark'];
                     $rawData = (string) ($mat['created_at'] ?? '');
                     $dtMaterial = $rawData !== '' ? date_create($rawData) : false;
                   ?>
                   <tr>
                     <td><?= (int) ($mat['id'] ?? 0) ?></td>
                     <td>
-                      <span class="badge <?= $tipoMaterial === 'video' ? 'bg-danger' : ($tipoMaterial === 'drive' ? 'bg-primary' : ($tipoMaterial === 'link' ? 'bg-success' : 'bg-secondary')) ?>">
-                        <i class="bi <?= $tipoMaterial === 'video' ? 'bi-camera-reels' : ($tipoMaterial === 'link' ? 'bi-link-45deg' : 'bi-google') ?> me-1"></i>
+                      <span class="badge <?= $badgeMaterial['cor'] ?>">
+                        <i class="bi <?= $badgeMaterial['icone'] ?> me-1"></i>
                         <?= htmlspecialchars($tipoMaterial ?: '-', ENT_QUOTES, 'UTF-8') ?>
                       </span>
                     </td>

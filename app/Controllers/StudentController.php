@@ -1129,6 +1129,86 @@ $stmt = $pdo->prepare(
         ], 'aluno');
     }
 
+    public function confirmarVisualizacaoVideo(): void
+    {
+        if (!$this->auth->checkRole('aluno')) {
+            Session::setFlash('flash', 'Faça login como aluno.');
+            $this->redirect('/aluno/login');
+        }
+
+        $user = Session::get('user');
+        $alunoId = (int) ($user['id'] ?? 0);
+        $materialId = (int) $this->input('id_material', 0);
+
+        if ($alunoId <= 0 || $materialId <= 0) {
+            Session::setFlash('flash', 'Dados inválidos para registrar a visualização.');
+            $this->redirect('/aluno/cursos');
+            return;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof \PDO) {
+            Session::setFlash('flash', 'Erro ao registrar a visualização.');
+            $this->redirect('/aluno/video?id=' . $materialId);
+            return;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT id, titulo FROM material WHERE id = :id AND tipo = :tipo AND ativo = 1 LIMIT 1'
+            );
+            $stmt->bindValue(':id', $materialId, \PDO::PARAM_INT);
+            $stmt->bindValue(':tipo', 'video', \PDO::PARAM_STR);
+            $stmt->execute();
+            $material = $stmt->fetch() ?: null;
+
+            if (!$material) {
+                Session::setFlash('flash', 'Vídeo não encontrado.');
+                $this->redirect('/aluno/cursos');
+                return;
+            }
+
+            $ip = substr((string) ($_SERVER['REMOTE_ADDR'] ?? '127.0.0.1'), 0, 50);
+
+            $stmt = $pdo->prepare(
+                'SELECT id FROM visualizacao'
+                . ' WHERE id_material = :id_material AND id_aluno = :id_aluno AND ativo = 1 LIMIT 1'
+            );
+            $stmt->bindValue(':id_material', $materialId, \PDO::PARAM_INT);
+            $stmt->bindValue(':id_aluno', $alunoId, \PDO::PARAM_INT);
+            $stmt->execute();
+            $jaVisualizado = $stmt->fetchColumn() !== false;
+
+            if (!$jaVisualizado) {
+                $stmt = $pdo->prepare(
+                    'INSERT INTO visualizacao (id_material, id_aluno, ativo, ip, created_at)'
+                    . ' VALUES (:id_material, :id_aluno, 1, :ip, NOW())'
+                );
+                $stmt->bindValue(':id_material', $materialId, \PDO::PARAM_INT);
+                $stmt->bindValue(':id_aluno', $alunoId, \PDO::PARAM_INT);
+                $stmt->bindValue(':ip', $ip, \PDO::PARAM_STR);
+                $stmt->execute();
+            }
+
+            if (!$jaVisualizado) {
+                $this->logService->log(
+                    'confirmar',
+                    'video',
+                    $materialId,
+                    "Aluno marcou o vídeo como visto: {$material['titulo']}"
+                );
+                Session::setFlash('flash', 'Vídeo marcado como visto. Registro acadêmico confirmado.');
+            } else {
+                Session::setFlash('flash', 'Você já marcou este vídeo como visto.');
+            }
+        } catch (\Throwable $e) {
+            error_log('[STUDENT VIDEO] Erro ao confirmar visualização: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao registrar a visualização.');
+        }
+
+        $this->redirect('/aluno/video?id=' . $materialId);
+    }
+
     public function drive(): void
     {
         if (!$this->auth->checkRole('aluno')) {

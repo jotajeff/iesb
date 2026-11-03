@@ -9,6 +9,9 @@
   $badgesTipo = [
     'video' => ['cor' => 'bg-danger', 'icone' => 'bi-camera-reels'],
     'drive' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
+    'pdf' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
+    'excel' => ['cor' => 'bg-success', 'icone' => 'bi-file-earmark-excel'],
+    'doc' => ['cor' => 'bg-info text-dark', 'icone' => 'bi-file-earmark-word'],
     'link' => ['cor' => 'bg-success', 'icone' => 'bi-link-45deg'],
   ];
   $badgeAtual = $badgesTipo[$tipoMaterial] ?? ['cor' => 'bg-secondary', 'icone' => 'bi-file-earmark'];

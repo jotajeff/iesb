@@ -4,9 +4,29 @@
   $badgesTipo = [
     'video' => ['cor' => 'bg-danger', 'icone' => 'bi-camera-reels'],
     'pdf' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
+    'excel' => ['cor' => 'bg-success', 'icone' => 'bi-file-earmark-excel'],
+    'doc' => ['cor' => 'bg-info text-dark', 'icone' => 'bi-file-earmark-word'],
     'link' => ['cor' => 'bg-success', 'icone' => 'bi-link-45deg'],
   ];
   $badgeAtual = $badgesTipo[$tipoSelecionado] ?? $badgesTipo['pdf'];
+  $arquivosTipo = [
+    'pdf' => [
+      'label' => 'Arquivo PDF',
+      'accept' => 'application/pdf',
+      'ajuda' => 'Apenas PDF, até 20MB. O arquivo será enviado ao Google Drive.',
+    ],
+    'excel' => [
+      'label' => 'Planilha Excel',
+      'accept' => '.xls,.xlsx,.csv,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/csv',
+      'ajuda' => 'Formatos XLS, XLSX ou CSV, até 20MB. O arquivo será enviado ao Google Drive.',
+    ],
+    'doc' => [
+      'label' => 'Documento Word',
+      'accept' => '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'ajuda' => 'Formatos DOC ou DOCX, até 20MB. O arquivo será enviado ao Google Drive.',
+    ],
+  ];
+  $arquivoAtual = $arquivosTipo[$tipoSelecionado] ?? null;
 ?>
 
 <section class="container py-4">
@@ -19,7 +39,7 @@
     <?php if ($tipoSelecionado === ''): ?>
       <p class="text-muted mb-3">Escolha o tipo de material que deseja publicar:</p>
       <div class="row g-3">
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-4">
           <a href="/admin/material/novo?tipo=video" class="text-decoration-none d-block h-100">
             <div class="card border shadow-sm h-100">
               <div class="card-body text-center">
@@ -30,7 +50,7 @@
             </div>
           </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-4">
           <a href="/admin/material/novo?tipo=pdf" class="text-decoration-none d-block h-100">
             <div class="card border shadow-sm h-100">
               <div class="card-body text-center">
@@ -41,7 +61,29 @@
             </div>
           </a>
         </div>
-        <div class="col-md-4">
+        <div class="col-md-6 col-lg-4">
+          <a href="/admin/material/novo?tipo=excel" class="text-decoration-none d-block h-100">
+            <div class="card border shadow-sm h-100">
+              <div class="card-body text-center">
+                <i class="bi bi-file-earmark-excel fs-1 text-success"></i>
+                <h5 class="mt-2 mb-1">Excel</h5>
+                <p class="text-muted small mb-0">Envie uma planilha XLS, XLSX ou CSV (armazenada no Google Drive).</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+          <a href="/admin/material/novo?tipo=doc" class="text-decoration-none d-block h-100">
+            <div class="card border shadow-sm h-100">
+              <div class="card-body text-center">
+                <i class="bi bi-file-earmark-word fs-1 text-info"></i>
+                <h5 class="mt-2 mb-1">DOC</h5>
+                <p class="text-muted small mb-0">Envie um documento Word DOC ou DOCX (armazenado no Google Drive).</p>
+              </div>
+            </div>
+          </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
           <a href="/admin/material/novo?tipo=link" class="text-decoration-none d-block h-100">
             <div class="card border shadow-sm h-100">
               <div class="card-body text-center">
@@ -112,11 +154,11 @@
             <input type="text" class="form-control" name="link" required maxlength="1000" placeholder="https://exemplo.com/...">
             <div class="form-text">Informe a URL completa (começando com http:// ou https://). O link será aberto em nova aba pelo aluno.</div>
           </div>
-        <?php else: ?>
+        <?php elseif ($arquivoAtual !== null): ?>
           <div class="col-12">
-            <label class="form-label">Arquivo PDF <span class="text-danger">*</span></label>
-            <input type="file" class="form-control" name="arquivo" accept="application/pdf" required>
-            <div class="form-text">Apenas PDF, até 20MB. O arquivo será enviado ao Google Drive.</div>
+            <label class="form-label"><?= htmlspecialchars($arquivoAtual['label'], ENT_QUOTES, 'UTF-8') ?> <span class="text-danger">*</span></label>
+            <input type="file" class="form-control" name="arquivo" accept="<?= htmlspecialchars($arquivoAtual['accept'], ENT_QUOTES, 'UTF-8') ?>" required>
+            <div class="form-text"><?= htmlspecialchars($arquivoAtual['ajuda'], ENT_QUOTES, 'UTF-8') ?></div>
           </div>
         <?php endif; ?>
 
@@ -151,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   form.addEventListener('submit', function (event) {
     var tipoInput = form.querySelector('input[name="tipo"]');
-    if (!tipoInput || tipoInput.value !== 'pdf') return;
+    if (!tipoInput || ['pdf', 'excel', 'doc'].indexOf(tipoInput.value) === -1) return;
 
     event.preventDefault();
     bar.style.width = '0%';

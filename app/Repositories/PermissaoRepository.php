@@ -11,12 +11,55 @@ final class PermissaoRepository
 {
     public function listarModulos(): array
     {
-        return $this->fetchAll('SELECT id, nome, rota, icone, ordem, ativo FROM modulo ORDER BY ordem ASC, nome ASC');
+        $this->ensureModuloRecursosAula();
+
+        return $this->fetchAll(
+            'SELECT id, nome, rota, icone, ordem, ativo, menu_grupo, menu_icone,
+                    menu_grupo_ordem, menu_ordem
+             FROM modulo ORDER BY menu_grupo_ordem ASC, menu_ordem ASC, ordem ASC, nome ASC'
+        );
+    }
+
+    private function ensureModuloRecursosAula(): void
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return;
+        }
+
+        try {
+            $stmt = $pdo->prepare('SELECT id FROM modulo WHERE rota = :rota LIMIT 1');
+            $stmt->bindValue(':rota', '/admin/logs/recursos', PDO::PARAM_STR);
+            $stmt->execute();
+            if ($stmt->fetchColumn() !== false) {
+                return;
+            }
+
+            $insert = $pdo->prepare(
+                'INSERT INTO modulo (nome, rota, icone, menu_grupo, menu_icone, menu_grupo_ordem, menu_ordem, ativo)
+                 VALUES (:nome, :rota, :icone, :menu_grupo, :menu_icone, :menu_grupo_ordem, :menu_ordem, 1)'
+            );
+            $insert->bindValue(':nome', 'Recursos de aula', PDO::PARAM_STR);
+            $insert->bindValue(':rota', '/admin/logs/recursos', PDO::PARAM_STR);
+            $insert->bindValue(':icone', 'bi-collection-play', PDO::PARAM_STR);
+            $insert->bindValue(':menu_grupo', 'Acesso', PDO::PARAM_STR);
+            $insert->bindValue(':menu_icone', 'bi-shield-lock', PDO::PARAM_STR);
+            $insert->bindValue(':menu_grupo_ordem', 50, PDO::PARAM_INT);
+            $insert->bindValue(':menu_ordem', 35, PDO::PARAM_INT);
+            $insert->execute();
+        } catch (\Throwable $e) {
+            error_log('[PERMISSOES] Erro ao garantir módulo Recursos de aula: ' . $e->getMessage());
+        }
     }
 
     public function buscarModulo(int $id): ?array
     {
-        return $this->fetchOne('SELECT id, nome, rota, icone, ordem, ativo FROM modulo WHERE id = :id LIMIT 1', [':id' => $id]);
+        return $this->fetchOne(
+            'SELECT id, nome, rota, icone, ordem, ativo, menu_grupo, menu_icone,
+                    menu_grupo_ordem, menu_ordem
+             FROM modulo WHERE id = :id LIMIT 1',
+            [':id' => $id]
+        );
     }
 
     public function salvarModulo(array $dados): int
@@ -29,12 +72,17 @@ final class PermissaoRepository
         try {
             if ((int) ($dados['id'] ?? 0) > 0) {
                 $stmt = $pdo->prepare(
-                    'UPDATE modulo SET nome = :nome, rota = :rota, icone = :icone, ordem = :ordem, ativo = :ativo WHERE id = :id'
+                    'UPDATE modulo SET nome = :nome, rota = :rota, icone = :icone, ordem = :ordem,
+                     ativo = :ativo, menu_grupo = :menu_grupo, menu_icone = :menu_icone,
+                     menu_grupo_ordem = :menu_grupo_ordem, menu_ordem = :menu_ordem WHERE id = :id'
                 );
                 $stmt->bindValue(':id', (int) $dados['id'], PDO::PARAM_INT);
             } else {
                 $stmt = $pdo->prepare(
-                    'INSERT INTO modulo (nome, rota, icone, ordem, ativo) VALUES (:nome, :rota, :icone, :ordem, :ativo)'
+                    'INSERT INTO modulo (nome, rota, icone, ordem, ativo, menu_grupo, menu_icone,
+                     menu_grupo_ordem, menu_ordem)
+                     VALUES (:nome, :rota, :icone, :ordem, :ativo, :menu_grupo, :menu_icone,
+                     :menu_grupo_ordem, :menu_ordem)'
                 );
             }
 
@@ -43,6 +91,10 @@ final class PermissaoRepository
             $stmt->bindValue(':icone', ($dados['icone'] ?? '') !== '' ? $dados['icone'] : null, ($dados['icone'] ?? '') !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
             $stmt->bindValue(':ordem', (int) ($dados['ordem'] ?? 0), PDO::PARAM_INT);
             $stmt->bindValue(':ativo', (int) ($dados['ativo'] ?? 1) === 1 ? 1 : 0, PDO::PARAM_INT);
+            $stmt->bindValue(':menu_grupo', ($dados['menu_grupo'] ?? '') !== '' ? $dados['menu_grupo'] : null, ($dados['menu_grupo'] ?? '') !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
+            $stmt->bindValue(':menu_icone', ($dados['menu_icone'] ?? '') !== '' ? $dados['menu_icone'] : null, ($dados['menu_icone'] ?? '') !== '' ? PDO::PARAM_STR : PDO::PARAM_NULL);
+            $stmt->bindValue(':menu_grupo_ordem', (int) ($dados['menu_grupo_ordem'] ?? 0), PDO::PARAM_INT);
+            $stmt->bindValue(':menu_ordem', (int) ($dados['menu_ordem'] ?? 0), PDO::PARAM_INT);
             $stmt->execute();
 
             return (int) ($dados['id'] ?? 0) > 0 ? (int) $dados['id'] : (int) $pdo->lastInsertId();

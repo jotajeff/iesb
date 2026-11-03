@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost:3306
--- Tempo de geração: 29/10/2026 às 15:20
+-- Tempo de geração: 03/11/2026 às 16:16
 -- Versão do servidor: 5.7.44-48
 -- Versão do PHP: 8.4.27
 
@@ -755,6 +755,10 @@ CREATE TABLE `modulo` (
   `nome` varchar(80) COLLATE utf8_unicode_ci NOT NULL,
   `rota` varchar(120) COLLATE utf8_unicode_ci DEFAULT NULL,
   `icone` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `menu_grupo` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `menu_icone` varchar(80) COLLATE utf8_unicode_ci DEFAULT NULL,
+  `menu_grupo_ordem` int(11) NOT NULL DEFAULT '0',
+  `menu_ordem` int(11) NOT NULL DEFAULT '0',
   `ordem` int(11) DEFAULT '0',
   `ativo` tinyint(1) NOT NULL DEFAULT '1',
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
@@ -1256,6 +1260,21 @@ CREATE TABLE `visitas_paginas` (
   `created_at` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Estrutura para tabela `visualizacao`
+--
+
+CREATE TABLE `visualizacao` (
+  `id` int(11) NOT NULL,
+  `id_material` int(11) NOT NULL,
+  `id_aluno` int(11) NOT NULL,
+  `ativo` tinyint(1) NOT NULL,
+  `ip` varchar(50) COLLATE utf8_unicode_ci NOT NULL,
+  `created_at` datetime NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
 
 --
 -- Índices para tabelas despejadas
@@ -1764,6 +1783,12 @@ ALTER TABLE `visitas_paginas`
   ADD KEY `idx_visitas_ip` (`ip`);
 
 --
+-- Índices de tabela `visualizacao`
+--
+ALTER TABLE `visualizacao`
+  ADD PRIMARY KEY (`id`);
+
+--
 -- AUTO_INCREMENT para tabelas despejadas
 --
 
@@ -2156,6 +2181,12 @@ ALTER TABLE `usuario_liga_funcao`
 --
 ALTER TABLE `visitas_paginas`
   MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT de tabela `visualizacao`
+--
+ALTER TABLE `visualizacao`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- Restrições para tabelas despejadas

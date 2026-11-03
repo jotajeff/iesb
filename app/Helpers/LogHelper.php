@@ -18,6 +18,7 @@ final class LogHelper
             'update', 'editar', 'alterar' => ['icon' => 'bi-pencil-square', 'color' => 'text-warning-emphasis'],
             'delete', 'remover', 'excluir' => ['icon' => 'bi-trash', 'color' => 'text-danger'],
             'view', 'visualizar' => ['icon' => 'bi-eye', 'color' => 'text-info'],
+            'confirmar', 'confirmacao', 'confirmado' => ['icon' => 'bi-check-circle', 'color' => 'text-success'],
             'matricular', 'matricula' => ['icon' => 'bi-journal-plus', 'color' => 'text-success'],
             'restaurar_senha', 'restaurar senha' => ['icon' => 'bi-key', 'color' => 'text-warning'],
             'trocar_turma', 'troca' => ['icon' => 'bi-arrow-left-right', 'color' => 'text-info-emphasis'],

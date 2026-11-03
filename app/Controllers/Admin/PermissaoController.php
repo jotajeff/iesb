@@ -70,6 +70,10 @@ final class PermissaoController extends Controller
             'icone' => trim((string) $this->input('icone', '')),
             'ordem' => (int) $this->input('ordem', 0),
             'ativo' => (int) $this->input('ativo', 1),
+            'menu_grupo' => trim((string) $this->input('menu_grupo', '')),
+            'menu_icone' => trim((string) $this->input('menu_icone', '')),
+            'menu_grupo_ordem' => (int) $this->input('menu_grupo_ordem', 0),
+            'menu_ordem' => (int) $this->input('menu_ordem', 0),
         ]);
 
         if ($moduloId <= 0) {

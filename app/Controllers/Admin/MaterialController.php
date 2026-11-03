@@ -9,12 +9,21 @@ use App\Core\Database;
 use App\Repositories\LinkRepository;
 use App\Repositories\StorageDriveRepository;
 use App\Services\LogService;
+use App\Services\AuthService;
 use App\Services\Storage\StorageService;
 use App\Support\Session;
 use PDO;
 
 final class MaterialController extends Controller
 {
+    private const TIPOS = ['video', 'pdf', 'excel', 'doc', 'link'];
+
+    private const EXTENSOES_ARQUIVO = [
+        'pdf' => ['pdf'],
+        'excel' => ['xls', 'xlsx', 'csv'],
+        'doc' => ['doc', 'docx'],
+    ];
+
     private LogService $logService;
 
     public function __construct()
@@ -88,7 +97,7 @@ final class MaterialController extends Controller
         }
 
         $tipo = trim((string) ($_GET['tipo'] ?? ''));
-        if ($tipo !== '' && !in_array($tipo, ['video', 'pdf', 'link'], true)) {
+        if ($tipo !== '' && !in_array($tipo, self::TIPOS, true)) {
             $tipo = '';
         }
 
@@ -113,13 +122,19 @@ final class MaterialController extends Controller
         $titulo = trim((string) $this->input('titulo', ''));
         $extra = (int) $this->input('extra', 0) === 1 ? 1 : 0;
 
-        if (!in_array($tipo, ['video', 'pdf', 'link'], true) || $idTurma <= 0 || $titulo === '') {
+        if (!in_array($tipo, self::TIPOS, true) || $idTurma <= 0 || $titulo === '') {
             Session::setFlash('flash', 'Selecione o tipo, a turma e informe o título.');
             $this->redirect('/admin/material/novo');
             return;
         }
 
         $idDisciplina = $idDisciplina > 0 ? $idDisciplina : 0;
+
+        if (!$this->podeUsarTurma($idTurma)) {
+            Session::setFlash('flash', 'Você só pode publicar material nas turmas sob sua coordenação.');
+            $this->redirect('/admin/material/novo');
+            return;
+        }
 
         try {
             if ($tipo === 'link') {
@@ -160,35 +175,39 @@ final class MaterialController extends Controller
                 return;
             }
 
+            $extensoes = self::EXTENSOES_ARQUIVO[$tipo] ?? [];
+            $rotuloTipo = $this->rotuloArquivo($tipo);
+
             $file = $_FILES['arquivo'] ?? null;
             if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
-                Session::setFlash('flash', 'Selecione um arquivo PDF para enviar.');
-                $this->redirect('/admin/material/novo?tipo=pdf');
+                Session::setFlash('flash', "Selecione um arquivo {$rotuloTipo} para enviar.");
+                $this->redirect('/admin/material/novo?tipo=' . $tipo);
                 return;
             }
 
             $originalName = (string) ($file['name'] ?? '');
             $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
-            if ($extension !== 'pdf') {
-                Session::setFlash('flash', 'Apenas arquivos PDF são permitidos.');
-                $this->redirect('/admin/material/novo?tipo=pdf');
+            if (!in_array($extension, $extensoes, true)) {
+                Session::setFlash('flash', 'Formato inválido. Envie: ' . implode(', ', array_map('strtoupper', $extensoes)) . '.');
+                $this->redirect('/admin/material/novo?tipo=' . $tipo);
                 return;
             }
             if ((int) ($file['size'] ?? 0) > 20 * 1024 * 1024) {
                 Session::setFlash('flash', 'O arquivo deve ter no máximo 20MB.');
-                $this->redirect('/admin/material/novo?tipo=pdf');
+                $this->redirect('/admin/material/novo?tipo=' . $tipo);
                 return;
             }
 
-            $link = $this->uploadPdfDrive($file, $originalName, $idTurma);
+            $link = $this->uploadArquivoDrive($file, $originalName, $idTurma, $tipo);
             if ($link === '') {
-                $this->redirect('/admin/material/novo?tipo=pdf');
+                $this->redirect('/admin/material/novo?tipo=' . $tipo);
                 return;
             }
 
-            $id = $this->inserirMaterial('drive', $link, $idTurma, $titulo, $idDisciplina, $extra);
+            $tipoBanco = $tipo === 'pdf' ? 'drive' : $tipo;
+            $id = $this->inserirMaterial($tipoBanco, $link, $idTurma, $titulo, $idDisciplina, $extra);
             if ($id > 0) {
-                $this->logService->log('criar', 'drive', $id, "Material PDF publicado na turma $idTurma: $titulo");
+                $this->logService->log('criar', $tipoBanco, $id, "Material {$rotuloTipo} publicado na turma $idTurma: $titulo");
                 Session::setFlash('flash', 'Material publicado com sucesso.');
             } else {
                 Session::setFlash('flash', 'Erro ao publicar o material.');
@@ -289,6 +308,12 @@ final class MaterialController extends Controller
             return;
         }
 
+        if (!$this->podeUsarTurma((int) ($material['id_fk'] ?? 0))) {
+            Session::setFlash('flash', 'Você só pode editar material nas turmas sob sua coordenação.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
         if ($tabela === 'link') {
             $material['tipo'] = 'link';
         }
@@ -319,6 +344,12 @@ final class MaterialController extends Controller
         if ($id <= 0 || $idTurma <= 0 || $titulo === '') {
             Session::setFlash('flash', 'Dados inválidos.');
             $this->redirect('/admin/material/editar?id=' . $id);
+            return;
+        }
+
+        if (!$this->podeUsarTurma($idTurma)) {
+            Session::setFlash('flash', 'Você só pode editar material nas turmas sob sua coordenação.');
+            $this->redirect('/admin/material');
             return;
         }
 
@@ -439,7 +470,7 @@ final class MaterialController extends Controller
         }
     }
 
-    private function uploadPdfDrive(array $file, string $originalName, int $idTurma): string
+    private function uploadArquivoDrive(array $file, string $originalName, int $idTurma, string $tipo): string
     {
         try {
             $storage = new StorageService();
@@ -477,16 +508,26 @@ final class MaterialController extends Controller
             $user = Session::get('user');
             $usuarioId = (int) ($user['id'] ?? 0);
             $timestamp = date('YmdHis');
-            $nomeDrive = sprintf('MAT_%s_%s_%s.pdf', $idTurma, $usuarioId, $timestamp);
+            $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+            $nomeDrive = sprintf('MAT_%s_%s_%s_%s.%s', strtoupper($tipo), $idTurma, $usuarioId, $timestamp, $extension);
 
             $resultado = $storage->uploadFile($file, $folderId, $nomeDrive);
 
             return (string) ($resultado['link'] ?? '');
         } catch (\Throwable $e) {
-            error_log('[MATERIAL] Erro no upload do PDF: ' . $e->getMessage());
-            Session::setFlash('flash', 'Erro ao enviar o PDF para o Drive.');
+            error_log('[MATERIAL] Erro no upload de arquivo: ' . $e->getMessage());
+            Session::setFlash('flash', 'Erro ao enviar o arquivo para o Drive.');
             return '';
         }
+    }
+
+    private function rotuloArquivo(string $tipo): string
+    {
+        return match ($tipo) {
+            'excel' => 'Excel',
+            'doc' => 'DOC',
+            default => 'PDF',
+        };
     }
 
     /**
@@ -500,18 +541,58 @@ final class MaterialController extends Controller
         }
 
         try {
-            $stmt = $pdo->query(
-                'SELECT t.id, t.nome AS turma_nome, c.nome AS curso_nome'
+            $auth = new AuthService();
+            $user = Session::get('user');
+            $coordenadorRestrito = $auth->checkRole('coordenador') && !$auth->isAdmin();
+            $sql = 'SELECT DISTINCT t.id, t.nome AS turma_nome, c.nome AS curso_nome'
                 . ' FROM turmas t'
-                . ' LEFT JOIN cursos c ON c.id = t.id_curso'
-                . ' WHERE t.ativo = 1'
-                . ' ORDER BY c.nome ASC, t.nome ASC'
-            );
+                . ' LEFT JOIN cursos c ON c.id = t.id_curso';
+            if ($coordenadorRestrito) {
+                $sql .= ' INNER JOIN turma_coordenador tc ON tc.id_turma = t.id AND tc.id_usuario = :id_usuario';
+            }
+            $sql .= ' WHERE t.ativo = 1 ORDER BY c.nome ASC, t.nome ASC';
+            $stmt = $pdo->prepare($sql);
+            if ($coordenadorRestrito) {
+                $stmt->bindValue(':id_usuario', (int) ($user['id'] ?? 0), PDO::PARAM_INT);
+            }
+            $stmt->execute();
             $rows = $stmt->fetchAll();
             return is_array($rows) ? $rows : [];
         } catch (\Throwable $e) {
             error_log('[MATERIAL] Erro em turmas: ' . $e->getMessage());
             return [];
+        }
+    }
+
+    private function podeUsarTurma(int $idTurma): bool
+    {
+        if ($idTurma <= 0) {
+            return false;
+        }
+
+        $auth = new AuthService();
+        if (!$auth->checkRole('coordenador') || $auth->isAdmin()) {
+            return true;
+        }
+
+        $user = Session::get('user');
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO || !is_array($user) || (int) ($user['id'] ?? 0) <= 0) {
+            return false;
+        }
+
+        try {
+            $stmt = $pdo->prepare(
+                'SELECT 1 FROM turma_coordenador
+                 WHERE id_turma = :id_turma AND id_usuario = :id_usuario LIMIT 1'
+            );
+            $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
+            $stmt->bindValue(':id_usuario', (int) $user['id'], PDO::PARAM_INT);
+            $stmt->execute();
+            return (bool) $stmt->fetchColumn();
+        } catch (\Throwable $e) {
+            error_log('[MATERIAL] Erro ao validar turma do coordenador: ' . $e->getMessage());
+            return false;
         }
     }
 

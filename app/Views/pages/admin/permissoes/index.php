@@ -27,6 +27,10 @@ $permissoes = is_array($permissoes ?? null) ? $permissoes : [];
             <div class="col-md-6"><label class="form-label">Ícone Bootstrap</label><input class="form-control" name="icone" placeholder="bi bi-grid" value="<?= htmlspecialchars((string) ($moduloEdicao['icone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
             <div class="col-md-3"><label class="form-label">Ordem</label><input class="form-control" type="number" name="ordem" value="<?= (int) ($moduloEdicao['ordem'] ?? 0) ?>"></div>
             <div class="col-md-3"><label class="form-label">Ativo</label><select class="form-select" name="ativo"><option value="1" <?= (int) ($moduloEdicao['ativo'] ?? 1) === 1 ? 'selected' : '' ?>>Sim</option><option value="0" <?= (int) ($moduloEdicao['ativo'] ?? 1) === 0 ? 'selected' : '' ?>>Não</option></select></div>
+            <div class="col-md-5"><label class="form-label">Grupo do menu</label><input class="form-control" name="menu_grupo" placeholder="Ex.: Acadêmico" value="<?= htmlspecialchars((string) ($moduloEdicao['menu_grupo'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
+            <div class="col-md-3"><label class="form-label">Ícone do grupo</label><input class="form-control" name="menu_icone" placeholder="bi-book" value="<?= htmlspecialchars((string) ($moduloEdicao['menu_icone'] ?? ''), ENT_QUOTES, 'UTF-8') ?>"></div>
+            <div class="col-md-2"><label class="form-label">Ordem grupo</label><input class="form-control" type="number" name="menu_grupo_ordem" value="<?= (int) ($moduloEdicao['menu_grupo_ordem'] ?? 0) ?>"></div>
+            <div class="col-md-2"><label class="form-label">Ordem item</label><input class="form-control" type="number" name="menu_ordem" value="<?= (int) ($moduloEdicao['menu_ordem'] ?? 0) ?>"></div>
             <div class="col-12"><button class="btn btn-success" type="submit"><i class="bi bi-check-lg me-1"></i>Salvar módulo</button></div>
           </form>
           <hr>

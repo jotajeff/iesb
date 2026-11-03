@@ -787,7 +787,7 @@ final class TurmaController extends Controller
         }
 
         $materialId = (int) ($_GET['id'] ?? 0);
-        $material = $this->buscarMaterial($materialId, 'drive');
+        $material = $this->buscarMaterial($materialId, ['drive', 'excel', 'doc']);
 
         if (!$material) {
             Session::setFlash('flash', 'Documento não encontrado.');
@@ -802,22 +802,22 @@ final class TurmaController extends Controller
         ], 'admin');
     }
 
-    private function buscarMaterial(int $id, string $tipo): ?array
+    private function buscarMaterial(int $id, string|array $tipo): ?array
     {
         $pdo = Database::connection();
         if (!$pdo instanceof \PDO) {
             return null;
         }
 
+        $tipos = is_array($tipo) ? $tipo : [$tipo];
+        $placeholders = implode(',', array_fill(0, count($tipos), '?'));
+
         try {
             $stmt = $pdo->prepare(
                 'SELECT id, titulo, link, tipo, id_fk, created_at'
-                . ' FROM material WHERE id = :id AND tipo = :tipo AND ativo = :ativo'
+                . " FROM material WHERE id = ? AND tipo IN ($placeholders) AND ativo = ?"
             );
-            $stmt->bindValue(':id', $id, \PDO::PARAM_INT);
-            $stmt->bindValue(':tipo', $tipo, \PDO::PARAM_STR);
-            $stmt->bindValue(':ativo', 1, \PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->execute([$id, ...$tipos, 1]);
             $row = $stmt->fetch();
             return $row ?: null;
         } catch (\Throwable) {

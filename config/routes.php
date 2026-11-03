@@ -26,6 +26,7 @@ use App\Controllers\Admin\ChamadaController;
 use App\Controllers\Admin\MaterialController;
 use App\Controllers\Admin\DocumentoController;
 use App\Controllers\Admin\ProtocoloController as AdminProtocoloController;
+use App\Controllers\Admin\RecursoAulaController;
 use App\Controllers\AuthController;
 use App\Controllers\HomeController;
 use App\Controllers\PageController;
@@ -68,6 +69,9 @@ return static function (Router $router): void {
     $router->get('/admin', [DashboardController::class, 'index']);
     $router->get('/admin/dashboard', [DashboardController::class, 'index']);
     $router->get('/admin/logs', [DashboardController::class, 'logs']);
+    $router->get('/admin/logs/recursos', [RecursoAulaController::class, 'index']);
+    $router->get('/admin/logs/recursos/aluno', [RecursoAulaController::class, 'aluno']);
+    $router->get('/admin/logs/recursos/ranking', [RecursoAulaController::class, 'ranking']);
     $router->get('/admin/dbase', [DashboardController::class, 'dbase']);
     $router->get('/admin/permissoes', [PermissaoController::class, 'index']);
     $router->post('/admin/permissoes/modulo/salvar', [PermissaoController::class, 'salvarModulo']);
@@ -358,6 +362,7 @@ return static function (Router $router): void {
     $router->get('/aluno/show', [StudentController::class, 'show']);
     $router->get('/aluno/professor', [StudentController::class, 'professor']);
     $router->get('/aluno/video', [StudentController::class, 'video']);
+    $router->post('/aluno/video/confirmar', [StudentController::class, 'confirmarVisualizacaoVideo']);
     $router->get('/aluno/drive', [StudentController::class, 'drive']);
     $router->get('/aluno/detalhes', [StudentController::class, 'detalhes']);
     $router->post('/aluno/matricular-curso', [StudentController::class, 'enrollCurso']);

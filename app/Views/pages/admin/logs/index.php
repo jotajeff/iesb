@@ -19,9 +19,14 @@
     ?>
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h4 class="mb-0"><i class="bi bi-clock-history"></i> &nbsp; Logs</h4>
-      <?php if (!$isAdmin): ?>
-        <span class="badge bg-secondary">Exibindo apenas seus registros</span>
-      <?php endif; ?>
+      <div class="d-flex flex-wrap align-items-center gap-2">
+        <a class="btn btn-outline-primary btn-sm" href="/admin/logs/recursos">
+          <i class="bi bi-collection-play me-1"></i>Recursos de aula
+        </a>
+        <?php if (!$isAdmin): ?>
+          <span class="badge bg-secondary">Exibindo apenas seus registros</span>
+        <?php endif; ?>
+      </div>
     </div>
 
     <?php if ($isAdmin): ?>
