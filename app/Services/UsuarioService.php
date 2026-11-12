@@ -54,6 +54,11 @@ final class UsuarioService
         return $id;
     }
 
+    public function emailEmUso(string $email, int $ignoreId = 0): bool
+    {
+        return $this->repository->emailEmUso($email, $ignoreId);
+    }
+
     public function atualizarUsuario(int $id, string $senha = '', string $ativo = '1', string $nome = '', string $email = '', string $tipo = '', string $telefone = '', string $titulacao = ''): void
     {
         $payload = [];

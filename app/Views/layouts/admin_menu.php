@@ -1,7 +1,7 @@
 <?php if (!empty($authUser)): ?>
   <?php
   $auth = new \App\Services\AuthService();
-  $can = fn(string $route): bool => $auth->hasPermission($route, 'consultar');
+  $can = fn(string $route): bool => $auth->hasExactPermission($route, 'consultar');
   $modulosMenu = (new \App\Repositories\PermissaoRepository())->listarModulos();
   $groups = [];
   foreach ($modulosMenu as $modulo) {

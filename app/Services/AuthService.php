@@ -160,6 +160,32 @@ final class AuthService
     }
 
     /**
+     * Exige permissão explícita no módulo, sem herdar permissões de rotas pai.
+     * Usado em módulos que compartilham prefixo com outro módulo, como
+     * /admin/logs/recursos em relação a /admin/logs.
+     */
+    public function hasExactPermission(string $route, string $action = 'consultar'): bool
+    {
+        $user = Session::get('user');
+        if (!is_array($user) || !$this->isStaff()) {
+            return false;
+        }
+
+        if ($this->isAdmin()) {
+            return true;
+        }
+
+        $route = '/' . trim(parse_url($route, PHP_URL_PATH) ?: $route, '/');
+        $permissions = (array) ($user['permissions'] ?? []);
+
+        if ($route === '/admin' && empty($permissions['/admin']['consultar'])) {
+            $route = '/admin/dashboard';
+        }
+
+        return !empty($permissions[$route][$action]);
+    }
+
+    /**
      * Verifica apenas email + senha (sem exigir tipo/role).
      * Retorna os dados do usuário se as credenciais estiverem corretas, ou null.
      */

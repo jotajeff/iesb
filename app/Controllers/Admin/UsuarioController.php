@@ -77,28 +77,17 @@ final class UsuarioController extends Controller
 
         $authUser = $this->authUser();
         $currentRole = (string) ($authUser['role'] ?? $authUser['type'] ?? '');
-        $isAdmin = $currentRole === 'admin';
-        $isOperador = $currentRole === 'operador';
+        $tipo = $currentRole === 'operador' ? 'professor' : 'operador';
 
         $nome = (string) $this->input('nome', '');
         $email = (string) $this->input('email', '');
         $senha = (string) $this->input('senha', '');
-        $tipo = (string) $this->input('tipo', 'aluno');
         $ativo = (string) $this->input('ativo', '1');
 
         if ($nome === '' || $email === '' || $senha === '') {
             Session::setFlash('flash', 'Preencha nome, email e senha.');
             $this->redirect('/admin/usuarios/novo');
             return;
-        }
-
-        $tiposValidos = ['admin', 'operador', 'professor'];
-        if (!in_array($tipo, $tiposValidos, true)) {
-            $tipo = $isOperador ? 'professor' : 'operador';
-        }
-
-        if ($isOperador) {
-            $tipo = 'professor';
         }
 
         $usuarioId = $this->usuarioService->criarUsuario($nome, $email, $senha, $tipo, $ativo);
@@ -171,24 +160,36 @@ final class UsuarioController extends Controller
         }
 
         if ($isAdmin) {
+            $nome = trim((string) $this->input('nome', (string) ($usuario['nome'] ?? '')));
+            $email = trim((string) $this->input('email', (string) ($usuario['email'] ?? '')));
+
+            if ($nome === '' || $email === '') {
+                Session::setFlash('flash', 'Informe nome e email do usuário.');
+                $this->redirect('/admin/usuarios/editar?id=' . $id);
+                return;
+            }
+
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+                Session::setFlash('flash', 'Informe um email válido.');
+                $this->redirect('/admin/usuarios/editar?id=' . $id);
+                return;
+            }
+
+            if ($this->usuarioService->emailEmUso($email, $id)) {
+                Session::setFlash('flash', 'Este email já está em uso por outro usuário.');
+                $this->redirect('/admin/usuarios/editar?id=' . $id);
+                return;
+            }
+
             $ativo = (string) $this->input('ativo', '1');
-            $tipo = (string) $this->input('tipo', '');
-
-            if ($tipo === '') {
-                $tipo = (string) ($usuario['tipo'] ?? '');
-            }
-
-            $tiposValidos = ['admin', 'operador', 'professor'];
-            if (!in_array($tipo, $tiposValidos, true)) {
-                $tipo = (string) ($usuario['tipo'] ?? 'operador');
-            }
         } else {
+            $nome = '';
+            $email = '';
             $ativo = (string) ($usuario['ativo'] ?? '1');
-            $tipo = (string) ($usuario['tipo'] ?? 'operador');
         }
 
-        $this->usuarioService->atualizarUsuario($id, $senha, $ativo, '', '', $tipo);
-        $this->logService->log('atualizar', 'usuario', $id, 'Usuário atualizado: ' . ($usuario['nome'] ?? ''));
+        $this->usuarioService->atualizarUsuario($id, $senha, $ativo, $nome, $email);
+        $this->logService->log('atualizar', 'usuario', $id, 'Usuário atualizado: ' . ($nome !== '' ? $nome : ($usuario['nome'] ?? '')));
         Session::setFlash('flash', 'Usuário atualizado com sucesso.');
         $this->redirect('/admin/usuarios');
     }

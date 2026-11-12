@@ -205,6 +205,29 @@ final class UsuarioRepository
         $stmt->execute();
     }
 
+    public function emailEmUso(string $email, int $ignoreId = 0): bool
+    {
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return false;
+        }
+
+        $sql = 'SELECT id FROM usuarios WHERE email = :email';
+        if ($ignoreId > 0) {
+            $sql .= ' AND id <> :id';
+        }
+        $sql .= ' LIMIT 1';
+
+        $stmt = $pdo->prepare($sql);
+        $stmt->bindValue(':email', $email, PDO::PARAM_STR);
+        if ($ignoreId > 0) {
+            $stmt->bindValue(':id', $ignoreId, PDO::PARAM_INT);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchColumn() !== false;
+    }
+
     public function findByEmailStaff(string $email): ?array
     {
         $pdo = Database::connection();

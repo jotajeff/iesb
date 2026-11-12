@@ -37,7 +37,7 @@ Não há testes, linting, typecheck ou CI.
 - **Rotas**: em `config/routes.php`. Params `{slug}`, `{id}` injetados em `$_GET`.
 - **Layouts**: `base` (público), `admin` (staff), `aluno` (portal aluno). 3º arg de `View::render()`.
 - **Auth**: `$_SESSION['user']` com `id`, `name`, `email`, `role`. Staff via `storage/users.json` (bcrypt). Alunos via MySQL.
-- **Roles**: `admin`, `professor`, `operador`, `aluno`. `isStaff()` = admin || professor || operador.
+- **Roles**: `admin`, `professor`, `coordenador`, `operador`, `secretaria`, `aluno`. `isStaff()` = admin || professor || coordenador || secretaria || operador.
 - **Controller base**: `render()`, `redirect()`, `input()`, `json()`. `render()` injeta `authUser`, `flash`, `niveisMenu`, `nivelSelecionado`.
 - **Services** instanciados com `new` nos controllers, sem DI container.
 - **`declare(strict_types=1)`** em todo PHP.
@@ -67,8 +67,9 @@ Não há testes, linting, typecheck ou CI.
 |---|---|
 | `chamada` | Chamadas geradas (id_turma, id_turma_disciplina, id_usuario_professor, data_aula, hora_inicio/fim, status) |
 | `chamada_presenca` | Presenças: id_chamada, id_matricula, presenca, ip, responsavel |
-| `material` | Materiais: tipo (video/drive), titulo, link, id_fk (turma), id_disciplina (0=secretaria) |
+| `material` | Materiais: tipo (`video`/`drive`/`excel`/`doc`), titulo, link, id_fk (turma), id_disciplina (0=secretaria) |
 | `link` | Links externos (tipo=link): titulo, link, id_fk (turma), id_disciplina, extra. Self-healing via `LinkRepository::ensureSchema()` + `storage/migration_link.sql` |
+| `visualizacao` | Confirmação de vídeo assistido: id_material, id_aluno, ativo, ip, created_at |
 | `banner_aluno` | Banners do portal: banner, texto, link, id_curso, ativo |
 | `turma_disciplina_professor` | Junção professor↔turma_disciplina (ou professor↔turma, schema flexível) |
 | `turma_disciplina` | Vínculo turma↔disciplina com professor (legado id_usuario_professor) |
@@ -77,8 +78,10 @@ Não há testes, linting, typecheck ou CI.
 | `turma_coordenador` | Coordenadores por turma (id_turma, id_usuario, created_at) |
 | `usuarios_funcao` | Cadastro de funções (id=5 = coordenador) |
 | `usuario_liga_funcao` | Vínculo usuário↔função (id_usuario, id_funcao, ativo) |
-| `usuarios` | Usuários (inclui campo `titulacao`; `tipo` legado) |
+| `usuarios` | Usuários (inclui `titulacao`; `tipo` é legado, usado apenas para fallback/vínculo de função) |
 | `imagem` | Fotos: tabela_fk='usuarios', id_fk=id_professor, path='assets/img/professor/...' |
+| `modulo` | Módulos do painel: nome, rota, icone, menu_grupo, menu_icone, menu_grupo_ordem, menu_ordem, ativo |
+| `logs_auditoria` | Auditoria: usuario_id, perfil, acao, entidade, entidade_id, ip, sucesso, created_at. Base dos recursos de aula/ranking |
 
 ## Frontend
 
@@ -89,11 +92,15 @@ Não há testes, linting, typecheck ou CI.
 
 ## Menu admin
 
-- **Dropdowns**: Cadastros, Secretaria, Acadêmico, Asaas, Acesso, Conteúdo, Setup, Sistema.
+- **Dinâmico**: `app/Views/layouts/admin_menu.php` carrega `PermissaoRepository::listarModulos()` (tabela `modulo`) e monta os dropdowns por `menu_grupo`/`menu_grupo_ordem`.
+- Cada item só aparece se `modulo.ativo=1`, tiver `menu_grupo` e o usuário tiver permissão explícita `consultar` na rota (`AuthService::hasExactPermission`, sem herdar do módulo pai).
+- Ícones: `modulo.icone` no item e `menu_icone` no grupo. Ordenação: `menu_grupo_ordem`, `menu_ordem`, `ordem`, `nome`.
+- **Grupos usuais**: Cadastros, Secretaria, Acadêmico, Asaas, Acesso, Conteúdo, Setup, Sistema.
 - **Secretaria**: Tarefas, Notificações, Protocolos, Documentos, Chamadas, Relatório de Presenças, Material, Email Matrículas.
 - **Conteúdo**: Sessões, Carrossel, Banner-Aluno, Notícias.
+- **Acesso**: inclui `/admin/logs/recursos` (Recursos de aula), autoinserido por `PermissaoRepository::ensureModuloRecursosAula()`.
 - Acesso ao `admin/db` (ferramenta DB) em `public/admin/db/` (fora do roteador MVC).
-- Botão Asaas: visible for users with `tipo='admin'` in `usuarios`.
+- Botão Asaas: visível para usuários com `tipo='admin'` em `usuarios`.
 
 ## Integração Asaas
 
@@ -107,7 +114,7 @@ Não há testes, linting, typecheck ou CI.
 - Arquitetura: `StorageService` (fachada) → `StorageProviderInterface` → `GoogleDriveProvider` → `GoogleDriveService` (API) + `GoogleOAuthService` (auth).
 - Admin: `/admin/storage` (conectar, desconectar, criar estrutura de pastas).
 - Banco: `integracao_google`, `documento`.
-- Materiais usam `StorageService` para upload de PDFs ao Drive.
+- Materiais usam `StorageService` para upload de PDFs, Excel e DOC ao Drive.
 
 ## Módulo Chamadas (admin + aluno)
 
@@ -117,14 +124,31 @@ Não há testes, linting, typecheck ou CI.
 - `turma_disciplina_professor`: tabela de junção com schema flexível (detecta `id_turma` vs `id_turma_disciplina` via `SHOW COLUMNS`).
 - Presence only registered by student (no auto-insert on chamada creation).
 
-## Módulo Material (admin/operador)
+## Módulo Material (staff com permissão)
 
 - `/admin/material` → listagem agrupada por turma, filtro por turma ativa.
-- `/admin/material/novo` → tipo (Vídeo/PDF/**Link** em 3 colunas) → turma → disciplina (Secretaria=0 ou vinculada) → campos → upload.
-- PDF: upload via `StorageService` ao Google Drive, tipo 'drive'. Vídeo: insert direto, tipo 'video'. **Link**: insert na tabela `link` (`LinkRepository`), mesmo fluxo turma/disciplina (não passa por `material`).
-- Listagem admin e portal misturam `material` + `link` (tipo 'link', badge verde). Editar/deletar de link usa `tabela=link` (query/hidden input).
-- `material.id_fk` = turma, `material.id_disciplina` = disciplina (0 = geral/secretaria).
-- Acesso: admin ou operador.
+- `/admin/material/novo` → seleção do tipo (Vídeo/PDF/**Excel**/**DOC**/**Link**) → turma → disciplina (Secretaria=0 ou vinculada) → campos → upload.
+- **PDF/Excel/DOC**: upload via `StorageService` ao Google Drive; `tipo` no banco: `drive` (PDF), `excel` (XLS/XLSX/CSV) e `doc` (DOC/DOCX). Limite de 20MB.
+- **Vídeo**: insert direto em `material`, tipo `video`. **Link**: insert na tabela `link` (`LinkRepository`), mesmo fluxo turma/disciplina (não passa por `material`).
+- Listagens admin, turma e portal misturam `material` + `link` com badges/ícones por tipo (`excel` verde, `doc` azul, `link` verde, `drive` azul, `video` vermelho).
+- Editar/deletar de link usa `tabela=link` (query/hidden input). `material.id_fk` = turma, `material.id_disciplina` = disciplina (0 = geral/secretaria).
+- Acesso via permissão `editar` em `/admin/material`, com escopo por perfil:
+  - **admin**: todas as turmas/materiais.
+  - **coordenador**: somente turmas vinculadas em `turma_coordenador`.
+  - **professor**: somente pares turma+disciplina vinculados em `turma_disciplina_professor` (fallback legado em `turma_disciplina.id_usuario_professor`); não acessa material geral/Secretaria (`id_disciplina=0`).
+  - **demais perfis staff** com permissão: sem restrição adicional.
+- O escopo é calculado em `MaterialController::escopoAcesso()` e aplicado na listagem, select de turmas, AJAX de disciplinas e nas ações criar/editar/remover; há validação server-side em todas as operações.
+- A view recebe `permite_secretaria` por turma; o select de disciplina mostra “Secretaria” apenas quando o usuário pode publicar material geral naquela turma.
+
+## Módulo Recursos de Aula (admin/staff)
+
+- `Admin\RecursoAulaController`; rotas `/admin/logs/recursos` (lista), `/admin/logs/recursos/aluno` e `/admin/logs/recursos/ranking`.
+- Exige permissão explícita `consultar` em `/admin/logs/recursos` (não herda de `/admin/logs`); link hard-coded em `logs/index.php` também é condicional.
+- Filtro de tipo: `todos`, `video` (padrão), `drive` (inclui PDF legado), `excel`, `doc`; lista apenas `material.ativo=1`.
+- Acessos vêm de `logs_auditoria` (`perfil='aluno'`, `acao='visualizar'`, `sucesso=1`, `entidade IN ('video','drive')`).
+- Lista por recurso exibe alunos, total de visualizações, primeira/última data e localização do IP (`IpLocationService`); totais de acessos e alunos únicos no topo.
+- **Por aluno** (`?aluno_id=`): recursos acessados, datas, IP/localização e coluna **Visualizado** via `EXISTS` em `visualizacao`.
+- **Ranking**: somente `alunos.ativo=1`; ordena por total de acessos e recursos distintos. Renderizado com barras horizontais.
 
 ## Módulo Documentos (Secretaria)
 
@@ -173,6 +197,7 @@ Não há testes, linting, typecheck ou CI.
 - **Dashboard**: documentos pendentes, aviso endereço, aviso parcela, chamada aberta, banners, cards (cursos matriculados, notificações), grid "Amplie Seus Conhecimentos", notícias, rodapé com horário do servidor.
 - **Chamadas**: página dedicada (`/aluno/chamadas`) com chamada aberta + histórico completo (presença e ausentes futuras = "Agendada").
 - **Calendário**: grade mensal por ano (apenas meses com aulas), dias de aula em badge preto, indicadores de presença/ausência (cores do sistema) — aulas futuras sem indicador.
+- **Vídeo**: `/aluno/video?id=` registra acesso em `logs_auditoria` (`acao='visualizar'`, `entidade='video'`). Botão **Marcar vídeo como visto** → `POST /aluno/video/confirmar`: idempotente, insere em `visualizacao` (`ativo=1`, IP) e log `confirmar`.
 - **Professor**: foto via tabela `imagem` (`tabela_fk='usuarios'`), titulação exibida, cards com nome + titulação.
 - **Matérias do curso**: agrupadas por disciplina, Secretaria primeiro (id_disciplina=0), com `table-striped`.
 
@@ -189,6 +214,8 @@ Não há testes, linting, typecheck ou CI.
 - **Fonte de verdade**: autorização, listagens e filtros usam `usuario_liga_funcao` + `usuarios_funcao`. Não usar `usuarios.tipo` para exibir função/perfil.
 - `FuncaoUsuarioRepository::listarUsuariosComFuncoes()` faz `LEFT JOIN usuarios → usuario_liga_funcao → usuarios_funcao` e agrupa as funções por usuário.
 - `/admin/usuarios`: filtros por busca (nome/email), **Função** (`usuario_liga_funcao.id_funcao`) e **Ativo**, com filtragem client-side; coluna **Funções** exibe os vínculos ativos.
+- `/admin/usuarios/novo`: sem campo **Tipo** na view. O controller define `usuarios.tipo` como `professor` (operador logado) ou `operador` (admin), apenas para vínculo legado de função.
+- `/admin/usuarios/editar`: sem campo **Tipo**. Admin edita nome, email, ativo e senha; operador edita apenas a própria senha. Email validado por formato e duplicidade (`UsuarioService::emailEmUso()`).
 - `/admin` (dashboard): exibe as funções vinculadas do usuário (session `authUser.functions`), em badges, em vez do antigo `usuarios.tipo`.
 - `AuthService`/`UserRepository` montam `role`, `roles`, `functions` e `permissions` a partir de `usuario_liga_funcao` (com fallback legado apenas quando não há vínculo).
 
@@ -207,7 +234,7 @@ Não há testes, linting, typecheck ou CI.
 - `.htaccess` reescreve tudo para `public/`, exceto `asaas-webhook.php`, `poc/` e `admin/db/`.
 - Rota `/area-do-aluno` alias para `StudentController::dashboard`.
 - `isStaff()` está duplicado como método privado em cada Admin controller. Não está no Controller base.
-- `.gitignore` ignora `*.md` e `*.sql` — arquivos markdown e SQL não são versionados.
+- `.gitignore` ignora `*.md` e `*.sql` — exceto `AGENTS.md`, que é rastreado; demais markdown e SQL não são versionados.
 - CORS: `App::run()` retorna 204 para `OPTIONS /api/*` com header fixo para `magdabrazilcursos.com.br`.
 - Dashboard do admin: cards Matriculados/Cursos (apenas admin/operador) ao lado de Pré-inscrições.
 
@@ -222,4 +249,4 @@ Não há testes, linting, typecheck ou CI.
 
 - `titulacao` em `usuarios`: campo `varchar(100)`, editável no novo/editar/perfil.
 - Foto: tabela `imagem` (`tabela_fk='usuarios'`, `id_fk`=id_professor, path em `assets/img/professor/`).
-- Duplicidade de email: verificada antes de criar (erro amigável sem expor SQL).
+- Duplicidade de email: verificada antes de criar e editar (erro amigável sem expor SQL).

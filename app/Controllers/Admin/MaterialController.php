@@ -26,6 +26,9 @@ final class MaterialController extends Controller
 
     private LogService $logService;
 
+    /** @var array<string, mixed>|null */
+    private ?array $escopoAcessoCache = null;
+
     public function __construct()
     {
         $this->logService = new LogService();
@@ -38,9 +41,11 @@ final class MaterialController extends Controller
             $this->redirect('/admin/login');
         }
 
+        $escopo = $this->escopoAcesso();
         $turmas = $this->turmas();
         $idTurma = (int) ($_GET['id_turma'] ?? 0);
-        if ($idTurma > 0 && !in_array($idTurma, array_column($turmas, 'id'), true)) {
+        $turmasPermitidas = array_map(static fn (array $turma): int => (int) ($turma['id'] ?? 0), $turmas);
+        if ($idTurma > 0 && !in_array($idTurma, $turmasPermitidas, true)) {
             $idTurma = 0;
         }
 
@@ -71,7 +76,15 @@ final class MaterialController extends Controller
             }
         }
 
-        $links = (new LinkRepository())->listarAdmin($idTurma > 0 ? $idTurma : null);
+        $materiais = array_values(array_filter(
+            $materiais,
+            fn (array $material): bool => $this->podeAcessarMaterial($escopo, $material)
+        ));
+
+        $links = array_values(array_filter(
+            (new LinkRepository())->listarAdmin($idTurma > 0 ? $idTurma : null),
+            fn (array $link): bool => $this->podeAcessarMaterial($escopo, $link)
+        ));
         if ($links !== []) {
             $materiais = array_merge($materiais, $links);
             usort($materiais, static function (array $a, array $b): int {
@@ -86,6 +99,7 @@ final class MaterialController extends Controller
             'materiais' => $materiais,
             'turmas' => $turmas,
             'idTurma' => $idTurma,
+            'restricaoTurmas' => !$escopo['irrestrito'],
         ], 'admin');
     }
 
@@ -106,6 +120,7 @@ final class MaterialController extends Controller
             'currentRoute' => '/admin/material',
             'tipo' => $tipo,
             'turmas' => $this->turmas(),
+            'permiteSecretaria' => $this->permiteMaterialGeral(),
         ], 'admin');
     }
 
@@ -130,8 +145,8 @@ final class MaterialController extends Controller
 
         $idDisciplina = $idDisciplina > 0 ? $idDisciplina : 0;
 
-        if (!$this->podeUsarTurma($idTurma)) {
-            Session::setFlash('flash', 'Você só pode publicar material nas turmas sob sua coordenação.');
+        if (!$this->podeUsarTurmaDisciplina($idTurma, $idDisciplina)) {
+            Session::setFlash('flash', 'Você não tem permissão para publicar material nesta turma ou disciplina.');
             $this->redirect('/admin/material/novo');
             return;
         }
@@ -235,6 +250,22 @@ final class MaterialController extends Controller
             return;
         }
 
+        $material = $tabela === 'link' ? (new LinkRepository())->buscarPorId($id) : $this->buscarMaterial($id);
+        if (!$material) {
+            Session::setFlash('flash', 'Material não encontrado.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
+        if (!$this->podeUsarTurmaDisciplina(
+            (int) ($material['id_fk'] ?? 0),
+            (int) ($material['id_disciplina'] ?? 0)
+        )) {
+            Session::setFlash('flash', 'Você não tem permissão para remover este material.');
+            $this->redirect('/admin/material');
+            return;
+        }
+
         if ($tabela === 'link') {
             if ((new LinkRepository())->softDelete($id)) {
                 $this->logService->log('desativar', 'link', $id, 'Link desativado');
@@ -308,8 +339,10 @@ final class MaterialController extends Controller
             return;
         }
 
-        if (!$this->podeUsarTurma((int) ($material['id_fk'] ?? 0))) {
-            Session::setFlash('flash', 'Você só pode editar material nas turmas sob sua coordenação.');
+        $idTurmaMaterial = (int) ($material['id_fk'] ?? 0);
+        $idDisciplinaMaterial = (int) ($material['id_disciplina'] ?? 0);
+        if (!$this->podeUsarTurmaDisciplina($idTurmaMaterial, $idDisciplinaMaterial)) {
+            Session::setFlash('flash', 'Você não tem permissão para editar este material.');
             $this->redirect('/admin/material');
             return;
         }
@@ -324,7 +357,8 @@ final class MaterialController extends Controller
             'material' => $material,
             'tabela' => $tabela,
             'turmas' => $this->turmas(),
-            'disciplinas' => $this->disciplinasDaTurma((int) ($material['id_fk'] ?? 0)),
+            'disciplinas' => $this->disciplinasDaTurma($idTurmaMaterial),
+            'permiteSecretaria' => $this->podeUsarTurmaDisciplina($idTurmaMaterial, 0),
         ], 'admin');
     }
 
@@ -347,15 +381,18 @@ final class MaterialController extends Controller
             return;
         }
 
-        if (!$this->podeUsarTurma($idTurma)) {
-            Session::setFlash('flash', 'Você só pode editar material nas turmas sob sua coordenação.');
+        $material = $tabela === 'link' ? (new LinkRepository())->buscarPorId($id) : $this->buscarMaterial($id);
+        if (!$material) {
+            Session::setFlash('flash', 'Material não encontrado.');
             $this->redirect('/admin/material');
             return;
         }
 
-        $material = $tabela === 'link' ? (new LinkRepository())->buscarPorId($id) : $this->buscarMaterial($id);
-        if (!$material) {
-            Session::setFlash('flash', 'Material não encontrado.');
+        $idTurmaAtual = (int) ($material['id_fk'] ?? 0);
+        $idDisciplinaAtual = (int) ($material['id_disciplina'] ?? 0);
+        if (!$this->podeUsarTurmaDisciplina($idTurmaAtual, $idDisciplinaAtual)
+            || !$this->podeUsarTurmaDisciplina($idTurma, $idDisciplina)) {
+            Session::setFlash('flash', 'Você não tem permissão para editar material nesta turma ou disciplina.');
             $this->redirect('/admin/material');
             return;
         }
@@ -430,7 +467,8 @@ final class MaterialController extends Controller
     private function disciplinasDaTurma(int $idTurma): array
     {
         $pdo = Database::connection();
-        if (!$pdo instanceof PDO || $idTurma <= 0) {
+        $escopo = $this->escopoAcesso();
+        if (!$pdo instanceof PDO || $idTurma <= 0 || !$this->podeAcessarTurma($escopo, $idTurma)) {
             return [];
         }
 
@@ -444,7 +482,17 @@ final class MaterialController extends Controller
             );
             $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
             $stmt->execute();
-            return $stmt->fetchAll() ?: [];
+            $rows = $stmt->fetchAll() ?: [];
+
+            if ($escopo['irrestrito'] || isset($escopo['turmas_coordenadas'][$idTurma])) {
+                return $rows;
+            }
+
+            $permitidas = $escopo['disciplinas_professor'][$idTurma] ?? [];
+            return array_values(array_filter(
+                $rows,
+                static fn (array $disciplina): bool => isset($permitidas[(int) ($disciplina['id'] ?? 0)])
+            ));
         } catch (\Throwable $e) {
             error_log('[MATERIAL] Erro em disciplinasDaTurma: ' . $e->getMessage());
             return [];
@@ -541,58 +589,214 @@ final class MaterialController extends Controller
         }
 
         try {
-            $auth = new AuthService();
-            $user = Session::get('user');
-            $coordenadorRestrito = $auth->checkRole('coordenador') && !$auth->isAdmin();
-            $sql = 'SELECT DISTINCT t.id, t.nome AS turma_nome, c.nome AS curso_nome'
+            $stmt = $pdo->query(
+                'SELECT DISTINCT t.id, t.nome AS turma_nome, c.nome AS curso_nome'
                 . ' FROM turmas t'
-                . ' LEFT JOIN cursos c ON c.id = t.id_curso';
-            if ($coordenadorRestrito) {
-                $sql .= ' INNER JOIN turma_coordenador tc ON tc.id_turma = t.id AND tc.id_usuario = :id_usuario';
-            }
-            $sql .= ' WHERE t.ativo = 1 ORDER BY c.nome ASC, t.nome ASC';
-            $stmt = $pdo->prepare($sql);
-            if ($coordenadorRestrito) {
-                $stmt->bindValue(':id_usuario', (int) ($user['id'] ?? 0), PDO::PARAM_INT);
-            }
-            $stmt->execute();
+                . ' LEFT JOIN cursos c ON c.id = t.id_curso'
+                . ' WHERE t.ativo = 1 ORDER BY c.nome ASC, t.nome ASC'
+            );
             $rows = $stmt->fetchAll();
-            return is_array($rows) ? $rows : [];
+            if (!is_array($rows)) {
+                return [];
+            }
+
+            $escopo = $this->escopoAcesso();
+            if (!$escopo['irrestrito']) {
+                $rows = array_values(array_filter(
+                    $rows,
+                    fn (array $turma): bool => $this->podeAcessarTurma($escopo, (int) ($turma['id'] ?? 0))
+                ));
+            }
+
+            foreach ($rows as &$turma) {
+                $idTurma = (int) ($turma['id'] ?? 0);
+                $turma['permite_secretaria'] = $this->podeAcessar($escopo, $idTurma, 0);
+            }
+            unset($turma);
+
+            return $rows;
         } catch (\Throwable $e) {
             error_log('[MATERIAL] Erro em turmas: ' . $e->getMessage());
             return [];
         }
     }
 
-    private function podeUsarTurma(int $idTurma): bool
+    private function podeUsarTurmaDisciplina(int $idTurma, int $idDisciplina): bool
+    {
+        return $this->podeAcessar($this->escopoAcesso(), $idTurma, $idDisciplina);
+    }
+
+    private function podeAcessarMaterial(array $escopo, array $material): bool
+    {
+        return $this->podeAcessar(
+            $escopo,
+            (int) ($material['id_fk'] ?? 0),
+            (int) ($material['id_disciplina'] ?? 0)
+        );
+    }
+
+    private function podeAcessar(array $escopo, int $idTurma, int $idDisciplina): bool
     {
         if ($idTurma <= 0) {
             return false;
         }
 
-        $auth = new AuthService();
-        if (!$auth->checkRole('coordenador') || $auth->isAdmin()) {
+        if ($escopo['irrestrito'] || isset($escopo['turmas_coordenadas'][$idTurma])) {
             return true;
         }
 
-        $user = Session::get('user');
-        $pdo = Database::connection();
-        if (!$pdo instanceof PDO || !is_array($user) || (int) ($user['id'] ?? 0) <= 0) {
+        return $idDisciplina > 0
+            && isset($escopo['disciplinas_professor'][$idTurma][$idDisciplina]);
+    }
+
+    private function podeAcessarTurma(array $escopo, int $idTurma): bool
+    {
+        if ($idTurma <= 0) {
             return false;
         }
 
+        if ($escopo['irrestrito'] || isset($escopo['turmas_coordenadas'][$idTurma])) {
+            return true;
+        }
+
+        return !empty($escopo['disciplinas_professor'][$idTurma]);
+    }
+
+    private function permiteMaterialGeral(): bool
+    {
+        $escopo = $this->escopoAcesso();
+        return $escopo['irrestrito'] || $escopo['coordenador'];
+    }
+
+    /**
+     * @return array{irrestrito: bool, coordenador: bool, professor: bool, turmas_coordenadas: array<int, bool>, disciplinas_professor: array<int, array<int, bool>>}
+     */
+    private function escopoAcesso(): array
+    {
+        if ($this->escopoAcessoCache !== null) {
+            return $this->escopoAcessoCache;
+        }
+
+        $auth = new AuthService();
+        $user = Session::get('user');
+        $idUsuario = is_array($user) ? (int) ($user['id'] ?? 0) : 0;
+        $isAdmin = $auth->isAdmin();
+        $isCoordenador = !$isAdmin && $auth->checkRole('coordenador');
+        $isProfessor = !$isAdmin && $auth->isProfessor();
+
+        $escopo = [
+            'irrestrito' => !$isCoordenador && !$isProfessor,
+            'coordenador' => $isCoordenador,
+            'professor' => $isProfessor,
+            'turmas_coordenadas' => [],
+            'disciplinas_professor' => [],
+        ];
+
+        if ($escopo['irrestrito'] || $idUsuario <= 0) {
+            return $this->escopoAcessoCache = $escopo;
+        }
+
+        $pdo = Database::connection();
+        if (!$pdo instanceof PDO) {
+            return $this->escopoAcessoCache = $escopo;
+        }
+
+        if ($isCoordenador) {
+            try {
+                $stmt = $pdo->prepare(
+                    'SELECT DISTINCT tc.id_turma FROM turma_coordenador tc'
+                    . ' INNER JOIN turmas t ON t.id = tc.id_turma AND t.ativo = 1'
+                    . ' WHERE tc.id_usuario = :id_usuario'
+                );
+                $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+                $stmt->execute();
+                foreach ($stmt->fetchAll() ?: [] as $row) {
+                    $idTurma = (int) ($row['id_turma'] ?? 0);
+                    if ($idTurma > 0) {
+                        $escopo['turmas_coordenadas'][$idTurma] = true;
+                    }
+                }
+            } catch (\Throwable $e) {
+                error_log('[MATERIAL] Erro ao carregar turmas do coordenador: ' . $e->getMessage());
+            }
+        }
+
+        if ($isProfessor) {
+            $escopo['disciplinas_professor'] = $this->carregarDisciplinasProfessor($pdo, $idUsuario);
+        }
+
+        return $this->escopoAcessoCache = $escopo;
+    }
+
+    /**
+     * @return array<int, array<int, bool>>
+     */
+    private function carregarDisciplinasProfessor(PDO $pdo, int $idUsuario): array
+    {
+        $pares = [];
+
         try {
             $stmt = $pdo->prepare(
-                'SELECT 1 FROM turma_coordenador
-                 WHERE id_turma = :id_turma AND id_usuario = :id_usuario LIMIT 1'
+                'SELECT DISTINCT td.id_turma, td.id_disciplina'
+                . ' FROM turma_disciplina td'
+                . ' WHERE td.id_usuario_professor = :id_usuario AND td.ativo = 1'
             );
-            $stmt->bindValue(':id_turma', $idTurma, PDO::PARAM_INT);
-            $stmt->bindValue(':id_usuario', (int) $user['id'], PDO::PARAM_INT);
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
             $stmt->execute();
-            return (bool) $stmt->fetchColumn();
+            foreach ($stmt->fetchAll() ?: [] as $row) {
+                $this->adicionarParDisciplina($pares, $row);
+            }
         } catch (\Throwable $e) {
-            error_log('[MATERIAL] Erro ao validar turma do coordenador: ' . $e->getMessage());
-            return false;
+            error_log('[MATERIAL] Erro ao carregar disciplinas legadas do professor: ' . $e->getMessage());
+        }
+
+        try {
+            $colunas = $pdo->query('SHOW COLUMNS FROM turma_disciplina_professor')->fetchAll(PDO::FETCH_COLUMN);
+            $modoTurma = in_array('id_turma', $colunas, true);
+
+            if ($modoTurma && in_array('id_disciplina', $colunas, true)) {
+                $stmt = $pdo->prepare(
+                    'SELECT DISTINCT id_turma, id_disciplina'
+                    . ' FROM turma_disciplina_professor'
+                    . ' WHERE id_usuario_professor = :id_usuario AND ativo = 1 AND id_disciplina > 0'
+                );
+            } elseif ($modoTurma) {
+                $stmt = $pdo->prepare(
+                    'SELECT DISTINCT td.id_turma, td.id_disciplina'
+                    . ' FROM turma_disciplina_professor tdp'
+                    . ' INNER JOIN turma_disciplina td ON td.id_turma = tdp.id_turma AND td.ativo = 1'
+                    . ' WHERE tdp.id_usuario_professor = :id_usuario AND tdp.ativo = 1'
+                );
+            } else {
+                $stmt = $pdo->prepare(
+                    'SELECT DISTINCT td.id_turma, td.id_disciplina'
+                    . ' FROM turma_disciplina_professor tdp'
+                    . ' INNER JOIN turma_disciplina td ON td.id = tdp.id_turma_disciplina AND td.ativo = 1'
+                    . ' WHERE tdp.id_usuario_professor = :id_usuario AND tdp.ativo = 1'
+                );
+            }
+
+            $stmt->bindValue(':id_usuario', $idUsuario, PDO::PARAM_INT);
+            $stmt->execute();
+            foreach ($stmt->fetchAll() ?: [] as $row) {
+                $this->adicionarParDisciplina($pares, $row);
+            }
+        } catch (\Throwable $e) {
+            error_log('[MATERIAL] Erro ao carregar disciplinas do professor: ' . $e->getMessage());
+        }
+
+        return $pares;
+    }
+
+    /**
+     * @param array<int, array<int, bool>> $pares
+     */
+    private function adicionarParDisciplina(array &$pares, array $row): void
+    {
+        $idTurma = (int) ($row['id_turma'] ?? 0);
+        $idDisciplina = (int) ($row['id_disciplina'] ?? 0);
+        if ($idTurma > 0 && $idDisciplina > 0) {
+            $pares[$idTurma][$idDisciplina] = true;
         }
     }
 

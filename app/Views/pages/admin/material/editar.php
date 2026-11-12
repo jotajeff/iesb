@@ -2,6 +2,7 @@
   $material = is_array($material ?? null) ? $material : [];
   $turmasView = is_array($turmas ?? null) ? $turmas : [];
   $disciplinasView = is_array($disciplinas ?? null) ? $disciplinas : [];
+  $permiteSecretaria = (bool) ($permiteSecretaria ?? true);
   $tipoMaterial = (string) ($material['tipo'] ?? '');
   $tabelaMaterial = (string) ($tabela ?? 'material') === 'link' ? 'link' : 'material';
   $turmaAtual = (int) ($material['id_fk'] ?? 0);
@@ -46,7 +47,7 @@
                 $label .= ' — ' . (string) $turma['curso_nome'];
               }
             ?>
-            <option value="<?= (int) ($turma['id'] ?? 0) ?>" <?= $turmaAtual === (int) ($turma['id'] ?? 0) ? 'selected' : '' ?>>
+            <option value="<?= (int) ($turma['id'] ?? 0) ?>" data-permite-secretaria="<?= !empty($turma['permite_secretaria']) ? '1' : '0' ?>" <?= $turmaAtual === (int) ($turma['id'] ?? 0) ? 'selected' : '' ?>>
               <?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?>
             </option>
           <?php endforeach; ?>
@@ -55,15 +56,23 @@
 
       <div class="col-md-6">
         <label class="form-label">Disciplina</label>
-        <select class="form-select" name="id_disciplina" id="materialDisciplina">
-          <option value="0" <?= $disciplinaAtual === 0 ? 'selected' : '' ?>>Secretaria (material geral da turma)</option>
+        <select class="form-select" name="id_disciplina" id="materialDisciplina" data-permite-secretaria="<?= $permiteSecretaria ? '1' : '0' ?>">
+          <?php if ($permiteSecretaria): ?>
+            <option value="0" <?= $disciplinaAtual === 0 ? 'selected' : '' ?>>Secretaria (material geral da turma)</option>
+          <?php else: ?>
+            <option value="" <?= $disciplinaAtual === 0 ? 'selected' : '' ?>>Selecione a disciplina</option>
+          <?php endif; ?>
           <?php foreach ($disciplinasView as $disciplina): ?>
             <option value="<?= (int) ($disciplina['id'] ?? 0) ?>" <?= $disciplinaAtual === (int) ($disciplina['id'] ?? 0) ? 'selected' : '' ?>>
               <?= htmlspecialchars((string) ($disciplina['disciplina_nome'] ?? '-'), ENT_QUOTES, 'UTF-8') ?>
             </option>
           <?php endforeach; ?>
         </select>
-        <div class="form-text">Selecione a disciplina ou deixe em "Secretaria" para material geral da turma.</div>
+        <div class="form-text">
+          <?= $permiteSecretaria
+            ? 'Selecione a disciplina ou deixe em "Secretaria" para material geral da turma.'
+            : 'Selecione uma das disciplinas em que você está vinculado.' ?>
+        </div>
       </div>
 
       <div class="col-md-6">
@@ -103,9 +112,26 @@ document.addEventListener('DOMContentLoaded', function () {
   var selDisciplina = document.getElementById('materialDisciplina');
   if (!selTurma || !selDisciplina) return;
 
+  var permiteSecretaria = selDisciplina.dataset.permiteSecretaria === '1';
+
+  function resetDisciplinas() {
+    selDisciplina.innerHTML = '';
+    var opt = document.createElement('option');
+    if (permiteSecretaria) {
+      opt.value = '0';
+      opt.textContent = 'Secretaria (material geral da turma)';
+    } else {
+      opt.value = '';
+      opt.textContent = 'Selecione a disciplina';
+    }
+    selDisciplina.appendChild(opt);
+  }
+
   selTurma.addEventListener('change', function () {
     var idTurma = selTurma.value;
-    selDisciplina.innerHTML = '<option value="0">Secretaria (material geral da turma)</option>';
+    var opcao = selTurma.options[selTurma.selectedIndex];
+    permiteSecretaria = !!(opcao && opcao.dataset.permiteSecretaria === '1');
+    resetDisciplinas();
     if (!idTurma) return;
 
     fetch('/admin/material/ajax-disciplinas?id_turma=' + encodeURIComponent(idTurma))

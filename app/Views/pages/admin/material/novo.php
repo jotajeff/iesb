@@ -1,6 +1,7 @@
 <?php
   $tipoSelecionado = (string) ($tipo ?? '');
   $turmasView = is_array($turmas ?? null) ? $turmas : [];
+  $permiteSecretaria = (bool) ($permiteSecretaria ?? true);
   $badgesTipo = [
     'video' => ['cor' => 'bg-danger', 'icone' => 'bi-camera-reels'],
     'pdf' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
@@ -118,17 +119,25 @@
                   $label .= ' — ' . (string) $turma['curso_nome'];
                 }
               ?>
-              <option value="<?= (int) ($turma['id'] ?? 0) ?>"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></option>
+              <option value="<?= (int) ($turma['id'] ?? 0) ?>" data-permite-secretaria="<?= !empty($turma['permite_secretaria']) ? '1' : '0' ?>"><?= htmlspecialchars($label, ENT_QUOTES, 'UTF-8') ?></option>
             <?php endforeach; ?>
           </select>
         </div>
 
         <div class="col-md-6">
           <label class="form-label">Disciplina</label>
-          <select class="form-select" name="id_disciplina" id="materialDisciplina" disabled>
-            <option value="0">Secretaria (material geral da turma)</option>
+          <select class="form-select" name="id_disciplina" id="materialDisciplina" data-permite-secretaria="<?= $permiteSecretaria ? '1' : '0' ?>" disabled>
+            <?php if ($permiteSecretaria): ?>
+              <option value="0">Secretaria (material geral da turma)</option>
+            <?php else: ?>
+              <option value="">Selecione a disciplina</option>
+            <?php endif; ?>
           </select>
-          <div class="form-text">Selecione a disciplina ou deixe em "Secretaria" para material geral da turma.</div>
+          <div class="form-text">
+            <?= $permiteSecretaria
+              ? 'Selecione a disciplina ou deixe em "Secretaria" para material geral da turma.'
+              : 'Selecione uma das disciplinas em que você está vinculado.' ?>
+          </div>
         </div>
 
         <div class="col-12">
@@ -238,11 +247,18 @@ document.addEventListener('DOMContentLoaded', function () {
   var selDisciplina = document.getElementById('materialDisciplina');
   if (!selTurma || !selDisciplina) return;
 
+  var permiteSecretaria = selDisciplina.dataset.permiteSecretaria === '1';
+
   function limparDisciplinas() {
     selDisciplina.innerHTML = '';
     var opt = document.createElement('option');
-    opt.value = '0';
-    opt.textContent = 'Secretaria (material geral da turma)';
+    if (permiteSecretaria) {
+      opt.value = '0';
+      opt.textContent = 'Secretaria (material geral da turma)';
+    } else {
+      opt.value = '';
+      opt.textContent = 'Selecione a disciplina';
+    }
     selDisciplina.appendChild(opt);
     selDisciplina.disabled = true;
   }
@@ -260,13 +276,17 @@ document.addEventListener('DOMContentLoaded', function () {
           opt.textContent = d.disciplina_nome;
           selDisciplina.appendChild(opt);
         });
-        selDisciplina.disabled = false;
+        selDisciplina.disabled = itens.length === 0 && !permiteSecretaria;
       })
       .catch(function () {
         limparDisciplinas();
       });
   }
 
-  selTurma.addEventListener('change', function () { carregarDisciplinas(selTurma.value); });
+  selTurma.addEventListener('change', function () {
+    var opcao = selTurma.options[selTurma.selectedIndex];
+    permiteSecretaria = !!(opcao && opcao.dataset.permiteSecretaria === '1');
+    carregarDisciplinas(selTurma.value);
+  });
 });
 </script>

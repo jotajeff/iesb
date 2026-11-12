@@ -2,6 +2,7 @@
   $materiaisView = is_array($materiais ?? null) ? $materiais : [];
   $turmasView = is_array($turmas ?? null) ? $turmas : [];
   $idTurma = (int) ($idTurma ?? 0);
+  $restricaoTurmas = (bool) ($restricaoTurmas ?? false);
   $badgesTipo = [
     'video' => ['cor' => 'bg-danger', 'icone' => 'bi-camera-reels'],
     'drive' => ['cor' => 'bg-primary', 'icone' => 'bi-file-earmark-pdf'],
@@ -35,7 +36,7 @@
       <div class="col-md-5 col-lg-4">
         <label class="form-label">Turma</label>
         <select class="form-select" name="id_turma" onchange="this.form.submit()">
-          <option value="">Todas as ativas</option>
+          <option value=""><?= $restricaoTurmas ? 'Todas as permitidas' : 'Todas as ativas' ?></option>
           <?php foreach ($turmasView as $turma): ?>
             <?php
               $label = (string) ($turma['turma_nome'] ?? '-');

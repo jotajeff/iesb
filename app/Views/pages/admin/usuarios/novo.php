@@ -1,10 +1,5 @@
 <section class="container py-4">
     <div class="bg-white border rounded-3 p-4 shadow-sm">
-      <?php
-        $currentRole = (string) ($authUser['role'] ?? '');
-        $isAdmin = $currentRole === 'admin';
-        $isOperador = $currentRole === 'operador';
-      ?>
       <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-4">
         <h4 class="mb-0"><i class="bi bi-plus-circle me-2"></i>Novo Usuário</h4>
         <a class="btn btn-outline-secondary btn-sm" href="/admin/usuarios"><i class="bi bi-arrow-left me-1"></i>Voltar para lista</a>
@@ -28,20 +23,7 @@
         </div>
         <small class="text-danger">Anote esta senha agora! Ela não será mostrada novamente.</small>
       </div>
-      <div class="col-md-3">
-        <label class="form-label">Tipo</label>
-        <?php if ($isOperador): ?>
-          <input class="form-control" type="text" value="Professor" readonly disabled>
-          <input type="hidden" name="tipo" value="professor">
-          <small class="text-muted">Operadores podem cadastrar apenas professores.</small>
-        <?php else: ?>
-          <select class="form-select" name="tipo">
-            <option value="admin">Admin</option>
-            <option value="operador" selected>Operador</option>
-          </select>
-        <?php endif; ?>
-      </div>
-      <div class="col-md-3">
+      <div class="col-md-6">
         <label class="form-label">Ativo</label>
         <select class="form-select" name="ativo">
           <option value="1" selected>Sim</option>

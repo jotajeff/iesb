@@ -17,10 +17,7 @@ final class RecursoAulaController extends Controller
 
     public function index(): void
     {
-        if (!$this->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os recursos de aula.');
-            $this->redirect('/admin/login');
-        }
+        $this->autorizar();
 
         $tipo = trim((string) ($_GET['tipo'] ?? 'video'));
         if (!in_array($tipo, self::TIPOS, true)) {
@@ -57,10 +54,7 @@ final class RecursoAulaController extends Controller
 
     public function aluno(): void
     {
-        if (!$this->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os recursos de aula.');
-            $this->redirect('/admin/login');
-        }
+        $this->autorizar();
 
         $alunoId = (int) ($_GET['aluno_id'] ?? 0);
         $alunos = $this->alunos();
@@ -96,10 +90,7 @@ final class RecursoAulaController extends Controller
 
     public function ranking(): void
     {
-        if (!$this->isStaff()) {
-            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os recursos de aula.');
-            $this->redirect('/admin/login');
-        }
+        $this->autorizar();
 
         $ranking = $this->rankingAlunos();
         $totalAcessos = 0;
@@ -329,8 +320,18 @@ final class RecursoAulaController extends Controller
         }
     }
 
-    private function isStaff(): bool
+    private function autorizar(): void
     {
-        return (new AuthService())->isStaff();
+        $auth = new AuthService();
+
+        if (!$auth->isStaff()) {
+            Session::setFlash('flash', 'Faça login como admin, operador ou professor para acessar os recursos de aula.');
+            $this->redirect('/admin/login');
+        }
+
+        if (!$auth->hasExactPermission('/admin/logs/recursos', 'consultar')) {
+            Session::setFlash('flash', 'Você não tem permissão para acessar os recursos de aula.');
+            $this->redirect('/admin');
+        }
     }
 }

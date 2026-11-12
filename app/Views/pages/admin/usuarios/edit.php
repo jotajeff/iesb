@@ -13,40 +13,26 @@
 
       <div class="col-md-6">
         <label class="form-label">Nome</label>
-        <input class="form-control" type="text" value="<?= htmlspecialchars((string) ($usuario['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
+        <?php if (!empty($isAdmin)): ?>
+          <input class="form-control" type="text" name="nome" required maxlength="255" value="<?= htmlspecialchars((string) ($usuario['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+        <?php else: ?>
+          <input class="form-control" type="text" value="<?= htmlspecialchars((string) ($usuario['nome'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
+        <?php endif; ?>
       </div>
       <div class="col-md-6">
         <label class="form-label">Email</label>
-        <input class="form-control" type="email" value="<?= htmlspecialchars((string) ($usuario['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
+        <?php if (!empty($isAdmin)): ?>
+          <input class="form-control" type="email" name="email" required maxlength="255" value="<?= htmlspecialchars((string) ($usuario['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>">
+        <?php else: ?>
+          <input class="form-control" type="email" value="<?= htmlspecialchars((string) ($usuario['email'] ?? ''), ENT_QUOTES, 'UTF-8') ?>" readonly disabled>
+        <?php endif; ?>
       </div>
-      <div class="col-md-4">
+      <div class="col-md-6">
         <label class="form-label">Nova senha</label>
         <input class="form-control" type="password" name="senha" placeholder="Deixe em branco para manter">
         <small class="text-muted">Preencha apenas se quiser alterar.</small>
       </div>
-      <?php $tipoAtual = (string) ($usuario['tipo'] ?? 'operador'); ?>
-      <div class="col-md-4">
-        <label class="form-label">Tipo</label>
-        <?php if (!empty($isAdmin)): ?>
-          <select class="form-select" name="tipo">
-            <option value="admin" <?= $tipoAtual === 'admin' ? 'selected' : '' ?>>Admin</option>
-            <option value="operador" <?= $tipoAtual === 'operador' ? 'selected' : '' ?>>Operador</option>
-            <option value="professor" <?= $tipoAtual === 'professor' ? 'selected' : '' ?>>Professor</option>
-          </select>
-        <?php else: ?>
-          <?php
-            $tipoLabel = match ($tipoAtual) {
-              'admin' => 'Admin',
-              'operador' => 'Operador',
-              'professor' => 'Professor',
-              default => ucfirst($tipoAtual ?: 'Operador'),
-            };
-          ?>
-          <input type="text" class="form-control" value="<?= $tipoLabel ?>" readonly disabled>
-          <input type="hidden" name="tipo" value="<?= htmlspecialchars($tipoAtual, ENT_QUOTES, 'UTF-8') ?>">
-        <?php endif; ?>
-      </div>
-      <div class="col-md-4">
+      <div class="col-md-6">
         <label class="form-label">Ativo</label>
         <?php if (!empty($isAdmin)): ?>
           <select class="form-select" name="ativo">

@@ -4,6 +4,7 @@
     $currentRole = (string) ($authUser['role'] ?? '');
     $currentUserId = (int) ($authUser['id'] ?? 0);
     $isAdmin = $currentRole === 'admin';
+    $podeRecursosAula = (new \App\Services\AuthService())->hasExactPermission('/admin/logs/recursos', 'consultar');
     $logEntries = $logs ?? [];
     $currentPerfil = $perfil ?? '';
     $currentNome = $nome ?? '';
@@ -20,9 +21,11 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
       <h4 class="mb-0"><i class="bi bi-clock-history"></i> &nbsp; Logs</h4>
       <div class="d-flex flex-wrap align-items-center gap-2">
-        <a class="btn btn-outline-primary btn-sm" href="/admin/logs/recursos">
-          <i class="bi bi-collection-play me-1"></i>Recursos de aula
-        </a>
+        <?php if ($podeRecursosAula): ?>
+          <a class="btn btn-outline-primary btn-sm" href="/admin/logs/recursos">
+            <i class="bi bi-collection-play me-1"></i>Recursos de aula
+          </a>
+        <?php endif; ?>
         <?php if (!$isAdmin): ?>
           <span class="badge bg-secondary">Exibindo apenas seus registros</span>
         <?php endif; ?>
