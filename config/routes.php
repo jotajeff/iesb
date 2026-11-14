@@ -25,6 +25,7 @@ use App\Controllers\Admin\BannerAlunoController;
 use App\Controllers\Admin\ChamadaController;
 use App\Controllers\Admin\MaterialController;
 use App\Controllers\Admin\DocumentoController;
+use App\Controllers\Admin\LeadController;
 use App\Controllers\Admin\ProtocoloController as AdminProtocoloController;
 use App\Controllers\Admin\RecursoAulaController;
 use App\Controllers\AuthController;
@@ -39,6 +40,7 @@ use App\Core\Router;
 return static function (Router $router): void {
     $router->get('/', [HomeController::class, 'index']);
     $router->get('/home', [HomeController::class, 'index']);
+    $router->post('/leads', [HomeController::class, 'salvarLead']);
     $router->get('/sobre', [PageController::class, 'sobre']);
     $router->get('/cursos', [PageController::class, 'cursos']);
     $router->get('/cursos/{slug}', [PageController::class, 'cursos']);
@@ -260,6 +262,10 @@ return static function (Router $router): void {
     $router->get('/admin/config/noticias/editar', [NoticiaController::class, 'editar']);
     $router->post('/admin/config/noticias/salvar', [NoticiaController::class, 'salvar']);
     $router->post('/admin/config/noticias/deletar', [NoticiaController::class, 'deletar']);
+
+    $router->get('/admin/leads', [LeadController::class, 'index']);
+    $router->get('/admin/leads/editar', [LeadController::class, 'editar']);
+    $router->post('/admin/leads/atualizar', [LeadController::class, 'atualizar']);
 
     $router->get('/admin/preinscricao', [PreInscricaoController::class, 'index']);
     $router->get('/admin/preinscricao/kanban', [PreInscricaoController::class, 'kanban']);
